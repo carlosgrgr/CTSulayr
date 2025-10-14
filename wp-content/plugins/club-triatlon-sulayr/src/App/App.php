@@ -1,9 +1,10 @@
 <?php
 namespace ClubTriatlonSulayr\App;
 
-use ClubTriatlonSulayr\Services\HelpersService;
-use ClubTriatlonSulayr\Modules\FieldsGroups\UserFieldsGroup;
 use ClubTriatlonSulayr\Services\UserService;
+use ClubTriatlonSulayr\Services\HelpersService;
+use ClubTriatlonSulayr\Modules\Templates\TemplatesManager;
+use ClubTriatlonSulayr\Modules\Fields\UserFields\UserFields;
 
 /**
  * App
@@ -63,8 +64,9 @@ class App {
      */
     public function load_classes(): void {
         $helpers = new HelpersService();
-        $userFields = new UserFieldsGroup();
+        $user_fields = new UserFields();
         $userService = new UserService();
+        $userTemplate = new TemplatesManager();
     }
 
     /**

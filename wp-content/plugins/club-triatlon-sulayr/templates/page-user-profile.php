@@ -24,7 +24,7 @@ $current_user_id = get_current_user_id();
     acf_form([
         'id'                   => 'acf-user-profile-form',
         'post_id'              => 'user_' . $current_user_id, // indicamos que son campos de usuario
-        'field_groups'         => ['group_' . md5('user_profile_fields')], // el mismo ID que definiste en UserFieldsGroup
+        'field_groups'         => ['group_' . md5( 'user_profile_fields' )], // el mismo ID que definiste en UserFieldsGroup
         'submit_value'         => __('Guardar cambios', 'club-triatlon-sulayr'),
         'updated_message'      => __('Perfil actualizado correctamente.', 'club-triatlon-sulayr'),
         'return'               => add_query_arg('updated', 'true', get_permalink()),
