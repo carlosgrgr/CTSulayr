@@ -13,6 +13,11 @@ class UserService {
         add_filter('login_redirect', [$this, 'redirect_after_login'], 10, 3);
         add_filter('acf/pre_save_post', [$this, 'save_user_data_security']);
         add_filter('acf/prepare_field/name=sulayr_user_photo', [$this, 'render_user_photo_preview']);
+        if ( ! is_admin() ) {
+            add_filter('acf/prepare_field/name=sulayr_user_membership_plan', [$this, 'maybe_lock_field']);
+            add_filter('acf/prepare_field/name=sulayr_user_swimming', [$this, 'maybe_lock_field']);
+        }
+        
     }
 
     /**
@@ -115,6 +120,22 @@ class UserService {
                     <img src="' . esc_url($url) . '" alt="" style="max-width:150px;border-radius:8px;">
                 </div>' . $field['instructions'];
             }
+        }
+
+        return $field;
+    }
+
+    public function maybe_lock_field($field) {
+        $today = new \DateTime();
+        $last_day = new \DateTime('last day of this month');
+        $interval = $today->diff($last_day);
+        $days_left = (int) $interval->format('%a');
+
+        // Si faltan 5 días o menos
+        if ($days_left <= 5) {
+            $field['readonly'] = 1; // Hace el campo solo lectura
+            $field['disabled'] = 1; // También evita cambios
+            $field['instructions'] = '<span style="color:#c00;">Este campo no puede modificarse a final de mes.</span>';
         }
 
         return $field;

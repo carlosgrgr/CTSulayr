@@ -27,6 +27,17 @@ class UserFields extends Fields
             'title' => __( 'Athlete data', SULAYR_TEXTDOMAIN ),
             'fields' => [
                 [
+                    'key' => 'sulayr_user_photo',
+                    'label' => 'Foto',
+                    'name' => 'sulayr_user_photo',
+                    'type' => 'file',
+                    'return_format' => 'id',
+                    'uploader' => 'basic',
+                    'mime_types' => 'jpg,jpeg,png',
+                    'required' => 0,
+                    'instructions' => 'Sube una foto',
+                ],
+                [
                     'key' => 'sulayr_user_phone',
                     'label' => 'Teléfono',
                     'name' => 'sulayr_user_phone',
@@ -63,19 +74,15 @@ class UserFields extends Fields
                     'key' => 'sulayr_user_swimming',
                     'label' => 'Suplemento de natación',
                     'name' => 'sulayr_user_swimming',
-                    'type' => 'true_false',
+                    'type' => 'select',
+                    'choices' => [
+                        '1' => 'Sí',
+                        '0' => 'No',
+                    ],
+                    'default_value' => '0',
+                    'allow_null' => 0,
                     'ui' => 1,
-                ],
-                [
-                    'key' => 'sulayr_user_photo',
-                    'label' => 'Foto',
-                    'name' => 'sulayr_user_photo',
-                    'type' => 'file',
-                    'return_format' => 'id',
-                    'uploader' => 'basic', // 👈 fuerza el uploader nativo, no la librería de medios
-                    'mime_types' => 'jpg,jpeg,png',
-                    'required' => 0,
-                    'instructions' => 'Sube una foto desde tu ordenador. No se abrirá la librería de medios.',
+                    'return_format' => 'value',
                 ],
             ],
             'location' => [
