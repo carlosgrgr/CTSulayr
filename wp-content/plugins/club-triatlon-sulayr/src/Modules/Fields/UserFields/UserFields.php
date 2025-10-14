@@ -70,10 +70,12 @@ class UserFields extends Fields
                     'key' => 'sulayr_user_photo',
                     'label' => 'Foto',
                     'name' => 'sulayr_user_photo',
-                    'type' => 'image',
+                    'type' => 'file',
                     'return_format' => 'id',
-                    'preview_size' => 'thumbnail',
-                    'library' => 'all',
+                    'uploader' => 'basic', // 👈 fuerza el uploader nativo, no la librería de medios
+                    'mime_types' => 'jpg,jpeg,png',
+                    'required' => 0,
+                    'instructions' => 'Sube una foto desde tu ordenador. No se abrirá la librería de medios.',
                 ],
             ],
             'location' => [

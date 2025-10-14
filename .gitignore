@@ -1,2 +1,3 @@
 wp-content/uploads/ast-block-templates-json/
 *.log
+wp-config.php

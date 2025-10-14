@@ -11,6 +11,8 @@ class UserService {
         // Hooks de usuario
         add_action('user_register', [$this, 'assign_athlete_role'], 10, 1);
         add_filter('login_redirect', [$this, 'redirect_after_login'], 10, 3);
+        add_filter('acf/pre_save_post', [$this, 'save_user_data_security']);
+        add_filter('acf/prepare_field/name=sulayr_user_photo', [$this, 'render_user_photo_preview']);
     }
 
     /**
@@ -88,5 +90,33 @@ class UserService {
         }
 
         return true;
+    }
+
+    public function save_user_data_security($post_id) {
+        if (strpos($post_id, 'user_') === 0) {
+            $user_id = (int) str_replace('user_', '', $post_id);
+            if ($user_id !== get_current_user_id()) {
+                wp_die('No tienes permiso para editar este perfil.');
+            }
+        }
+
+        return $post_id;
+    }
+
+    public function render_user_photo_preview($field)
+    {
+        $user_id = get_current_user_id();
+        $photo_id = get_field('sulayr_user_photo', 'user_' . $user_id);
+
+        if ($photo_id) {
+            $url = wp_get_attachment_image_url($photo_id, 'medium');
+            if ($url) {
+                $field['instructions'] = '<div style="margin-bottom:10px;">
+                    <img src="' . esc_url($url) . '" alt="" style="max-width:150px;border-radius:8px;">
+                </div>' . $field['instructions'];
+            }
+        }
+
+        return $field;
     }
 }
