@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class UserFields extends Fields
 {
-    private string $group_name = 'user_profile_fields';
+    private string $group_name = CustomFields::USER_PROFILE_FIELDS_GROUP;
     protected array $fields = [];
 
     /**
@@ -38,7 +38,7 @@ class UserFields extends Fields
                     'instructions' => 'Sube una foto',
                 ],
                 [
-                    'key' => 'sulayr_user_phone',
+                    'key' => 'field_' . md5( CustomFields::USER_PROFILE_PHONE ),
                     'label' => 'Teléfono',
                     'name' => 'sulayr_user_phone',
                     'type' => 'text',

@@ -3,6 +3,7 @@ namespace ClubTriatlonSulayr\App;
 
 use ClubTriatlonSulayr\Services\UserService;
 use ClubTriatlonSulayr\Services\HelpersService;
+use ClubTriatlonSulayr\Infrastructure\CustomFields;
 use ClubTriatlonSulayr\Modules\Templates\TemplatesManager;
 use ClubTriatlonSulayr\Modules\Fields\UserFields\UserFields;
 

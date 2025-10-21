@@ -21,22 +21,6 @@ class ComposerStaticInit604a1f695289624a7a533cd86e8c4f1d
     );
 
     public static $classMap = array (
-        'ClubTriatlonSulayr\\App\\App' => __DIR__ . '/../..' . '/src/App/App.php',
-        'ClubTriatlonSulayr\\App\\Commons\\ActionHooks' => __DIR__ . '/../..' . '/src/App/Commons/ActionHooks.php',
-        'ClubTriatlonSulayr\\App\\Commons\\MetaData' => __DIR__ . '/../..' . '/src/App/Commons/MetaData.php',
-        'ClubTriatlonSulayr\\App\\Commons\\OptionsData' => __DIR__ . '/../..' . '/src/App/Commons/OptionsData.php',
-        'ClubTriatlonSulayr\\App\\WpDependencies' => __DIR__ . '/../..' . '/src/App/WpDependencies.php',
-        'ClubTriatlonSulayr\\Modules\\Endpoints\\Endpoint' => __DIR__ . '/../..' . '/src/Modules/Endpoints/Endpoint.php',
-        'ClubTriatlonSulayr\\Modules\\FieldsGroups\\FieldsGroup' => __DIR__ . '/../..' . '/src/Modules/FieldsGroups/FieldsGroup.php',
-        'ClubTriatlonSulayr\\Modules\\FieldsGroups\\UserFieldsGroup' => __DIR__ . '/../..' . '/src/Modules/FieldsGroups/UserFieldsGroup.php',
-        'ClubTriatlonSulayr\\Modules\\PostTypes\\PostType' => __DIR__ . '/../..' . '/src/Modules/PostTypes/PostType.php',
-        'ClubTriatlonSulayr\\Modules\\RestFields\\RestField' => __DIR__ . '/../..' . '/src/Modules/RestFields/RestField.php',
-        'ClubTriatlonSulayr\\Modules\\Roles\\AthleteRole' => __DIR__ . '/../..' . '/src/Modules/Roles/AthleteRole.php',
-        'ClubTriatlonSulayr\\Modules\\Roles\\Role' => __DIR__ . '/../..' . '/src/Modules/Roles/Role.php',
-        'ClubTriatlonSulayr\\Modules\\SettingsPages\\SettingsPage' => __DIR__ . '/../..' . '/src/Modules/SettingsPages/SettingsPage.php',
-        'ClubTriatlonSulayr\\Modules\\Taxonomies\\Taxonomy' => __DIR__ . '/../..' . '/src/Modules/Taxonomies/Taxonomy.php',
-        'ClubTriatlonSulayr\\Services\\HelpersService' => __DIR__ . '/../..' . '/src/Services/HelpersService.php',
-        'ClubTriatlonSulayr\\Services\\UserService' => __DIR__ . '/../..' . '/src/Services/UserService.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
     );
 
