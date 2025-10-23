@@ -12,12 +12,13 @@ class UserService {
         add_action('user_register', [$this, 'assign_athlete_role'], 10, 1);
         add_filter('login_redirect', [$this, 'redirect_after_login'], 10, 3);
         add_filter('acf/pre_save_post', [$this, 'save_user_data_security']);
+        add_filter( 'show_admin_bar', [$this, 'hide_wpadminbar_to_athletes'] );
         add_filter('acf/prepare_field/name=sulayr_user_photo', [$this, 'render_user_photo_preview']);
         if ( ! is_admin() ) {
             add_filter('acf/prepare_field/name=sulayr_user_membership_plan', [$this, 'maybe_lock_field']);
             add_filter('acf/prepare_field/name=sulayr_user_swimming', [$this, 'maybe_lock_field']);
         }
-        
+
     }
 
     /**
@@ -139,5 +140,15 @@ class UserService {
         }
 
         return $field;
+    }
+
+    public function hide_wpadminbar_to_athletes($show) {
+        if ( is_user_logged_in() ) {
+            $user = wp_get_current_user();
+            if ( in_array('athlete', (array) $user->roles) ) {
+                return false;
+            }
+        }
+        return $show;
     }
 }

@@ -1,0 +1,324 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: 2025-10-23 14:57+0200\n"
+"PO-Revision-Date: 2025-10-23 14:57+0200\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.8\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-KeywordsList: __;_e\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#: src/App/App.php:122
+#, php-format
+msgid ""
+"In order to activate the <b>%s</b> plugin, you have to meet the next "
+"requirements:"
+msgstr ""
+
+#: src/App/App.php:124
+#, php-format
+msgid "PHP version: %s"
+msgstr ""
+
+#: src/App/App.php:125
+#, php-format
+msgid "WordPress version: %s"
+msgstr ""
+
+#: src/App/App.php:127
+#, php-format
+msgid "Activate plugin: %s"
+msgstr ""
+
+#: src/Modules/Endpoints/Endpoint.php:58
+msgid "Message of custom response"
+msgstr ""
+
+#: src/Modules/Fields/UserFields/UserFields.php:27
+msgid "Athlete data"
+msgstr "Datos del atleta"
+
+#: src/Modules/Fields/UserFields/UserFields.php:32
+#: templates/page-user-profile.php:38
+msgid "Profile photo"
+msgstr "Foto de perfil"
+
+#: src/Modules/Fields/UserFields/UserFields.php:39
+msgid "Upload your photo (jpg, png, jpeg)"
+msgstr "Sube tu foto (jpg, png, jpeg)"
+
+#: src/Modules/Fields/UserFields/UserFields.php:43
+msgid "Phone number"
+msgstr "Número de teléfono"
+
+#: src/Modules/Fields/UserFields/UserFields.php:50
+msgid "Birthday"
+msgstr "Fecha de nacimiento"
+
+#: src/Modules/Fields/UserFields/UserFields.php:58
+msgid "DNI"
+msgstr "DNI"
+
+#: src/Modules/Fields/UserFields/UserFields.php:64
+msgid "Your Selected Rate"
+msgstr "Tarifa seleccionada"
+
+#: src/Modules/Fields/UserFields/UserFields.php:68
+msgid "Basic"
+msgstr "Básica"
+
+#: src/Modules/Fields/UserFields/UserFields.php:69
+msgid "Training"
+msgstr "Entrenamiento"
+
+#: src/Modules/Fields/UserFields/UserFields.php:76
+msgid "Swimming Supplement"
+msgstr "Suplmento de natación"
+
+#: src/Modules/Fields/UserFields/UserFields.php:80
+msgid "Yes"
+msgstr "Si"
+
+#: src/Modules/Fields/UserFields/UserFields.php:81
+msgid "No"
+msgstr "No"
+
+#: src/Modules/PostTypes/PostType.php:70 src/Modules/PostTypes/PostType.php:71
+#: src/Modules/PostTypes/PostType.php:91 src/Modules/PostTypes/PostType.php:95
+#: src/Modules/Taxonomies/Taxonomy.php:74
+#: src/Modules/Taxonomies/Taxonomy.php:75
+#: src/Modules/Taxonomies/Taxonomy.php:76
+#, php-format
+msgid "%s"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:72
+msgid "Add New"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:73
+#, php-format
+msgid "Add New %s"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:74 src/Modules/Taxonomies/Taxonomy.php:78
+#, php-format
+msgid "Edit %s"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:75
+#, php-format
+msgid "New %s"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:76 src/Modules/PostTypes/PostType.php:77
+#: src/Modules/Taxonomies/Taxonomy.php:79
+#, php-format
+msgid "View %s"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:78 src/Modules/Taxonomies/Taxonomy.php:83
+#, php-format
+msgid "Search %s"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:79 src/Modules/Taxonomies/Taxonomy.php:84
+#, php-format
+msgid "%s not Found"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:80
+#, php-format
+msgid "%s not Found in Trash"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:81 src/Modules/Taxonomies/Taxonomy.php:90
+#, php-format
+msgid "Parent %s:"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:82 src/Modules/Taxonomies/Taxonomy.php:77
+#, php-format
+msgid "All %s"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:83
+#, php-format
+msgid "%s Archives"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:84
+#, php-format
+msgid "%s Attributes"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:85
+#, php-format
+msgid "Insert into %s"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:86
+#, php-format
+msgid "Uploaded to this %s"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:87
+msgid "Featured Image"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:88
+msgid "Set Featured Image"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:89
+msgid "Remove Featured Image"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:90
+msgid "Use Featured Image"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:92
+#, php-format
+msgid "Filter %s List"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:93
+#, php-format
+msgid "%s List Navigation"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:94
+#, php-format
+msgid "%s List"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:96
+#, php-format
+msgid "%s Published"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:97
+#, php-format
+msgid "%s Published Privately"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:98
+#, php-format
+msgid "%s Reverte to Draft"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:99
+#, php-format
+msgid "%s Scheduled"
+msgstr ""
+
+#: src/Modules/PostTypes/PostType.php:100
+#, php-format
+msgid "%s Updated"
+msgstr ""
+
+#: src/Modules/Roles/Role.php:45
+msgid "Custom role"
+msgstr ""
+
+#: src/Modules/SettingsPages/SettingsPage.php:49
+#: src/Modules/SettingsPages/SettingsPage.php:53
+msgid "Settings"
+msgstr ""
+
+#: src/Modules/SettingsPages/SettingsPage.php:57
+msgid "Save"
+msgstr ""
+
+#: src/Modules/SettingsPages/SettingsPage.php:61
+msgid "Settings have been saved successfully"
+msgstr ""
+
+#: src/Modules/Taxonomies/Taxonomy.php:80
+#, php-format
+msgid "Update %s"
+msgstr ""
+
+#: src/Modules/Taxonomies/Taxonomy.php:81
+#, php-format
+msgid "Add new %s"
+msgstr ""
+
+#: src/Modules/Taxonomies/Taxonomy.php:82
+#, php-format
+msgid "New %s Name"
+msgstr ""
+
+#: src/Modules/Taxonomies/Taxonomy.php:85
+#, php-format
+msgid "Back to %s"
+msgstr ""
+
+#: src/Modules/Taxonomies/Taxonomy.php:89
+#, php-format
+msgid "Parent %s"
+msgstr ""
+
+#: src/Modules/Taxonomies/Taxonomy.php:94
+#, php-format
+msgid "Popular %s"
+msgstr ""
+
+#: src/Modules/Taxonomies/Taxonomy.php:95
+#, php-format
+msgid "Separate %s with Commas"
+msgstr ""
+
+#: src/Modules/Taxonomies/Taxonomy.php:96
+#, php-format
+msgid "Add or remove %s"
+msgstr ""
+
+#: src/Modules/Taxonomies/Taxonomy.php:97
+#, php-format
+msgid "Choose from most used %s"
+msgstr ""
+
+#: src/Modules/Templates/TemplatesManager.php:19
+#: templates/page-user-profile.php:36
+msgid "My profile"
+msgstr "Mi perfil"
+
+#: src/Modules/Templates/TemplatesManager.php:20
+#: templates/page-user-login.php:42 templates/page-user-login.php:63
+msgid "Login"
+msgstr "Iniciar sesión"
+
+#: templates/page-user-login.php:50
+msgid "Username or Email"
+msgstr "Usuario o Email"
+
+#: templates/page-user-login.php:54
+msgid "Password"
+msgstr "Contraseña"
+
+#: templates/page-user-login.php:59
+msgid "Remember me"
+msgstr "Recuérdame"
+
+#: templates/page-user-login.php:67
+msgid "Forgot your password?"
+msgstr "¿Olvidaste tu contraseña?"
+
+#: templates/page-user-profile.php:48
+msgid "Save changes"
+msgstr "Guardar cambios"
+
+#: templates/page-user-profile.php:53
+msgid "Logout"
+msgstr "Cerrar sesión"
+
+#~ msgid "Hello"
+#~ msgstr "Hola"
