@@ -7,6 +7,7 @@ use ClubTriatlonSulayr\Modules\Roles\AthleteRole;
 use ClubTriatlonSulayr\Infrastructure\CustomFields;
 use ClubTriatlonSulayr\Modules\Templates\TemplatesManager;
 use ClubTriatlonSulayr\Modules\Fields\UserFields\UserFields;
+use ClubTriatlonSulayr\Modules\Users\Unsubscription;
 
 /**
  * App
@@ -70,6 +71,7 @@ class App {
         $userService = new UserService();
         $userTemplate = new TemplatesManager();
         $athlete_role = new AthleteRole();
+        $user_unsubscription = new Unsubscription( $userService );
     }
 
     /**

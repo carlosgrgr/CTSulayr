@@ -1,6 +1,8 @@
 <?php
 namespace ClubTriatlonSulayr\Services;
 
+use ClubTriatlonSulayr\Infrastructure\CustomTemplates;
+
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -37,7 +39,7 @@ class UserService {
      */
     public function redirect_after_login($redirect_to, $requested_redirect_to, $user) {
         if (isset($user->roles) && in_array('athlete', $user->roles, true)) {
-            return home_url('/mi-perfil');
+            return home_url( CustomTemplates::TEMPLATE_MY_PROFILE['url'] );
         }
         return $redirect_to;
     }

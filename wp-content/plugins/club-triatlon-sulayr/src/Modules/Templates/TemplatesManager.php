@@ -1,6 +1,8 @@
 <?php
 namespace ClubTriatlonSulayr\Modules\Templates;
 
+use ClubTriatlonSulayr\Infrastructure\CustomTemplates;
+
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -16,8 +18,9 @@ class TemplatesManager {
      * Añade la plantilla al selector del admin
      */
     public function register_custom_template($templates) {
-        $templates['page-user-profile.php'] = __('My profile', SULAYR_TEXTDOMAIN);
-        $templates['page-user-login.php'] = __('Login', SULAYR_TEXTDOMAIN);
+        foreach ( CustomTemplates::ALL_TEMPLATES as $template ) {
+            $templates[$template['path']] = $template['name'];
+        }
         return $templates;
     }
 
@@ -25,16 +28,13 @@ class TemplatesManager {
      * Indica a WP que use la plantilla del plugin
      */
     public function load_custom_template($template) {
-        if (is_page_template('page-user-profile.php')) {
-            $plugin_template = plugin_dir_path( SULAYR_FILE ) . 'templates/page-user-profile.php';
-            if (file_exists($plugin_template)) {
-                return $plugin_template;
-            }
-        }
-        if (is_page_template('page-user-login.php')) {
-            $plugin_template = plugin_dir_path( SULAYR_FILE ) . 'templates/page-user-login.php';
-            if (file_exists($plugin_template)) {
-                return $plugin_template;
+
+        foreach ( CustomTemplates::ALL_TEMPLATES as $template ) {
+            if ( is_page_template( $template['path'] ) ) {
+                $plugin_template = plugin_dir_path( SULAYR_FILE ) . 'templates/' . $template['path'];
+                if (file_exists($plugin_template)) {
+                    return $plugin_template;
+                }
             }
         }
         return $template;

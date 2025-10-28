@@ -5,13 +5,14 @@
  */
 
 use ClubTriatlonSulayr\Infrastructure\CustomFields;
+use ClubTriatlonSulayr\Infrastructure\CustomTemplates;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 acf_form_head();
 
 if ( ! is_user_logged_in() ) {
-    wp_redirect( site_url( '/inicio-de-sesion' ) );
+    wp_redirect( site_url( CustomTemplates::TEMPLATE_LOGIN['url'] ) );
     exit;
 }
 
@@ -29,13 +30,15 @@ if ( $user_profile_photo ) {
     $user_profile_photo_url = SULAYR_PUBLIC_ASSETS . '/images/default-user.png';
 }
 
-// TODO: CSS for the profile page
 ?>
 
 <main class="user-profile-page">
-    <h1><?php _e( 'My profile', SULAYR_TEXTDOMAIN ); ?></h1>
+    
+    <?php include SULAYR_TEMPLATE_DIR . '/parts/content-user-menu.php'; ?>
+    
+    <h1><?php echo $user_name; ?></h1>
     <div class="user-profile-photo">
-        <img src="<?php echo esc_url( $user_profile_photo_url ); ?>" alt="<?php echo esc_attr( $user_name ) ?? __( 'Profile photo', SULAYR_TEXTDOMAIN ); ?>">
+        <img src="<?php echo esc_url( $user_profile_photo_url ); ?>" alt="<?php echo esc_attr( $user_name ) ?? __( 'Foto de perfil', SULAYR_TEXTDOMAIN ); ?>">
     </div>
 
     <?php
@@ -45,12 +48,12 @@ if ( $user_profile_photo ) {
             'field_groups'    => [ 'group_' . md5( CustomFields::USER_PROFILE_FIELDS_GROUP ) ],
             'uploader'        => 'basic',
             'form_attributes' => [ 'enctype' => 'multipart/form-data' ],
-            'submit_value'    => __( 'Save changes', SULAYR_TEXTDOMAIN ),
+            'submit_value'    => __( 'Guardar', SULAYR_TEXTDOMAIN ),
         ] );
     ?>
     <div class="logout-button-wrapper">
-        <a class="button logout-button" href="<?php echo esc_url( wp_logout_url( site_url('/inicio-de-sesion') ) ); ?>">
-            <?php _e( 'Logout', SULAYR_TEXTDOMAIN ); ?>
+        <a class="button logout-button" href="<?php echo esc_url( wp_logout_url( site_url( CustomTemplates::TEMPLATE_LOGIN['url'] ) ) ); ?>">
+            <?php _e( 'Cerrar sesión', SULAYR_TEXTDOMAIN ); ?>
         </a>
     </div>
     </p>

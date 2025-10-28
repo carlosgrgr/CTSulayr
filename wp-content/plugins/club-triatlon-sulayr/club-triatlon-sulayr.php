@@ -28,6 +28,7 @@ define( 'SULAYR_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SULAYR_URL', plugin_dir_url( __FILE__ ) );
 define( 'SULAYR_PUBLIC_ASSETS', SULAYR_URL . '/public' );
 define( 'SULAYR_ADMIN_ASSETS', SULAYR_URL . '/admin' );
+define( 'SULAYR_TEMPLATE_DIR', SULAYR_DIR . 'templates' );
 
 define( 'SULAYR_NAME', 'Plugin Boilerplate' );
 define( 'SULAYR_VERSION', '0.3.0' );
