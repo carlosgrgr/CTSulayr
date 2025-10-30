@@ -93,8 +93,11 @@ class App {
      * @package	club-triatlon-sulayr
      */
     public function load_public_assets(): void {
-        wp_enqueue_script( 'club-triatlon-sulayr-front', SULAYR_PUBLIC_ASSETS . '/js/scripts.js', [], SULAYR_VERSION, true );
+        wp_enqueue_style( 'bootstrap-css', SULAYR_PUBLIC_ASSETS . '/bootstrap/css/bootstrap.min.css', [], '5.3.8' );
         wp_enqueue_style( 'club-triatlon-sulayr-front', SULAYR_PUBLIC_ASSETS . '/css/styles.css', [], SULAYR_VERSION );
+        
+        wp_enqueue_script( 'bootstrap-js', SULAYR_PUBLIC_ASSETS . '/bootstrap/js/bootstrap.bundle.min.js', [], '5.3.8', true );
+        wp_enqueue_script( 'club-triatlon-sulayr-front', SULAYR_PUBLIC_ASSETS . '/js/scripts.js', [], SULAYR_VERSION, true );
     }
 
     /**

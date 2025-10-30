@@ -1,31 +1,47 @@
 /* User profile menu */
-.user-profile-menu {
-    margin-bottom: 24px;
-}
-
-.user-profile-menu ul {
-    list-style: none;
+/* Contenedor de menú */
+nav {
+    margin: 2rem 0;
     padding: 0;
-    margin: 0;
+}
+
+/* Lista con Bootstrap .nav puede estar en linea o columna: forzamos vertical */
+nav ul.nav {
     display: flex;
-    justify-content: center;
-    gap: 40px;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-left: 0; /* elimina indentación */
+    list-style: none;
 }
 
-.user-profile-menu ul li a {
+/* Ítems del menú */
+nav ul.nav li.nav-item {
+    margin: 0;
+}
+
+/* Enlaces estilo botón */
+nav ul.nav li.nav-item a.nav-link {
     display: block;
-    padding: 10px 24px;
-    color: #2866a2;
+    padding: 0.5rem 1.25rem;
+    border-radius: 5px;
+    color: #2c3e50;
     font-weight: 600;
-    text-decoration: none;
-    border-radius: 6px;
-    transition: background 0.2s, color 0.2s;
+    background-color: #f7f9fa;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.user-profile-menu ul li a:hover,
-.user-profile-menu ul li a.active {
-    background: #2866a2;
-    color: #fff;
+nav ul.nav li.nav-item a.nav-link:hover {
+    background-color: #3498db;
+    color: white;
+    text-decoration: none;
+}
+
+/* Enlace activo destacado */
+nav ul.nav li.nav-item a.nav-link.active {
+    background-color: #2980b9;
+    color: white;
+    cursor: default;
+    box-shadow: 0 0 6px rgba(41, 128, 185, 0.6);
 }
 /* END User profile menu */
 
@@ -47,6 +63,16 @@
     margin-bottom: 1.5rem;
     font-weight: 700;
     color: #2c3e50;
+}
+
+.img-profile-circle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: center;
+    aspect-ratio: 1/1;
+    overflow: hidden;
 }
 
 .user-profile-page .user-profile-photo {
