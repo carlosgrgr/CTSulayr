@@ -5,7 +5,7 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 1.8
+ * @version 2.4
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -111,29 +111,18 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 		/*--------------------------------*/
 
 		// Load more button
-		if ( vcex_validate_boolean( $pagination_loadmore ) ) {
-
-			if ( ! empty( $vcex_query->max_num_pages ) ) {
-
-				vcex_loadmore_scripts();
-
-				if ( function_exists( 'wpex_get_loop_counter' ) ) {
-					$atts['entry_count'] = wpex_get_loop_counter(); // pass counter to ajax
-				}
-
-				echo vcex_get_loadmore_button(  'vcex_post_type_archive', $atts, $vcex_query );
-
+		if ( vcex_validate_att_boolean( 'pagination_loadmore', $atts ) && ! empty( $vcex_query->max_num_pages ) ) {
+			vcex_loadmore_scripts();
+			if ( function_exists( 'wpex_get_loop_counter' ) ) {
+				$raw_atts['entry_count'] = wpex_get_loop_counter();
 			}
-
+			echo vcex_get_loadmore_button(  'vcex_post_type_archive', $raw_atts, $vcex_query );
 		}
 
 		// Standard pagination
 		elseif ( 'true' == $pagination || ( 'true' == $custom_query && ! empty( $vcex_query->query['pagination'] ) ) ) {
-
 			echo vcex_pagination( $vcex_query, false );
-
 		}
-
 		?>
 
 	</div>

@@ -5,7 +5,7 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 1.8
+ * @version 2.4
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -638,10 +638,10 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 		/*--------------------------------*/
 
 		// Load more button.
-		if ( vcex_shortcode_has_loadmore( $atts, $vcex_query ) ) {
+		if ( vcex_validate_att_boolean( 'pagination_loadmore', $atts ) && ! empty( $vcex_query->max_num_pages ) ) {
 			vcex_loadmore_scripts();
-			$atts['entry_count'] = $entry_count; // Update counter
-			$html .= vcex_get_loadmore_button( 'vcex_testimonials_grid', $atts, $vcex_query );
+			$raw_atts['entry_count'] = $entry_count;
+			$html .= vcex_get_loadmore_button( 'vcex_testimonials_grid', $raw_atts, $vcex_query );
 		}
 
 		// Standard pagination.

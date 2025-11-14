@@ -2,10 +2,10 @@
 
 namespace TotalThemeCore\Vcex;
 
-defined( 'ABSPATH' ) || exit;
+\defined( 'ABSPATH' ) || exit;
 
 /**
- * WPML Integration for vcex shortcodes.
+ * WPML Integration.
  */
 class WPML {
 

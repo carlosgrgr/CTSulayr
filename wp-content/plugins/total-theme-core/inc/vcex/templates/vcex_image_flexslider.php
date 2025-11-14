@@ -5,7 +5,7 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 2.3
+ * @version 2.4
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -24,14 +24,12 @@ extract( $atts );
 // Get images from custom field
 if ( ! empty( $atts['custom_field_gallery'] ) ) {
 	$cf_fallback = $image_ids;
-	$image_ids  = [];
-	$meta_value = vcex_get_acf_field( sanitize_text_field( $atts['custom_field_gallery'] ) );
-
+	$image_ids   = [];
+	$meta_value  = vcex_get_meta_value( sanitize_text_field( $atts['custom_field_gallery'] ) );
 	if ( $meta_value ) {
-		// most likely an ACF field
 		if ( is_array( $meta_value ) ) {
 			foreach ( $meta_value as $k => $v ) {
-				$image_id = $v['id'] ?? $v;
+				$image_id = $v['id'] ?? $v['ID'] ?? $v;
 				if ( is_numeric( $image_id ) && wp_attachment_is_image( $image_id ) ) {
 					$image_ids[] = $image_id;
 				}
@@ -40,7 +38,6 @@ if ( ! empty( $atts['custom_field_gallery'] ) ) {
 			$image_ids = $meta_value;
 		}
 	}
-
 	if ( ! $image_ids && vcex_is_template_edit_mode() ) {
 		$image_ids = $cf_fallback;
 	}
@@ -55,7 +52,7 @@ elseif ( vcex_validate_boolean( $post_gallery ) ) {
 elseif ( defined( 'RML_VERSION' )&& ! empty( $atts['rml_folder'] ) ) {
 	$rml_query = new WP_Query( [
 		'post_status'    => 'inherit',
-		'posts_per_page' => ! empty( $atts['posts_per_page'] ) ? intval( $atts['posts_per_page'] ) : '12',
+		'posts_per_page' => ! empty( $atts['posts_per_page'] ) ? intval( $atts['posts_per_page'] ) : 12,
 		'post_type'      => 'attachment',
 		'orderby'        => 'rml', // Order by custom order of RML
 		'rml_folder'     =>  sanitize_text_field( $atts['rml_folder'] ),
@@ -66,48 +63,63 @@ elseif ( defined( 'RML_VERSION' )&& ! empty( $atts['rml_folder'] ) ) {
 	}
 }
 
-// If there aren't any images bail
-if ( empty( $image_ids ) ) {
-	return;
-}
+// Parse image ids
+$attachments = [];
+if ( ! empty( $image_ids ) ) {
 
-// Otherwise if there are images lets turn it into an array
-else {
-
-	// Get image ID's.
+	// Get image ID's
 	if ( is_string( $image_ids ) ) {
 		$attachments = explode( ',', $image_ids );
 	} elseif ( is_array( $image_ids ) ) {
-		$attachments = [];
 		foreach ( $image_ids as $image_id ) {
 			$attachments[] = $image_id['id'] ?? $image_id;
 		}
 	}
 
-	// Translate images.
+	// Translate images
 	foreach ( $attachments as $key => $attachment ) {
-		if ( function_exists( 'wpex_parse_obj_id' ) ) {
-			$attachments[ $key ] = wpex_parse_obj_id( $attachment, 'attachment' );
+		$parsed_attachment = vcex_parse_obj_id( $attachment, 'attachment' );
+		if ( $parsed_attachment ) {
+			$attachments[ $key ] = $parsed_attachment;
 		}
 	}
-
 }
 
-// Sanitize attachments to make sure they exist.
-$attachments = array_filter( $attachments, 'vcex_validate_attachment' );
+// Add featured image to array
+if ( vcex_validate_att_boolean( 'include_featured', $atts ) ) {
+	$featured_image = vcex_get_featured_image_id();
+	if ( $featured_image ) {
+		$featured_image = vcex_parse_obj_id( $featured_image, 'attachment' );
+		if ( $featured_image ) {
+			if ( ! empty( $attachments ) ) {
+				if ( ! in_array( $featured_image, $attachments ) ) {
+					array_unshift( $attachments, $featured_image );
+				}
+			} else {
+				$attachments = [ $featured_image ];
+			}
+		}
+	}
+}
 
+// Sanitize attachments to make sure they exist
+if ( $attachments ) {
+	$attachments = array_filter( $attachments, 'vcex_validate_attachment' );
+}
+
+// No attachments - bail!
 if ( ! $attachments ) {
 	return;
 }
 
-// Turn links into array.
+// Get custom links
 $thumbnail_link = ! empty( $atts['thumbnail_link'] ) ? $atts['thumbnail_link'] : 'none';
-if ( 'custom_link' == $thumbnail_link ) {
+if ( 'custom_link' === $thumbnail_link ) {
 
-	// Remove duplicate images.
+	// Remove duplicate images @todo move outside of this check?
 	$attachments = array_unique( $attachments );
 
-	// Turn links into array.
+	// Turn links into array
 	if ( is_string( $custom_links ) ) {
 		if ( isset( $atts['is_elementor_widget'] ) && true === $atts['is_elementor_widget'] ) {
 			$custom_links = wp_parse_list( $custom_links );
@@ -118,11 +130,11 @@ if ( 'custom_link' == $thumbnail_link ) {
 		$custom_links = [];
 	}
 
-	// Count items.
+	// Count items
 	$attachments_count  = count( $attachments );
 	$custom_links_count = count( $custom_links );
 
-	// Add empty values to custom_links array for images without links.
+	// Add empty values to custom_links array for images without links
 	if ( $attachments_count > $custom_links_count ) {
 		$count = 0;
 		foreach ( $attachments as $val ) {
@@ -133,10 +145,10 @@ if ( 'custom_link' == $thumbnail_link ) {
 		}
 	}
 
-	// New custom links count.
+	// New custom links count
 	$custom_links_count = count( $custom_links );
 
-	// Remove extra custom links.
+	// Remove extra custom links
 	if ( $custom_links_count > $attachments_count ) {
 		$count = 0;
 		foreach ( $custom_links as $key => $val ) {
@@ -147,7 +159,7 @@ if ( 'custom_link' == $thumbnail_link ) {
 		}
 	}
 
-	// Set links as the keys for the images.
+	// Set links as the keys for the images
 	$attachments = array_combine( $attachments, $custom_links );
 
 } else {
@@ -161,7 +173,7 @@ if ( ! $attachments ) {
 	return;
 }
 
-// Load slider scripts.
+// Load slider scripts
 if ( vcex_vc_is_inline() ) {
 	vcex_enqueue_slider_scripts();
 	vcex_enqueue_slider_scripts( true ); // needs both in builder incase user switches settings.
@@ -170,27 +182,27 @@ if ( vcex_vc_is_inline() ) {
 	vcex_enqueue_slider_scripts( $noCarouselThumbnails );
 }
 
-// Load lightbox scripts.
+// Load lightbox scripts
 if ( 'lightbox' === $thumbnail_link ) {
 	vcex_enqueue_lightbox_scripts();
 }
 
-// Sanitize data and declare main vars.
+// Sanitize data and declare main vars
 $caption_data     = [];
 $wrap_data        = [];
 $slideshow        = vcex_vc_is_inline() ? 'false' : $slideshow;
 $caption          = vcex_validate_att_boolean( 'caption', $atts );
 $show_placeholder = vcex_validate_att_boolean( 'placeholder', $atts, true ) && ! vcex_validate_att_boolean( 'randomize', $atts );
 
-// Get animation type.
+// Get animation type
 if ( ! empty( $custom_animation ) ) {
 	$animation = $custom_animation;
 } else {
 	$animation = ! empty( $atts['animation'] ) ? $atts['animation'] : 'slide';
 }
 
-// Slider attributes.
-if ( in_array( $animation, array( 'fade', 'fade_slides' ) ) ) {
+// Slider attributes
+if ( in_array( $animation, [ 'fade', 'fade_slides' ], true ) ) {
 	$wrap_data[] = 'data-fade="true"';
 }
 
@@ -268,7 +280,7 @@ if ( ! vcex_validate_att_boolean( 'desktop_touch', $atts, true )
 	$wrap_data[] = 'data-touch-swipe-desktop="false"';
 }
 
-// Caption attributes and classes.
+// Caption attributes and classes
 if ( $caption ) {
 	$caption_position = ! empty( $atts['caption_position'] ) ? $atts['caption_position'] : 'bottomCenter';
 	$caption_style    = ! empty( $atts['caption_style'] ) ? $atts['caption_style'] : 'black';
@@ -307,7 +319,7 @@ if ( $caption ) {
 		}
 	}
 
-	// Caption classes.
+	// Caption classes
 	$caption_class = [
 		'wpex-slider-caption',
 	];
@@ -359,7 +371,7 @@ if ( $caption ) {
 
 }
 
-// Main Classes.
+// Main Classes
 $wrap_class = [
 	'vcex-image-slider',
 	'vcex-module',
@@ -392,17 +404,17 @@ if ( 'lightbox' === $thumbnail_link ) {
 	}
 }
 
-// Parse wrap class.
+// Parse wrap class
 $wrap_class = vcex_parse_shortcode_classes( $wrap_class, 'vcex_image_flexslider', $atts );
 
-// Filter wrap data attributes.
+// Filter wrap data attributes
 $wrap_data = (array) apply_filters( 'vcex_image_flexslider_data_attributes', $wrap_data, $atts );
 
 if ( $wrap_data && is_array( $wrap_data ) ) {
 	$wrap_data = ' ' . trim( implode( ' ', $wrap_data ) );
 }
 
-// Open animation wrapper.
+// Open animation wrapper
 if ( $css_animation && 'none' !== $css_animation ) {
 
 	$css_animation_style = vcex_inline_style( [
@@ -413,17 +425,17 @@ if ( $css_animation && 'none' !== $css_animation ) {
 	$output .= '<div class="' . vcex_get_css_animation( $css_animation ) . '"' . $css_animation_style . '>';
 }
 
-// Open css wrapper.
+// Open css wrapper
 if ( $css ) {
 	$output .= '<div class="vcex-image-slider-css-wrap ' . vcex_vc_shortcode_custom_css_class( $css ) . '">';
 }
 
-// Create overlay HTML.
+// Create overlay HTML
 if ( vcex_validate_att_boolean( 'overlay', $atts ) ) {
 	$overlay_html = '<div class="wpex-slider__overlay wpex-absolute wpex-inset-0 wpex-bg-black wpex-opacity-30"></div>';
 }
 
-// Preloader image.
+// Preloader image
 if ( $show_placeholder ) {
 	$preloader_class = 'wpex-slider-preloaderimg wpex-relative';
 
@@ -467,12 +479,12 @@ if ( $show_placeholder ) {
 
 }
 
-// Start slider output.
+// Start slider output
 $output .= '<div class="' . $wrap_class . '"' . vcex_get_unique_id( $unique_id ) . $wrap_data . '>';
 
 	$output .= '<div class="wpex-slider-slides sp-slides">';
 
-		// Loop through attachments.
+		// Loop through attachments
 		foreach ( $attachments as $attachment => $custom_link ) :
 
 			// Define main vars
@@ -482,7 +494,7 @@ $output .= '<div class="' . $wrap_class . '"' . vcex_get_unique_id( $unique_id )
 			$get_caption      = $caption ? $attachment_data[ $caption_type ] : '';
 			$attachment_video = $attachment_data['video'];
 
-			// Generate img HTML.
+			// Generate img HTML
 			$image_args = array(
 				'attachment'    => $attachment,
 				'size'          => $img_size,
@@ -502,14 +514,14 @@ $output .= '<div class="' . $wrap_class . '"' . vcex_get_unique_id( $unique_id )
 
 			$attachment_img = vcex_get_post_thumbnail( $image_args );
 
-			// Image or video needed.
+			// Image or video needed
 			if ( $attachment_img || $attachment_video ) {
 
 				$output .= '<div class="wpex-slider-slide sp-slide">';
 
 					$output .= '<div class="wpex-slider-media wpex-relative">';
 
-						// Check if the current attachment has a video.
+						// Check if the current attachment has a video
 						if ( $attachment_video && ! vcex_validate_boolean( $lighbox_videos ) ) {
 
 							if ( ! empty( $overlay_html ) ) {
@@ -520,7 +532,7 @@ $output .= '<div class="' . $wrap_class . '"' . vcex_get_unique_id( $unique_id )
 								$get_caption = '';
 							}
 
-							// Output video.
+							// Output video
 							$output .= '<div class="wpex-slider-video responsive-video-wrap">';
 
 								$output .= vcex_video_oembed( $attachment_video, 'sp-video', array(
@@ -533,28 +545,24 @@ $output .= '<div class="' . $wrap_class . '"' . vcex_get_unique_id( $unique_id )
 
 						} elseif( $attachment_img ) {
 
-							// Lightbox links.
+							// Lightbox links
 							if ( 'lightbox' === $thumbnail_link ) {
 
-								// Video lightbox.
+								// Video lightbox
 								if ( $attachment_video ) {
-
 									$lightbox_url = vcex_get_video_embed_url( $attachment_video );
 									$lightbox_data_attributes .= ' data-thumb="' . vcex_get_lightbox_image( $attachment ) . '"';
-
 								}
 
-								// Image lightbox.
+								// Image lightbox
 								else {
-
 									$lightbox_url = vcex_get_lightbox_image( $attachment );
-
 								}
 
-								// Define data attributes var.
+								// Define data attributes var
 								$lightbox_data_attributes = '';
 
-								// Lightbox titles.
+								// Lightbox titles
 								if ( 'title' === $lightbox_title && $attachment_data['title'] ) {
 									$lightbox_data_attributes .= ' data-title="' . $attachment_data['title'] . '"';
 								} elseif ( 'alt' === $lightbox_title ) {
@@ -566,25 +574,22 @@ $output .= '<div class="' . $wrap_class . '"' . vcex_get_unique_id( $unique_id )
 									}
 								}
 
-								// Lightbox Captions.
+								// Lightbox Captions
 								if ( $attachment_data['caption'] && vcex_validate_boolean( $lightbox_caption ) ) {
 									$lightbox_data_attributes .= ' data-caption="' . str_replace( '"',"'", $attachment_data['caption'] ) . '"';
 								}
 
 								$output .= '<a href="' . esc_url( $lightbox_url ) . '" class="vcex-flexslider-entry-img wpex-slider-media-link wpex-lightbox-group-item"' . $lightbox_data_attributes . '>';
-
 									if ( ! empty( $overlay_html ) ) {
 										$output .= $overlay_html;
 									}
-
 									$output .= $attachment_img;
-
 								$output .= '</a>';
 
-							// Custom Links.
+							// Custom Links
 							} elseif ( 'custom_link' === $thumbnail_link ) {
 
-								// Check for a meta link value.
+								// Check for a meta link value
 								if ( $link_meta_key ) {
 									$meta_custom_link = get_post_meta( $attachment, wp_strip_all_tags( $link_meta_key ), true );
 									if ( ! empty( $meta_custom_link ) ) {
@@ -592,45 +597,34 @@ $output .= '<div class="' . $wrap_class . '"' . vcex_get_unique_id( $unique_id )
 									}
 								}
 
-								// Custom link.
+								// Custom link
 								if ( $custom_link ) {
-
 									$output .= '<a href="' . esc_url( $custom_link ) . '"' . vcex_html( 'target_attr', $custom_links_target ) . ' class="wpex-slider-media-link">';
-
 										if ( ! empty( $overlay_html ) ) {
 											$output .= $overlay_html;
 										}
-
 										$output .= $attachment_img;
-
 									$output .= '</a>';
 
-								// No link.
+								// No link
 								} else {
-
 									if ( ! empty( $overlay_html ) ) {
 										$output .= $overlay_html;
 									}
-
 									$output .= $attachment_img;
-
 								}
 
-							// Just images, no links.
+							// Just images, no links
 							} else {
-
 								if ( ! empty( $overlay_html ) ) {
 									$output .= $overlay_html;
 								}
-
-								// Display the main slider image.
 								$output .= $attachment_img;
-
 							}
 
 						}
 
-						// Close media element before caption.
+						// Close media element before caption
 						if ( 'static' === $caption_position ) {
 							$output .= '</div>';
 						}
@@ -646,7 +640,7 @@ $output .= '<div class="' . $wrap_class . '"' . vcex_get_unique_id( $unique_id )
 							$output .= '</div>';
 						}
 					
-					// Close media element after caption.
+					// Close media element after caption
 					if ( 'static' !== $caption_position ) {
 						$output .= '</div>';
 					}
@@ -660,8 +654,8 @@ $output .= '<div class="' . $wrap_class . '"' . vcex_get_unique_id( $unique_id )
 	$output .= '</div>';
 
 	if ( vcex_validate_att_boolean( 'control_thumbs', $atts, true ) ) {
-		$thumbnails = array_keys( $attachments ); // strip out URL's.
-		$thumbnails = apply_filters( 'vcex_image_flexslider_thumbnails', $thumbnails ); // allows people to display different images via filter.
+		$thumbnails = array_keys( $attachments ); // strip out URL's
+		$thumbnails = apply_filters( 'vcex_image_flexslider_thumbnails', $thumbnails ); // allows people to display different images via filter
 
 		if ( ! empty( $thumbnails ) && is_array( $thumbnails ) ) {
 			$thumbnails_carousel = vcex_validate_att_boolean( 'control_thumbs_carousel', $atts, true );
@@ -707,7 +701,7 @@ $output .= '<div class="' . $wrap_class . '"' . vcex_get_unique_id( $unique_id )
 					} else {
 						$args['class'] .= ' wpex-object-cover';
 					}
-					// Add sliderPro class last.
+					// Add sliderPro class last
 					$args['class'] .= ' sp-nc-thumbnail';
 				}
 
@@ -716,7 +710,7 @@ $output .= '<div class="' . $wrap_class . '"' . vcex_get_unique_id( $unique_id )
 					$output .= vcex_get_post_thumbnail( $args );
 				}
 
-			$output .= '</div>'; // close thumbnails container.
+			$output .= '</div>'; // close thumbnails container
 
 		}
 
@@ -724,12 +718,12 @@ $output .= '<div class="' . $wrap_class . '"' . vcex_get_unique_id( $unique_id )
 
 $output .= '</div>';
 
-// Close css wrapper.
+// Close css wrapper
 if ( $css ) {
 	$output .= '</div>';
 }
 
-// Close animation wrapper.
+// Close animation wrapper
 if ( $css_animation && 'none' !== $css_animation ) {
 	$output .= '</div>';
 }

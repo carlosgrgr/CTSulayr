@@ -5,7 +5,6 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Flex Container Shortcode.
  */
-
 if ( ! class_exists( 'Vcex_Flex_Container_Shortcode' ) ) {
 
 	class Vcex_Flex_Container_Shortcode extends \TotalThemeCore\Vcex\Shortcode_Abstract {
@@ -42,16 +41,17 @@ if ( ! class_exists( 'Vcex_Flex_Container_Shortcode' ) ) {
 		 * Returns custom vc map settings.
 		 */
 		public static function get_vc_lean_map_settings(): array {
-			$allowed_elements = \apply_filters(
-				'vcex_flex_container_allowed_elements',
-				'vcex_heading,vcex_icon_box,vcex_milestone,vcex_bullets,vcex_button,vcex_list_item,vcex_teaser,vc_column_text,vcex_image,vcex_pricing,vcex_custom_field,vcex_navbar,vcex_post_terms,vcex_post_meta,vcex_page_title,vcex_image_banner,vcex_social_links,vcex_newsletter_form,vcex_icon,vcex_social_share,vcex_author_bio,vcex_feature_box,vcex_shortcode,vcex_tribe_event_data,vcex_star_rating,vcex_post_excerpt,vcex_just_events_date,vcex_just_events_time,vcex_horizontal_menu,vcex_off_canvas_menu,vcex_searchbar,vcex_dark_mode_toggle,vc_raw_html,vcex_woocommerce_template,vcex_post_next_prev'
-			);
 			return [
 				'allowed_container_element' => false,
 				'is_container'				=> true,
 				'content_element'			=> true,
 				'js_view'					=> 'VcColumnView',
-				'as_parent'					=> [ 'only' => $allowed_elements ],
+				'as_parent'					=> [
+					'only' => apply_filters(
+						'vcex_flex_container_allowed_elements',
+						'vcex_heading,vcex_icon_box,vcex_milestone,vcex_bullets,vcex_button,vcex_list_item,vcex_teaser,vc_column_text,vcex_image,vcex_pricing,vcex_custom_field,vcex_navbar,vcex_post_terms,vcex_post_meta,vcex_page_title,vcex_image_banner,vcex_social_links,vcex_newsletter_form,vcex_icon,vcex_social_share,vcex_author_bio,vcex_feature_box,vcex_shortcode,vcex_tribe_event_data,vcex_star_rating,vcex_post_excerpt,vcex_just_events_date,vcex_just_events_time,vcex_horizontal_menu,vcex_off_canvas_menu,vcex_searchbar,vcex_dark_mode_toggle,vc_raw_html,vcex_woocommerce_template,vcex_post_next_prev,vcex_acf_repeater,wpex_template'
+					)
+				],
 			];
 		}
 
@@ -94,7 +94,8 @@ if ( ! class_exists( 'Vcex_Flex_Container_Shortcode' ) ) {
 					'heading' => esc_html__( 'Stack Elements Breakpoint', 'total-theme-core' ),
 					'param_name' => 'row_stack_bp',
 					'dependency' => [ 'element' => 'flex_direction', 'value' => 'row' ],
-					'description' => esc_html__( 'Select a breakpoint if you wish to stack your elements vertically at a certain point. Note: Flex Basis, Align Items and Justify Content values are ignored at the stacking point to prevent issues as the flex direction will change from row to column.', 'total-theme-core' ),
+					'description' => esc_html__( 'Select a breakpoint if you wish to stack your elements vertically at a certain point.', 'total-theme-core' ),
+					'notice' => esc_html__( 'Note: Flex Basis, Align Items and Justify Content values are ignored at the stacking point to prevent issues as the flex direction will change from row to column.', 'total-theme-core' ),
 				],
 				[
 					'type' => 'vcex_ofswitch',
@@ -165,14 +166,8 @@ if ( ! class_exists( 'Vcex_Flex_Container_Shortcode' ) ) {
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 				],
 				[
-					'type' => 'vcex_select',
-					'heading' => esc_html__( 'Shadow', 'total-theme-core' ),
-					'param_name' => 'shadow',
-					'group' => esc_html__( 'Style', 'total-theme-core' ),
-				],
-				[
 					'type' => 'textfield',
-					'heading' => esc_html__( 'Width', 'total-theme-core' ),
+					'heading' => esc_html__( 'Max Width', 'total-theme-core' ),
 					'param_name' => 'width',
 					'description' => self::param_description( 'width' ),
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
@@ -190,6 +185,58 @@ if ( ! class_exists( 'Vcex_Flex_Container_Shortcode' ) ) {
 					'heading' => esc_html__( 'Minimum Height', 'total-theme-core' ),
 					'param_name' => 'min_height',
 					'description' => self::param_description( 'height' ),
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_select',
+					'heading' => esc_html__( 'Shadow', 'total-theme-core' ),
+					'param_name' => 'shadow',
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_colorpicker',
+					'heading' => esc_html__( 'Background', 'total-theme-core' ),
+					'param_name' => 'background_color',
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_select',
+					'choices' => 'padding',
+					'heading' => esc_html__( 'Vertical Padding', 'total-theme-core' ),
+					'param_name' => 'padding_y',
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_select',
+					'choices' => 'padding',
+					'heading' => esc_html__( 'Horizontal Padding', 'total-theme-core' ),
+					'param_name' => 'padding_x',
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_select',
+					'heading' => esc_html__( 'Border Radius', 'total-theme-core' ),
+					'param_name' => 'border_radius',
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_select',
+					'heading' => esc_html__( 'Border Width', 'total-theme-core' ),
+					'param_name' => 'border_width',
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_select',
+					'heading' => esc_html__( 'Border Style', 'total-theme-core' ),
+					'param_name' => 'border_style',
+					'dependency' => [ 'element' => 'border_width', 'not_empty' => true ],
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_colorpicker',
+					'heading' => esc_html__( 'Border Color', 'total-theme-core' ),
+					'param_name' => 'border_color',
+					'dependency' => [ 'element' => 'border_width', 'not_empty' => true ],
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 				],
 				// CSS

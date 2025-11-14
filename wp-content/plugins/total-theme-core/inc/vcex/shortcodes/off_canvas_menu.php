@@ -60,8 +60,7 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 		 */
 		public static function get_params_list(): array {
 			$extra_choices = self::_get_extra_choices();
-
-			$settings = [
+			$params = [
 				[
 					'type' => 'textfield',
 					'placeholder' => esc_html__( 'Menu', 'total-theme-core' ),
@@ -160,6 +159,14 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 				],
 				// Toggle
 				[
+					'type' => 'vcex_ofswitch',
+					'std' => 'false',
+					'heading' => esc_html__( 'Full-Width', 'total-theme-core' ),
+					'param_name' => 'toggle_full_width',
+					'group' => esc_html__( 'Toggle', 'total-theme-core' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
 					'type' => 'vcex_select_buttons',
 					'std' => 'start',
 					'choices' => [
@@ -167,7 +174,8 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 						'center' => esc_html__( 'Center', 'total-theme-core' ),
 						'end' => esc_html__( 'End', 'total-theme-core' ),
 					],
-					'heading' => esc_html__( 'Align', 'total-theme-core' ),
+					'heading' => esc_html__( 'Horizontal Alignment', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'toggle_full_width', 'value_not_equal_to' => 'true' ],
 					'param_name' => 'toggle_align',
 					'group' => esc_html__( 'Toggle', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
@@ -199,7 +207,7 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 				],
 				[
 					'type' => 'vcex_text',
-					'heading' => esc_html__( 'Label', 'total-theme-core' ),
+					'heading' => esc_html__( 'Visible Label', 'total-theme-core' ),
 					'param_name' => 'toggle_label',
 					'group' => esc_html__( 'Toggle', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
@@ -261,7 +269,7 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 				[
 					'type' => 'vcex_text',
 					'placeholder' => '22px',
-					'heading' => esc_html__( 'Width', 'total-theme-core' ),
+					'heading' => esc_html__( 'Hamburger Bar Width', 'total-theme-core' ),
 					'param_name' => 'toggle_width',
 					'dependency' => [ 'element' => 'toggle_style', 'value' => 'hamburger' ],
 					'css' => [ 'selector' => '.vcex-off-canvas-menu__toggle', 'property' => '--wpex-hamburger-icon-width' ],
@@ -271,7 +279,7 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 				[
 					'type' => 'vcex_text',
 					'placeholder' => '3px',
-					'heading' => esc_html__( 'Bar Height', 'total-theme-core' ),
+					'heading' => esc_html__( 'Hamburger Bar Height', 'total-theme-core' ),
 					'param_name' => 'toggle_bar_height',
 					'dependency' => [ 'element' => 'toggle_style', 'value' => 'hamburger' ],
 					'css' => [ 'selector' => '.vcex-off-canvas-menu__toggle', 'property' => '--wpex-hamburger-icon-bar-height' ],
@@ -281,7 +289,7 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 				[
 					'type' => 'vcex_text',
 					'placeholder' => '4px',
-					'heading' => esc_html__( 'Bar Gap', 'total-theme-core' ),
+					'heading' => esc_html__( 'Hamburger Bar Gap', 'total-theme-core' ),
 					'param_name' => 'toggle_bar_gap',
 					'dependency' => [ 'element' => 'toggle_style', 'value' => 'hamburger' ],
 					'css' => [ 'selector' => '.vcex-off-canvas-menu__toggle', 'property' => '--wpex-hamburger-icon-gutter' ],
@@ -317,6 +325,15 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 					'heading' => esc_html__( 'Background: Hover', 'total-theme-core' ),
 					'param_name' => 'toggle_bg_hover',
 					'css' => [ 'selector' => ':is(.vcex-off-canvas-menu__toggle,.vcex-off-canvas-menu__extra-item):hover', 'property' => 'background-color' ],
+					'group' => esc_html__( 'Toggle', 'total-theme-core' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
+					'type' => 'vcex_select',
+					'choices' => 'transition_duration',
+					'heading' => esc_html__( 'Hover Animation Speed', 'total-theme-core' ),
+					'param_name' => 'toggle_transition_duration',
+					'group' => esc_html__( 'Items', 'total-theme-core' ),
 					'group' => esc_html__( 'Toggle', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
@@ -780,13 +797,23 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 					'group' => esc_html__( 'Title', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
-				// Dropdown > Mega.
+				// Dropdown > Mega
+				[
+					'type' => 'vcex_ofswitch',
+					'std' => 'true',
+					'heading' => esc_html__( 'Enable', 'total-theme-core' ),
+					'description' => esc_html__( 'Disable this option to make mega menus appear as normal dropdowns.', 'total-theme-core' ),
+					'param_name' => 'mega_enabled',
+					'group' => esc_html__( 'Mega', 'total-theme-core' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
 				[
 					'type' => 'vcex_ofswitch',
 					'std' => 'true',
 					'heading' => esc_html__( 'Headings', 'total-theme-core' ),
 					'param_name' => 'mega_heading_enabled',
 					'group' => esc_html__( 'Mega', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'mega_enabled', 'value' => 'true' ],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
@@ -986,8 +1013,9 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 				],
 			];
 
+			// WooCommerce Settings
 			if ( array_key_exists( 'cart_toggle', $extra_choices ) ) {
-				$settings[] = [
+				$params[] = [
 					'type' => 'vcex_select_icon',
 					'heading' => esc_html__( 'Cart Icon', 'total-theme-core' ),
 					'param_name' => 'cart_toggle_icon',
@@ -999,7 +1027,7 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 						'type' => 'select',
 						'choices' => array_merge(
 							[ '' => esc_html__( 'Default', 'total-theme-core' ) ],
-							\TotalThemeCore\Vcex\WooCommerce::get_cart_icon_choices( true )
+							totalthemecore_call_static( 'Vcex\WooCommerce', 'get_cart_icon_choices', true )
 						),
 						'conditions' => [
 							'terms' => [
@@ -1013,14 +1041,12 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 					],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				];
-				// Cart Badge
-				$settings[] = [
+				$params[] = [
 					'type' => 'vcex_ofswitch',
 					'std' => 'true',
 					'heading' => esc_html__( 'Cart Badge', 'total-theme-core' ),
 					'description' => esc_html__( 'Enable to display a badge when items are in the cart.', 'total-theme-core' ),
 					'param_name' => 'cart_badge',
-					'group' => esc_html__( 'Extras', 'total-theme-core' ),
 					'dependency' => [ 'element' => 'extra_items', 'value_includes' => 'cart_toggle' ],
 					'elementor' => [
 						'conditions' => [
@@ -1033,15 +1059,16 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 							],
 						],
 					],
+					'group' => esc_html__( 'Cart Badge', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				];
-				$settings[] = [
+				$params[] = [
 					'type' => 'vcex_ofswitch',
 					'std' => 'false',
 					'heading' => esc_html__( 'Display Cart Count', 'total-theme-core' ),
 					'param_name' => 'cart_badge_count',
-					'group' => esc_html__( 'Extras', 'total-theme-core' ),
-					'dependency' => array( 'element' => 'cart_badge', 'value' => 'true' ),
+					'group' => esc_html__( 'Cart Badge', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'cart_badge', 'value' => 'true' ],
 					'elementor' => [
 						'conditions' => [
 							'terms' => [
@@ -1060,13 +1087,13 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 					],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				];
-				$settings[] = [
+				$params[] = [
 					'type' => 'vcex_colorpicker',
 					'heading' => esc_html__( 'Backgound', 'total-theme-core' ),
 					'param_name' => 'cart_badge_bg',
-					'group' => esc_html__( 'Extras', 'total-theme-core' ),
+					'group' => esc_html__( 'Cart Badge', 'total-theme-core' ),
 					'css' => [ 'property' => '--wpex-cart-badge-bg' ],
-					'dependency' => array( 'element' => 'cart_badge', 'value' => 'true' ),
+					'dependency' => [ 'element' => 'cart_badge', 'value' => 'true' ],
 					'elementor' => [
 						'conditions' => [
 							'terms' => [
@@ -1085,11 +1112,11 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 					],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				];
-				$settings[] = [
+				$params[] = [
 					'type' => 'vcex_colorpicker',
 					'heading' => esc_html__( 'Color', 'total-theme-core' ),
 					'param_name' => 'cart_badge_color',
-					'group' => esc_html__( 'Extras', 'total-theme-core' ),
+					'group' => esc_html__( 'Cart Badge', 'total-theme-core' ),
 					'css' => [ 'property' => '--wpex-cart-badge-color' ],
 					'dependency' => array( 'element' => 'cart_badge_count', 'value' => 'true' ),
 					'elementor' => [
@@ -1110,13 +1137,13 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 					],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				];
-				$settings[] = [
+				$params[] = [
 					'type' => 'vcex_text',
 					'heading' => esc_html__( 'Dimensions', 'total-theme-core' ),
 					'param_name' => 'cart_badge_dims',
-					'group' => esc_html__( 'Extras', 'total-theme-core' ),
+					'group' => esc_html__( 'Cart Badge', 'total-theme-core' ),
 					'css' => [ 'property' => '--wpex-cart-badge-dims' ],
-					'dependency' => array( 'element' => 'cart_badge', 'value' => 'true' ),
+					'dependency' => [ 'element' => 'cart_badge', 'value' => 'true' ],
 					'elementor' => [
 						'conditions' => [
 							'terms' => [
@@ -1135,11 +1162,11 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 					],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				];
-				$settings[] = [
+				$params[] = [
 					'type' => 'vcex_text',
 					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
 					'param_name' => 'cart_badge_font_size',
-					'group' => esc_html__( 'Extras', 'total-theme-core' ),
+					'group' => esc_html__( 'Cart Badge', 'total-theme-core' ),
 					'css' => [ 'property' => '--wpex-cart-badge-font-size' ],
 					'dependency' => array( 'element' => 'cart_badge_count', 'value' => 'true' ),
 					'elementor' => [
@@ -1160,13 +1187,13 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 					],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				];
-				$settings[] = [
+				$params[] = [
 					'type' => 'vcex_text',
 					'heading' => esc_html__( 'Vertical OffSet', 'total-theme-core' ),
 					'param_name' => 'cart_badge_top',
-					'group' => esc_html__( 'Extras', 'total-theme-core' ),
+					'group' => esc_html__( 'Cart Badge', 'total-theme-core' ),
 					'css' => [ 'property' => '--wpex-cart-badge-top' ],
-					'dependency' => array( 'element' => 'cart_badge', 'value' => 'true' ),
+					'dependency' => [ 'element' => 'cart_badge', 'value' => 'true' ],
 					'elementor' => [
 						'conditions' => [
 							'terms' => [
@@ -1185,13 +1212,13 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 					],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				];
-				$settings[] = [
+				$params[] = [
 					'type' => 'vcex_text',
 					'heading' => esc_html__( 'Horizontal OffSet', 'total-theme-core' ),
 					'param_name' => 'cart_badge_right',
-					'group' => esc_html__( 'Extras', 'total-theme-core' ),
+					'group' => esc_html__( 'Cart Badge', 'total-theme-core' ),
 					'css' => [ 'property' => '--wpex-cart-badge-right' ],
-					'dependency' => array( 'element' => 'cart_badge', 'value' => 'true' ),
+					'dependency' => [ 'element' => 'cart_badge', 'value' => 'true' ],
 					'elementor' => [
 						'conditions' => [
 							'terms' => [
@@ -1210,13 +1237,13 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 					],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				];
-				$settings[] = [
+				$params[] = [
 					'type' => 'vcex_text',
 					'heading' => esc_html__( 'Outline Width', 'total-theme-core' ),
 					'param_name' => 'cart_badge_outline_width',
-					'group' => esc_html__( 'Extras', 'total-theme-core' ),
+					'group' => esc_html__( 'Cart Badge', 'total-theme-core' ),
 					'css' => [ 'property' => '--wpex-cart-badge-outline-width' ],
-					'dependency' => array( 'element' => 'cart_badge', 'value' => 'true' ),
+					'dependency' => [ 'element' => 'cart_badge', 'value' => 'true' ],
 					'elementor' => [
 						'conditions' => [
 							'terms' => [
@@ -1235,13 +1262,13 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 					],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				];
-				$settings[] = [
+				$params[] = [
 					'type' => 'vcex_colorpicker',
 					'heading' => esc_html__( 'Outline Color', 'total-theme-core' ),
 					'param_name' => 'cart_badge_outline_color',
-					'group' => esc_html__( 'Extras', 'total-theme-core' ),
+					'group' => esc_html__( 'Cart Badge', 'total-theme-core' ),
 					'css' => [ 'property' => '--wpex-cart-badge-outline-color' ],
-					'dependency' => array( 'element' => 'cart_badge', 'value' => 'true' ),
+					'dependency' => [ 'element' => 'cart_badge', 'value' => 'true' ],
 					'elementor' => [
 						'conditions' => [
 							'terms' => [
@@ -1262,7 +1289,7 @@ if ( ! class_exists( 'Vcex_Off_Canvas_Menu_Shortcode' ) ) {
 				];
 			}
 
-			return $settings;
+			return $params;
 		}
 
 		/**

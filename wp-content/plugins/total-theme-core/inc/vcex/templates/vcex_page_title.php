@@ -4,7 +4,7 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 1.7.1
+ * @version 2.4
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -20,9 +20,9 @@ if ( empty( $title ) ) {
 }
 
 $tag_escaped  = ! empty( $atts['html_tag'] ) ? tag_escape( $atts['html_tag'] ) : 'h1';
-$link_to_post = vcex_validate_att_boolean( 'link_to_post', $atts );
+$link_to_post = vcex_validate_att_boolean( 'link_to_post', $atts ) && is_post_type_viewable( get_post_type() );
 
-// Define shortcode classes.
+// Define shortcode classes
 $wrap_class = [
 	'vcex-page-title',
 	'vcex-module',
@@ -33,21 +33,30 @@ if ( ! empty( $atts['width'] ) ) {
 	$wrap_class[] = vcex_parse_align_class( ! empty( $atts['float'] ) ? $atts['float'] : 'center' );
 }
 
-// Custom user classes.
+// Custom user classes
 $extra_classes = vcex_get_shortcode_extra_classes( $atts, 'vcex_page_title' );
 
 if ( $extra_classes ) {
 	$wrap_class = array_merge( $wrap_class, $extra_classes );
 }
 
-// Filters shortcode classes.
+// Filters shortcode classes
 $wrap_class = vcex_parse_shortcode_classes( $wrap_class, 'vcex_page_title', $atts );
 
-// Begin output.
+// Begin output
 $output = '<div class="' . esc_attr( trim( $wrap_class ) ) . '">';
 
 	if ( $link_to_post ) {
-		$output .= '<a href="' . esc_url( get_permalink( vcex_get_the_ID() ) ) . '" class="vcex-page-title__link wpex-no-underline wpex-inherit-color">';
+		if ( function_exists( 'wpex_get_permalink' ) ) {
+			$url = wpex_get_permalink();
+		} else {
+			$url = get_permalink( vcex_get_the_ID() );
+		}
+		if ( $url ) {
+			$output .= '<a href="' . esc_url( $url ) . '" class="vcex-page-title__link wpex-no-underline wpex-inherit-color">';
+		} else {
+			$link_to_post = false; // remove closing link tag
+		}
 	}
 
 	$heading_classes = [

@@ -49,7 +49,7 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 		 * Array of shortcode parameters.
 		 */
 		public static function get_params_list(): array {
-			return [
+			$params = [
 				// General
 				[
 					'type' => 'vcex_select',
@@ -275,6 +275,21 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
+					'type' => 'vcex_ofswitch',
+					'std' => 'false',
+					'heading' => esc_html__( 'Render with AJAX', 'total-theme-core' ),
+					'description' => esc_html__( 'This setting allows the element to be rendered via AJAX, bypassing caching mechanisms. It\'s designed for use with queries that require dynamic content, such as time-sensitive or random posts. Please note that enabling this option may increase server load, so it should only be used when absolutely necessary.', 'total-theme-core' ),
+					'param_name' => 'ajax_render',
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
+					'type' => 'textfield',
+					'heading' => esc_html__( 'Loading Text', 'total-theme-core' ),
+					'param_name' => 'ajax_render_loading_text',
+					'dependency' => [ 'element' => 'ajax_render', 'value' => 'true' ],
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
 					'type' => 'textfield',
 					'heading' => esc_html__( 'Element ID', 'total-theme-core' ),
 					'param_name' => 'unique_id',
@@ -290,7 +305,9 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 					'admin_label' => true,
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
-				vcex_vc_map_add_css_animation(),
+				vcex_vc_map_add_css_animation( [
+					'description' => esc_html__( 'Select an animation to apply when the element enters the browser\'s viewport; the animation runs on each entry. Note that animations are not compatible with Isotope-style filters, as they conflict with item rearrangement.', 'total-theme-core' ),
+				] ),
 				[
 					'type' => 'vcex_ofswitch',
 					'std' => 'false',
@@ -302,7 +319,7 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 					'type' => 'vcex_subheading',
 					'param_name' => 'vcex_subheading__carousel',
 					'dependency' => [ 'element' => 'display_type', 'value' => 'carousel' ],
-					'text' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
+					'text' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
@@ -371,20 +388,19 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 				],
 				[
 					'type' => 'vcex_select',
-					'heading' => \esc_html__( 'Autoplay Type', 'total-theme-core' ),
+					'heading' => esc_html__( 'Autoplay Type', 'total-theme-core' ),
 					'param_name' => 'autoplay_type',
 					'std' => 'default',
 					'choices' => [
-						'default' => \esc_html__( 'Default', 'total-theme-core' ),
-						'smooth' => \esc_html__( 'Smooth', 'total-theme-core' ),
+						'default' => esc_html__( 'Default', 'total-theme-core' ),
+						'smooth' => esc_html__( 'Smooth', 'total-theme-core' ),
 					],
-					'description' => \esc_html__( 'The "Smooth" autoplay type will remove the carousel arrows and dot navigation. Items will scroll automatically and can\'t be paused, ideal for displaying logos.', 'total-theme-core' ),
+					'description' => esc_html__( 'The "Smooth" autoplay type will remove the carousel arrows and dot navigation. Items will scroll automatically and can\'t be paused, ideal for displaying logos.', 'total-theme-core' ),
 					'dependency' => [ 'element' => 'auto_play', 'value' => 'true' ],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
-					'type' => 'vcex_text',
-					'input_type' => 'number',
+					'type' => 'vcex_number',
 					'heading' => esc_html__( 'Autoplay Interval Timeout.', 'total-theme-core' ),
 					'param_name' => 'timeout_duration',
 					'placeholder' => '5000',
@@ -394,7 +410,7 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 				],
 				[
 					'type' => 'vcex_ofswitch',
-					'heading' => \esc_html__( 'Pause on Hover', 'total-theme-core' ),
+					'heading' => esc_html__( 'Pause on Hover', 'total-theme-core' ),
 					'param_name' => 'hover_pause',
 					'std' => 'true',
 					'dependency' => [ 'element' => 'autoplay_type', 'value' => 'default' ],
@@ -411,37 +427,35 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 				[
 					'type' => 'vcex_ofswitch',
 					'heading' => esc_html__( 'Center Item', 'total-theme-core' ),
-					'description' => \esc_html__( 'Enable to center the middle slide when displaying slides divisible by 2.', 'total-theme-core' ),
+					'description' => esc_html__( 'Enable to center the middle slide when displaying slides divisible by 2.', 'total-theme-core' ),
 					'param_name' => 'center',
 					'std' => 'false',
 					'dependency' => [ 'element' => 'display_type', 'value' => 'carousel' ],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
-					'type' => 'vcex_text',
-					'input_type' => 'number',
+					'type' => 'vcex_number',
+					'min' => '1',
 					'heading' => esc_html__( 'Items To Display', 'total-theme-core' ),
 					'param_name' => 'items',
 					'placeholder' => '4',
 					'dependency' => [ 'element' => 'display_type', 'value' => 'carousel' ],
-					'label_block' => true,
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
 					'type' => 'vcex_select',
-					'choices' => \totalthemecore_call_static( 'Vcex\Carousel\Core', 'get_out_animation_choices' ),
+					'choices' => totalthemecore_call_static( 'Vcex\Carousel\Core', 'get_out_animation_choices' ),
 					'heading' => esc_html__( 'Animation', 'total-theme-core' ),
 					'param_name' => 'out_animation',
 					'dependency' => [ 'element' => 'items', 'value' => '1' ],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
-					'type' => 'vcex_text',
-					'input_type' => 'number',
+					'type' => 'vcex_number',
 					'placeholder' => '250',
 					'heading' => esc_html__( 'Animation Speed', 'total-theme-core' ),
 					'param_name' => 'animation_speed',
-					'description' => \esc_html__( 'Time it takes to transition between slides. In milliseconds.', 'total-theme-core' ),
+					'description' => esc_html__( 'Time it takes to transition between slides. In milliseconds.', 'total-theme-core' ),
 					'dependency' => [ 'element' => 'display_type', 'value' => 'carousel' ],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
@@ -455,54 +469,57 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
-					'type' => 'vcex_text',
-					'input_type' => 'number',
+					'type' => 'vcex_number',
+					'min' => '1',
 					'heading' => esc_html__( 'Items To Scrollby', 'total-theme-core' ),
 					'param_name' => 'items_scroll',
 					'placeholder' => '1',
 					'dependency' => [ 'element' => 'display_type', 'value' => 'carousel' ],
-					'label_block' => true,
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
-					'type' => 'vcex_text',
-					'input_type' => 'number',
+					'type' => 'vcex_number',
+					'min' => '1',
 					'heading' => esc_html__( 'Tablet: Items To Display', 'total-theme-core' ),
 					'param_name' => 'tablet_items',
 					'placeholder' => '3',
+					'elementor' => [
+						'placeholder' => '',
+					],
 					'dependency' => [ 'element' => 'display_type', 'value' => 'carousel' ],
-					'label_block' => true,
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
-					'type' => 'vcex_text',
-					'input_type' => 'number',
+					'type' => 'vcex_number',
+					'min' => '1',
 					'heading' => esc_html__( 'Mobile Landscape: Items To Display', 'total-theme-core' ),
 					'param_name' => 'mobile_landscape_items',
 					'placeholder' => '2',
+					'elementor' => [
+						'placeholder' => '',
+					],
 					'dependency' => [ 'element' => 'display_type', 'value' => 'carousel' ],
-					'label_block' => true,
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
-					'type' => 'vcex_text',
-					'input_type' => 'number',
+					'type' => 'vcex_number',
+					'min' => '1',
 					'heading' => esc_html__( 'Mobile Portrait: Items To Display', 'total-theme-core' ),
 					'param_name' => 'mobile_portrait_items',
 					'placeholder' => '1',
+					'elementor' => [
+						'placeholder' => '',
+					],
 					'dependency' => [ 'element' => 'display_type', 'value' => 'carousel' ],
-					'label_block' => true,
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
-					'type' => 'vcex_text',
-					'input_type' => 'number',
+					'type' => 'vcex_number',
 					'heading' => esc_html__( 'Margin Between Items', 'total-theme-core' ),
 					'description' => esc_html__( 'Value in pixels.', 'total-theme-core' ),
 					'param_name' => 'items_margin',
 					'placeholder' => '15',
 					'dependency' => [ 'element' => 'display_type', 'value' => 'carousel' ],
-					'label_block' => true,
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				// Query
@@ -516,10 +533,19 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
+					'type' => 'vcex_ofswitch',
+					'std' => 'false',
+					'heading' => esc_html__( 'Include Featured Image', 'total-theme-core' ),
+					'param_name' => 'post_gallery_include_featured',
+					'group' => esc_html__( 'Query', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'query_type', 'value' => 'post_gallery' ],
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
 					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Callback', 'total-theme-core' ),
 					'param_name' => 'query_callback',
-					'choices' => 'callback_functions',
+					'choices_callback' => [ self::class, '_get_query_callback_choices' ],
 					'description' => sprintf( esc_html__( 'Callback functions must be %swhitelisted%s for security reasons.', 'total-theme-core' ), '<a href="https://totalwptheme.com/docs/how-to-whitelist-callback-functions-for-elements/" target="_blank" rel="noopener noreferrer">', '</a>' ),
 					'group' => esc_html__( 'Query', 'total-theme-core' ),
 					'dependency' => [ 'element' => 'query_type', 'value' => 'callback' ],
@@ -541,7 +567,6 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 					'group' => esc_html__( 'Query', 'total-theme-core' ),
 					'description' => esc_html__( 'Enter a post type name to use as the placeholder for the preview while editing in the WPBakery live editor.', 'total-theme-core' ),
 					'dependency' => [ 'element' => 'query_type', 'value' => 'auto' ],
-					'label_block' => true,
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
@@ -585,8 +610,8 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 					'dependency' => [ 'element' => 'query_type', 'value' => [ 'related' ] ],
 				],
 				[
-					'type' => 'vcex_text',
-					'input_type' => 'number',
+					'type' => 'vcex_number',
+					'min' => '-1',
 					'heading' => esc_html__( 'Posts Per Page', 'total-theme-core' ),
 					'param_name' => 'posts_per_page',
 					'value' => '12',
@@ -596,7 +621,6 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 						'element' => 'query_type',
 						'value_not_equal_to' => [ 'auto', 'custom', 'callback', 'custom_field' ],
 					],
-					'label_block' => true,
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
@@ -616,12 +640,10 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 						'element' => 'query_type',
 						'value_not_equal_to' => [ 'custom_field', 'term_card' ]
 					],
-					'label_block' => true,
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
-					'type' => 'vcex_text',
-					'input_type' => 'number',
+					'type' => 'vcex_number',
 					'heading' => esc_html__( 'Offset', 'total-theme-core' ),
 					'param_name' => 'offset',
 					'group' => esc_html__( 'Query', 'total-theme-core' ),
@@ -631,7 +653,7 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 				],
 				[
 					'type' => 'autocomplete',
-					'heading' => esc_html__( 'Query Specific Posts', 'total-theme-core' ),
+					'heading' => esc_html__( 'Only Include These Posts or Pages', 'total-theme-core' ),
 					'param_name' => 'posts_in',
 					'group' => esc_html__( 'Query', 'total-theme-core' ),
 					'settings' => [
@@ -644,7 +666,7 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 						'sortable' => true,
 						'display_inline' => false, // Important because true will break sortable.
 					],
-					'description' => esc_html__( 'Start typing a post name to locate and add it. Make sure you have selected the Post Types above so they match the post types of the selected posts.', 'total-theme-core' ),
+					'description' => esc_html__( 'Ensure the Post Types selected above correspond to the items you choose.', 'total-theme-core' ),
 					'dependency' => [ 'element' => 'query_type', 'is_empty' => true ],
 					'elementor' => [
 						'type' => 'text',
@@ -675,7 +697,7 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 				],
 				[
 					'type' => 'autocomplete',
-					'heading' => esc_html__( 'Include Terms', 'total-theme-core' ),
+					'heading' => esc_html__( 'Include Categories, Tags, or Other Terms', 'total-theme-core' ),
 					'param_name' => 'terms_in',
 					'settings' => [
 						'multiple' => true,
@@ -688,7 +710,7 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 					'description' => esc_html__( 'Search for terms (categories, tags or custom taxonomies) you wish to include in the query.', 'total-theme-core' ),
 					'elementor' => [
 						'type' => 'text',
-						'label_block' => true,
+
 						'description' => esc_html__( 'Enter a comma separated list of taxonomy term ids.', 'total-theme-core' ),
 					],
 					'group' => esc_html__( 'Query', 'total-theme-core' ),
@@ -713,7 +735,7 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 				],
 				[
 					'type' => 'autocomplete',
-					'heading' => esc_html__( 'Exclude Terms', 'total-theme-core' ),
+					'heading' => esc_html__( 'Exclude Categories, Tags, or Other Terms', 'total-theme-core' ),
 					'param_name' => 'terms_not_in',
 					'settings' => [
 						'multiple' => true,
@@ -726,7 +748,7 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 					'description' => esc_html__( 'Search for terms (categories, tags or custom taxonomies) you wish to exclude from the query.', 'total-theme-core' ),
 					'elementor' => [
 						'type' => 'text',
-						'label_block' => true,
+
 						'description' => esc_html__( 'Enter a comma separated list of taxonomy term ids.', 'total-theme-core' ),
 					],
 					'group' => esc_html__( 'Query', 'total-theme-core' ),
@@ -774,7 +796,7 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 				[
 					'type' => 'vcex_ofswitch',
 					'std' => 'false',
-					'heading' => esc_html__( 'Meta Query', 'total-theme-core' ),
+					'heading' => esc_html__( 'Meta Query (Filter by Custom Fields)', 'total-theme-core' ),
 					'param_name' => 'meta_query',
 					'dependency' => [ 'element' => 'query_type', 'value' => [ '', 'related' ] ],
 					'group' => esc_html__( 'Query', 'total-theme-core' ),
@@ -879,7 +901,7 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 					'std' => 'false',
 					'group' => esc_html__( 'Query', 'total-theme-core' ),
 					'description' => esc_html__( 'Include sticky posts, but not at the top.', 'total-theme-core' ),
-					'dependency' => [ 'element' => 'query_type', 'is_empty' => true ],
+					'dependency' => [ 'element' => 'query_type', 'value' => [ '', 'author' ] ],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
@@ -889,7 +911,7 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 					'param_name' => 'show_sticky_posts',
 					'std' => 'false',
 					'group' => esc_html__( 'Query', 'total-theme-core' ),
-					'dependency' => [ 'element' => 'query_type', 'is_empty' => true ],
+					'dependency' => [ 'element' => 'query_type', 'value' => [ '', 'author' ] ],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
@@ -899,7 +921,7 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 					'param_name' => 'exclude_sticky_posts',
 					'std' => 'false',
 					'group' => esc_html__( 'Query', 'total-theme-core' ),
-					'dependency' => [ 'element' => 'query_type', 'is_empty' => true ],
+					'dependency' => [ 'element' => 'query_type', 'value' => [ '', 'author' ] ],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
@@ -908,7 +930,7 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 					'param_name' => 'exclude_current_post',
 					'std' => 'false',
 					'group' => esc_html__( 'Query', 'total-theme-core' ),
-					'dependency' => [ 'element' => 'query_type', 'is_empty' => true ],
+					'dependency' => [ 'element' => 'query_type', 'value' => [ '', 'author' ] ],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
@@ -917,7 +939,7 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 					'heading' => esc_html__( 'Post With Thumbnails Only', 'total-theme-core' ),
 					'param_name' => 'thumbnail_query',
 					'group' => esc_html__( 'Query', 'total-theme-core' ),
-					'dependency' => [ 'element' => 'query_type', 'is_empty' => true ],
+					'dependency' => [ 'element' => 'query_type', 'value' => [ '', 'author' ] ],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
@@ -964,6 +986,11 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 							'just_events_past',
 							'just_events_today',
 							'just_events_ongoing',
+							'tribe_events_all',
+							'tribe_events_upcoming',
+							'tribe_events_past',
+							'tribe_events_today',
+							'tribe_events_ongoing',
 							'woo_best_selling',
 							'woo_upsells',
 						],
@@ -1292,10 +1319,23 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 				],
 				[
 					'type' => 'textfield',
-					'heading' => esc_html__( 'Excerpt Length', 'total-theme-core' ),
+					'heading' => esc_html__( 'Excerpt Max Words', 'total-theme-core' ),
 					'param_name' => 'excerpt_length',
 					'group' => esc_html__( 'Entry', 'total-theme-core' ),
 					'description' => esc_html__( 'Enter how many words to display for the excerpt. To display the full post content enter "-1". To display the full post content up to the "more" tag enter "9999".', 'total-theme-core' ),
+					'dependency' => [
+						'element' => 'card_style',
+						'value_not_equal_to' => self::custom_card_styles(),
+					],
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
+					'type' => 'vcex_select',
+					'choices' => 'line_clamp',
+					'heading' => esc_html__( 'Excerpt Max Lines', 'total-theme-core' ),
+					'description' => esc_html__( 'Set the maximum number of visible lines for the excerpt.', 'total-theme-core' ),
+					'param_name' => 'excerpt_max_lines',
+					'group' => esc_html__( 'Entry', 'total-theme-core' ),
 					'dependency' => [
 						'element' => 'card_style',
 						'value_not_equal_to' => self::custom_card_styles(),
@@ -1433,7 +1473,8 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 					'value' => [
 						esc_html__( 'Default', 'total-theme-core' ) => '',
 						esc_html__( 'Go to Post', 'total-theme-core' ) => 'post',
-						esc_html__( 'Lightbox', 'total-theme-core' ) => 'lightbox',
+						esc_html__( 'Single Lightbox', 'total-theme-core' ) => 'lightbox',
+						esc_html__( 'Lightbox Gallery', 'total-theme-core' ) => 'lightbox_group',
 						esc_html__( 'Modal Dialog (Browser Modal)', 'total-theme-core' ) => 'dialog',
 						esc_html__( 'Modal Popup (Lightbox Script)', 'total-theme-core' ) => 'modal',
 						esc_html__( 'None', 'total-theme-core' ) => 'none',
@@ -1542,13 +1583,14 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
-					'type' => 'dropdown',
+					'type' => 'vcex_select_buttons',
+					'std' => 'top',
 					'heading' => esc_html__( 'Placement', 'total-theme-core' ),
 					'param_name' => 'featured_location',
-					'value' => [
-						esc_html__( 'Top', 'total-theme-core' ) => 'top',
-						esc_html__( 'Left', 'total-theme-core' ) => 'left',
-						esc_html__( 'Right', 'total-theme-core' ) => 'right',
+					'choices' => [
+						'top' => esc_html__( 'Top', 'total-theme-core' ),
+						'left' => esc_html__( 'Left', 'total-theme-core' ),
+						'right' => esc_html__( 'Right', 'total-theme-core' ),
 					],
 					'group' => esc_html__( 'Featured', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
@@ -1799,10 +1841,23 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 				],
 				[
 					'type' => 'textfield',
-					'heading' => esc_html__( 'Excerpt Length', 'total-theme-core' ),
+					'heading' => esc_html__( 'Excerpt Max Words', 'total-theme-core' ),
 					'param_name' => 'featured_excerpt_length',
 					'group' => esc_html__( 'Featured', 'total-theme-core' ),
 					'description' => esc_html__( 'Enter how many words to display for the excerpt. To display the full post content enter "-1". To display the full post content up to the "more" tag enter "9999".', 'total-theme-core' ),
+					'dependency' => [
+						'element' => 'featured_style',
+						'value_not_equal_to' => self::custom_card_styles(),
+					],
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
+					'type' => 'vcex_select',
+					'choices' => 'line_clamp',
+					'heading' => esc_html__( 'Excerpt Max Lines', 'total-theme-core' ),
+					'description' => esc_html__( 'Set the maximum number of visible lines for the excerpt.', 'total-theme-core' ),
+					'param_name' => 'featured_excerpt_max_lines',
+					'group' => esc_html__( 'Featured', 'total-theme-core' ),
 					'dependency' => [
 						'element' => 'featured_style',
 						'value_not_equal_to' => self::custom_card_styles(),
@@ -1847,6 +1902,42 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 				[ 'type' => 'hidden', 'param_name' => 'ajax_action' ],
 				[ 'type' => 'hidden', 'param_name' => 'ignore_tax_query' ],
 			];
+
+			// Extra query options for the Tribe Events Calendar
+			if ( class_exists( 'Tribe__Events__Main', false ) ) {
+				if ( post_type_exists( 'tribe_event_series' ) ) {
+					$params[] = [
+						'type' => 'vcex_select',
+						'choices_callback' => [ self::class, '_get_tribe_series_choices' ],
+						'heading' => esc_html__( 'Event Series', 'total-theme-core' ),
+						'group' => esc_html__( 'Query', 'total-theme-core' ),
+						'param_name' => 'tribe_events_series',
+						'dependency' => [ 'element' => 'query_type', 'value_includes' => 'tribe_events' ],
+					];
+				}
+				if ( class_exists( 'Tribe__Events__Pro__Main', false ) ) {
+					$params[] = [
+						'type' => 'vcex_ofswitch',
+						'std' => 'true',
+						'heading' => esc_html__( 'Single Recurring Events', 'total-theme-core' ),
+						'description' => esc_html__( 'Show only the next instance of each recurring event.', 'total-theme-core' ),
+						'group' => esc_html__( 'Query', 'total-theme-core' ),
+						'param_name' => 'tribe_events_hide_recurrence',
+						'dependency' => [ 'element' => 'query_type', 'value_includes' => 'tribe_events' ],
+					];
+				}
+				$params[] = [
+					'type' => 'vcex_ofswitch',
+					'heading' => esc_html__( 'Featured Events Only', 'total-theme-core' ),
+					'group' => esc_html__( 'Query', 'total-theme-core' ),
+					'param_name' => 'tribe_events_featured',
+					'std' => 'false',
+					'dependency' => [ 'element' => 'query_type', 'value_includes' => 'tribe_events' ],
+				];
+			}
+
+			// Return full list of params
+			return $params;
 		}
 
 		/**
@@ -1996,52 +2087,55 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 		 * Returns query types.
 		 */
 		public static function get_query_type_choices(): array {
-			$choices = [
-				''              => esc_html__( 'Default', 'total-theme-core' ),
-				'auto'          => esc_html__( 'Auto (dynamic templates)', 'total-theme-core' ),
-				'custom'        => esc_html__( 'Advanced (custom arguments)', 'total-theme-core' ),
-				'callback'      => esc_html__( 'Callback (child theme function)', 'total-theme-core' ),
-				'post_gallery'  => esc_html__( 'Post Gallery', 'total-theme-core' ),
-				'attachments'   => esc_html__( 'Custom Gallery', 'total-theme-core' ),
-				'custom_field'  => esc_html__( 'Custom Field', 'total-theme-core' ),
-				'post_children' => esc_html__( 'Child Pages', 'total-theme-core' ),
-				'related'       => esc_html__( 'Related by Taxonomy', 'total-theme-core' ),
-				'term_card'     => esc_html__( 'Term Card', 'total-theme-core' ),
+			return (array) apply_filters(
+				'wpex_post_cards_query_type_choices',
+				totalthemecore_call_static( 'Vcex\Query_Builder', 'get_query_type_choices' )
+			);
+		}
+
+		/**
+		 * Returns array of tribe event series.
+		 */
+		public static function _get_tribe_series_choices(): array {
+			$series = [
+				'' => esc_html__( '— Select —', 'total-theme-core' ),
 			];
-
-			/*if ( taxonomy_exists( 'post_series' ) ) {
-				$choices['post_series'] = esc_html__( 'Post Series', 'total-theme-core' );
-			}*/
-
-			if ( get_theme_mod( 'staff_enable', true ) && post_type_exists( 'staff' ) ) {
-				$choices['author'] = esc_html__( 'Posts by Author or Current Staff Member', 'total-theme-core' );
+			$event_series_query = new WP_Query( [
+				'post_type'      => 'tribe_event_series',
+				'posts_per_page' => 50,
+				'fields'         => 'ids'
+			] );
+			if ( ! empty( $event_series_query->posts ) && is_array( $event_series_query->posts ) ) {
+				foreach ( $event_series_query->posts as $event_series_id ) {
+					$series[ $event_series_id ] = esc_html( get_the_title( $event_series_id ) );
+				}
 			}
+			return $series;
+		}
 
-			// 3rd party integrations.
-			if ( class_exists( 'Just_Events\Plugin', false ) ) {
-				$choices['just_events_all']      = esc_html__( 'All Events', 'total-theme-core' );
-				$choices['just_events_upcoming'] = esc_html__( 'Upcoming Events', 'total-theme-core' );
-				$choices['just_events_today']    = esc_html__( 'Today\'s Events', 'total-theme-core' );
-				$choices['just_events_ongoing']  = esc_html__( 'Ongoing Events', 'total-theme-core' );
-				$choices['just_events_past']     = esc_html__( 'Past Events', 'total-theme-core' );
+		/**
+		 * Returns array of callback function choices.
+		 */
+		public static function _get_query_callback_choices(): array {
+			$choices = [
+				'' => esc_html__( '— Select —', 'total-theme-core' ),
+			];
+			if ( defined( 'VCEX_CALLBACK_FUNCTION_WHITELIST' )
+				&& is_array( VCEX_CALLBACK_FUNCTION_WHITELIST )
+			) {
+				$choices = array_merge(
+					$choices,
+					array_combine( VCEX_CALLBACK_FUNCTION_WHITELIST, VCEX_CALLBACK_FUNCTION_WHITELIST )
+				);
 			}
-
-			if ( class_exists( 'WooCommerce', false ) ) {
-				$choices['woo_featured']     = esc_html__( 'WooCommerce - Featured', 'total-theme-core' );
-				$choices['woo_onsale']       = esc_html__( 'WooCommerce - On Sale', 'total-theme-core' );
-				$choices['woo_best_selling'] = esc_html__( 'WooCommerce - Best Selling', 'total-theme-core' );
-				$choices['woo_related']      = esc_html__( 'WooCommerce - Related', 'total-theme-core' );
-				$choices['woo_upsells']      = esc_html__( 'WooCommerce - Upsells', 'total-theme-core' );
-			}
-
-			return (array) apply_filters( 'wpex_post_cards_query_type_choices', $choices );
+			return (array) apply_filters( 'wpex_post_cards_query_callback_choices', $choices );
 		}
 
 		/**
 		 * Register autocomplete hooks.
 		 */
 		public static function register_vc_autocomplete_hooks(): void {
-			// Terms.
+			// Terms
 			add_filter(
 				'vc_autocomplete_wpex_post_cards_terms_in_callback',
 				'TotalThemeCore\WPBakery\Autocomplete\Taxonomy_Terms_Ids::callback'
@@ -2058,7 +2152,7 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 				'vc_autocomplete_wpex_post_cards_terms_not_in_render',
 				'TotalThemeCore\WPBakery\Autocomplete\Taxonomy_Terms_Ids::render'
 			);
-			// Author query.
+			// Author query
 			add_filter(
 				'vc_autocomplete_wpex_post_cards_author_in_callback',
 				'TotalThemeCore\WPBakery\Autocomplete\Users::callback'
@@ -2067,7 +2161,7 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 				'vc_autocomplete_wpex_post_cards_author_in_render',
 				'TotalThemeCore\WPBakery\Autocomplete\Users::render'
 			);
-			// Posts In query.
+			// Posts In query
 			add_filter(
 				'vc_autocomplete_wpex_post_cards_posts_in_callback',
 				'vc_include_field_search'
@@ -2076,7 +2170,7 @@ if ( ! class_exists( 'Wpex_Post_Cards_Shortcode' ) ) {
 				'vc_autocomplete_wpex_post_cards_posts_in_render',
 				'vc_include_field_render'
 			);
-			// Featured Card ID.
+			// Featured Card ID
 			add_filter(
 				'vc_autocomplete_wpex_post_cards_featured_post_id_callback',
 				'vc_include_field_search'

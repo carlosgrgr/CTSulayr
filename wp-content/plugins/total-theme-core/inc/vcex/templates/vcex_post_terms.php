@@ -5,40 +5,33 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 1.8.8
+ * @version 2.4
  */
 
 defined( 'ABSPATH' ) || exit;
 
-extract( $atts );
+extract( $atts ); // @todo remove
 
-// Define main vars.
-$post_id         = vcex_get_the_ID();
-$button_color    = ! empty( $atts['button_color'] ) ? $atts['button_color'] : '';
-$button_align    = ! empty( $atts['button_align'] ) ? $atts['button_align'] : '';
-$first_term_only = vcex_validate_att_boolean( 'first_term_only', $atts );
-$custom_spacer   = apply_filters( 'vcex_post_terms_default_spacer', $spacer );
-
-// Check if currently in template editing mode.
+// Define vars needed to get terms
+$post_id            = vcex_get_the_ID();
+$taxonomy           = ! empty( $atts['taxonomy'] ) ? sanitize_text_field( $atts['taxonomy'] ) : '';
+$first_term_only    = vcex_validate_att_boolean( 'first_term_only', $atts );
 $template_edit_mode = vcex_is_template_edit_mode();
 
-// Locate taxonomy if one isn't defined.
-if ( ! $template_edit_mode && empty( $taxonomy ) && function_exists( 'wpex_get_post_primary_taxonomy' ) ) {
+// Locate taxonomy if one isn't defined
+if ( ! $template_edit_mode && ! $taxonomy && function_exists( 'wpex_get_post_primary_taxonomy' ) ) {
 	$taxonomy = wpex_get_post_primary_taxonomy( $post_id );
 }
 
-// Taxonomy is required.
+// Taxonomy is required
 if ( ! $template_edit_mode && ( empty( $taxonomy ) || ! taxonomy_exists( $taxonomy ) ) ) {
 	return;
 }
 
-// Get module style.
-$module_style = ! empty( $style ) ? $style : 'buttons';
-
-// Define terms.
+// Define terms
 $terms = [];
 
-// Dummy terms for dynamic templates.
+// Dummy terms for dynamic templates
 if ( $template_edit_mode ) {
 	$dummy_link = '#';
 	$sample_terms_number = $first_term_only ? 1 : 2;
@@ -55,7 +48,7 @@ if ( $template_edit_mode ) {
 	}
 }
 
-// Get featured term.
+// Get featured term
 if ( ! $terms
 	&& $first_term_only
 	&& function_exists( 'totaltheme_get_post_primary_term' )
@@ -64,51 +57,65 @@ if ( ! $terms
 	$terms = [ $primary_term ];
 }
 
-// If terms is empty lets query them.
+// If terms is empty lets query them
 if ( ! $terms ) {
 
-	// Query arguments.
+	// Sanitize order
+	if ( ! in_array( strtoupper( $order ), [ 'ASC', 'DESC' ], true ) ) {
+		$order = 'DESC';
+	}
+
+	// Sanitize orderby
+	if ( ! in_array( $orderby, [ 'name', 'slug', 'term_group', 'term_id', 'id', 'description' ], true ) ) {
+		$orderby = 'name';
+	}
+
+	// Query arguments
 	$query_args = [
 		'order'   => $order,
 		'orderby' => $orderby,
 		'fields'  => 'all',
 	];
 
-	/**
-	 * Filters the vcex_post_terms shortcode query args.
-	 *
-	 * @param array $query_args
-	 * @param array $shortcode_atts
-	 */
+	// Filters the vcex_post_terms shortcode query args
 	$query_args = (array) apply_filters( 'vcex_post_terms_query_args', $query_args, $atts );
 
 	$terms = wp_get_post_terms( $post_id, $taxonomy, $query_args );
 
-	// Get first term only.
+	// Get first term only
 	if ( $first_term_only && isset( $terms[0] ) ) {
 		$terms = [ $terms[0] ];
 	}
 
 }
 
-// Terms needed.
+// Terms needed
 if ( ! $terms || is_wp_error( $terms ) ) {
 	return;
 }
 
-// Define output var.
+// Main element vars
+$style = ! empty( $atts['style'] ) ? sanitize_text_field( $atts['style'] ) : 'buttons';
+
+// Define output var
 $output = '';
 
-// Wrap classes.
+// Wrap classes
 $wrap_class = [
 	'vcex-post-terms',
 	'vcex-module',
-	'wpex-clr',
 ];
 
-if ( 'center' === $button_align && 'buttons' === $style ) {
-	$wrap_class[] = 'textcenter';
-	$wrap_class[] = 'wpex-last-mr-0';
+if ( 'buttons' === $style ) {
+	$wrap_class[] = 'wpex-flex wpex-flex-wrap';
+	if ( ! empty( $atts['spacing'] ) ) {
+		$wrap_class[] = vcex_parse_gap_class( $atts['spacing'] );
+	} else  {
+		$wrap_class[] = 'wpex-gap-5';
+	}
+	if ( ! empty( $atts['button_align'] ) ) {
+		$wrap_class[] = vcex_parse_justify_content_class( $atts['button_align'] );
+	}
 }
 
 // Alignment
@@ -117,7 +124,7 @@ if ( ! empty( $atts['max_width'] ) ) {
 	$wrap_class[] = vcex_parse_align_class( ! empty( $atts['align'] ) ? $atts['align'] : 'center' );
 }
 
-// Add extra classes.
+// Add extra classes
 $extra_classes = vcex_get_shortcode_extra_classes( $atts, 'vcex_post_terms' );
 
 if ( $extra_classes ) {
@@ -126,88 +133,26 @@ if ( $extra_classes ) {
 
 $wrap_class = vcex_parse_shortcode_classes( $wrap_class, 'vcex_post_terms', $atts );
 
-// Wrap style.
-$shortcode_css_args = [
-	'animation_delay'    => $atts['animation_delay'] ?? null,
-	'animation_duration' => $atts['animation_duration'] ?? null,
-	'width'              => $atts['max_width'] ?? null,
-];
-
-if ( 'buttons' !== $module_style ) {
-	$shortcode_css_args['font_family']    = $button_font_family;
-	$shortcode_css_args['color']          = $button_color;
-	$shortcode_css_args['font_size']      = $button_font_size;
-	$shortcode_css_args['font_weight']    = $button_font_weight;
-	$shortcode_css_args['text_transform'] = $button_text_transform;
-}
-
-if ( $button_color && 'buttons' !== $style ) {
-	$shortcode_css_args['--wpex-link-color'] = $button_color;
-	$shortcode_css_args['--wpex-hover-link-color'] = $button_color;
-}
-
-if ( 'buttons' !== $style || ( 'buttons' === $style && 'plain-text' === $button_style ) ) {
-	if ( ! empty( $atts['link_underline'] ) ) {
-		$underline = vcex_validate_boolean( $atts['link_underline'] );
-		$shortcode_css_args['--wpex-link-decoration-line'] = $underline ? 'underline' : 'none';
-	}
-	if ( ! empty( $atts['link_underline_hover'] ) ) {
-		$underline = vcex_validate_boolean( $atts['link_underline_hover'] );
-		$shortcode_css_args['--wpex-hover-link-decoration-line'] = $underline ? 'underline' : 'none';
-	}
-}
-
-$shortcode_css = vcex_inline_style( $shortcode_css_args );
-
-// Begin output.
-$output .= '<div class="' . esc_attr( $wrap_class ) . '"' . vcex_get_unique_id( $unique_id ) . $shortcode_css . '>';
+// Begin output
+$output .= '<div class="' . esc_attr( $wrap_class ) . '"' . vcex_get_unique_id( $unique_id ) . '>';
 
 	// Define link vars
-	$link_style = '';
 	$link_class = [
 		'vcex-post-terms__item',
 	];
 	$link_class_xtra = [];
 
-	// Button Style Classes and inline styles.
-	if ( 'buttons' === $module_style ) {
-
-		$link_class_xtra[] = vcex_get_button_classes(
-			$button_style,
-			$button_color_style,
-			$button_size,
-			$button_align
-		);
-
-		$spacing = $spacing ?: '5';
-		$spacing_direction = ( 'right' === $button_align ) ? 'l' : 'r';
-
-		$link_class_xtra[] = 'wpex-m' . $spacing_direction . '-' . sanitize_html_class( absint( $spacing ) );
-		$link_class_xtra[] = 'wpex-mb-' . sanitize_html_class( absint( $spacing ) );
+	// Button Style Classes and inline styles
+	if ( 'buttons' === $style ) {
+		$link_class_xtra[] = 'vcex-post-terms__item--btn';
+		$link_class_xtra[] = vcex_get_button_classes( $button_style, $button_color_style, $button_size );
 
 		if ( 'false' == $atts['archive_link'] || ! $atts['archive_link'] ) {
 			$link_class_xtra[] = 'wpex-cursor-default';
 		}
-
-		// Button Style.
-		$link_style_args = [
-			'margin'         => $button_margin,
-			'color'          => ( 'term_color' !== $button_color ) ? $button_color : '',
-			'background'     => ( 'term_color' !== $button_background ) ? $button_background : '',
-			'padding'        => $button_padding,
-			'font_size'      => $button_font_size,
-			'font_weight'    => $button_font_weight,
-			'border_radius'  => $button_border_radius,
-			'text_transform' => $button_text_transform,
-			'font_family'    => $button_font_family,
-			'letter_spacing' => $button_letter_spacing,
-		];
-
-		$link_style = vcex_inline_style( $link_style_args );
-
 	}
 
-	// Get child_of value.
+	// Get child_of value
 	if ( ! empty( $child_of ) ) {
 		$get_child_of = get_term_by( 'slug', trim( $child_of ), $taxonomy );
 		if ( $get_child_of ) {
@@ -215,147 +160,118 @@ $output .= '<div class="' . esc_attr( $wrap_class ) . '"' . vcex_get_unique_id( 
 		}
 	}
 
-	// Get excluded terms.
+	// Get excluded terms
 	if ( ! empty( $exclude_terms ) ) {
 		$exclude_terms = preg_split( '/\,[\s]*/', $exclude_terms );
 	} else {
 		$exclude_terms = [];
 	}
 
-	// Before Text.
-	if ( 'inline' === $module_style && ! empty( $before_text ) ) {
+	// Before Text or Open list
+	if ( 'inline' === $style && ! empty( $before_text ) ) {
 		$output .= '<span class="vcex-post-terms__label vcex-label">' . vcex_parse_text_safe( $before_text ) . '</span> ';
-	}
-
-	// Open UL list.
-	elseif ( 'ul' === $module_style ) {
+	} elseif ( 'ul' === $style ) {
 		$output .= '<ul class="vcex-post-terms__list">';
-	}
-
-	// Open OL list.
-	elseif ( 'ol' === $module_style ) {
+	} elseif ( 'ol' === $style ) {
 		$output .= '<ol class="vcex-post-terms__list">';
 	}
 
-	// Loop through terms.
+	// Loop through terms
 	if ( is_array( $terms ) ) {
 		$terms_count = 0;
 		$first_run = true;
 		foreach ( $terms as $term ) :
 
-			// Skip items that aren't a child of a specific parent..
+			// Skip items that aren't a child of a specific parent
 			if ( ! empty( $child_of_id ) && $term->parent != $child_of_id ) {
 				continue;
 			}
 
-			// Skip excluded terms.
+			// Skip excluded terms
 			if ( in_array( $term->slug, $exclude_terms ) ) {
 				continue;
 			}
 
-			// Set link class in loop to prevent issues with added term classes.
+			// Get term id
+			$term_id = absint( $term->term_id );
+
+			// Set link class in loop to prevent issues with added term classes
 			$item_link_class = $link_class;
-			$item_link_class[] = 'vcex-post-terms__item--' . absint( $term->term_id );
+			$item_link_class[] = "vcex-post-terms__item--{$term_id}";
 
 			if ( $link_class_xtra ) {
 				$item_link_class = array_merge( $item_link_class, $link_class_xtra );
 			}
 
-			// Add to counter.
+			// Add to counter
 			$terms_count ++;
 
-			// Add li tags.
-			if ( in_array( $module_style, [ 'ul', 'ol' ] ) ) {
+			// Add li tags
+			if ( in_array( $style, [ 'ul', 'ol' ] ) ) {
 				$output .= '<li>';
 			}
 
-			// Hover styles
-			$link_hover_data = [];
-
-			if ( 'buttons' === $module_style && ! empty( $atts['button_hover_background'] ) ) {
-				$button_hover_background = $atts['button_hover_background'];
-				if ( 'term_color' === $atts['button_hover_background'] && ! $template_edit_mode ) {
-					$button_hover_background = vcex_get_term_color( $term );
-				}
-				$link_hover_data['background'] = esc_attr( vcex_parse_color( $button_hover_background ) );
-			}
-
-			if ( ! empty( $atts['button_hover_color'] ) ) {
-				$button_hover_color = $atts['button_hover_color'];
-				if ( 'term_color' === $atts['button_hover_color'] && ! $template_edit_mode ) {
-					$button_hover_color = vcex_get_term_color( $term );
-				}
-				$link_hover_data['color'] = esc_attr( vcex_parse_color( $button_hover_color ) );
-			}
-
-			$link_hover_data = $link_hover_data ? htmlspecialchars( wp_json_encode( $link_hover_data ) ) : '';
-
-			// Add term colors.
-			if ( (bool) vcex_get_term_color( $term ) ) {
-				if ( 'term_color' === $button_background ) {
-					$item_link_class[] = 'has-term-' . sanitize_html_class( $term->term_id ) . '-background-color';
-				}
-				if ( 'term_color' === $button_color ) {
-					$item_link_class[] = 'has-term-' . sanitize_html_class( $term->term_id ) . '-color';
-				}
-			}
-
-			/**
-			 * Filters the vcex_post_terms element link class.
-			 *
-			 * @param array $class
-			 * @param obj $term
-			 * @param array $shortcode_atts
-			 */
+			// Filters the vcex_post_terms element link class
 			$item_link_class = (array) apply_filters( 'vcex_post_terms_link_class', $item_link_class, $term, $atts );
 
-			// Open term element.
-			if ( 'true' == $atts['archive_link'] ) {
-
-				$output .= '<a' . vcex_parse_html_attributes( [
-					'href'            => $dummy_link ?? get_term_link( $term, $taxonomy ),
-					'class'           => $item_link_class,
-					'style'           => $link_style,
-					'target'          => $archive_link_target,
-					'data-wpex-hover' => $link_hover_data,
-				] ) . '>';
-
-			} else {
-
-				$output .= '<span' . vcex_parse_html_attributes( [
-					'class' => $item_link_class,
-					'style' => $link_style,
-					'data-wpex-hover' => $link_hover_data,
-				] ) . '>';
-
+			// Add term color classes
+			if ( in_array( 'term_color', $atts, true ) && (bool) vcex_get_term_color( $term ) ) {
+				if ( isset( $atts['button_color'] ) && 'term_color' === $atts['button_color'] ) {
+					$item_link_class[] = "has-term-{$term_id}-color";
+				} else {
+					if ( isset( $atts['button_hover_color'] ) && 'term_color' === $atts['button_hover_color'] ) {
+						$item_link_class[] = "has-term-{$term_id}-hover-color";
+					}
+				}
+				if ( isset( $atts['button_background'] ) && 'term_color' === $atts['button_background'] ) {
+					$item_link_class[] = "has-term-{$term_id}-background-color";
+				} else {
+					if ( isset( $atts['button_hover_background'] ) && 'term_color' === $atts['button_hover_background'] ) {
+						$item_link_class[] = "has-term-{$term_id}-hover-background-color";
+					}
+				}
 			}
 
-			// Display title.
+			// Open term element
+			if ( 'true' == $atts['archive_link'] ) {
+				$output .= '<a' . vcex_parse_html_attributes( [
+					'href'   => $dummy_link ?? get_term_link( $term, $taxonomy ),
+					'class'  => $item_link_class,
+					'target' => $atts['archive_link_target'] ?? '',
+				] ) . '>';
+			} else {
+				$output .= '<span' . vcex_parse_html_attributes( [
+					'class' => $item_link_class,
+				] ) . '>';
+			}
+
+			// Display title
 			$output .= esc_html( $term->name );
 
-			// Close term element.
+			// Close term element
 			if ( 'true' == $atts['archive_link'] ) {
 				$output .= '</a>';
 			} else {
 				$output .= '</span>';
 			}
 
-			// Add spacer for inline style.
-			if ( 'inline' === $module_style && $terms_count < count( $terms ) ) {
+			// Add spacer for inline style
+			if ( 'inline' === $style && $terms_count < count( $terms ) ) {
 
-				if ( $custom_spacer ) {
+				if ( ! empty( $atts['spacer'] ) ) {
 					$output .= ' ';
-					$spacer = $custom_spacer;
+					// Parse custom spacer, don't use sanitize_text_field because that will trim spaces
+					$spacer = do_shortcode( wp_strip_all_tags( $atts['spacer'] ) );
 				} else {
-					$spacer = '&comma;';
+					$spacer = apply_filters( 'vcex_post_terms_default_spacer', '&comma;' );
 				}
 
-				$output .= '<span class="vcex-post-terms__separator vcex-spacer">' . do_shortcode( wp_strip_all_tags( $spacer ) ) . '</span> '; // @note don't use sanitize_text_field because that will trim spaces.
+				$output .= '<span class="vcex-post-terms__separator vcex-spacer">' . $spacer . '</span> ';
 
 			}
 
-			// Close li tags.
-			if ( in_array( $module_style, [ 'ul', 'ol' ] ) ) {
+			// Close li tags
+			if ( in_array( $style, [ 'ul', 'ol' ] ) ) {
 				$output .= '</li>';
 			}
 
@@ -364,17 +280,17 @@ $output .= '<div class="' . esc_attr( $wrap_class ) . '"' . vcex_get_unique_id( 
 		endforeach;
 	}
 
-	// Close UL list.
-	if ( 'ul' === $module_style ) {
+	// Close UL list
+	if ( 'ul' === $style ) {
 		$output .= '</ul>';
 	}
 
 	// Open OL list
-	elseif ( 'ol' === $module_style ) {
+	elseif ( 'ol' === $style ) {
 		$output .= '</ol>';
 	}
 
-// Close main wrapper.
+// Close main wrapper
 $output .= '</div>';
 
 // @codingStandardsIgnoreLine

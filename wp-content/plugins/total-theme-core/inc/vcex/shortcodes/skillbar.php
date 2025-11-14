@@ -424,7 +424,7 @@ if ( ! class_exists( 'VCEX_Skillbar_Shortcode' ) ) {
 		 * Used to parse the percentage value before sending it to css_pre_render to avoid doing it twice.
 		 */
 		public static function shortcode_atts( $atts ) {
-			$atts = \vcex_shortcode_atts( self::TAG, $atts, self::class );
+			$atts = vcex_shortcode_atts( self::TAG, $atts, self::class );
 
 			if ( ! empty( $atts['source'] ) && 'custom' !== $atts['source'] ) {
 				$atts['percentage'] = vcex_get_source_value( $atts['source'], $atts );

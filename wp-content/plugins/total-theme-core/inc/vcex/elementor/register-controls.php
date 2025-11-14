@@ -2,9 +2,12 @@
 
 namespace TotalThemeCore\Vcex\Elementor;
 
+use TotalThemeCore\Vcex\Setting_Choices as Vcex_Setting_Choices;
+use Elementor\Repeater as Elementor_Repeater;
+use Elementor\Group_Control_Typography as Elementor_Group_Control_Typography;
 use Elementor\Controls_Manager as Elementor_Controls_Manager;
 
-\defined( 'ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 final class Register_Controls {
 
@@ -47,7 +50,7 @@ final class Register_Controls {
 				"section_{$section_k}",
 				[
 					'label' => $section_v['label'],
-					'tab'   => \Elementor\Controls_Manager::TAB_CONTENT,
+					'tab'   => Elementor_Controls_Manager::TAB_CONTENT,
 				]
 			);
 
@@ -59,7 +62,7 @@ final class Register_Controls {
 					unset( $group_settings['is_group'], $group_settings['group_type'], $group_settings['type'] );
 					$this->widget->add_group_control( $setting_args['group_type'], $group_settings );
 				} elseif ( ! empty( $setting_args['repeater'] ) ) {
-					$repeater = new \Elementor\Repeater();
+					$repeater = new Elementor_Repeater();
 					foreach ( $setting_args['repeater'] as $repeater_control_id => $repeater_control_settings ) {
 						$repeater->add_control( $repeater_control_id, $repeater_control_settings );
 					}
@@ -99,7 +102,7 @@ final class Register_Controls {
 			}
 
 			// Get section key from group name
-			$section_k = \sanitize_key( $param['group'] );
+			$section_k = sanitize_key( $param['group'] );
 			
 			// Add new section
 			if ( ! isset( $sections[ $section_k ] ) ) {
@@ -147,23 +150,28 @@ final class Register_Controls {
 		$dependency = $param['dependency'] ?? false;
 		$default    = $param['default'] ?? $param['std'] ?? null;
 
+		// Add notice
+		if ( isset( $param['notice'] ) && empty( $param['description'] ) ) {
+			$param['description'] = $param['notice'];
+		}
+
 		// If a default isn't set try grab it from the value which is what WPB uses
 		// We must do this before our switch statement
 		if ( ! $default && isset( $param['value'] ) ) {
-			if ( \is_array( $param['value'] ) ) {
+			if ( is_array( $param['value'] ) ) {
 				$default = reset( $param['value'] );
-			} elseif ( \is_string( $param['value'] ) ) {
+			} elseif ( is_string( $param['value'] ) ) {
 				$default = $param['value'];
 			}
 		}
 
 		// These params always get added
 		$param['type']  = $param['type'] ?? 'text';
-		$param['label'] = $param['heading'] ?? '';
-		$param['name']  = $param['param_name'] ?? '';
+		$param['label'] = $param['label'] ?? $param['heading'] ?? '';
+		$param['name']  = $param['name'] ?? $param['param_name'] ?? '';
 
 		if ( ! $recursive_fields ) {
-			$param['group'] = $param['group'] ?? \esc_html__( 'General', 'total-theme-core' );
+			$param['group'] = $param['group'] ?? esc_html__( 'General', 'total-theme-core' );
 		}
 
 		// Modify param based on the param type
@@ -205,7 +213,7 @@ final class Register_Controls {
 
 					// Make sure default is an array for the sorter type - this is important to prevent errors with the contains conditions check
 					if ( $default ) {
-						if ( \is_string( $default ) ) {
+						if ( is_string( $default ) ) {
 							$default = explode( ',', $default );
 						}
 					} else {
@@ -220,11 +228,11 @@ final class Register_Controls {
 				$param['options']     = $this->choices_get_post_types();
 				break;
 			case 'checkbox':
-				if ( isset( $param['value'] ) && \is_array( $param['value'] ) ) {
+				if ( isset( $param['value'] ) && is_array( $param['value'] ) ) {
 					$param['type']     = 'select2';
 					$param['multiple'] = true;
-					$param['options']  = \array_flip( $param['value'] );
-					if ( $default && \is_string( $default ) ) {
+					$param['options']  = array_flip( $param['value'] );
+					if ( $default && is_string( $default ) ) {
 						$default = explode(',', $default );
 					}
 				} else {
@@ -260,7 +268,7 @@ final class Register_Controls {
 				break;
 			case 'vcex_text_align':
 				$param['type'] = 'select';
-				$param['choices'] = \totalthemecore_call_static( 'WPBakery\Params\Text_Align', 'get_choices', $param );
+				$param['choices'] = totalthemecore_call_static( 'WPBakery\Params\Text_Align', 'get_choices', $param );
 				break;
 			case 'vcex_hover_animations':
 			case 'vcex_button_colors':
@@ -269,7 +277,7 @@ final class Register_Controls {
 			case 'vcex_image_crop_locations':
 			case 'vcex_image_filters':
 			case 'vcex_image_hovers':
-				$param['choices'] = \str_replace( 'vcex_', '', $param['type'] );
+				$param['choices'] = str_replace( 'vcex_', '', $param['type'] );
 				$param['type']    = 'select'; // must go after choices!
 				break;
 			case 'vcex_preset_textfield':
@@ -312,7 +320,7 @@ final class Register_Controls {
 			case 'vcex_notice':
 				$param['type']            = 'raw_html';
 				$param['raw']             = $param['text'];
-				$param['content_classes'] = 'vcex-elementor-control-notice';
+				$param['content_classes'] = 'elementor-descriptor vcex-elementor-control-notice';
 				break;
 			case 'iconpicker':
 			case 'vcex_select_icon':
@@ -322,7 +330,7 @@ final class Register_Controls {
 					$dependency = false;
 				}
 				if ( ! empty( $param['choices'] ) ) {
-					$param['choices'] = \array_combine( $param['choices'], $param['choices'] );
+					$param['choices'] = array_combine( $param['choices'], $param['choices'] );
 				}
 				if ( $default ) {
 					$default = [
@@ -333,15 +341,15 @@ final class Register_Controls {
 				break;
 			case 'dropdown':
 				$param['type'] = 'select';
-				if ( $param['value'] && \is_array( $param['value'] ) ) {
-					$param['options'] = \array_flip( $param['value'] );
+				if ( $param['value'] && is_array( $param['value'] ) ) {
+					$param['options'] = array_flip( $param['value'] );
 				}
 				break;
 			case 'vcex_ofswitch':
 				$param['type']         = 'switcher';
 				$param['return_value'] = $param['vcex']['on'] ?? 'true';
-				$param['label_on']     = \esc_html__( 'On', 'total-theme-core' );
-				$param['label_off']    = \esc_html__( 'Off', 'total-theme-core' );
+				$param['label_on']     = esc_html__( 'On', 'total-theme-core' );
+				$param['label_off']    = esc_html__( 'Off', 'total-theme-core' );
 				if ( ! $default ) {
 					$default = $param['vcex']['off'] ?? 'false'; // vcex_ofswitch switcher is always false by default
 				}
@@ -366,7 +374,7 @@ final class Register_Controls {
 				break;
 			case 'typography':
 				$param['is_group']   = true;
-				$param['group_type'] = \Elementor\Group_Control_Typography::get_type();
+				$param['group_type'] = Elementor_Group_Control_Typography::get_type();
 				if ( isset( $param['selector'] ) ) {
 					$param['selector'] = '{{WRAPPER}} ' . $param['selector'];
 				} else {
@@ -435,8 +443,8 @@ final class Register_Controls {
 	 * Parses options before sending to elementor.
 	 */
 	private function parse_options( $options, $param ) {
-		if ( ! \is_array( $options ) && \class_exists( 'TotalThemeCore\Vcex\Setting_Choices' ) ) {
-			return (new \TotalThemeCore\Vcex\Setting_Choices( $options, $param, 'elementor' ))->get_choices();
+		if ( ! is_array( $options ) && class_exists( 'TotalThemeCore\Vcex\Setting_Choices' ) ) {
+			return (new Vcex_Setting_Choices( $options, $param, 'elementor' ))->get_choices();
 		}
 		return $options;
 	}
@@ -446,7 +454,7 @@ final class Register_Controls {
 	 * in Elementor. Because if the og param doesn't exist Elementor won't ever display the setting.
 	 */
 	private function parse_dependency( $dependency, $params = [] ) {
-		if ( ! \is_array( $dependency ) || empty( $dependency['element'] ) ) {
+		if ( ! is_array( $dependency ) || empty( $dependency['element'] ) ) {
 			return;
 		}
 		$condition        = [];
@@ -517,7 +525,7 @@ final class Register_Controls {
 			'select2'               => Elementor_Controls_Manager::SELECT2,
 			'repeater'              => Elementor_Controls_Manager::REPEATER,
 			'dimensions'            => Elementor_Controls_Manager::DIMENSIONS,
-			'raw_html'              => Elementor_Controls_Manager::CODE,
+			'raw_html'              => Elementor_Controls_Manager::RAW_HTML,
 			'textarea_raw_html'     => Elementor_Controls_Manager::CODE,
 			'media'                 => Elementor_Controls_Manager::MEDIA,
 			'attach_images'         => Elementor_Controls_Manager::GALLERY,
@@ -526,6 +534,7 @@ final class Register_Controls {
 			'textfield'             => Elementor_Controls_Manager::TEXT,
 			'text'                  => Elementor_Controls_Manager::TEXT,
 			'vcex_text'             => Elementor_Controls_Manager::TEXT,
+			'vcex_number'           => Elementor_Controls_Manager::NUMBER,
 			'textarea_html'         => Elementor_Controls_Manager::WYSIWYG,
 			'color'                 => Elementor_Controls_Manager::COLOR,
 			'vcex_preset_textfield' => Elementor_Controls_Manager::SELECT,
@@ -542,13 +551,13 @@ final class Register_Controls {
 	 */
 	private function choices_get_post_types() {
 		$post_types_list = [];
-		$post_types = \get_post_types( [
+		$post_types = get_post_types( [
 			'public' => true,
 		] );
 		if ( $post_types ) {
 			foreach ( $post_types as $post_type ) {
 				if ( ! in_array( $post_type, [ 'revision', 'nav_menu_item', 'attachment', 'elementor_library'  ], true ) ) {
-					$post_types_list[ $post_type ] = \get_post_type_object( $post_type )->labels->name ?? $post_type;
+					$post_types_list[ $post_type ] = get_post_type_object( $post_type )->labels->name ?? $post_type;
 				}
 			}
 		}
@@ -560,22 +569,22 @@ final class Register_Controls {
 	 */
 	private function get_font_family_choices(): array {
 		$fonts = [];
-		if ( \function_exists( '\wpex_get_registered_fonts' ) ) {
-			$user_fonts = (array) \wpex_get_registered_fonts();
+		if ( function_exists( 'wpex_get_registered_fonts' ) ) {
+			$user_fonts = (array) wpex_get_registered_fonts();
 			if ( $user_fonts ) {
 				foreach ( $user_fonts as $font_name => $font_settings ) {
-					$fonts[ $font_name ] = \ucfirst( $font_name );
+					$fonts[ $font_name ] = $font_name;
 				}
 			}
 		}
-		if ( ! $fonts && \function_exists( '\wpex_standard_fonts' ) ) {
-			$std_fonts = (array) \wpex_standard_fonts();
+		if ( ! $fonts && function_exists( 'wpex_standard_fonts' ) ) {
+			$std_fonts = (array) wpex_standard_fonts();
 			foreach ( $std_fonts as $font_name ) {
-				$fonts[ $font_name ] = \ucfirst( $font_name );
+				$fonts[ $font_name ] = $font_name;
 			}
 		}
 		if ( $fonts ) {
-			$fonts = [ '' => \esc_html__( 'Default', 'total-theme-core' ) ] + $fonts;
+			$fonts = [ '' => esc_html__( 'Default', 'total-theme-core' ) ] + $fonts;
 		}
 		return $fonts;
 	}
@@ -584,7 +593,7 @@ final class Register_Controls {
 	 * Check if a param is an elementor param.
 	 */
 	private function is_elementor_param( $param ): bool {
-		return isset( $param['editors'] ) && \is_array( $param['editors'] ) && \in_array( 'elementor', $param['editors'], true );
+		return isset( $param['editors'] ) && is_array( $param['editors'] ) && in_array( 'elementor', $param['editors'], true );
 	}
 
 }

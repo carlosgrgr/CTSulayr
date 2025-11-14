@@ -41,17 +41,17 @@ if ( ! class_exists( 'Vcex_Grid_Container_Shortcode' ) ) {
 		 * Returns custom vc map settings.
 		 */
 		public static function get_vc_lean_map_settings(): array {
-			$allowed_elements = \apply_filters(
-				'vcex_grid_container_allowed_elements',
-				'vcex_icon_box,vcex_milestone,vcex_bullets,vcex_list_item,vcex_teaser,vc_column_text,vcex_image,vcex_image_swap,vcex_pricing,vcex_custom_field,vcex_image_banner,vcex_icon,vcex_feature_box,vcex_post_next_prev,vcex_shortcode,vc_raw_html,vcex_callout'
-			);
-
 			return [
 				'allowed_container_element' => false,
 				'is_container'				=> true,
 				'content_element'			=> true,
 				'js_view'					=> 'VcColumnView',
-				'as_parent'					=> [ 'only' => $allowed_elements ],
+				'as_parent'					=> [
+					'only' => apply_filters(
+						'vcex_grid_container_allowed_elements',
+						'vcex_heading,vcex_icon_box,vcex_milestone,vcex_bullets,vcex_list_item,vcex_teaser,vc_column_text,vcex_image,vcex_image_swap,vcex_pricing,vcex_custom_field,vcex_image_banner,vcex_icon,vcex_feature_box,vcex_post_next_prev,vcex_shortcode,vc_raw_html,vcex_callout'
+					)
+				],
 			];
 		}
 
@@ -94,6 +94,7 @@ if ( ! class_exists( 'Vcex_Grid_Container_Shortcode' ) ) {
 					'type' => 'textfield',
 					'heading' => esc_html__( 'Gap', 'total-theme-core' ),
 					'param_name' => 'gap',
+					'css' => true,
 					'description' => esc_html__( 'Spacing between elements. Default is 20px.', 'total-theme-core' ),
 				],
 				[
@@ -167,16 +168,81 @@ if ( ! class_exists( 'Vcex_Grid_Container_Shortcode' ) ) {
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 				],
 				[
+					'type' => 'textfield',
+					'heading' => esc_html__( 'Max Width', 'total-theme-core' ),
+					'param_name' => 'width',
+					'css' => [ 'property' => 'max-width' ],
+					'description' => self::param_description( 'width' ),
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_text_align',
+					'heading' => esc_html__( 'Align', 'total-theme-core' ),
+					'param_name' => 'align',
+					'std' => 'center',
+					'dependency' => [ 'element' => 'width', 'not_empty' => true ],
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				],
+				[
+					'type' => 'textfield',
+					'heading' => esc_html__( 'Minimum Height', 'total-theme-core' ),
+					'param_name' => 'min_height',
+					'css' => [ 'property' => 'min-height', 'important_in_editor' => true ],
+					'description' => self::param_description( 'height' ),
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				],
+				[
 					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Shadow', 'total-theme-core' ),
 					'param_name' => 'shadow',
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 				],
 				[
-					'type' => 'textfield',
-					'heading' => esc_html__( 'Width', 'total-theme-core' ),
-					'param_name' => 'width',
-					'description' => self::param_description( 'width' ),
+					'type' => 'vcex_colorpicker',
+					'heading' => esc_html__( 'Background', 'total-theme-core' ),
+					'param_name' => 'background_color',
+					'css' => true,
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_select',
+					'choices' => 'padding',
+					'heading' => esc_html__( 'Vertical Padding', 'total-theme-core' ),
+					'param_name' => 'padding_y',
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_select',
+					'choices' => 'padding',
+					'heading' => esc_html__( 'Horizontal Padding', 'total-theme-core' ),
+					'param_name' => 'padding_x',
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_select',
+					'heading' => esc_html__( 'Border Radius', 'total-theme-core' ),
+					'param_name' => 'border_radius',
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_select',
+					'heading' => esc_html__( 'Border Width', 'total-theme-core' ),
+					'param_name' => 'border_width',
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_select',
+					'heading' => esc_html__( 'Border Style', 'total-theme-core' ),
+					'param_name' => 'border_style',
+					'dependency' => [ 'element' => 'border_width', 'not_empty' => true ],
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_colorpicker',
+					'heading' => esc_html__( 'Border Color', 'total-theme-core' ),
+					'param_name' => 'border_color',
+					'css' => true,
+					'dependency' => [ 'element' => 'border_width', 'not_empty' => true ],
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 				],
 				// CSS.

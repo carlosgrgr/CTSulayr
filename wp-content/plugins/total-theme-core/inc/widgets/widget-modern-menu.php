@@ -2,12 +2,15 @@
 
 namespace TotalThemeCore\Widgets;
 
+use Walker_Nav_Menu;
+use TotalThemeCore\WidgetBuilder;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Modern Menu widget.
  */
-class Widget_Modern_Menu extends \TotalThemeCore\WidgetBuilder {
+class Widget_Modern_Menu extends WidgetBuilder {
 
 	/**
 	 * Widget args.
@@ -20,75 +23,75 @@ class Widget_Modern_Menu extends \TotalThemeCore\WidgetBuilder {
 	public function __construct() {
 		$this->args = [
 			'id_base' => 'wpex_modern_menu',
-			'name'    => $this->branding() . \esc_html__( 'Sidebar Menu', 'total-theme-core' ),
+			'name'    => $this->branding() . esc_html__( 'Sidebar Menu', 'total-theme-core' ),
 			'options' => [
 				'customize_selective_refresh' => true,
 			],
 			'fields'  => [
 				[
 					'id'    => 'title',
-					'label' => \esc_html__( 'Title', 'total-theme-core' ),
+					'label' => esc_html__( 'Title', 'total-theme-core' ),
 					'type'  => 'text',
 				],
 				[
 					'id'      => 'nav_menu',
-					'label'   => \esc_html__( 'Select Menu', 'total-theme-core' ),
+					'label'   => esc_html__( 'Select Menu', 'total-theme-core' ),
 					'type'    => 'select',
 					'choices' => 'menus',
 				],
 				[
 					'id'          => 'aria_label',
-					'label'       => \esc_html__( 'Aria Label', 'total-theme-core' ),
+					'label'       => esc_html__( 'Aria Label', 'total-theme-core' ),
 					'description' => esc_html__( 'Label for screen readers.', 'total-theme-core' ),
 					'type'        => 'text',
 				],
 				[
 					'id'      => 'style',
-					'label'   => \esc_html__( 'Style', 'total-theme-core' ),
+					'label'   => esc_html__( 'Style', 'total-theme-core' ),
 					'type'    => 'select',
 					'choices' => [
-						'bordered' => \esc_html__( 'Default', 'total-theme-core' ),
-						'clean' => \esc_html__( 'Clean', 'total-theme-core' ),
-						'plain' => \esc_html__( 'Plain', 'total-theme-core' ),
+						'bordered' => esc_html__( 'Default', 'total-theme-core' ),
+						'clean' => esc_html__( 'Clean', 'total-theme-core' ),
+						'plain' => esc_html__( 'Plain', 'total-theme-core' ),
 					],
 				],
 				[
 					'id'      => 'active_highlight',
 					'default' => true,
-					'label'   => \esc_html__( 'Highlight Active Page', 'total-theme-core' ),
+					'label'   => esc_html__( 'Highlight Active Page', 'total-theme-core' ),
 					'type'    => 'checkbox',
 				],
 				[
 					'id'      => 'show_arrows',
 					'default' => true,
-					'label'   => \esc_html__( 'Show Side Arrows', 'total-theme-core' ),
-					'description' => \esc_html__( 'If "Hide Dropdowns" is enabled, arrows will only appear on items that have dropdowns, not on all menu items.', 'total-theme-core' ),
+					'label'   => esc_html__( 'Show Side Arrows', 'total-theme-core' ),
+					'description' => esc_html__( 'If "Hide Dropdowns" is enabled, arrows will only appear on items that have dropdowns, not on all menu items.', 'total-theme-core' ),
 					'type'    => 'checkbox',
 				],
 				[
 					'id'      => 'show_descriptions',
 					'default' => false,
-					'label'   => \esc_html__( 'Show Descriptions', 'total-theme-core' ),
+					'label'   => esc_html__( 'Show Descriptions', 'total-theme-core' ),
 					'type'    => 'checkbox',
 				],
 				[
 					'id'          => 'hide_dropdowns',
 					'default'     => false,
-					'label'       => \esc_html__( 'Hide Dropdowns', 'total-theme-core' ),
-					'description' => \esc_html__( 'Dropdowns will open when the parent menu item is clicked. This option works best with the "Clean" or "Plain" style.', 'total-theme-core' ),
+					'label'       => esc_html__( 'Hide Dropdowns', 'total-theme-core' ),
+					'description' => esc_html__( 'Dropdowns will open when the parent menu item is clicked. This option works best with the "Clean" or "Plain" style.', 'total-theme-core' ),
 					'type'        => 'checkbox',
 				],
 				[
 					'id'          => 'expand_active_dropdowns',
 					'default'     => true,
-					'label'       => \esc_html__( 'Expand Active Dropdowns', 'total-theme-core' ),
-					'description' => \esc_html__( 'Automatically expand dropdowns that include the active page.', 'total-theme-core' ),
+					'label'       => esc_html__( 'Expand Active Dropdowns', 'total-theme-core' ),
+					'description' => esc_html__( 'Automatically expand dropdowns that include the active page.', 'total-theme-core' ),
 					'type'        => 'checkbox',
 				],
 				[
 					'id'          => 'el_class',
-					'label'       => \esc_html__( 'Extra class name', 'total-theme-core' ),
-					'description' => \esc_html__( 'Add extra classes to the widget container.', 'total-theme-core' ),
+					'label'       => esc_html__( 'Extra class name', 'total-theme-core' ),
+					'description' => esc_html__( 'Add extra classes to the widget container.', 'total-theme-core' ),
 					'type'        => 'text',
 				],
 			],
@@ -107,7 +110,7 @@ class Widget_Modern_Menu extends \TotalThemeCore\WidgetBuilder {
 			return;
 		}
 
-		echo \wp_kses_post( $args['before_widget'] );
+		echo wp_kses_post( $args['before_widget'] );
 
 		$this->widget_title( $args, $instance );
 
@@ -124,12 +127,12 @@ class Widget_Modern_Menu extends \TotalThemeCore\WidgetBuilder {
 		}
 
 		if ( ! empty( $instance['el_class'] ) ) {
-			$menu_class .= ' ' . \esc_attr( $instance['el_class'] );
+			$menu_class .= ' ' . esc_attr( $instance['el_class'] );
 		}
 
-		$aria_label = ! empty( $instance['aria_label'] ) ? \sanitize_text_field( $instance['aria_label'] ) : '';
+		$aria_label = ! empty( $instance['aria_label'] ) ? sanitize_text_field( $instance['aria_label'] ) : '';
 
-		\wp_nav_menu( [
+		wp_nav_menu( [
 			'menu_class'           => $menu_class,
 			'menu'                 => $instance['nav_menu'],
 			'walker'               => new Widget_Modern_Menu_Walker,
@@ -139,7 +142,7 @@ class Widget_Modern_Menu extends \TotalThemeCore\WidgetBuilder {
 			'container_aria_label' => $aria_label,
 		] );
 
-		echo \wp_kses_post( $args['after_widget'] );
+		echo wp_kses_post( $args['after_widget'] );
 	}
 
 }
@@ -149,7 +152,7 @@ register_widget( 'TotalThemeCore\Widgets\Widget_Modern_Menu' );
 /**
  * Custom Walker_Nav_Menu for the core menu widget.
  */
-class Widget_Modern_Menu_Walker extends \Walker_Nav_Menu {
+class Widget_Modern_Menu_Walker extends Walker_Nav_Menu {
 
 	/**
 	 * The URL to the privacy policy page.
@@ -346,7 +349,7 @@ class Widget_Modern_Menu_Walker extends \Walker_Nav_Menu {
 			} else {
 				$details_open = '';
 			}
-			$item_output .= '<details class="wpex-m-0"' . $details_open . '><summary class="' . \esc_attr( $summary_class ) . '">';
+			$item_output .= '<details class="wpex-m-0"' . $details_open . '><summary class="' . esc_attr( $summary_class ) . '">';
 		}
 		// WIDGET DETAILS ELEMENT END
 
@@ -363,7 +366,7 @@ class Widget_Modern_Menu_Walker extends \Walker_Nav_Menu {
 			if ( 'plain' === $widget_style || 'clean' === $widget_style ) {
 				$desc_class .= ' wpex-text-2';
 			}
-			$title = '<span class="modern-menu-widget__link-text"><span class="modern-menu-widget__link-heading wpex-block wpex-bold">' . $title . '</span><span class="' . \esc_attr( $desc_class ) . '">' . \esc_html( $menu_item->description ) . '</span></span>';
+			$title = '<span class="modern-menu-widget__link-text"><span class="modern-menu-widget__link-heading wpex-block wpex-bold">' . $title . '</span><span class="' . esc_attr( $desc_class ) . '">' . esc_html( $menu_item->description ) . '</span></span>';
 		} else {
 			$title = '<span class="modern-menu-widget__link-text">' . $title . '</span>';
 		}
@@ -375,7 +378,7 @@ class Widget_Modern_Menu_Walker extends \Walker_Nav_Menu {
 			$show_arrows = false;
 		}
 
-		if ( $show_arrows && \function_exists( '\totaltheme_get_icon' ) ) {
+		if ( $show_arrows && function_exists( 'totaltheme_get_icon' ) ) {
 
 			if ( $has_details ) {
 				$link_arrow_icon = ( 'bordered' === $widget_style ) ? 'material-arrow-forward-ios' : 'bootstrap-chevron-right';
@@ -383,7 +386,7 @@ class Widget_Modern_Menu_Walker extends \Walker_Nav_Menu {
 				$link_arrow_icon = ( 'bordered' === $widget_style ) ? 'material-arrow-back-ios' : 'bootstrap-chevron-left';
 			}
 
-			$link_arrow = (string) \apply_filters( 'wpex_modern_menu_widget_link_icon', $link_arrow_icon );
+			$link_arrow = (string) apply_filters( 'wpex_modern_menu_widget_link_icon', $link_arrow_icon );
 
 			if ( $link_arrow ) {
 				$icon_class = 'modern-menu-widget__link-icon';
@@ -410,9 +413,9 @@ class Widget_Modern_Menu_Walker extends \Walker_Nav_Menu {
 					if ( ! $has_details && ! is_rtl() ) {
 						$icon_class .= ' wpex-rotate-180';
 					}
-					$title = $title . \totaltheme_get_icon( $link_arrow, $icon_class );
+					$title = $title . totaltheme_get_icon( $link_arrow, $icon_class );
 				} else {
-					$title = \totaltheme_get_icon( $link_arrow, $icon_class ) . $title;
+					$title = totaltheme_get_icon( $link_arrow, $icon_class ) . $title;
 				}
 
 			}
@@ -542,7 +545,7 @@ class Widget_Modern_Menu_Walker extends \Walker_Nav_Menu {
 	 * Helper function returns page layout.
 	 */
 	private function get_page_layout() {
-		return \function_exists( 'wpex_content_area_layout' ) ? \wpex_content_area_layout() : 'right-sidebar';
+		return function_exists( 'wpex_content_area_layout' ) ? wpex_content_area_layout() : 'right-sidebar';
 	}
 
 }

@@ -188,6 +188,7 @@ if ( ! class_exists( 'Vcex_Steps_Shortcode' ) ) {
 				[
 					'type' => 'vcex_select',
 					'choices' => 'gap',
+					'std' => '',
 					'heading' => esc_html__( 'Horizontal Gap', 'total-theme-core' ),
 					'param_name' => 'gap_x',
 					'description' => esc_html__( 'Select the horizontal gap between steps.', 'total-theme-core' ),
@@ -198,9 +199,9 @@ if ( ! class_exists( 'Vcex_Steps_Shortcode' ) ) {
 				[
 					'type' => 'vcex_select',
 					'choices' => 'gap',
+					'std' => '',
 					'heading' => esc_html__( 'Vertical Gap', 'total-theme-core' ),
 					'param_name' => 'gap_y',
-					'std' => '40px',
 					'description' => esc_html__( 'Select the vertical gap between steps.', 'total-theme-core' ),
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],

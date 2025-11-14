@@ -285,103 +285,111 @@ if ( ! class_exists( 'VCEX_WooCommerce_Template_Shortcode' ) ) {
 		 * Array of shortcode parameters.
 		 */
 		public static function get_params_list(): array {
-			return array(
-				array(
+			return [
+				[
 					'type' => 'dropdown',
 					'heading' => esc_html__( 'Template', 'total-theme-core' ),
 					'param_name' => 'part',
 					'value' => self::get_template_choices(),
 					'editors' => [ 'wpbakery', 'elementor' ],
-				),
-				array(
+				],
+				[
 					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Bottom Margin', 'total-theme-core' ),
 					'param_name' => 'bottom_margin',
 					'admin_label' => true,
-				),
-				array(
+				],
+				[
 					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Visibility', 'total-theme-core' ),
 					'param_name' => 'visibility',
 					'editors' => [ 'wpbakery', 'elementor' ],
-				),
-				array(
+				],
+				[
 					'type' => 'textfield',
 					'heading' => esc_html__( 'Extra class name', 'total-theme-core' ),
 					'param_name' => 'el_class',
 					'description' => self::param_description( 'el_class' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
-				),
+				],
 				vcex_vc_map_add_css_animation(),
-				array(
+				[
 					'type' => 'textfield',
 					'heading' => esc_html__( 'Animation Duration', 'total'),
 					'param_name' => 'animation_duration',
 					'description' => esc_html__( 'Enter your custom time in seconds (decimals allowed).', 'total'),
-				),
-				array(
+				],
+				[
 					'type' => 'textfield',
 					'heading' => esc_html__( 'Animation Delay', 'total'),
 					'param_name' => 'animation_delay',
 					'description' => esc_html__( 'Enter your custom time in seconds (decimals allowed).', 'total'),
-				),
+				],
 				// Typography
-				array(
+				[
 					'type' => 'vcex_text_align',
 					'heading' => esc_html__( 'Text Align', 'total-theme-core' ),
 					'param_name' => 'text_align',
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
-				),
-				array(
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
 					'type' => 'vcex_colorpicker',
 					'heading' => esc_html__( 'Color', 'total-theme-core' ),
 					'param_name' => 'color',
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
-				),
-				array(
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
 					'type' => 'vcex_font_size',
 					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
 					'param_name' => 'font_size',
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
-				),
-				array(
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
 					'type' => 'vcex_font_family_select',
 					'heading' => esc_html__( 'Font Family', 'total-theme-core' ),
 					'param_name' => 'font_family',
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
-				),
-				array(
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
 					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Font Weight', 'total-theme-core' ),
 					'param_name' => 'font_weight',
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
-				),
-				array(
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
 					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Text Transform', 'total-theme-core' ),
 					'param_name' => 'text_transform',
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
-				),
-				array(
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
 					'type' => 'vcex_preset_textfield',
 					'heading' => esc_html__( 'Line Height', 'total-theme-core' ),
 					'param_name' => 'line_height',
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
-				),
-				array(
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
 					'type' => 'vcex_preset_textfield',
 					'heading' => esc_html__( 'Letter Spacing', 'total-theme-core' ),
 					'param_name' => 'letter_spacing',
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
-				),
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
 				// CSS
-				array(
+				[
 					'type' => 'css_editor',
 					'heading' => esc_html__( 'CSS box', 'total-theme-core' ),
 					'param_name' => 'css',
 					'group' => esc_html__( 'CSS', 'total-theme-core' ),
-				),
-			);
+				],
+			];
 		}
 
 		/**

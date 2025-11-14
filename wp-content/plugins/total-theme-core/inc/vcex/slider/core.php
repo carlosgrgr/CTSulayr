@@ -2,12 +2,11 @@
 
 namespace TotalThemeCore\Vcex\Slider;
 
-\defined( 'ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Core Slider methods.
  */
-
 class Core {
 
 	/**
@@ -34,11 +33,11 @@ class Core {
 	 */
 	public static function enqueue_scripts() {
 		foreach ( self::get_style_depends() as $style ) {
-			\wp_enqueue_style( $style );
+			wp_enqueue_style( $style );
 		}
 
 		foreach ( self::get_script_depends() as $script ) {
-			\wp_enqueue_script( $script );
+			wp_enqueue_script( $script );
 		}
 	}
 

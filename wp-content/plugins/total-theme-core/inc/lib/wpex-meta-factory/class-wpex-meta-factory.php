@@ -10,7 +10,7 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 	class WPEX_Meta_Factory {
 
 		/**
-		 * Check if class has initialized.
+		 * Check if class has initialized at least once.
 		 */
 		protected static $initialized = false;
 
@@ -20,9 +20,14 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 		protected static $scripts_enqueued = false;
 
 		/**
+		 * Render callbacks.
+		 */
+		protected static $render_callbacks = [];
+
+		/**
 		 * Version.
 		 */
-		public $version = '2.1';
+		public $version = '2.2';
 
 		/**
 		 * Default metabox settings.
@@ -61,6 +66,24 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 				$this->metabox['screen'] = [ $this->metabox['screen'] ];
 			}
 
+			// If the metabox isn't registered for the admin only check for callbacks
+			if ( 'admin_init' !== current_filter() ) {
+				foreach ( $this->get_metabox_fields() as $field ) {
+					if ( isset( $field['render_callback'] ) ) {
+						self::$render_callbacks[ $field['id'] ] = $field['render_callback'];
+					}
+				}
+			}
+
+			if ( is_admin() ) {
+				$this->register_admin_hooks();
+			}
+		}
+
+		/**
+		 * Register admin hooks.
+		 */
+		private function register_admin_hooks() {
 			add_action( 'load-post.php', [ $this, 'add_save_actions' ] );
 			add_action( 'load-post-new.php', [ $this, 'add_save_actions' ] );
 			add_action( 'admin_enqueue_scripts', [ $this, 'maybe_enqueue_scripts' ] );
@@ -290,8 +313,6 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 				$field_id_parsed = $field_id;
 			}
 
-			$tr_id = 'wpex-mf-tr--' . esc_attr( $field_id_parsed );
-
 			if ( $field_desc ) {
 				$desc_class = 'wpex-mf-desc';
 				if ( $desc_tip ) {
@@ -303,84 +324,96 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 					}
 				$field_desc_html .= '>' . wp_kses_post( $field_desc ) . '</p>';
 			}
+
+			$tr_id = 'heading' === $field_type ? '' : ' id="wpex-mf-tr--' . esc_attr( $field_id_parsed ) . '"';
 			?>
 
-			<tr id="<?php echo esc_attr( $tr_id ); ?>" class="wpex-mf-tr wpex-mf-field--<?php echo esc_attr( $field['type'] ?? 'text' ); ?>"<?php echo $this->get_conditional_data( $field ); ?>>
+			<tr<?php echo $tr_id; ?> class="wpex-mf-tr wpex-mf-field--<?php echo esc_attr( $field['type'] ?? 'text' ); ?>"<?php echo $this->get_conditional_data( $field ); ?>><?php
 
-				<?php if ( $field_name ) {
-					?>
+				if ( 'heading' === $field_type ) {
+					echo '<th colspan="2">' . esc_html( $field_name ) . '</th>';
+				} else {
+	
+					if ( $field_name ) {
+						?>
+						<th>
+							<div class="wpex-mf-label__wrap">
+								<span class="wpex-mf-label"><?php
+								if ( isset( $field['icon'] ) && function_exists( 'totaltheme_get_icon' ) ) {
+									echo totaltheme_get_icon( $field['icon'], 'wpex-mf-label__icon' );
+								}
+								switch ( $field['type'] ) {
+									case 'multi_select':
+									case 'group':
+									case 'button_group':
+										echo '<span id="wpex-mf-label--' . esc_attr( $field_id_parsed ) . '">' . esc_html( wp_strip_all_tags( $field_name ) ) . '</span>';
+										break;
+									default:
+										?>
+										<label id="<?php echo esc_attr( "wpex-mf-label--{$field_id_parsed}" ); ?>" for="<?php echo esc_attr( $this->get_field_id( $field ) ); ?>"><?php echo esc_html( wp_strip_all_tags( $field_name ) ); ?></label>
+										<?php
+										break;
 
-					<th>
+								} ?>
+								</span>
+								<?php if ( $desc_tip ) { ?>
+									<button type="button" class="wpex-mf-help-button" aria-expanded="false" aria-controls="wpex-mf-desc--<?php echo esc_attr( $field_id_parsed ); ?>"><span class="dashicons dashicons-editor-help"aria-hidden="true"></span><span class="screen-reader-text"><?php echo sprintf( esc_html_x( 'Help on: %s', 'Help on: *custom field name* screen reader text.', 'total-theme-core' ), $field_name ); ?></span></button>
+								<?php } ?>
+							</div>
+							<?php if ( $field_desc ) {
+								// @codingStandardsIgnoreLine
+								echo $field_desc_html;
+							} ?>
+						</th>
+						<?php
+					}
 
-						<div class="wpex-mf-label__wrap">
-							
-							<span class="wpex-mf-label"><?php
+					// Output field type.
+					$method = "field_{$field_type}";
 
-							if ( isset( $field['icon'] ) && function_exists( 'totaltheme_get_icon' ) ) {
-								echo totaltheme_get_icon( $field['icon'], 'wpex-mf-label__icon' );
+					if ( method_exists( $this, $method ) ) {
+
+						$td_colspan = empty( $field_name ) ? '2' : '';
+						?>
+						<td colspan="<?php echo esc_attr( $td_colspan ); ?>"><?php
+
+							// Render field type
+							$this->$method( $field, $value );
+
+							// Hint
+							if ( isset( $field['immutable'] ) && true === $field['immutable'] && $value ) {
+								$immutable_desc = isset( $field['immutable_desc'] ) ? $field['immutable_desc'] : esc_html__( 'This field is locked and cannot be edited.', 'total-theme-core' );
+								if ( $immutable_desc ) {
+									echo '<p id="wpex-mf-hint--' . esc_attr( $field_id_parsed ) . '" class="wpex-mf-hint">' . esc_html( $immutable_desc ) . '</p>';
+								}
+							} elseif ( ! empty( $field['hint'] ) ) {
+								echo '<p id="wpex-mf-hint--' . esc_attr( $field_id_parsed ) . '" class="wpex-mf-hint">' . esc_html( $field['hint'] ) . '</p>';
+							}
+
+							// Immutable notice
+							if ( ! $value && isset( $field['immutable'] ) && true === $field['immutable'] ) {
+								echo '<div id="wpex-mf-immutable-notice--' . esc_attr( $field_id_parsed ) . '" class="wpex-mf-immutable-notice wpex-mf-warning" role="note"><span>&#x26A0;</span><div>' . esc_html__( 'Once set, this field will be locked and uneditable.', 'total-theme-core' ) . '</div></div>';
+							}
+
+							// After field hook
+							if ( ! empty( $field['after_hook'] ) ) {
+								$after_hook = $field['after_hook'];
+								if ('alias' === $field['id'] ) {
+									$after_hook = str_replace( '{{alias}}', $value, $after_hook );
+								}
+								echo '<div class="wpex-mf-after-hook">' . wp_kses_post( $after_hook ) . '</div>';
 							}
 							
-							switch ( $field['type'] ) {
-								case 'multi_select':
-								case 'group':
-									echo esc_html( wp_strip_all_tags( $field_name ) );
-									break;
-								default:
-									?>
-									<label class="wpex-mf-label" for="<?php echo esc_attr( $this->parse_field_id( $field['id'] ) ); ?>"><?php echo esc_html( wp_strip_all_tags( $field_name ) ); ?></label>
-									<?php
-									break;
+							// Field description
+							if ( empty( $field_name ) && $field_desc ) {
+								echo $field_desc_html; // @codingStandardsIgnoreLine
+							}
 
-							} ?>
-
-							</span>
-
-							<?php if ( $desc_tip ) { ?>
-								<button type="button" class="wpex-mf-help-button" aria-expanded="false" aria-controls="wpex-mf-desc--<?php echo esc_attr( $field_id_parsed ); ?>"><span class="dashicons dashicons-editor-help"aria-hidden="true"></span><span class="screen-reader-text"><?php echo sprintf( esc_html_x( 'Help on: %s', 'Help on: *custom field name* screen reader text.', 'total-theme-core' ), $field_name ); ?></span></button>
-							<?php } ?>
-
-						</div>
-
-						<?php if ( $field_desc ) {
-							// @codingStandardsIgnoreLine
-							echo $field_desc_html;
-						} ?>
-
-					</th>
-
-					<?php
-				} ?>
-
-				<?php
-				// Output field type.
-				$method = "field_{$field_type}";
-
-				if ( method_exists( $this, $method ) ) {
-
-					$td_colspan = empty( $field_name ) ? '2' : '';
-					?>
-					<td colspan="<?php echo esc_attr( $td_colspan ); ?>"><?php
-
-						// Render field type.
-						$this->$method( $field, $value );
-
-						// After field hook.
-						if ( ! empty( $field['after_hook'] ) ) {
-							echo '<div class="wpex-mf-after-hook">' . wp_kses_post( $field['after_hook'] ) . '</div>';
-						}
-						
-						// Field description.
-						if ( empty( $field_name ) && $field_desc ) {
-							// @codingStandardsIgnoreLine
-							echo $field_desc_html;
-						}
-
-					?></td>
-					<?php
+						?></td>
+						<?php
+					}
 				}
-				?>
-
-			</tr>
+			?></tr>
 
 		<?php
 		}
@@ -457,12 +490,64 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 		 * Render a text field type.
 		 */
 		protected function field_text( $field, $value ) {
-			$required    = isset( $field['required'] ) ? ' required' : '';
-			$maxlength   = isset( $field['maxlength'] ) ? ' maxlength="' . esc_attr( floatval( $field['maxlength'] ) ) . '"' : '';
-			$placeholder = ! empty( $field['placeholder'] ) ? ' placeholder="' . esc_attr( esc_attr( $field['placeholder'] ) ) . '"' : '';
-			?>
-				<input class="wpex-mf-metabox__input wpex-mf-metabox__input--wide" id="<?php echo esc_attr( $this->parse_field_id( $field['id'] ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>" type="text" value="<?php echo esc_attr( $value ); ?>" <?php echo $required . $maxlength . $placeholder; ?>>
-			<?php
+			$input_attrs = ! empty( $field['input_attrs'] ) && is_array( $field['input_attrs'] ) ? $field['input_attrs'] : [];
+			$choices     = ! empty( $field['choices'] ) && is_array( $field['choices'] ) ? $field['choices'] : [];
+
+			if ( $choices && is_callable( $choices ) ) {
+				$choices = call_user_func( $choices );
+			}
+
+			// Allowed outside of input_attrs
+			if ( ! isset( $input_attrs['required'] ) && ! empty( $field['required'] ) ) {
+				$input_attrs['required'] = true;
+			}
+			if ( ! isset( $input_attrs['maxlength'] ) && isset( $field['maxlength'] ) ) {
+				$input_attrs['maxlength'] = floatval( $field['maxlength'] );
+			}
+			if ( ! isset( $input_attrs['placeholder'] ) && ! empty( $field['placeholder'] ) ) {
+				$input_attrs['placeholder'] = $field['placeholder'];
+			}
+
+			 // Add value, type, id, name, class explicitly (not overrideable)
+			$input_attrs['type']  = 'text';
+			$input_attrs['value'] = $value;
+			$input_attrs['id']    = $this->get_field_id( $field );
+			$input_attrs['name']  = $this->get_field_name( $field );
+			$input_attrs['class'] = 'wpex-mf-metabox__input wpex-mf-metabox__input--wide';
+
+			if ( isset( $field['immutable'] ) && true === $field['immutable'] && $value ) {
+				$input_attrs['readonly'] = true;
+			}
+
+			if ( $describedby = $this->get_field_describedby( $field ) ) {
+				$input_attrs['aria-describedby'] = $describedby;
+			}
+
+			// Build attribute string
+			$attr_str = '';
+			foreach ( $input_attrs as $attr => $attr_value ) {
+				if ( is_bool( $attr_value ) ) {
+					if ( $attr_value ) {
+						$attr_str .= ' ' . esc_attr( $attr );
+					}
+				} else {
+					$attr_str .= ' ' . esc_attr( $attr ) . '="' . esc_attr( $attr_value ) . '"';
+				}
+			}
+
+			if ( $choices ) {
+				$attr_str .= ' list="datalist-' . esc_attr( $input_attrs['id'] ) . '"';
+			}
+
+			echo '<input' . $attr_str . '>';
+
+			if ( $choices ) {
+				echo '<datalist id="datalist-' . esc_attr( $input_attrs['id'] ) . '">';
+					foreach ( $choices as $choice ) {
+						echo '<option value="' . esc_attr( $choice ) . '">';
+					}
+				echo '</datalist>';
+			}
 		}
 
 		/**
@@ -478,9 +563,14 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 			$required = isset( $field['required'] ) ? ' required' : '';
 			$min      = isset( $field['min'] ) ? ' min="' . esc_attr( $field['min'] ) . '"' : '';
 			$max      = isset( $field['max'] ) ? ' max="' . esc_attr( $field['max'] ) . '"' : '';
-			?>
 
-				<input class="wpex-mf-metabox__input wpex-mf-metabox__input--wide" id="<?php echo esc_attr( $this->parse_field_id( $field['id'] ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>" type="date" value="<?php echo esc_attr( $value ); ?>" <?php echo $required . $min . $max; ?>>
+			if ( $describedby = $this->get_field_describedby( $field ) ) {
+				$describedby = ' aria-describedby="' . esc_attr( $describedby ) . '"';
+			} else {
+				$describedby = '';
+			}
+			?>
+				<input class="wpex-mf-metabox__input wpex-mf-metabox__input--wide" id="<?php echo esc_attr( $this->get_field_id( $field ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>" type="date" value="<?php echo esc_attr( $value ); ?>" <?php echo $required . $min . $max . $describedby; ?>>
 			<?php
 		}
 
@@ -491,8 +581,14 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 			$required    = isset( $field['required'] ) ? ' required' : '';
 			$maxlength   = isset( $field['maxlength'] ) ? ' maxlength="' . floatval( $field['maxlength'] ) . '"' : '';
 			$placeholder = ! empty( $field['placeholder'] ) ? ' placeholder="' . esc_attr( $field['placeholder'] ) . '"' : '';
+
+			if ( $describedby = $this->get_field_describedby( $field ) ) {
+				$describedby = ' aria-describedby="' . esc_attr( $describedby ) . '"';
+			} else {
+				$describedby = '';
+			}
 			?>
-				<input class="wpex-mf-metabox__input wpex-mf-metabox__input--wide" id="<?php echo esc_attr( $this->parse_field_id( $field['id'] ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>" type="url" value="<?php echo esc_attr( $value ); ?>" <?php echo $required . $maxlength . $placeholder; ?>>
+				<input class="wpex-mf-metabox__input wpex-mf-metabox__input--wide" id="<?php echo esc_attr( $this->get_field_id( $field ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>" type="url" value="<?php echo esc_attr( $value ); ?>" <?php echo $required . $maxlength . $placeholder . $describedby; ?>>
 			<?php
 		}
 
@@ -503,8 +599,14 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 			$step_safe = ! empty( $field['step'] ) ? ' step="' . esc_attr( $field['step'] ) . '"' : '';
 			$min_safe  = isset( $field['min'] ) ? ' min="' . esc_attr( $field['min'] ) . '"' : '';
 			$max_safe  = isset( $field['max'] ) ? ' max="' . esc_attr( $field['max'] ) . '"' : '';
+
+			if ( $describedby = $this->get_field_describedby( $field ) ) {
+				$describedby = ' aria-describedby="' . esc_attr( $describedby ) . '"';
+			} else {
+				$describedby = '';
+			}
 			?>
-				<input class="wpex-mf-metabox__input wpex-mf-metabox__input--wide" id="<?php echo esc_attr( $this->parse_field_id( $field['id'] ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>" type="number" value="<?php echo esc_attr( $value ); ?>"<?php echo $step_safe . $min_safe . $max_safe; ?>>
+				<input class="wpex-mf-metabox__input wpex-mf-metabox__input--wide" id="<?php echo esc_attr( $this->get_field_id( $field ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>" type="number" value="<?php echo esc_attr( $value ); ?>"<?php echo $step_safe . $min_safe . $max_safe . $describedby; ?>>
 			<?php
 		}
 
@@ -513,8 +615,13 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 		 */
 		protected function field_textarea( $field, $value ) {
 			$rows = $field['rows'] ?? 4;
+			if ( $describedby = $this->get_field_describedby( $field ) ) {
+				$describedby = ' aria-describedby="' . esc_attr( $describedby ) . '"';
+			} else {
+				$describedby = '';
+			}
 			?>
-			<textarea class="wpex-mf-metabox__input wpex-mf-metabox__input--wide" id="<?php echo esc_attr( $this->parse_field_id( $field['id'] ) ); ?>" rows="<?php echo absint( $rows ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>"><?php echo wp_kses_post( $value ); ?></textarea>
+			<textarea class="wpex-mf-metabox__input wpex-mf-metabox__input--wide" id="<?php echo esc_attr( $this->get_field_id( $field ) ); ?>" rows="<?php echo absint( $rows ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>"<?php echo $describedby; ?>><?php echo wp_kses_post( $value ); ?></textarea>
 			<?php
 		}
 
@@ -523,8 +630,13 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 		 */
 		protected function field_iframe( $field, $value ) {
 			$rows = $field['rows'] ?? 4;
+			if ( $describedby = $this->get_field_describedby( $field ) ) {
+				$describedby = ' aria-describedby="' . esc_attr( $describedby ) . '"';
+			} else {
+				$describedby = '';
+			}
 			?>
-			<textarea class="wpex-mf-metabox__input wpex-mf-metabox__input--wide" id="<?php echo esc_attr( $this->parse_field_id( $field['id'] ) ); ?>" rows="<?php echo absint( $rows ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>"><?php echo wp_kses( $value, $this->get_iframe_allowed_tags() ); ?></textarea>
+			<textarea class="wpex-mf-metabox__input wpex-mf-metabox__input--wide" id="<?php echo esc_attr( $this->get_field_id( $field ) ); ?>" rows="<?php echo absint( $rows ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>"<?php echo $describedby; ?>><?php echo wp_kses( $value, $this->get_iframe_allowed_tags() ); ?></textarea>
 			<?php
 		}
 
@@ -533,8 +645,13 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 		 */
 		protected function field_html( $field, $value ) {
 			$rows = $field['rows'] ?? 4;
+			if ( $describedby = $this->get_field_describedby( $field ) ) {
+				$describedby = ' aria-describedby="' . esc_attr( $describedby ) . '"';
+			} else {
+				$describedby = '';
+			}
 			?>
-			<textarea class="wpex-mf-metabox__input wpex-mf-metabox__input--wide wpex-mf-metabox__input--noresize" id="<?php echo esc_attr( $this->parse_field_id( $field['id'] ) ); ?>" rows="<?php echo absint( $rows ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>"><?php echo wp_kses_post( $value ); ?></textarea>
+			<textarea class="wpex-mf-metabox__input wpex-mf-metabox__input--wide wpex-mf-metabox__input--noresize" id="<?php echo esc_attr( $this->get_field_id( $field ) ); ?>" rows="<?php echo absint( $rows ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>"<?php echo $describedby; ?>><?php echo wp_kses_post( $value ); ?></textarea>
 			<?php
 		}
 
@@ -544,13 +661,13 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 		protected function field_wp_editor( $field, $value ) {
 			wp_editor(
 				wp_kses_post( $value ),
-				$this->parse_field_id( $field['id'] ),
+				$this->get_field_id( $field ),
 				[
 					'textarea_name' => esc_attr( $this->add_prefix( $field['id'] ) ),
-					'textarea_rows' => $field['rows'] ?? 4,
+					'textarea_rows' => absint( $field['rows'] ?? 4 ),
 					'media_buttons' => wp_validate_boolean( $field['media_buttons'] ?? false ),
 					'quicktags'     => wp_validate_boolean( $field['quicktags'] ?? false ),
-					'teeny'         => $field['teeny'] ?? false,
+					'teeny'         => wp_validate_boolean( $field['teeny'] ?? false ),
 				]
 			);
 		}
@@ -560,8 +677,13 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 		 */
 		protected function field_checkbox( $field, $value ) {
 			$value = $value ? true : false;
+			if ( $describedby = $this->get_field_describedby( $field ) ) {
+				$describedby = ' aria-describedby="' . esc_attr( $describedby ) . '"';
+			} else {
+				$describedby = '';
+			}
 			?>
-				<input class="wpex-mf-metabox__input wpex-mf-metabox__input--wide" id="<?php echo esc_attr( $this->parse_field_id( $field['id'] ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>" type="checkbox" <?php checked( $value, true, true ); ?>>
+				<input class="wpex-mf-metabox__input wpex-mf-metabox__input--wide" id="<?php echo esc_attr( $this->get_field_id( $field ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>" type="checkbox" <?php checked( $value, true, true ); ?><?php echo $describedby; ?>>
 			<?php
 		}
 
@@ -571,14 +693,19 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 		protected function field_select( $field, $value ) {
 			$choices      = $field['choices'] ?? $field['options'] ?? [];
 			$autocomplete = ! empty( $field['autocomplete'] ) ? $field['autocomplete'] : []; // @todo
-			if ( is_callable( $choices ) ) {
+			if ( $choices && is_callable( $choices ) ) {
 				$choices = call_user_func( $choices );
 			}
 			if ( empty( $choices ) || ! is_array( $choices ) ) {
 				return;
 			}
+			if ( $describedby = $this->get_field_describedby( $field ) ) {
+				$describedby = ' aria-describedby="' . esc_attr( $describedby ) . '"';
+			} else {
+				$describedby = '';
+			}
 			?>
-			<select class="wpex-mf-metabox__input wpex-mf-metabox__input--wide" id="<?php echo esc_attr( $this->parse_field_id( $field['id'] ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>"><?php $this->render_select_options( $choices, $value ); ?></select>
+			<select class="wpex-mf-metabox__input wpex-mf-metabox__input--wide" id="<?php echo esc_attr( $this->get_field_id( $field ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>"<?php echo $describedby; ?>><?php $this->render_select_options( $choices, $value ); ?></select>
 			<?php
 		}
 
@@ -610,7 +737,6 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 		 */
 		protected function field_button_group( $field, $value ) {
 			$choices = $field['choices'] ?? $field['options'] ?? [];
-
 			if ( is_callable( $choices ) ) {
 				$choices = call_user_func( $choices );
 			}
@@ -618,15 +744,21 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 			if ( empty( $choices ) || ! is_array( $choices ) ) {
 				return;
 			}
+
+			if ( $describedby = $this->get_field_describedby( $field ) ) {
+				$describedby = ' aria-describedby="' . esc_attr( $describedby ) . '"';
+			} else {
+				$describedby = '';
+			}
 			?>
-			<div class="wpex-mf-metabox__button-group">
+			<div class="wpex-mf-metabox__button-group" role="group" aria-labelledby="<?php echo esc_attr( $this->get_field_label_id( $field['id'] ) ); ?>"<?php echo $describedby; ?>>
 				<?php foreach ( $choices as $choice_v => $name ) {
 					$button_class = $choice_v ? 'wpex-mf-metabox__button--' . sanitize_html_class( sanitize_key( $name ) ) : '';
 					?>
 					<button class="<?php echo esc_attr( trim( $button_class ) ); ?>"<?php echo $choice_v ? 'value="' . esc_attr( $choice_v ) . '"' : ''; ?><?php echo ( $value === $choice_v ) ? ' aria-pressed="true"' : ''; ?>><?php echo esc_html( $name ); ?></button>
 				<?php } ?>
 			</div>
-			<input class="wpex-mf-metabox__input" id="<?php echo esc_attr( $this->parse_field_id( $field['id'] ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>" type="hidden" value="<?php echo esc_attr( $value ); ?>">
+			<input class="wpex-mf-metabox__input" id="<?php echo esc_attr( $this->get_field_id( $field ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>" type="hidden" value="<?php echo esc_attr( $value ); ?>">
 			<?php
 		}
 
@@ -636,9 +768,10 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 		protected function field_select_template( $field, $value ) {
 			if ( function_exists( 'totaltheme_call_non_static' ) ) {
 				totaltheme_call_non_static( 'Theme_Builder', 'template_select', [
-					'id'            => $this->parse_field_id( $field['id'] ),
+					'id'            => $this->get_field_id( $field ),
 					'class'         => 'wpex-mf-metabox__input wpex-mf-metabox__input--wide',
 					'name'          => $this->get_field_name( $field ),
+					'describedby'   => $this->get_field_describedby( $field ),
 					'selected'      => $value,
 					'template_type' => 'single',
 					'echo'          => true,
@@ -654,8 +787,9 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 		protected function field_color( $field, $value ) {
 			if ( function_exists( 'totaltheme_component' ) ) {
 				totaltheme_component( 'color', [
-					'id'                 => $this->parse_field_id( $field['id'] ),
+					'id'                 => $this->get_field_id( $field ),
 					'input_name'         => $this->get_field_name( $field ),
+					'describedby'        => $this->get_field_describedby( $field ),
 					'value'              => $value,
 					'allow_global'       => $field['allow_global'] ?? true,
 					'exclude'            => 'extra,theme',
@@ -665,7 +799,7 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 				wp_enqueue_style( 'wp-color-picker' );
 				wp_enqueue_script( 'wp-color-picker' );
 				?>
-					<input class="wpex-mf-metabox__input wpex-mf-colorpicker" id="<?php echo esc_attr( $this->parse_field_id( $field['id'] ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>" type="text" value="<?php echo esc_attr( $value ); ?>">
+					<input class="wpex-mf-metabox__input wpex-mf-colorpicker" id="<?php echo esc_attr( $this->get_field_id( $field ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>" type="text" value="<?php echo esc_attr( $value ); ?>">
 				<?php
 			}
 		}
@@ -676,9 +810,10 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 		protected function field_icon_select( $field, $value ) {
 			if ( function_exists( 'totaltheme_call_static' ) ) {
 				totaltheme_call_static( 'Helpers\Icon_Select', 'render_form', [
-					'selected'   => $value,
-					'choices'    => [],
-					'input_name' => $this->add_prefix( $field['id'] ),
+					'selected'    => $value,
+					'choices'     => [],
+					'input_name'  => $this->add_prefix( $field['id'] ),
+					'describedby' => $this->get_field_describedby( $field ),
 				] );
 			}
 		}
@@ -687,18 +822,27 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 		 * Render a multi_select field type.
 		 */
 		protected function field_multi_select( $field, $value ) {
-			$value = is_array( $value ) ? $value : [];
-			$choices = $field['choices'] ?? [];
+			$value   = is_array( $value ) ? $value : [];
+			$choices = $field['choices'] ?? $field['options'] ?? [];
+			if ( $choices && is_callable( $choices ) ) {
+				$choices = call_user_func( $choices );
+			}
 			if ( empty( $choices ) ) {
 				return;
 			}
+			if ( $describedby = $this->get_field_describedby( $field ) ) {
+				$describedby = ' aria-describedby="' . esc_attr( $describedby ) . '"';
+			} else {
+				$describedby = '';
+			}
 			?>
-				<fieldset>
+				<fieldset<?php echo $describedby; ?>>
+					<legend class="screen-reader-text"><?php echo esc_html( $field['name'] ?? '' ); ?></legend>
 					<?php foreach ( $choices as $choice_v => $name ) {
 						$field_id = $field['id'] . '_' . $choice_v;
 						?>
-						<input class="wpex-mf-metabox__input" id="<?php echo $this->parse_field_id( $field_id ); ?>" type="checkbox" name="<?php echo esc_attr( $this->add_prefix( $field['id'] ) ); ?>[]" value="<?php echo esc_attr( $choice_v ); ?>" <?php checked( in_array( $choice_v, $value ), true, true ); ?>>
-						<label for="<?php echo $this->parse_field_id( $field_id ); ?>"><?php echo esc_html( $name ); ?></label>
+						<input class="wpex-mf-metabox__input" id="<?php echo $this->get_field_id( $field_id ); ?>" type="checkbox" name="<?php echo esc_attr( $this->add_prefix( $field['id'] ) ); ?>[]" value="<?php echo esc_attr( $choice_v ); ?>" <?php checked( in_array( $choice_v, $value ), true, true ); ?>>
+						<label for="<?php echo $this->get_field_id( $field_id ); ?>"><?php echo esc_html( $name ); ?></label>
 						<br>
 					<?php } ?>
 				</fieldset>
@@ -711,7 +855,7 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 		protected function field_upload( $field, $value ) {
 			wp_enqueue_media();
 
-			// Old Redux cleanup.
+			// Old Redux cleanup or ACF migration
 			if ( is_array( $value ) ) {
 				$value = $value['url'] ?? '';
 			}
@@ -721,6 +865,12 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 			$return      = ! empty( $field['return'] ) ? $field['return'] : 'url';
 			$media_type  = $field['media_type'] ?? 'all';
 			$show_input  = 'url' == $return || isset( $field['show_input'] );
+
+			if ( $describedby = $this->get_field_describedby( $field ) ) {
+				$describedby = ' aria-describedby="' . esc_attr( $describedby ) . '"';
+			} else {
+				$describedby = '';
+			}
 
 			if ( is_array( $media_type ) ) {
 				$media_type = implode( ',', $media_type );
@@ -742,34 +892,42 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 
 				?>
 
-				<div class="wpex-mf-upload-preview<?php echo ! $preview_visible ? ' wpex-mf-upload-preview--empty' : ''; ?>">
-					<div class="wpex-mf-upload-preview__content<?php echo ! $preview_visible ? ' hidden' : ''; ?>"><?php $this->upload_field_attachment_preview( $value ); ?></div>
-					<a href="#" class="wpex-mf-upload-remove" role="button"><svg fill="currentColor" height="24" width="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"></path></svg><span class="screen-reader-text"><?php esc_html_e( 'remove selected icon', 'total-theme-core' ); ?></span></a>
-					<div class="wpex-mf-upload-preview__loader"><svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg"><circle cx="18" cy="18" r="18" fill="#a2a2a2" fill-opacity=".5"/><circle cx="18" cy="8" r="4" fill="#fff"><animateTransform attributeName="transform" dur="1100ms" from="0 18 18" repeatCount="indefinite" to="360 18 18" type="rotate"/></circle></svg></div>
-				</div>
+				<div role="group" aria-labelledby="<?php echo esc_attr( $this->get_field_label_id( $field['id'] ) ); ?>"<?php echo $describedby; ?>>
 
-				<div class="wpex-mf-upload-actions">
-					<input class="wpex-mf-metabox__input wpex-mf-metabox__input--wide" id="<?php echo esc_attr( $this->parse_field_id( $field['id'] ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>" type="<?php echo $show_input ? 'text' : 'hidden'; ?>" value="<?php echo esc_attr( $value ); ?>" data-selection="<?php echo esc_attr( $return ); ?>" <?php echo $required . $placeholder; ?>>
-					<button class="wpex-mf-upload button-secondary" type="button" data-wpex-mf-media-type="<?php echo esc_attr( $media_type ); ?>"><?php
-						switch ( $media_type ) {
-							case 'image':
-								esc_html_e( 'Select Image', 'total-theme-core' );
-								break;
-							case 'video':
-								esc_html_e( 'Select Video', 'total-theme-core' );
-								break;
-							case 'audio':
-								esc_html_e( 'Select Audio', 'total-theme-core' );
-								break;
-							case 'font':
-								esc_html_e( 'Select Font', 'total-theme-core' );
-								break;
-							case 'all':
-							default:
-								esc_html_e( 'Select File', 'total-theme-core' );
-								break;
-						}
-					?></button>
+					<div class="wpex-mf-upload-preview<?php echo ! $preview_visible ? ' wpex-mf-upload-preview--empty' : ''; ?>">
+						<div class="wpex-mf-upload-preview__content<?php echo ! $preview_visible ? ' hidden' : ''; ?>"><?php $this->upload_field_attachment_preview( $value ); ?></div>
+						<a href="#" class="wpex-mf-upload-remove" role="button" aria-label="<?php esc_attr_e( 'Remove selected item', 'total-theme-core' ); ?>"><svg fill="currentColor" height="24" width="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"></path></svg><span class="screen-reader-text"><?php esc_html_e( 'remove selected icon', 'total-theme-core' ); ?></span></a>
+						<div class="wpex-mf-upload-preview__loader"><svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg"><circle cx="18" cy="18" r="18" fill="#a2a2a2" fill-opacity=".5"/><circle cx="18" cy="8" r="4" fill="#fff"><animateTransform attributeName="transform" dur="1100ms" from="0 18 18" repeatCount="indefinite" to="360 18 18" type="rotate"/></circle></svg></div>
+					</div>
+
+					<div class="wpex-mf-upload-actions">
+						<input class="wpex-mf-metabox__input wpex-mf-metabox__input--wide" id="<?php echo esc_attr( $this->get_field_id( $field ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>" type="<?php echo $show_input ? 'text' : 'hidden'; ?>" value="<?php echo esc_attr( $value ); ?>" data-selection="<?php echo esc_attr( $return ); ?>" <?php echo $required . $placeholder; ?>>
+						<button class="wpex-mf-upload button-secondary" type="button" data-wpex-mf-media-type="<?php echo esc_attr( $media_type ); ?>"><?php
+							switch ( $media_type ) {
+								case 'pdf':
+								case 'application/pdf':
+									esc_html_e( 'Select a PDF', 'total-theme-core' );
+									break;
+								case 'image':
+									esc_html_e( 'Select Image', 'total-theme-core' );
+									break;
+								case 'video':
+									esc_html_e( 'Select Video', 'total-theme-core' );
+									break;
+								case 'audio':
+									esc_html_e( 'Select Audio', 'total-theme-core' );
+									break;
+								case 'font':
+									esc_html_e( 'Select Font', 'total-theme-core' );
+									break;
+								case 'all':
+								default:
+									esc_html_e( 'Select File', 'total-theme-core' );
+									break;
+							}
+						?></button>
+					</div>
+
 				</div>
 
 				<?php
@@ -778,7 +936,7 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 
 			// Standard upload
 			else { ?>
-				<input class="wpex-mf-metabox__input" id="<?php echo esc_attr( $this->parse_field_id( $field['id'] ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>" type="text" value="<?php echo esc_attr( $value ); ?>" data-selection="<?php echo esc_attr( $return ); ?>" <?php echo $required . $placeholder; ?>>
+				<input class="wpex-mf-metabox__input" id="<?php echo esc_attr( $this->get_field_id( $field ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field ) ); ?>" type="text" value="<?php echo esc_attr( $value ); ?>" data-selection="<?php echo esc_attr( $return ); ?>" <?php echo $required . $placeholder; ?>>
 				<button class="wpex-mf-upload button-secondary" type="button" data-wpex-mf-media-type="<?php echo esc_attr( $media_type ); ?>"><?php esc_html_e( 'Upload', 'total-theme-core' ); ?></button>
 			<?php
 
@@ -789,17 +947,17 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 		 * Save metabox data.
 		 */
 		public function save_meta_data( $post_id ) {
-			// If this is an autosave, our form has not been submitted, so we don't want to do anything.
+			// If this is an autosave, our form has not been submitted, so we don't want to do anything
 			if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 				return;
 			}
 
-			// Check if our nonce is set.
+			// Check if our nonce is set
 			if ( ! isset( $_POST["wpex_meta_factory_nonce_{$this->metabox['id']}"] ) ) {
 				return;
 			}
 
-			// Verify that the nonce is valid.
+			// Verify that the nonce is valid
 			if ( ! wp_verify_nonce(
 				sanitize_text_field( wp_unslash( $_POST["wpex_meta_factory_nonce_{$this->metabox['id']}" ] ) ),
 				"wpex_metabox_factory_{$this->metabox['id']}" )
@@ -807,7 +965,7 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 				return;
 			}
 
-			// Check the user's permissions.
+			// Check the user's permissions
 			if ( isset( $_POST['post_type'] ) && 'page' === $_POST['post_type'] ) {
 				if ( ! current_user_can( 'edit_page', $post_id ) ) {
 					return;
@@ -856,7 +1014,7 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 					}
 				} else {
 
-					// Migrate fields.
+					// Migrate fields
 					if ( isset( $field['migrate'] ) && get_post_meta( $post_id, $field['migrate'] ) ) {
 						delete_post_meta( $post_id, $field['migrate'] );
 					}
@@ -894,13 +1052,30 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 		}
 
 		/**
-		 * Returns the field id.
+		 * Parses the field id.
 		 */
 		protected function parse_field_id( $id ): string {
 			$id = str_replace( '][', '-', $id );
 			$id = str_replace( '[', '-', $id );
 			$id = str_replace( ']', '', $id );
-			return 'wpex-mf-field--' . esc_attr( $id );
+			return $id;
+		}
+
+		/**
+		 * Returns the field id.
+		 */
+		protected function get_field_id( $field ): string {
+			return 'wpex-mf-field--' . esc_attr( $this->parse_field_id( $field['id'] ?? $field ) );
+		}
+
+		/**
+		 * Returns the label id.
+		 */
+		protected function get_field_label_id( $id ): string {
+			$id = str_replace( '][', '-', $id );
+			$id = str_replace( '[', '-', $id );
+			$id = str_replace( ']', '', $id );
+			return 'wpex-mf-label--' . esc_attr( $id );
 		}
 
 		/**
@@ -911,9 +1086,29 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 		}
 
 		/**
+		 * Returns the describedby attribute for the field.
+		 */
+		protected function get_field_describedby( $field ): string {
+			$describedby = '';
+			if ( $this->field_has_description( $field ) ) {
+				$describedby .= 'wpex-mf-desc--' . esc_attr( $this->parse_field_id( $field['id'] ) );
+			}
+			if ( ! empty( $field['hint'] ) ) {
+				$describedby .= ' wpex-mf-hint--' . esc_attr( $this->parse_field_id( $field['id'] ) );
+			}
+			if ( isset( $field['immutable'] ) && true === $field['immutable'] && ! isset( $field['immutable_notice'] ) ) {
+				$describedby .= ' wpex-mf-immutable-notice--' . esc_attr( $this->parse_field_id( $field['id'] ) );
+			}
+			return $describedby;
+		}
+
+		/**
 		 * Sanitize input values before inserting into the database.
 		 */
 		protected function sanitize_value_for_db( $input, $field ) {
+			if ( isset( $field['sanitize_callback'] ) && is_callable( $field['sanitize_callback'] ) ) {
+				return call_user_func( $field['sanitize_callback'], $input, $field );
+			}
 			switch ( $this->get_field_type( $field ) ) {
 				case 'date':
 					if ( $timestamp = strtotime( $input ) ) {
@@ -943,8 +1138,8 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 					break;
 				case 'button_group':
 				case 'select':
-					$choices = $field['choices'] ?? [];
-					if ( is_callable( $choices ) ) {
+					$choices = $field['choices'] ?? $field['options'] ?? [];
+					if ( $choices && is_callable( $choices ) ) {
 						$choices = call_user_func( $choices );
 					}
 					if ( in_array( $input, $choices, true ) || array_key_exists( $input, $choices ) ) {
@@ -955,9 +1150,13 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 					if ( ! is_array( $input ) ) {
 						return $field['default'] ?? [];
 					}
+					$choices = $field['choices'] ?? $field['options'] ?? [];
+					if ( $choices && is_callable( $choices ) ) {
+						$choices = call_user_func( $choices );
+					}
 					$checks = true;
 					foreach ( $input as $v ) {
-						if ( ! in_array( $v, $field['choices'], true ) && ! array_key_exists( $v, $field['choices'] ) ) {
+						if ( ! in_array( $v, $choices, true ) && ! array_key_exists( $v, $choices ) ) {
 							$checks = false;
 							break;
 						}
@@ -1008,7 +1207,10 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 				return;
 			}
 
-			$is_image = str_starts_with( $mime_type, 'image/' );
+			$is_image  = str_starts_with( $mime_type, 'image/' );
+			$file      = get_attached_file( $attachment_id );
+			$file_name = esc_html( wp_basename( $file ) );
+			$meta      = wp_get_attachment_metadata( $attachment_id );
 
 			echo '<div class="wpex-mf-upload-preview__icon">';
 
@@ -1018,15 +1220,15 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 				echo '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 96C0 60.7 28.7 32 64 32H448c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM48 368v32c0 8.8 7.2 16 16 16H96c8.8 0 16-7.2 16-16V368c0-8.8-7.2-16-16-16H64c-8.8 0-16 7.2-16 16zm368-16c-8.8 0-16 7.2-16 16v32c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V368c0-8.8-7.2-16-16-16H416zM48 240v32c0 8.8 7.2 16 16 16H96c8.8 0 16-7.2 16-16V240c0-8.8-7.2-16-16-16H64c-8.8 0-16 7.2-16 16zm368-16c-8.8 0-16 7.2-16 16v32c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V240c0-8.8-7.2-16-16-16H416zM48 112v32c0 8.8 7.2 16 16 16H96c8.8 0 16-7.2 16-16V112c0-8.8-7.2-16-16-16H64c-8.8 0-16 7.2-16 16zM416 96c-8.8 0-16 7.2-16 16v32c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V112c0-8.8-7.2-16-16-16H416zM160 128v64c0 17.7 14.3 32 32 32H320c17.7 0 32-14.3 32-32V128c0-17.7-14.3-32-32-32H192c-17.7 0-32 14.3-32 32zm32 160c-17.7 0-32 14.3-32 32v64c0 17.7 14.3 32 32 32H320c17.7 0 32-14.3 32-32V320c0-17.7-14.3-32-32-32H192z"/></svg>';
 			} elseif ( str_starts_with( $mime_type, 'audio/' ) ) {
 				echo '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M499.1 6.3c8.1 6 12.9 15.6 12.9 25.7v72V368c0 44.2-43 80-96 80s-96-35.8-96-80s43-80 96-80c11.2 0 22 1.6 32 4.6V147L192 223.8V432c0 44.2-43 80-96 80s-96-35.8-96-80s43-80 96-80c11.2 0 22 1.6 32 4.6V200 128c0-14.1 9.3-26.6 22.8-30.7l320-96c9.7-2.9 20.2-1.1 28.3 5z"/></svg>';
-			} elseif ( str_contains( $mime_type, 'font' ) ) {
+			} elseif ( str_contains( $mime_type, 'pdf' ) ) {
+				echo '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 64C0 28.7 28.7 0 64 0L224 0l0 128c0 17.7 14.3 32 32 32l128 0 0 144-208 0c-35.3 0-64 28.7-64 64l0 144-48 0c-35.3 0-64-28.7-64-64L0 64zm384 64l-128 0L256 0 384 128zM176 352l32 0c30.9 0 56 25.1 56 56s-25.1 56-56 56l-16 0 0 32c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-48 0-80c0-8.8 7.2-16 16-16zm32 80c13.3 0 24-10.7 24-24s-10.7-24-24-24l-16 0 0 48 16 0zm96-80l32 0c26.5 0 48 21.5 48 48l0 64c0 26.5-21.5 48-48 48l-32 0c-8.8 0-16-7.2-16-16l0-128c0-8.8 7.2-16 16-16zm32 128c8.8 0 16-7.2 16-16l0-64c0-8.8-7.2-16-16-16l-16 0 0 96 16 0zm80-112c0-8.8 7.2-16 16-16l48 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-32 0 0 32 32 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-32 0 0 48c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-64 0-64z"/></svg>';
+			} elseif ( str_contains( $mime_type, 'font' ) || str_ends_with( $file, 'woff2' ) || str_ends_with( $file, 'woff' ) ) {
 				echo '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M254 52.8C249.3 40.3 237.3 32 224 32s-25.3 8.3-30 20.8L57.8 416H32c-17.7 0-32 14.3-32 32s14.3 32 32 32h96c17.7 0 32-14.3 32-32s-14.3-32-32-32h-1.8l18-48H303.8l18 48H320c-17.7 0-32 14.3-32 32s14.3 32 32 32h96c17.7 0 32-14.3 32-32s-14.3-32-32-32H390.2L254 52.8zM279.8 304H168.2L224 155.1 279.8 304z"/></svg>';
+			} else {
+				echo '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M320 464c8.8 0 16-7.2 16-16l0-288-80 0c-17.7 0-32-14.3-32-32l0-80L64 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l256 0zM0 64C0 28.7 28.7 0 64 0L229.5 0c17 0 33.3 6.7 45.3 18.7l90.5 90.5c12 12 18.7 28.3 18.7 45.3L384 448c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 64z"/></svg>';
 			}
 
 			echo '</div>';
-
-			$file      = get_attached_file( $attachment_id );
-			$file_name = esc_html( wp_basename( $file ) );
-			$meta      = wp_get_attachment_metadata( $attachment_id );
 
 			echo '<div class="wpex-mf-upload-preview__meta">';
 
@@ -1065,7 +1267,7 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 			check_ajax_referer( "{$this->prefix}ajax_nonce", 'nonce' );
 
 			if ( ! empty( $_POST['field_value'] ) ) {
-				echo $this->upload_field_attachment_preview( sanitize_text_field( $_POST['field_value'] ) );
+				echo $this->upload_field_attachment_preview( sanitize_text_field( wp_unslash( $_POST['field_value'] ) ) );
 			}
 
 			wp_die();
@@ -1204,7 +1406,7 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 				'percent' => [ 'number', 'text' ],
 				'image'   => [ 'upload', 'image' ],
 				'video'   => [ 'upload', 'video', 'iframe' ],
-				'link'    => [ 'url' ],
+				'link'    => [ 'url', 'upload', 'video', 'image' ],
 				'text'    => [ 'text', 'textarea', 'wp_editor', 'select', 'button_group' ],
 				'color'   => [ 'color' ],
 				'icon'    => [ 'icon_select' ],
@@ -1219,7 +1421,27 @@ if ( ! class_exists( 'WPEX_Meta_Factory', false ) ) {
 			if ( empty( $field['conditional_logic'] ) || ! is_array( $field['conditional_logic'] ) ) {
 				return '';
 			}
-			return ' data-wpex-mf-condition="' . esc_attr( \wp_json_encode( $field['conditional_logic'] ) ) . '"';
+			$conditions = $field['conditional_logic'];
+			if ( isset( $conditions[0] ) && ! is_array( $conditions[0] ) ) {
+				$conditions = [ $conditions ]; // Normalize: if it's a single condition (not a nested array)
+			}
+			return ' data-wpex-mf-condition="' . esc_attr( wp_json_encode( $conditions ) ) . '"';
+		}
+
+		/**
+		 * Helper function returns render callback.
+		 *
+		 * Can return a string or a callable.
+		 */
+		public static function get_render_callback( $field_name ) {
+			return self::$render_callbacks[ $field_name ] ?? '';
+		}
+
+		/**
+		 *  Check if a field has a description.
+		 */
+		protected function field_has_description( $field ): bool {
+			return ! empty( $field['description'] ) || ! empty( $field['desc'] );
 		}
 
 	}

@@ -5,46 +5,48 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 2.0
+ * @version 2.4
  */
 
 defined( 'ABSPATH' ) || exit;
 
-// Define main vars.
+// Define main vars
 $output = '';
 $image_ids = $atts['image_ids'] ?? '';
 
-// Get images from custom field.
+// Get images from custom field
 if ( ! empty( $atts['custom_field_gallery'] ) ) {
 	$cf_fallback = $image_ids;
-	$image_ids = ''; // !!! important !!!
-	$custom_field_gallery = sanitize_text_field( $atts['custom_field_gallery'] );
-
-	if ( function_exists( 'get_field_object' ) && str_starts_with( $custom_field_gallery, 'field_' ) ) {
-		$field_obj = get_field_object( $custom_field_gallery );
-		if ( ! empty( $field_obj['type'] ) && 'gallery' === $field_obj['type'] && ! empty( $field_obj['value'] ) ) {
-			$image_ids = $field_obj['value'];
+	$image_ids   = [];
+	$meta_value  = vcex_get_meta_value( sanitize_text_field( $atts['custom_field_gallery'] ) );
+	if ( $meta_value ) {
+		if ( is_array( $meta_value ) ) {
+			foreach ( $meta_value as $k => $v ) {
+				$image_id = $v['id'] ?? $v['ID'] ?? $v;
+				if ( is_numeric( $image_id ) && wp_attachment_is_image( $image_id ) ) {
+					$image_ids[] = $image_id;
+				}
+			}
+		} else {
+			$image_ids = $meta_value;
 		}
 	}
-
-	$image_ids = $image_ids ?: get_post_meta( vcex_get_the_ID(), $custom_field_gallery, true );
-
 	if ( ! $image_ids && vcex_is_template_edit_mode() ) {
 		$image_ids = $cf_fallback;
 	}
 
-// Get images from post gallery.
+// Get images from post gallery
 } elseif ( vcex_validate_att_boolean( 'post_gallery', $atts, false ) ) {
 	$image_ids = vcex_get_post_gallery_ids( vcex_get_the_ID(), $image_ids );
 }
 
-// Get images based on Real Media folder.
+// Get images based on Real Media folder
 elseif ( defined( 'RML_VERSION' ) && ! empty( $atts['rml_folder'] ) ) {
 	$rml_query = new WP_Query( [
 		'post_status'    => 'inherit',
 		'posts_per_page' => ! empty( $atts['posts_per_page'] ) ? intval( $atts['posts_per_page'] ) : '12',
 		'post_type'      => 'attachment',
-		'orderby'        => 'rml', // Order by custom order of RML.
+		'orderby'        => 'rml', // Order by custom order of RML
 		'rml_folder'     => sanitize_text_field( $atts['rml_folder'] ),
 		'fields'         => 'ids',
 	] );
@@ -53,10 +55,9 @@ elseif ( defined( 'RML_VERSION' ) && ! empty( $atts['rml_folder'] ) ) {
 	}
 }
 
-// Sanitize image ids.
-if ( ! $image_ids ) {
-	return;
-} else {
+// Parse image ids
+$attachment_ids = [];
+if ( ! empty( $image_ids ) ) {
 	if ( is_string( $image_ids ) ) {
 		$attachment_ids = explode( ',', $image_ids );
 	} elseif ( is_array( $image_ids ) ) {
@@ -67,17 +68,32 @@ if ( ! $image_ids ) {
 	}
 }
 
-// Remove duplicate images.
-$attachment_ids = array_unique( $attachment_ids );
+// Add featured image to array
+if ( vcex_validate_att_boolean( 'include_featured', $atts ) ) {
+	$featured_image = vcex_get_featured_image_id();
+	if ( $featured_image ) {
+		if ( ! empty( $attachment_ids ) ) {
+			if ( ! in_array( $featured_image, $attachment_ids ) ) {
+				array_unshift( $attachment_ids, $featured_image );
+			}
+		} else {
+			$attachment_ids = [ $featured_image ];
+		}
+	}
+}
 
-// Sanitize attachments to make sure they exist.
-$attachment_ids = array_filter( $attachment_ids, 'vcex_validate_attachment' );
+// Remove duplicate and non existing images
+if ( $attachment_ids ) {
+	$attachment_ids = array_unique( $attachment_ids );
+	$attachment_ids = array_filter( $attachment_ids, 'vcex_validate_attachment' );
+}
 
-if ( ! $attachment_ids ) {
+// No images - bail!
+if ( empty( $attachment_ids ) ) {
 	return;
 }
 
-// Turn links into array.
+// Turn links into array
 if ( ! empty( $atts['custom_links'] ) && is_string( $atts['custom_links'] ) ) {
 	if ( isset( $atts['is_elementor_widget'] ) && true === $atts['is_elementor_widget'] ) {
 		$custom_links = wp_parse_list( $atts['custom_links'] );
@@ -92,7 +108,7 @@ if ( ! empty( $atts['custom_links'] ) && is_string( $atts['custom_links'] ) ) {
 $attachment_ids_count = count( $attachment_ids );
 $custom_links_count   = count( $custom_links );
 
-// Add empty values to custom_links array for images without links.
+// Add empty values to custom_links array for images without links
 if ( $attachment_ids_count > $custom_links_count ) {
 	$count = 0;
 	foreach ( $attachment_ids as $val ) {
@@ -103,10 +119,10 @@ if ( $attachment_ids_count > $custom_links_count ) {
 	}
 }
 
-// New custom links count.
+// New custom links count
 $custom_links_count = count( $custom_links );
 
-// Remove extra custom links.
+// Remove extra custom links
 if ( $custom_links_count > $attachment_ids_count ) {
 	$count = 0;
 	foreach ( $custom_links as $key => $val ) {
@@ -117,15 +133,24 @@ if ( $custom_links_count > $attachment_ids_count ) {
 	}
 }
 
-// Set links as the keys for the images.
+// Set links as the keys for the images
 $images_links_array = array_combine( $attachment_ids, $custom_links );
 
-// Return if no images.
+// Return if no images
 if ( ! $images_links_array ) {
 	return;
 }
 
-// Lets create a new Query for the image carousel.
+// Order
+$orderby = ! empty( $atts['orderby'] )
+	? vcex_call_helper( 'Sanitize_Query_Parameter', 'orderby', $atts['orderby'], 'post__in' )
+	: 'post__in';
+
+$order = ! empty( $atts['order'] )
+	? vcex_call_helper( 'Sanitize_Query_Parameter', 'order', $atts['order'], 'DESC' )
+	: 'DESC';
+
+// Lets create a new Query for the image carousel
 $vcex_query = new WP_Query( [
 	'post_type'      => 'attachment',
 	'post_status'    => 'any',
@@ -133,28 +158,28 @@ $vcex_query = new WP_Query( [
 	'paged'          => NULL,
 	'no_found_rows'  => true,
 	'post__in'       => $attachment_ids,
-	'orderby'        => ! empty( $atts['orderby'] ) ? $atts['orderby'] : 'post__in',
-	'order'          => $atts['order'],
+	'orderby'        => $orderby,
+	'order'          => $order,
 ] );
 
-// Display carousel if there are images.
+// Display carousel if there are images
 if ( $vcex_query && $vcex_query->have_posts() ) :
 
-	// Define main vars.
+	// Define main vars
 	$carousel_style    = ! empty( $atts['style'] ) ? $atts['style'] : '';
 	$thumbnail_link    = ! empty( $atts['thumbnail_link'] ) ? $atts['thumbnail_link'] : '';
 	$show_title        = vcex_validate_att_boolean( 'title', $atts, false );
 	$title_type        = ! empty( $atts['title_type'] ) ? $atts['title_type'] : 'title';
 	$show_caption      = vcex_validate_att_boolean( 'caption', $atts, false );
 	$inline_videos     = (bool) apply_filters( 'vcex_image_carousel_video_support', false );
-	$unique_classname  = vcex_element_unique_classname();
 	$carousel_settings = vcex_get_carousel_settings( $atts, 'vcex_image_carousel', false );
+	$unique_classname  = vcex_element_unique_classname();
 	$carousel_css      = vcex_get_carousel_inline_css( $unique_classname, $carousel_settings );
 
-	// Make sure scripts are loaded.
+	// Make sure scripts are loaded
 	vcex_enqueue_carousel_scripts();
 
-	// Main Classes.
+	// Main Classes
 	$wrap_class = [
 		'vcex-image-carousel',
 		'wpex-carousel',
@@ -163,31 +188,31 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 		'vcex-module',
 	];
 
-	if ( \totalthemecore_call_static( 'Vcex\Carousel\Core', 'use_owl_classnames' ) ) {
+	if ( totalthemecore_call_static( 'Vcex\Carousel\Core', 'use_owl_classnames' ) ) {
 		$wrap_class[] = 'owl-carousel';
 	}
 
-	if ( $carousel_css ) {
+	if ( ! empty( $carousel_css ) ) {
 		$wrap_class[] = 'wpex-carousel--render-onload';
 		$wrap_class[] = $unique_classname;
 	}
 
-	// Bottom margin.
+	// Bottom margin
 	if ( ! empty( $atts['bottom_margin'] ) ) {
 		$wrap_class[] = vcex_parse_margin_class( $atts['bottom_margin'], 'bottom' );
 	}
 
-	// Vertical align.
+	// Vertical align
 	if ( vcex_validate_att_boolean( 'vertical_align', $atts, false ) ) {
 		$wrap_class[] = 'wpex-carousel-items-center';
 	}
 
-	// Carousel style.
+	// Carousel style
 	if ( $carousel_style && 'default' !== $carousel_style ) {
 		$wrap_class[] = sanitize_html_class( $carousel_style );
 	}
 
-	// Arrow classes.
+	// Arrow classes
 	if ( vcex_validate_att_boolean( 'arrows', $atts, true ) ) {
 		$arrows_position = ! empty( $atts['arrows_position'] ) ? $atts['arrows_position'] : 'default';
 		$arrows_style = ! empty( $atts['arrows_style'] ) ? $atts['arrows_style'] : 'default';
@@ -200,12 +225,12 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 		$wrap_class[] = sanitize_html_class( "arrwpos-{$arrows_position}" );
 	}
 
-	// CSS animation class.
+	// CSS animation class
 	if ( ! empty( $atts['css_animation'] ) ) {
 		$wrap_class[] = vcex_get_css_animation( $atts['css_animation'] );
 	}
 
-	// Entry classes.
+	// Entry classes
 	$entry_classes = [
 		'wpex-carousel-slide',
 	];
@@ -227,7 +252,7 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 		}
 	}
 
-	// Image class.
+	// Image class
 	$image_class = [];
 	if ( ! empty( $atts['img_aspect_ratio'] ) ) {
 		$image_class[] = vcex_parse_aspect_ratio_class( $atts['img_aspect_ratio'] );
@@ -236,7 +261,7 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 		}
 	}
 
-	// Deprecated content css.
+	// Deprecated content css
 	if ( $show_title || $show_caption ) {
 		$content_style = '';
 		if ( empty( $atts['content_css'] ) ) {
@@ -249,8 +274,8 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 		}
 	}
 
-	// Custom classes (add last).
-	// @todo rename param to el_class.
+	// Custom classes (add last)
+	// @todo rename param to el_class
 	if ( ! empty( $atts['classes'] ) ) {
 		$wrap_class[] = vcex_get_extra_class( $atts['classes'] );
 	}
@@ -270,8 +295,8 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 		] );
 	}
 
-	// Carousel CSS (important must be added directly before the carousel).
-	if ( $carousel_css ) {
+	// Carousel CSS (important must be added directly before the carousel)
+	if ( ! empty( $carousel_css ) ) {
 		$output .= $carousel_css;
 	}
 
@@ -284,22 +309,22 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 	/*** Begin Carousel Output ***/
 	$output .= '<div class="' . esc_attr( $wrap_class ) . '" data-wpex-carousel="' . vcex_carousel_settings_to_json( $carousel_settings ) . '"' . vcex_get_unique_id( $atts ) . '>';
 
-		// Start counter used for lightbox.
+		// Start counter used for lightbox
 		$count=0;
 
 		// Loop through images
 		while ( $vcex_query->have_posts() ) :
 
-			// Add to counter.
+			// Add to counter
 			$count++;
 
-			// Reset entry_classes.
+			// Reset entry_classes
 			$loop_entry_classes = $entry_classes;
 
-			// Get post from query.
+			// Get post from query
 			$vcex_query->the_post();
 
-			// Store entry data in $atts array so we can apply a filter later.
+			// Store entry data in $atts array so we can apply a filter later
 			$atts['post_url']     = '';
 			$atts['post_id']      = get_the_ID();
 			$atts['post_data']    = vcex_get_attachment_data( $atts['post_id'] );
@@ -319,12 +344,12 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 					break;
 			}
 
-			// Define other useful vars.
+			// Define other useful vars
 			$og_attachment_id = $atts['post_id'];
 			$has_video_icon   = false;
 
 
-			// Get original attachment ID - fix for WPML.
+			// Get original attachment ID - fix for WPML
 			if ( $custom_links_count && function_exists( 'icl_object_id' ) ) {
 				global $sitepress;
 				if ( $sitepress ) {
@@ -339,12 +364,12 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 				}
 			}
 
-			// Pluck array to see if item has custom link.
+			// Pluck array to see if item has custom link
 			if ( array_key_exists( $og_attachment_id, $images_links_array ) ) {
 				$atts['post_url'] = $images_links_array[ $og_attachment_id ];
 			}
 
-			// Check for custom meta links.
+			// Check for custom meta links
 			if ( 'custom_link' === $thumbnail_link ) {
 				if ( ! empty( $atts['link_meta_key'] ) ) {
 					$meta_custom_link = get_post_meta( $atts['post_id'], trim( $atts['link_meta_key'] ), true );
@@ -359,12 +384,12 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 				}
 			}
 
-			// Remove links if the post_url is a # symbol.
+			// Remove links if the post_url is a # symbol
 			if ( '#' === $atts['post_url'] ) {
 				$atts['post_url'] = '';
 			}
 
-			// Image|Video output.
+			// Image|Video output
 			if ( $inline_videos && $atts['post_video'] ) {
 				$atts['media_type'] = 'video';
 				$loop_entry_classes[] = 'owl-item-video';
@@ -392,34 +417,34 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 
 					/*** Entry Media ***/
 
-					// Entry Video.
+					// Entry Video
 					if ( $inline_videos && $atts['post_video'] ) {
 						$output .= '<a href="' . esc_url( set_url_scheme( $atts['post_video'] ) ) . '" class="owl-video"></a>';
 					}
 
-					// Image thumbnail.
+					// Image thumbnail
 					else {
 
-						// Add custom links to attributes for use with the overlay styles.
+						// Add custom links to attributes for use with the overlay styles
 						if ( 'custom_link' === $thumbnail_link ) {
 							$atts['overlay_link'] = $atts['post_url'] ?: 'disable';
 						}
 
-						// Lightbox.
+						// Lightbox
 						if ( 'lightbox' === $thumbnail_link ) {
 
 							$atts['lightbox_data']  = []; // must reset for each item
 							$lightbox_image_escaped = vcex_get_lightbox_image( $atts['post_id'] );
 							$atts['lightbox_link']  = $lightbox_image_escaped;
 
-							// Main link attributes.
+							// Main link attributes
 							$link_attrs = [
 								'href'  => '',
 								'title' => $atts['post_alt'],
 								'class' => 'wpex-carousel-entry-img',
 							];
 
-							// Main link lightbox attributes.
+							// Main link lightbox attributes
 							if ( 'lightbox' == $thumbnail_link ) {
 
 								if ( $has_lightbox_gallery ) {
@@ -447,18 +472,18 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 									$link_attrs['data-show_title'] = 'false';
 								}
 
-								// Video lightbox.
+								// Video lightbox
 								if ( $atts['post_video']
 									&& $video_embed_url = vcex_get_video_embed_url( $atts['post_data']['video'] )
 								) {
 									$has_video_icon = true;
 									$atts['lightbox_link']    = $video_embed_url;
 									$link_attrs['data-thumb'] = $lightbox_image_escaped;
-									// Pass lightbox data to $atts for use with image overlays.
+									// Pass lightbox data to $atts for use with image overlays
 									$atts['lightbox_data']['data-thumb'] = 'data-thumb="' . esc_attr( $lightbox_image_escaped ) . '"';
 								}
 
-								// Caption data.
+								// Caption data
 								if ( vcex_validate_att_boolean( 'lightbox_caption', $atts, true )
 									&& $attachment_caption = get_post_field( 'post_excerpt', $atts['post_id'] )
 								) {
@@ -479,12 +504,12 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 
 						}
 
-						// Parent page link.
+						// Parent page link
 						elseif ( 'parent_page' === $thumbnail_link ) {
 
 							$post_parent = get_post_parent( $atts['post_id'] );
 
-							// Open link.
+							// Open link
 							if ( $post_parent ) {
 								$link_attrs = [
 									'href'   => get_permalink( $post_parent ),
@@ -496,23 +521,23 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 
 							}
 
-								// Display image.
+								// Display image
 								$output .= $image_output;
 
-								// Inner link overlay HTML.
+								// Inner link overlay HTML
 								$output .= vcex_get_entry_image_overlay( 'inside_link', 'vcex_image_carousel', $atts );
 
-							// Close link.
+							// Close link
 							if ( $post_parent ) {
 								$output .= '</a>';
 							}
 
 						}
 
-						// Attachment page.
+						// Attachment page
 						elseif ( 'attachment_page' === $thumbnail_link || 'full_image' === $thumbnail_link ) {
 
-							// Open link tag.
+							// Open link tag
 							$link_attrs = [
 								'href'   =>  ( 'attachment_page' === $thumbnail_link ) ? get_permalink() : wp_get_attachment_url( $atts['post_id'] ),
 								'class'  => 'wpex-carousel-entry-img',
@@ -525,42 +550,29 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 							$output .= '</a>';
 						}
 
-						// Custom Link.
+						// Custom Link
 						elseif ( 'custom_link' == $thumbnail_link && $atts['post_url'] ) {
-
 							$link_attrs = [
 								'href'   => $atts['post_url'],
 								'class'  => 'wpex-carousel-entry-img',
 								'target' => $atts['link_target'],
 							];
-
 							$output .= '<a' . vcex_parse_html_attributes( $link_attrs ) . '>';
-
-								// Display Image.
 								$output .= $image_output;
-
-								// Inner link overlay HTML.
 								$output .= vcex_get_entry_image_overlay( 'inside_link', 'vcex_image_carousel', $atts );
-
 							$output .= '</a>';
-
 						}
 
-						// No link.
+						// No link
 						else {
-
-							// Display Image.
 							$output .= $image_output;
-
-							// Inner link overlay HTML.
 							$output .= vcex_get_entry_image_overlay( 'inside_link', 'vcex_image_carousel', $atts );
-
 						}
 
-						// Outer link overlay HTML.
+						// Outer link overlay HTML
 						$output .= vcex_get_entry_image_overlay( 'outside_link', 'vcex_image_carousel', $atts );
 
-					} // end video/image check.
+					} // end video/image check
 
 				$output .= '</figure>';
 
@@ -593,16 +605,16 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 
 	$output .= '</div>';
 
-	// Close wrap for single item auto height.
+	// Close wrap for single item auto height
 	if ( isset( $has_owl_wrapper ) && true === $has_owl_wrapper ) {
 		$output .= '</div>';
 	}
 
-	// Reset the post data to prevent conflicts with other queries.
+	// Reset the post data to prevent conflicts with other queries
 	vcex_reset_postdata();
 
-	// @codingStandardsIgnoreLine.
+	// @codingStandardsIgnoreLine
 	echo $output;
 
-// End Query.
+// End Query
 endif;

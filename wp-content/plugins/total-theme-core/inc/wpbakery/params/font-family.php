@@ -9,6 +9,9 @@ namespace TotalThemeCore\WPBakery\Params;
  */
 final class Font_Family {
 
+	/**
+	 * Param output.
+	 */
 	public static function output( $settings, $value ) {
 		if ( ! \defined( '\TOTAL_THEME_ACTIVE' ) ) {
 			return '<input type="text" class="wpb_vc_param_value '
@@ -20,15 +23,15 @@ final class Font_Family {
 		$user_fonts     = self::get_user_fonts();
 		$custom_fonts   = self::get_custom_fonts();
 		$standard_fonts = self::get_standard_fonts();
-		$google_fonts   = self::get_google_fonts();
+		$google_fonts   = $user_fonts ? [] : self::get_google_fonts(); // only display Google fonts if no user fonts are registered
 		$chosen_class   = ( \is_array( $google_fonts ) && \count( $google_fonts ) > 10 ) ? 'vcex-chosen ' : '';
 
 		$output = '<select name="'
-				. $settings['param_name']
+				. \esc_attr( $settings['param_name'] )
 				. '" class="wpb_vc_param_value wpb-input wpb-select '
 				. $chosen_class
-				. $settings['param_name']
-				. ' ' . $settings['type'] .'">'
+				. \esc_attr( $settings['param_name'] )
+				. ' ' . \esc_attr( $settings['type'] ) .'">'
 				. '<option value="" '. \selected( $value, '', false ) .'>'. \esc_html__( 'Default', 'total-theme-core' ) .'</option>';
 
 		$value_exists = false;
@@ -36,11 +39,12 @@ final class Font_Family {
 		// User fonts
 		if ( $user_fonts ) {
 			$output .= '<optgroup label="' . \esc_html__( 'My Fonts', 'total-theme-core' ) . '">';
-			foreach ( $user_fonts as $font_name => $font_settings ) {
-				if ( $font_name === $value ) {
+			foreach ( $user_fonts as $key => $font ) {
+				if ( $key === $value ) {
 					$value_exists = true;
 				}
-				$output .= '<option value="' . \esc_html( $font_name ) . '" ' . \selected( $font_name, $value, false ) . '>' . \ucfirst( \esc_html( $font_name ) ) . '</option>';
+				$font_label = $font['label'] ?? $font['name'] ?? $key;
+				$output .= '<option value="' . \esc_html( $key ) . '" ' . \selected( $key, $value, false ) . '>' . \esc_html( $font_label ) . '</option>';
 			}
 			$output .= '</optgroup>';
 		}
@@ -93,6 +97,9 @@ final class Font_Family {
 
 	}
 
+	/**
+	 * Get Font Manager fonts.
+	 */
 	protected static function get_user_fonts() {
 		$user_fonts = [];
 		if ( \function_exists( '\wpex_get_registered_fonts' ) ) {
@@ -101,6 +108,9 @@ final class Font_Family {
 		return $user_fonts;
 	}
 
+	/**
+	 * Get custom fonts.
+	 */
 	protected static function get_custom_fonts() {
 		$custom_fonts = [];
 		if ( \function_exists( '\wpex_add_custom_fonts' ) ) {
@@ -109,6 +119,9 @@ final class Font_Family {
 		return $custom_fonts;
 	}
 
+	/**
+	 * Get standard fonts.
+	 */
 	protected static function get_standard_fonts() {
 		$standard_fonts = [];
 		if ( \function_exists( '\wpex_standard_fonts' ) ) {
@@ -117,10 +130,10 @@ final class Font_Family {
 		return $standard_fonts;
 	}
 
+	/**
+	 * Get Google fonts.
+	 */
 	protected static function get_google_fonts() {
-		if ( \function_exists( '\wpex_has_registered_fonts' ) && \wpex_has_registered_fonts() ) {
-			return [];
-		}
 		$google_fonts = [];
 		if ( \function_exists( '\wpex_google_fonts_array' ) ) {
 			$google_fonts = \wpex_google_fonts_array();

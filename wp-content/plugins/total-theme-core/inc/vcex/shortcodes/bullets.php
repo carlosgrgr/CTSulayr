@@ -46,7 +46,7 @@ if ( ! class_exists( 'Vcex_Bullets_Shortcode' ) ) {
 					'param_name' => 'content',
 					'holder' => 'div',
 					'value' => '<ul><li>List 1</li><li>List 2</li><li>List 3</li><li>List 4</li></ul>',
-					'description' => esc_html__( 'Insert an unordered list.', 'total-theme-core' ),
+					'description' => esc_html__( 'Insert a bulleted (ul) list.', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[

@@ -2,7 +2,7 @@
 
 namespace TotalThemeCore;
 
-\defined( 'ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 final class Autoloader {
 
@@ -10,7 +10,7 @@ final class Autoloader {
 	 * Register our autoloader.
 	 */
 	public static function run(): void {
-		\spl_autoload_register( [ self::class, 'autoload' ] );
+		spl_autoload_register( [ self::class, 'autoload' ] );
 	}
 
 	/**
@@ -19,9 +19,9 @@ final class Autoloader {
 	private static function autoload( $class ): void {
 		if ( 'WPEX_Meta_Factory' === $class ) {
 			require_once TTC_PLUGIN_DIR_PATH . 'inc/lib/wpex-meta-factory/class-wpex-meta-factory.php';
-		} elseif ( 0 === \strpos( $class, __NAMESPACE__ ) ) {
+		} elseif ( 0 === strpos( $class, __NAMESPACE__ ) ) {
 			$path = self::get_class_path( $class );
-			if ( $path && \is_readable( $path ) ) {
+			if ( $path && is_readable( $path ) ) {
 				require $path;
 			}
 		}
@@ -34,29 +34,15 @@ final class Autoloader {
 	 * @return string|null $path The path to the class file.
 	 */
 	private static function get_class_path( string $class ): ?string {
-
-		// Remove namespace.
-		$class = \str_replace( __NAMESPACE__ . '\\', '', $class );
-
-		// Lowercase.
-		$class = \strtolower( $class );
-
-		// Convert underscores to dashes.
-		$class = \str_replace( '_', '-', $class );
-
-		// Fix classnames with incorrect naming convention.
+		$class = str_replace( __NAMESPACE__ . '\\', '', $class );
+		$class = strtolower( $class );
+		$class = str_replace( '_', '-', $class );
 		$class = self::parse_class_filename( $class );
-
-		// Return early if parsing returns null.
 		if ( ! $class ) {
 			return null;
 		}
-
-		// Convert backslash to correct directory separator.
-		$class = \str_replace( '\\', DIRECTORY_SEPARATOR, $class ) . '.php';
-
-		// Return final class path.
-		$plugin_dir = \untrailingslashit( \TTC_PLUGIN_DIR_PATH );
+		$class = str_replace( '\\', DIRECTORY_SEPARATOR, $class ) . '.php';
+		$plugin_dir = untrailingslashit( TTC_PLUGIN_DIR_PATH );
 		return "{$plugin_dir}/inc/{$class}";
 	}
 

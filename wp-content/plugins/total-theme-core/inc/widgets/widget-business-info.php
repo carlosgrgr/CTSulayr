@@ -2,12 +2,14 @@
 
 namespace TotalThemeCore\Widgets;
 
+use TotalThemeCore\WidgetBuilder;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Business Info widget.
  */
-class Widget_Business_Info extends \TotalThemeCore\WidgetBuilder {
+class Widget_Business_Info extends WidgetBuilder {
 
 	/**
 	 * Widget args.
@@ -20,61 +22,61 @@ class Widget_Business_Info extends \TotalThemeCore\WidgetBuilder {
 	public function __construct() {
 		$this->args = [
 			'id_base' => 'wpex_info_widget',
-			'name'    => $this->branding() . \esc_html__( 'Business Info', 'total-theme-core' ),
+			'name'    => $this->branding() . esc_html__( 'Business Info', 'total-theme-core' ),
 			'options' => [
 				'customize_selective_refresh' => true,
 			],
 			'fields'  => [
 				[
 					'id'    => 'title',
-					'label' => \esc_html__( 'Title', 'total-theme-core' ),
+					'label' => esc_html__( 'Title', 'total-theme-core' ),
 					'type'  => 'text',
 				],
 				[
 					'id'    => 'address',
-					'label' => \esc_html__( 'Address', 'total-theme-core' ),
+					'label' => esc_html__( 'Address', 'total-theme-core' ),
 					'type'  => 'textarea',
 				],
 				[
 					'id'    => 'phone_number',
-					'label' => \esc_html__( 'Phone Number', 'total-theme-core' ),
+					'label' => esc_html__( 'Phone Number', 'total-theme-core' ),
 					'type'  => 'text',
 				],
 				[
 					'id'    => 'phone_number_mobile',
-					'label' => \esc_html__( 'Mobile Phone Number', 'total-theme-core' ),
+					'label' => esc_html__( 'Mobile Phone Number', 'total-theme-core' ),
 					'type'  => 'text',
 				],
 				[
 					'id'    => 'phone_number_tel_link',
-					'label' => \esc_html__( 'Add "tel" link to the phone number?', 'total-theme-core' ),
+					'label' => esc_html__( 'Add "tel" link to the phone number?', 'total-theme-core' ),
 					'type'  => 'checkbox',
 				],
 				[
 					'id'    => 'fax_number',
-					'label' => \esc_html__( 'Fax Number', 'total-theme-core' ),
+					'label' => esc_html__( 'Fax Number', 'total-theme-core' ),
 					'type'  => 'text',
 				],
 				[
 					'id'    => 'email',
-					'label' => \esc_html__( 'Email', 'total-theme-core' ),
+					'label' => esc_html__( 'Email', 'total-theme-core' ),
 					'type'  => 'text',
 				],
 				[
 					'id'          => 'email_label',
-					'label'       => \esc_html__( 'Email Label', 'total-theme-core' ),
+					'label'       => esc_html__( 'Email Label', 'total-theme-core' ),
 					'type'        => 'text',
-					'description' => \esc_html__( 'Will display your email by default if this field is empty.', 'total-theme-core' ),
+					'description' => esc_html__( 'Will display your email by default if this field is empty.', 'total-theme-core' ),
 				],
 				[
 					'id'      => 'has_icons',
 					'default' => true,
-					'label'   => \esc_html__( 'Show icons?', 'total-theme-core' ),
+					'label'   => esc_html__( 'Show icons?', 'total-theme-core' ),
 					'type'    => 'checkbox',
 				],
 				[
 					'id'      => 'item_bottom_margin',
-					'label'   => \esc_html__( 'Bottom margin between items.', 'total-theme-core' ),
+					'label'   => esc_html__( 'Bottom margin between items.', 'total-theme-core' ),
 					'type'    => 'select',
 					'choices' => 'margin',
 				],
@@ -90,7 +92,7 @@ class Widget_Business_Info extends \TotalThemeCore\WidgetBuilder {
 	public function widget( $args, $instance ) {
 		extract( $this->parse_instance( $instance ) );
 
-		echo \wp_kses_post( $args['before_widget'] );
+		echo wp_kses_post( $args['before_widget'] );
 
 		$this->widget_title( $args, $instance );
 
@@ -98,13 +100,13 @@ class Widget_Business_Info extends \TotalThemeCore\WidgetBuilder {
 		$bm_class = 'wpex-mb-10';
 
 		if ( $item_bottom_margin
-			&& \function_exists( '\wpex_utl_margins' )
-			&& \array_key_exists( $item_bottom_margin, \wpex_utl_margins() )
+			&& function_exists( 'wpex_utl_margins' )
+			&& array_key_exists( $item_bottom_margin, wpex_utl_margins() )
 		) {
 			$bm_class = 'wpex-mb-' . sanitize_html_class( absint( $item_bottom_margin ) );
 		}
 
-		$has_icons = isset( $has_icons ) && \wp_validate_boolean( $has_icons ) && \function_exists( '\totaltheme_get_icon' );
+		$has_icons = isset( $has_icons ) && wp_validate_boolean( $has_icons ) && function_exists( 'totaltheme_get_icon' );
 
 		// Define widget output.
 		$output = '';
@@ -115,7 +117,7 @@ class Widget_Business_Info extends \TotalThemeCore\WidgetBuilder {
 		if ( $address ) {
 			$output .= '<li class="wpex-info-widget-address wpex-flex ' . $bm_class . '">';
 				if ( $has_icons ) {
-					$output .= '<div class="wpex-info-widget-icon wpex-mr-10">' . \totaltheme_get_icon( 'map-marker', 'wpex-icon--w' ) . '</div>';
+					$output .= '<div class="wpex-info-widget-icon wpex-mr-10">' . totaltheme_get_icon( 'map-marker', 'wpex-icon--w' ) . '</div>';
 				}
 				$output .= '<div class="wpex-info-widget-data wpex-flex-grow wpex-last-mb-0">' . wpautop( wp_kses_post( $address ) ) . '</div>';
 			$output .= '</li>';
@@ -125,13 +127,13 @@ class Widget_Business_Info extends \TotalThemeCore\WidgetBuilder {
 		if ( $phone_number ) {
 			$output .= '<li class="wpex-info-widget-phone wpex-flex ' . $bm_class . '">';
 				if ( $has_icons ) {
-					$output .= '<div class="wpex-info-widget-icon wpex-mr-10">' . \totaltheme_get_icon( 'phone', 'wpex-icon--w' ) . '</div>';
+					$output .= '<div class="wpex-info-widget-icon wpex-mr-10">' . totaltheme_get_icon( 'phone', 'wpex-icon--w' ) . '</div>';
 				}
 				$output .= '<div class="wpex-info-widget-data wpex-flex-grow">';
-					if ( \wp_validate_boolean( $phone_number_tel_link ) ) {
-						$output .= '<a href="tel:' . \sanitize_text_field( $phone_number ) . '">' . \esc_html( $phone_number ) . '</a>';
+					if ( wp_validate_boolean( $phone_number_tel_link ) ) {
+						$output .= '<a href="tel:' . sanitize_text_field( $phone_number ) . '">' . esc_html( $phone_number ) . '</a>';
 					} else {
-						$output .= \esc_html( $phone_number );
+						$output .= esc_html( $phone_number );
 					}
 				$output .= '</div>';
 			$output .= '</li>';
@@ -141,13 +143,13 @@ class Widget_Business_Info extends \TotalThemeCore\WidgetBuilder {
 		if ( $phone_number_mobile ) {
 			$output .= '<li class="wpex-info-widget-phone-mobile wpex-flex ' . $bm_class . '">';
 				if ( $has_icons ) {
-					$output .= '<div class="wpex-info-widget-icon wpex-mr-10">' . \totaltheme_get_icon( 'mobile', 'wpex-icon--w' ) . '</div>';
+					$output .= '<div class="wpex-info-widget-icon wpex-mr-10">' . totaltheme_get_icon( 'mobile', 'wpex-icon--w' ) . '</div>';
 				}
 				$output .= '<div class="wpex-info-widget-data wpex-flex-grow">';
 					if ( true == wp_validate_boolean( $phone_number_tel_link ) ) {
-						$output .= '<a href="tel:' . sanitize_text_field( $phone_number_mobile ) . '">' . \esc_html( $phone_number_mobile ) . '</a>';
+						$output .= '<a href="tel:' . sanitize_text_field( $phone_number_mobile ) . '">' . esc_html( $phone_number_mobile ) . '</a>';
 					} else {
-						$output .= \esc_html( $phone_number_mobile );
+						$output .= esc_html( $phone_number_mobile );
 					}
 				$output .= '</div>';
 			$output .= '</li>';
@@ -157,9 +159,9 @@ class Widget_Business_Info extends \TotalThemeCore\WidgetBuilder {
 		if ( $fax_number ) {
 			$output .= '<li class="wpex-info-widget-fax wpex-flex ' . $bm_class . '">';
 				if ( $has_icons ) {
-					$output .= '<div class="wpex-info-widget-icon wpex-mr-10">' . \totaltheme_get_icon( 'fax', 'wpex-icon--w' ) . '</div>';
+					$output .= '<div class="wpex-info-widget-icon wpex-mr-10">' . totaltheme_get_icon( 'fax', 'wpex-icon--w' ) . '</div>';
 				}
-				$output .= '<div class="wpex-info-widget-data wpex-flex-grow">' . \esc_html( $fax_number ) . '</div>';
+				$output .= '<div class="wpex-info-widget-data wpex-flex-grow">' . esc_html( $fax_number ) . '</div>';
 			$output .= '</li>';
 		}
 
@@ -167,11 +169,11 @@ class Widget_Business_Info extends \TotalThemeCore\WidgetBuilder {
 		if ( $email ) {
 
 			// Sanitize email.
-			$sanitize_email = \sanitize_email( $email );
-			$is_email       = \is_email( $sanitize_email );
+			$sanitize_email = sanitize_email( $email );
+			$is_email       = is_email( $sanitize_email );
 
 			// Spam protect email address.
-			$protected_email = $is_email ? \antispambot( $sanitize_email ) : $sanitize_email;
+			$protected_email = $is_email ? antispambot( $sanitize_email ) : $sanitize_email;
 
 			// Sanitize & fallback for email label.
 			$email_label = ( ! $email_label && $is_email ) ? $protected_email : $email_label;
@@ -180,20 +182,20 @@ class Widget_Business_Info extends \TotalThemeCore\WidgetBuilder {
 			$output .= '<li class="wpex-info-widget-email wpex-flex ' . $bm_class . '">';
 
 				if ( $has_icons ) {
-					$output .= '<div class="wpex-info-widget-icon wpex-mr-10">' . \totaltheme_get_icon( 'envelope', 'wpex-icon--w' ) . '</div>';
+					$output .= '<div class="wpex-info-widget-icon wpex-mr-10">' . totaltheme_get_icon( 'envelope', 'wpex-icon--w' ) . '</div>';
 				}
 
 				$output .= '<div class="wpex-info-widget-data wpex-flex-grow">';
 
 					if ( $is_email ) {
-						$output .= '<a href="mailto:' . $protected_email . '">' . \esc_html( $email_label ) . '</a>';
+						$output .= '<a href="mailto:' . $protected_email . '">' . esc_html( $email_label ) . '</a>';
 					} else {
 						$parse_email_url = parse_url( $email );
 
 						if ( ! empty( $parse_email_url['scheme'] ) ) {
-							$output .= '<a href="' . esc_url( $email ) . '">' . \esc_html( $email_label ) . '</a>';
+							$output .= '<a href="' . esc_url( $email ) . '">' . esc_html( $email_label ) . '</a>';
 						} else {
-							$output .= \esc_html( $email_label );
+							$output .= esc_html( $email_label );
 						}
 					}
 

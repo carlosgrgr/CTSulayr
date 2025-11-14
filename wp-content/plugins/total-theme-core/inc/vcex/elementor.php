@@ -20,11 +20,6 @@ final class Elementor {
 	const DYNAMIC_CATEGORY_ID = 'vcex_dynamic';
 
 	/**
-	 * WooCommerce Category ID.
-	 */
-//	const WOO_CATEGORY_ID = 'vcex_woocommerce';
-
-	/**
 	 * Instance.
 	 */
 	private static $instance = null;
@@ -52,13 +47,9 @@ final class Elementor {
 	}
 
 	/**
-	 * Register widgets.
+	 * Return list of widgets.
 	 */
-	public function register_widgets( $widgets_manager ) {
-		if ( ! \class_exists( '\TotalThemeCore\Vcex\Elementor\Register_Controls' ) ) {
-			return; // Preload required class
-		}
-
+	private function get_widgets_list(): array {
 		$widgets = [
 			'Alert',
 			'Animated_Text',
@@ -137,7 +128,8 @@ final class Elementor {
 
 		if ( \class_exists( '\WooCommerce', false ) ) {
 			$widgets[] = 'Cart_Link';
-		//	$widgets[] = 'WooCommerce_Template';
+			$widgets[] = 'WooCommerce_Template';
+			$widgets[] = 'WooCommerce_Notices';
 		}
 
 		if ( \class_exists( '\Just_Events\Plugin', false ) ) {
@@ -145,7 +137,17 @@ final class Elementor {
 			$widgets[] = 'Just_Events_Time';
 		}
 
-		foreach ( $widgets as $widget_name ) {
+		return $widgets;
+	}
+
+	/**
+	 * Register widgets.
+	 */
+	public function register_widgets( $widgets_manager ) {
+		if ( ! \class_exists( '\TotalThemeCore\Vcex\Elementor\Register_Controls' ) ) {
+			return; // Preload required class
+		}
+		foreach ( $this->get_widgets_list() as $widget_name ) {
 			$widget_class_name = 'TotalThemeCore\Vcex\Elementor\Widgets\\' . $widget_name;
 			if ( \class_exists( $widget_class_name ) ) {
 				$widget = new $widget_class_name();
@@ -174,7 +176,7 @@ final class Elementor {
 	 * Enqueue JS in the editor.
 	 */
 	public function editor_scripts(): void {
-		if ( ! totalthemecore_call_static( 'Elementor\Helpers', 'is_edit_mode' ) ) {
+		if ( ! \totalthemecore_call_static( 'Elementor\Helpers', 'is_edit_mode' ) ) {
 			return;
 		}
 		\wp_enqueue_script(

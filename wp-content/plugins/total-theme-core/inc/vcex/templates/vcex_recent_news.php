@@ -5,7 +5,7 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 2.0
+ * @version 2.4
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -570,9 +570,9 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 	if ( 'true' == $atts['pagination_loadmore'] && ! empty( $vcex_query->max_num_pages ) ) {
 		vcex_loadmore_scripts();
 		if ( isset( $atts ) ) {
-			$atts['entry_count'] = $entry_count; // Update counter.
+			$raw_atts['entry_count'] = $entry_count;
 		}
-		$output .= vcex_get_loadmore_button( 'vcex_recent_news', $atts, $vcex_query );
+		$output .= vcex_get_loadmore_button( 'vcex_recent_news', $raw_atts, $vcex_query );
 	}
 
 	// Close wrap.

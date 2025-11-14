@@ -2,12 +2,14 @@
 
 namespace TotalThemeCore\Widgets;
 
+use TotalThemeCore\WidgetBuilder;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Advertisement widget.
  */
-class Widget_Advertisement extends \TotalThemeCore\WidgetBuilder {
+class Widget_Advertisement extends WidgetBuilder {
 
 	/**
 	 * Widget args.

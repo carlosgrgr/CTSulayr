@@ -2,12 +2,14 @@
 
 namespace TotalThemeCore\Widgets;
 
+use TotalThemeCore\WidgetBuilder;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Users Grid widget.
  */
-class Widget_Users_Grid extends \TotalThemeCore\WidgetBuilder {
+class Widget_Users_Grid extends WidgetBuilder {
 
 	/**
 	 * Widget args.
@@ -49,16 +51,7 @@ class Widget_Users_Grid extends \TotalThemeCore\WidgetBuilder {
 					'id'      => 'orderby',
 					'label'   => esc_html__( 'Orderby', 'total-theme-core' ),
 					'type'    => 'select',
-					'choices' => array(
-						'ID'           => esc_html__( 'ID', 'total-theme-core' ),
-						'login'        => esc_html__( 'Login', 'total-theme-core' ),
-						'nicename'     => esc_html__( 'Nicename', 'total-theme-core' ),
-						'email'        => esc_html__( 'Email', 'total-theme-core' ),
-						'url'          => esc_html__( 'URL', 'total-theme-core' ),
-						'registered'   => esc_html__( 'Registered', 'total-theme-core' ),
-						'display_name' => esc_html__( 'Display Name', 'total-theme-core' ),
-						'post_count'   => esc_html__( 'Post Count', 'total-theme-core' ),
-					),
+					'choices' => $this->get_orderby_choices(),
 					'default' => 'login',
 				),
 				array(
@@ -146,12 +139,6 @@ class Widget_Users_Grid extends \TotalThemeCore\WidgetBuilder {
 
 	/**
 	 * Front-end display of widget.
-	 *
-	 * @see WP_Widget::widget()
-	 * @since 1.0
-	 *
-	 * @param array $args     Widget arguments.
-	 * @param array $instance Saved values from database.
 	 */
 	public function widget( $args, $instance ) {
 		extract( $this->parse_instance( $instance ) );
@@ -166,23 +153,33 @@ class Widget_Users_Grid extends \TotalThemeCore\WidgetBuilder {
 		$output = '';
 
 		// Query users
-		$query_args = array(
-			'orderby' => $orderby,
-			'order'   => $order,
-		);
-		$role_in = array();
+		$query_args = [
+			'orderby' => in_array( $orderby, array_keys( $this->get_orderby_choices() ), true ) ? $orderby : 'ID',
+			'order' => in_array( strtolower( sanitize_key( $order ) ), array_keys( $this->choices_query_order() ), true ) ? $order : 'DESC',
+		];
+
+		$role_in = [];
+
 		if ( $admins ) {
 			$role_in[] = 'administrator';
 		}
+
+		if ( $editors ) {
+			$role_in[] = 'editor';
+		}
+
 		if ( $authors ) {
 			$role_in[] = 'author';
 		}
+
 		if ( $contributors ) {
 			$role_in[] = 'contributor';
 		}
+
 		if ( $subscribers ) {
 			$role_in[] = 'subscriber';
 		}
+
 		if ( $role_in ) {
 			$query_args['role__in'] = $role_in;
 		}
@@ -198,8 +195,6 @@ class Widget_Users_Grid extends \TotalThemeCore\WidgetBuilder {
 				'wpex-gap-' . absint( $columns_gap ?: 10 ),
 			);
 
-			$grid_class = array_map( 'esc_attr', $grid_class );
-
 			$output .= '<div class="' . esc_attr( implode( ' ', $grid_class ) ) . '">';
 
 				foreach ( $get_users as $user ) :
@@ -208,9 +203,7 @@ class Widget_Users_Grid extends \TotalThemeCore\WidgetBuilder {
 
 						// Open link tag
 						if ( $link_to_posts ) {
-
 							$output .= '<a href="' . esc_url( get_author_posts_url( $user->ID, $user->user_nicename ) ) . '" title="' . esc_attr( $user->display_name ) . ' ' . esc_html__( 'Archive', 'total-theme-core' ) . '" class="wpex-no-underline wpex-block wpex-inherit-color">';
-
 						}
 
 						// Display avatar
@@ -236,13 +229,9 @@ class Widget_Users_Grid extends \TotalThemeCore\WidgetBuilder {
 
 						// Display name
 						if ( $show_name ) {
-
 							$output .= '<div class="wpex-users-widget-name wpex-mt-15 wpex-font-semibold">';
-
 								$output .= esc_html( $user->display_name );
-
 							$output .= '</div>';
-
 						}
 
 						// Close link
@@ -267,6 +256,22 @@ class Widget_Users_Grid extends \TotalThemeCore\WidgetBuilder {
 		echo wp_kses_post( $args['after_widget'] );
 	}
 
+	/**
+	 * Returns orderby choices,
+	 */
+	private function get_orderby_choices(): array {
+		return [
+			'ID'           => esc_html__( 'ID', 'total-theme-core' ),
+			'login'        => esc_html__( 'Login', 'total-theme-core' ),
+			'nicename'     => esc_html__( 'Nicename', 'total-theme-core' ),
+			'email'        => esc_html__( 'Email', 'total-theme-core' ),
+			'url'          => esc_html__( 'URL', 'total-theme-core' ),
+			'registered'   => esc_html__( 'Registered', 'total-theme-core' ),
+			'display_name' => esc_html__( 'Display Name', 'total-theme-core' ),
+			'post_count'   => esc_html__( 'Post Count', 'total-theme-core' ),
+		];
+	}
+
 }
 
-register_widget( 'TotalThemeCore\Widgets\Widget_Users_Grid' );
+register_widget( 'TotalThemeCore\\Widgets\\Widget_Users_Grid' );

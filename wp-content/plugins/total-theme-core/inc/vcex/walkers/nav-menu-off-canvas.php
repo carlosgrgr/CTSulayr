@@ -2,12 +2,14 @@
 
 namespace TotalThemeCore\Vcex\Walkers;
 
-\defined( 'ABSPATH' ) || exit;
+use Walker_Nav_Menu;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Custom walker used to create mobile menus.
  */
-class Nav_Menu_Off_Canvas extends \Walker_Nav_Menu {
+class Nav_Menu_Off_Canvas extends Walker_Nav_Menu {
 
 	/**
 	 * Check if currently inside a mega menu.
@@ -115,22 +117,24 @@ class Nav_Menu_Off_Canvas extends \Walker_Nav_Menu {
 		$has_details = 0 === $depth && ! empty( $this->has_children ) && ! $args->vcex_atts['sub_expanded'];
 
 		// Get menu item icon
-		$icon = ( $icon = \get_post_meta( $menu_item->ID, '_menu_item_totaltheme_icon', true ) ) ? \sanitize_text_field( $icon ) : '';
+		$icon = ( $icon = get_post_meta( $menu_item->ID, '_menu_item_totaltheme_icon', true ) ) ? sanitize_text_field( $icon ) : '';
 		if ( $icon ) {
 			$icon_class = 'vcex-off-canvas-menu-nav__icon wpex-flex-shrink-0 wpex-icon--w';
 			if ( $args->vcex_atts['item_transition_duration'] ) {
 				$icon_class .= " wpex-transition-{$args->vcex_atts['item_transition_duration']}";
 			}
-			$menu_item_icon_html = \vcex_get_theme_icon_html( $icon, $icon_class );
+			$icon_html = vcex_get_theme_icon_html( $icon, $icon_class );
+			$icon_placement = get_post_meta( $menu_item->ID, '_menu_item_totaltheme_icon_placement', true );
+			$icon_placement = ( $icon_placement && in_array( $icon_placement, [ 'start', 'end' ], true ) ) ? $icon_placement : 'start';
 		}
 
 		// Li classes
 		$classes = empty( $menu_item->classes ) ? [] : (array) $menu_item->classes;
-		$classes[] = \esc_attr( "menu-item-{$menu_item->ID}" );
+		$classes[] = esc_attr( "menu-item-{$menu_item->ID}" );
 
 		if ( 0 === $depth ) {
-			$mega_cols = \get_post_meta( $menu_item->ID, '_menu_item_totaltheme_mega_cols', true );
-			if ( \is_numeric( $mega_cols ) && (int) $mega_cols > 0 ) {
+			$mega_cols = get_post_meta( $menu_item->ID, '_menu_item_totaltheme_mega_cols', true );
+			if ( is_numeric( $mega_cols ) && (int) $mega_cols > 0 ) {
 				$classes[] = 'megamenu'; // send to parse_menu_item_classes()
 			}
 		}
@@ -139,10 +143,10 @@ class Nav_Menu_Off_Canvas extends \Walker_Nav_Menu {
 		$classes = $this->parse_menu_item_classes( $classes, $args, $depth);
 
 		// Megamenu check (resets at the start of each lvl 0 item)
-		if ( 0 === $depth ) {
-			$this->is_mega = \in_array( 'vcex-off-canvas-menu-nav__item--has_mega', $classes, true );
+		if ( 0 === $depth && vcex_validate_att_boolean( 'mega_enabled', $args->vcex_atts, true ) ) {
+			$this->is_mega = in_array( 'vcex-off-canvas-menu-nav__item--has_mega', $classes, true );
 			if ( $this->is_mega ) {
-				$this->mega_no_headings = \in_array( 'vcex-off-canvas-menu-nav__item--has_mega-no-headings', $classes, true );
+				$this->mega_no_headings = in_array( 'vcex-off-canvas-menu-nav__item--has_mega-no-headings', $classes, true );
 			}
 		}
 
@@ -151,21 +155,37 @@ class Nav_Menu_Off_Canvas extends \Walker_Nav_Menu {
 		}
 
 		// Add main li class to top of array
-		\array_unshift( $classes, 'vcex-off-canvas-menu-nav__item' );
+		array_unshift( $classes, 'vcex-off-canvas-menu-nav__item' );
 
 		// Filter classes
 		if ( $add_hooks ) {
 			$classes = apply_filters( 'nav_menu_css_class', $classes, $menu_item, $args, $depth );
 		}
 
+		// Menu buttons
+		$is_menu_button = in_array( 'menu-button', $classes, true );
+
+		if ( $is_menu_button ) {
+			$has_details = false;
+			$has_description = false;
+			$menu_button_class = 'theme-button wpex-flex wpex-justify-center';
+			if ( in_array( 'menu-button-rounded', $classes, true ) ) {
+				$menu_button_class .= ' wpex-rounded-full';
+			}
+			if ( in_array( 'local-scroll', $classes, true ) ) {
+				$menu_button_class .= ' local-scroll-link';
+			}
+			$classes = [ 'vcex-off-canvas-menu-nav__button', 'wpex-mt-5' ];
+		}
+
 		// Generate li attributes
 		$li_atts          = [];
-		$li_atts['class'] = \implode( ' ', \array_filter( $classes ) );
+		$li_atts['class'] = implode( ' ', array_filter( $classes ) );
 
 		if ( $add_hooks ) {
 			$li_id = apply_filters( 'nav_menu_item_id', $menu_item->ID, $menu_item, $args, $depth );
 			if ( $li_id ) {
-				$li_atts['id'] = \esc_attr( $li_id );
+				$li_atts['id'] = esc_attr( $li_id );
 			}
 
 			$li_atts = apply_filters( 'nav_menu_item_attributes', $li_atts, $menu_item, $args, $depth );
@@ -187,15 +207,19 @@ class Nav_Menu_Off_Canvas extends \Walker_Nav_Menu {
 		// Open menu item content
 		if ( $has_content ) {
 
-			$content_class = [
-				'vcex-off-canvas-menu-nav__item-content',
-				$args->vcex_atts['nav_centered'] ? 'wpex-inline-flex' : 'wpex-flex',
-				'wpex-gap-5',
-				'wpex-relative',
-				'wpex-text-2',
-				'wpex-hover-text-2',
-				'wpex-no-underline',
-			];
+			if ( $is_menu_button ) {
+				$content_class = [ $menu_button_class ];
+			} else {
+				$content_class = [
+					'vcex-off-canvas-menu-nav__item-content',
+					$args->vcex_atts['nav_centered'] ? 'wpex-inline-flex' : 'wpex-flex',
+					'wpex-gap-5',
+					'wpex-relative',
+					'wpex-text-2',
+					'wpex-hover-text-2',
+					'wpex-no-underline',
+				];
+			}
 
 			// Justify content
 			if ( ! empty( $args->vcex_atts['item_justify_content'] ) ) {
@@ -216,11 +240,11 @@ class Nav_Menu_Off_Canvas extends \Walker_Nav_Menu {
 			$content_class_string = implode( ' ', $content_class );
 
 			if ( $has_details ) {
-				$output .= '<details class="wpex-m-0"><summary class="' . \esc_attr( $content_class_string ) . ' wpex-list-none">';
+				$output .= '<details class="wpex-m-0"><summary class="' . esc_attr( $content_class_string ) . ' wpex-list-none">';
 			} elseif ( $has_link ) {
 				$has_link = true;
 				$link_atts = [
-					'class' => \esc_attr( $content_class_string ),
+					'class' => esc_attr( $content_class_string ),
 				];
 
 				$link_atts['title']  = ! empty( $menu_item->attr_title ) ? $menu_item->attr_title : '';
@@ -247,11 +271,11 @@ class Nav_Menu_Off_Canvas extends \Walker_Nav_Menu {
 				$output .= '<a' . $this->build_atts( $link_atts ) . '>';
 			} else {
 				$has_link = false;
-				$output .= '<div class="' . \esc_attr( $content_class_string ) . '">';
+				$output .= '<div class="' . esc_attr( $content_class_string ) . '">';
 			}
 
 			// Open icon wrapper
-			if ( $icon && $menu_item_icon_html ) {
+			if ( $icon && $icon_html ) {
 				$icon_wrap_class = 'vcex-off-canvas-menu-nav__icon-wrap wpex-flex wpex-self-center';
 				if ( $args->vcex_atts['nav_centered'] ) {
 					$icon_wrap_class .= ' wpex-text-left';
@@ -261,7 +285,10 @@ class Nav_Menu_Off_Canvas extends \Walker_Nav_Menu {
 				} else {
 					$icon_wrap_class .= ' wpex-gap-10';
 				}
-				$output .= '<div class="' . \esc_attr( $icon_wrap_class ) . '">' . $menu_item_icon_html;
+				$output .= '<div class="' . esc_attr( $icon_wrap_class ) . '">';
+				if ( 'start' === $icon_placement ) {
+					$output .= $icon_html;
+				}
 			}
 
 			// Text element
@@ -295,7 +322,7 @@ class Nav_Menu_Off_Canvas extends \Walker_Nav_Menu {
 				}
 
 				if ( $text_heading_class ) {
-					$output .= '<div class="' . \esc_attr( $text_heading_class ) . '">' . $menu_item_title . '</div>';
+					$output .= '<div class="' . esc_attr( $text_heading_class ) . '">' . $menu_item_title . '</div>';
 				} else {
 					$output .= $menu_item_title;
 				}
@@ -309,7 +336,10 @@ class Nav_Menu_Off_Canvas extends \Walker_Nav_Menu {
 			$output .= '</div>';
 
 			// Close icon wrap
-			if ( $icon && $menu_item_icon_html ) {
+			if ( $icon && $icon_html ) {
+				if ( 'end' === $icon_placement ) {
+					$output .= $icon_html;
+				}
 				$output .= '</div>';
 			}
 
@@ -351,7 +381,7 @@ class Nav_Menu_Off_Canvas extends \Walker_Nav_Menu {
 	 */
 	protected function parse_menu_item_classes( array $classes, $args = [] ): array {
 		foreach ( $classes as $class_k => $class_v ) {
-			if ( ! \is_string( $class_v ) ) {
+			if ( ! is_string( $class_v ) ) {
 				continue;
 			}
 			if ( 'hide-headings' === $class_v ) {
@@ -362,13 +392,13 @@ class Nav_Menu_Off_Canvas extends \Walker_Nav_Menu {
 				|| 'megamenu' === $class_v
 				|| 'hide-headings' === $class_v
 				|| 'megamenu' === $class_v
-				|| \str_starts_with( $class_v, 'col-' )
+				|| str_starts_with( $class_v, 'col-' )
 			) {
 				unset( $classes[ $class_k ] );
 			}
 		}
-		if ( ! \vcex_validate_att_boolean( 'mega_heading_enabled', $args->vcex_atts, true )
-			&& ! \in_array( 'vcex-off-canvas-menu-nav__item--has_mega-no-headings', $classes, true )
+		if ( ! vcex_validate_att_boolean( 'mega_heading_enabled', $args->vcex_atts, true )
+			&& ! in_array( 'vcex-off-canvas-menu-nav__item--has_mega-no-headings', $classes, true )
 		) {
 			$classes[] = 'vcex-off-canvas-menu-nav__item--has_mega-no-headings';
 		}
@@ -380,7 +410,7 @@ class Nav_Menu_Off_Canvas extends \Walker_Nav_Menu {
 	 */
 	private function _get_down_arrow( $args = [] ) {
 		$icon = $args->vcex_atts['sub_arrow_icon'];
-		return (string) \vcex_get_theme_icon_html( "{$icon}-down", 'vcex-off-canvas-menu-nav__arrow-icon wpex-flex wpex-items-center', 'xs', false );
+		return (string) vcex_get_theme_icon_html( "{$icon}-down", 'vcex-off-canvas-menu-nav__arrow-icon wpex-flex wpex-items-center', 'xs', false );
 	}
 
 }

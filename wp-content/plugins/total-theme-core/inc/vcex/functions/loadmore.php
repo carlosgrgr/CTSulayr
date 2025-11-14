@@ -2,15 +2,6 @@
 
 defined( 'ABSPATH' ) || exit;
 
-// @todo Deprecate.
-
-/**
- * Checks if shortcode has load more.
- */
-function vcex_shortcode_has_loadmore( $atts, $vcex_query ): bool {
-	return vcex_validate_att_boolean( 'pagination_loadmore', $atts ) && ! empty( $vcex_query->max_num_pages );
-}
-
 /**
  * Check if we are currently loading new posts.
  */
@@ -47,6 +38,7 @@ function vcex_loadmore_scripts() {
 		'vcex_loadmore_params',
 		[
 			'ajax_url' => esc_url( set_url_scheme( admin_url( 'admin-ajax.php' ) ) ),
+			'nonce'    => wp_create_nonce( 'vcex-ajax-pagination-nonce' )
 		]
 	);
 }
@@ -54,8 +46,8 @@ function vcex_loadmore_scripts() {
 /**
  * Load More Button.
  */
-function vcex_get_loadmore_button( $shortcode_tag, $atts, $query, $infinite_scroll = false ) {
-	return totalthemecore_call_non_static( 'Vcex\Ajax', 'get_loadmore_button', $shortcode_tag, $atts, $query, $infinite_scroll );
+function vcex_get_loadmore_button( $shortcode_tag, $raw_atts, $query, $infinite_scroll = false ) {
+	return totalthemecore_call_non_static( 'Vcex\Ajax', 'get_loadmore_button', $shortcode_tag, $raw_atts, $query, $infinite_scroll );
 }
 
 /**
@@ -65,7 +57,7 @@ function vcex_loadmore_ajax_render() {
 	check_ajax_referer( 'vcex-ajax-pagination-nonce', 'nonce' );
 
 	if ( empty( $_POST['shortcodeParams'] ) || empty( $_POST[ 'shortcodeTag' ] ) ) {
-		wp_die();
+		wp_send_json_error( 'vcex loadmore: shortcodeParams and/or shortcodeTag not defined');
 	}
 
 	$tag = sanitize_text_field( wp_unslash( $_POST['shortcodeTag'] ) );
@@ -82,14 +74,47 @@ function vcex_loadmore_ajax_render() {
 	];
 
 	if ( ! in_array( $tag, $allowed_tags, true ) ) {
-		wp_die();
+		wp_send_json_error( 'vcex: Shortcode not allowed' );
 	}
 
 	if ( class_exists( 'WPBMap' ) ) {
 		WPBMap::addAllMappedShortcodes(); // fix for WPBakery not working in ajax
 	}
 
-	$params = wp_unslash( array_map( 'sanitize_text_field', $_POST['shortcodeParams'] ) );
+	$params = sanitize_text_field( wp_unslash( $_POST['shortcodeParams'] ) );
+		
+	if ( ! $params ) {
+		wp_send_json_error( [ 'message' => 'vcex_ajax: empty atts' ] );
+	}
+
+	$params = json_decode( $params, true );
+	
+	if ( empty( $params['nonce'] ) ) {
+		wp_send_json_error( [ 'message' => 'vcex_ajax: atts nonce not found' ] );
+	}
+
+	$atts_nonce = $params['nonce'];
+	unset( $params['nonce'] );
+	ksort( $params );
+
+	$expected_nonce = 'vcex_load_more_button_' . md5( wp_json_encode( $params ) );
+
+	if ( ! wp_verify_nonce( $atts_nonce, $expected_nonce ) ) {
+		wp_send_json_error( [ 'message' => 'vcex_ajax: atts nonce did not verify' ] );
+	}
+
+	if ( ! empty( $params['query_vars'] ) ) {
+		$query_vars_safe = totalthemecore_call_static( 'Vcex\Ajax', 'decrypt', sanitize_text_field( wp_unslash( $params['query_vars'] ) ) );
+		if ( $query_vars_safe ) {
+			$params['query_vars'] = $query_vars_safe;
+		} else {
+			wp_send_json_error( [ 'message' => 'vcex_ajax: could not decrypt query_vars' ] );
+		}
+	}
+
+	if ( isset( $_POST['paged'] ) ) {
+		$params['paged'] = floatval( wp_unslash( $_POST['paged'] ) );
+	}
 
 	wp_send_json_success( vcex_do_shortcode_function( $tag, $params ) );
 

@@ -72,7 +72,7 @@ final class Builder {
 				break;
 			case 'wpex_card_link':
 				$cf_link = \get_post_meta( $post_id, 'link_custom_field', true );
-				if ( $cf_link  ) {
+				if ( $cf_link ) {
 					printf( esc_html__( 'Custom Field: %s', 'total-theme-core' ), $cf_link );
 				} else {
 					$link_type = \get_post_meta( $post_id, 'link_type', true );
@@ -224,15 +224,6 @@ final class Builder {
 			'context'  => 'advanced',
 			'priority' => 'default',
 			'fields'   => [ self::class, 'get_metabox_fields' ],
-			'scripts'  => [
-				[
-					'totaltheme-cards-builder-metabox',
-					\totalthemecore_get_js_file( 'admin/cards-builder-metabox' ),
-					[],
-					TTC_VERSION,
-					true
-				],
-			],
 		];
 	}
 
@@ -279,6 +270,7 @@ final class Builder {
 				'id'   => 'link_custom_field',
 				'type' => 'text',
 				'desc' => \esc_html__( 'Enter the name of a custom field to use for your card link.', 'total-theme-core' ),
+				'conditional_logic' => [ 'link_type', '!=', [ 'none', 'post', 'modal', 'dialog' ] ],
 			];
 		}
 

@@ -5,27 +5,27 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 2.0
+ * @version 2.4.2
  */
 
 defined( 'ABSPATH' ) || exit;
 
-// Get onclick attributes early so they can be modified later if needed.
+// Get onclick attributes early so they can be modified later if needed
 $onclick = $atts['onclick'] ?? '';
 $onclick_attrs = vcex_get_shortcode_onclick_attributes( $atts, 'vcex_button' );
 $link = $onclick_attrs['href'] ?? '';
 
-// @note: The button has always fallen back to a # symbol for the link.
+// @note: The button has always fallen back to a # symbol for the link
 if ( ! $link && ( 'custom_link' === $onclick || (bool) vcex_get_template_edit_mode() ) ) {
 	$link = '#';
 }
 
-// Don't show the button if there is no link.
+// Don't show the button if there is no link
 if ( ! (bool) $link ) {
 	return;
 }
 
-// Declare main vars.
+// Declare main vars
 $output        = '';
 $layout        = $atts['layout'] ?? '';
 $align         = ( empty( $atts['text_align'] ) && ! empty( $atts['align'] ) ) ? $atts['align'] : null;
@@ -37,7 +37,7 @@ $button_align  = $atts['align'] ?? '';
 $button_state  = $atts['state'] ?? '';
 $lightbox_type = $atts['lightbox_type'] ?? '';
 
-// Sanitize content.
+// Sanitize content
 switch ( $text_source ) {
 	case 'custom_field':
 		if ( ! empty( $atts['text_custom_field'] ) ) {
@@ -64,12 +64,12 @@ switch ( $text_source ) {
 		break;
 }
 
-// Don't show button if content is empty.
+// Don't show button if content is empty
 if ( empty( $content ) || ! is_string( $content ) ) {
 	return;
 }
 
-// Button Classes.
+// Button Classes
 $button_classes = [
 	'vcex-button',
 ];
@@ -77,7 +77,7 @@ $button_classes = [
 $button_classes[] = vcex_get_button_classes( $button_style, $button_color, $button_size, $button_align );
 
 if ( 'plain-text' === $button_style ) {
-	$button_classes[] = 'wpex-inline-block'; // fixex issues with margins and other styles.
+	$button_classes[] = 'wpex-inline-block'; // fixex issues with margins and other styles
 }
 
 if ( $button_state ) {
@@ -116,7 +116,7 @@ if ( ! empty( $atts['visibility'] ) ) {
 	$button_classes[] = vcex_parse_visibility_class( $atts['visibility'] );
 }
 
-// Wrap classes.
+// Wrap classes
 $wrap_classes = [];
 
 if ( 'center' === $align ) {
@@ -145,11 +145,11 @@ if ( $wrap_classes ) {
 	$wrap_classes = implode( ' ', $wrap_classes );
 }
 
-// Define button icon_classes.
+// Define button icon_classes
 $icon_left  = ! empty( $atts['icon_left_alt'] ) ? vcex_parse_text_safe( $atts['icon_left_alt'] ) : vcex_get_icon_html( $atts, 'icon_left' );
 $icon_right = ! empty( $atts['icon_right_alt'] ) ? vcex_parse_text_safe( $atts['icon_right_alt'] ) : vcex_get_icon_html( $atts, 'icon_right' );
 
-// Responsive styles.
+// Responsive styles
 $unique_classname = vcex_element_unique_classname();
 
 $el_responsive_styles = [
@@ -163,16 +163,16 @@ if ( $responsive_css ) {
 	$output .= '<style>' . $responsive_css . '</style>';
 }
 
-// Add onclick classes to the button classes and unset.
+// Add onclick classes to the button classes and unset
 if ( isset( $onclick_attrs['class'] ) ) {
 	$button_classes = array_merge( $button_classes, $onclick_attrs['class'] );
 	unset( $onclick_attrs['class'] );
 }
 
-// Turn arrays into strings.
+// Turn arrays into strings
 $button_classes = vcex_parse_shortcode_classes( implode( ' ', $button_classes ), 'vcex_button', $atts );
 
-// Open CSS wrapper.
+// Open CSS wrapper
 if ( ! empty( $atts['css_wrap'] ) ) {
 	$css_wrap_class = vcex_vc_shortcode_custom_css_class( $atts['css_wrap'] );
 	$css_wrap_style_args = [];
@@ -193,7 +193,7 @@ if ( ! empty( $atts['css_wrap'] ) ) {
 
 }
 
-	// Open wrapper for specific button styles.
+	// Open wrapper for specific button styles
 	if ( $wrap_classes ) {
 		$output .= '<div class="' . esc_attr( $wrap_classes ) . '">';
 	}
@@ -215,18 +215,13 @@ if ( ! empty( $atts['css_wrap'] ) ) {
 			$link_attrs['download'] = 'download';
 		}
 
-		if ( 'toggle_element' === $onclick ) {
-			$link_attrs['aria-expanded'] = ( 'active' === $button_state ) ? 'true' : 'false';
-			$link_attrs['aria-controls'] = str_replace( '#', '', $link_attrs['href'] );
-		}
-
-		// Open Link.
+		// Open Link
 		$output .= '<a' . vcex_parse_html_attributes( $link_attrs ) . '>';
 
-			// Open inner span.
+			// Open inner span
 			$output .= '<span class="vcex-button-inner theme-button-inner wpex-flex wpex-flex-wrap wpex-items-center wpex-justify-center">';
 
-				// Left Icon.
+				// Left Icon
 				if ( $icon_left ) {
 					$icon_left_class = 'vcex-button-icon vcex-icon-wrap theme-button-icon-left';
 					if ( ! empty( $atts['icon_left_transform'] ) ) {
@@ -235,19 +230,30 @@ if ( ! empty( $atts['css_wrap'] ) ) {
 					$output .= '<span class="' . esc_attr( $icon_left_class ) . '">' . $icon_left . '</span>';
 				}
 
-				// Text.
-				if ( 'toggle_element' === $onclick ) {
-					if ( ! empty( $atts['toggle_element_active_text'] ) ) {
-						$output .= '<span class="theme-button-text" data-open-text>' . vcex_parse_text_safe( $content ) . '</span>';
-						$output .= '<span class="theme-button-text" data-close-text>' . vcex_parse_text_safe( $atts['toggle_element_active_text'] ) . '</span>';
-					} else {
-						$output .= '<span class="theme-button-text">' . vcex_parse_text_safe( $content ) . '</span>';
-					}
-				} else {
-					$output .= vcex_parse_text_safe( $content );
+				// Text
+				switch ( $onclick ) {
+					case 'toggle_element':
+						if ( ! empty( $atts['toggle_element_active_text'] ) ) {
+							$output .= '<span class="theme-button-text" data-open-text>' . vcex_parse_text_safe( $content ) . '</span>';
+							$output .= '<span class="theme-button-text" data-close-text>' . vcex_parse_text_safe( $atts['toggle_element_active_text'] ) . '</span>';
+						} else {
+							$output .= '<span class="theme-button-text">' . vcex_parse_text_safe( $content ) . '</span>';
+						}
+						break;
+					case 'toggle_playback':
+						if ( ! empty( $atts['toggled_text'] ) ) {
+							$output .= '<span class="theme-button-text" data-on-text>' . vcex_parse_text_safe( $content ) . '</span>';
+							$output .= '<span class="theme-button-text" data-off-text>' . vcex_parse_text_safe( $atts['toggled_text'] ) . '</span>';
+						} else {
+							$output .= vcex_parse_text_safe( $content );
+						}
+						break;
+					default:
+						$output .= vcex_parse_text_safe( $content );
+						break;
 				}
 
-				// Icon Right.
+				// Icon Right
 				if ( $icon_right ) {
 					$icon_right_class = 'vcex-button-icon vcex-icon-wrap theme-button-icon-right';
 					if ( ! empty( $atts['icon_right_transform'] ) ) {
@@ -256,18 +262,18 @@ if ( ! empty( $atts['css_wrap'] ) ) {
 					$output .= '<span class="' . esc_attr( $icon_right_class ) . '">' . $icon_right . '</span>';
 				}
 
-			// Close inner span.
+			// Close inner span
 			$output .= '</span>';
 
-		// Close link.
+		// Close link
 		$output .= '</a>';
 
-	// Close wrapper for specific button styles.
+	// Close wrapper for specific button styles
 	if ( $wrap_classes ) {
 		$output .=  '</div>';
 	}
 
-// Close css wrap div.
+// Close css wrap div
 if ( ! empty( $atts['css_wrap'] ) ) {
 	$output .= '</div>';
 }

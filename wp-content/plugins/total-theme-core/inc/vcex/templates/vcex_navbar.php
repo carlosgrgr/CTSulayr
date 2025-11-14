@@ -5,29 +5,66 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 2.0.2
+ * @version 2.4
  */
 
 defined( 'ABSPATH' ) || exit;
 
-if ( empty( $atts['menu'] ) ) {
+// Get menu
+$menu_id = ! empty( $atts['menu'] ) ? sanitize_text_field( $atts['menu'] ) : '';
+
+if ( ! $menu_id || ( 'current_tax_terms' === $menu_id && ( ! is_tax() && ! is_category() && ! is_tag() ) ) ) {
 	return;
 }
 
 // Main vars
-$output           = '';
-$menu_id           = $atts['menu'] ?? '';
-$preset_design     = ! empty( $atts['preset_design'] ) ? $atts['preset_design'] : 'none';
-$button_style      = ! empty( $atts['button_style'] ) ? $atts['button_style'] : '';
-$button_layout     = ! empty( $atts['button_layout'] ) ? $atts['button_layout'] : '';
-$url_sort          = vcex_validate_att_boolean( 'url_sort', $atts, false );
-$has_mobile_select = vcex_validate_att_boolean( 'mobile_select', $atts, false );
-$filter_menu       = $atts['filter_menu'] ?? false;
+$output            = '';
+$preset_design     = ! empty( $atts['preset_design'] ) ? sanitize_text_field( $atts['preset_design'] ) : 'none';
+$button_style      = ! empty( $atts['button_style'] ) ? sanitize_text_field( $atts['button_style'] ) : '';
+$button_layout     = ! empty( $atts['button_layout'] ) ? sanitize_text_field( $atts['button_layout'] ) : '';
+$url_sort          = vcex_validate_att_boolean( 'url_sort', $atts ); // @todo deprecate - this was never officially integrated
+$has_mobile_select = vcex_validate_att_boolean( 'mobile_select', $atts );
+$filter_menu       = ! empty( $atts['filter_menu'] ) ? sanitize_text_field( $atts['filter_menu'] ) : false;
 $filter_mode       = ( $filter_menu && ! empty( $atts['filter_layout_mode'] ) ) ? $atts['filter_layout_mode'] : 'masonry';
 $show_term_count   = vcex_validate_att_boolean( 'term_count', $atts );
+$is_local_scroll   = vcex_validate_att_boolean( 'local_scroll', $atts );
 
-if ( 'current_tax_terms' === $menu_id && ( ! is_tax() && ! is_category() && ! is_tag() ) ) {
-	return;
+if ( 'spaced_out' === $button_layout
+	|| apply_filters( 'vcex_navbar_use_flex_layout', vcex_theme_version_check( 'initial', '6.4', '>=' ) )
+) {
+	$has_flex_layout = true;
+} else {
+	$has_flex_layout = false;
+}
+
+if ( ! in_array( $button_layout, [ 'expanded', 'list' ] ) && ! empty( $atts['stack_breakpoint'] ) ) {
+	$stack_breakpoint = sanitize_text_field( $atts['stack_breakpoint'] );
+	if ( $stack_breakpoint ) {
+		$has_flex_layout = true;
+	}
+} else {
+	$stack_breakpoint = '';
+}
+
+if ( $has_mobile_select ) {
+	$inner_visibility_class = 'visible-desktop';
+	$mobile_select_visibility_class = 'hidden-desktop';
+	$mobile_select_breakpoint = ! empty( $atts['mobile_select_breakpoint'] ) ? sanitize_text_field( $atts['mobile_select_breakpoint'] ) : 'lg';
+	// Convert to older visibility classes
+	switch ( $mobile_select_breakpoint ) {
+		case 'xl':
+			$inner_visibility_class = 'visible-desktop-large';
+			$mobile_select_visibility_class = 'hidden-desktop-large';
+			break;
+		case 'md':
+			$inner_visibility_class = 'hidden-phone';
+			$mobile_select_visibility_class = 'visible-phone';
+			break;
+		case 'sm':
+			$inner_visibility_class = 'hidden-phone-small';
+			$mobile_select_visibility_class = 'visible-phone-small';
+			break;
+	}
 }
 
 // Get menu object
@@ -98,17 +135,30 @@ if ( empty( $menu_items ) || ! is_array( $menu_items ) ) {
 }
 
 if ( isset( $atts['align'] ) && ! in_array( $button_layout, [ 'expanded', 'spaced_out' ] ) ) {
-	$align = $atts['align'];
+	$align = sanitize_text_field( $atts['align'] );
 } else {
 	$align = '';
 }
 
-// Link margins
-$default_link_margin_side = ( ! $button_layout || 'spaced_out' === $button_layout ) ? '5' : '';
-$default_link_margin_side = ( 'none' === $preset_design ) ? $default_link_margin_side : '10';
-$link_margin_side = ! empty( $atts['link_margin_side'] ) ? absint( $atts['link_margin_side'] ) : $default_link_margin_side;
-$default_link_margin_bottom = ( 'none' === $preset_design ) ? '5' : '';
-$link_margin_bottom = ! empty( $atts['link_margin_bottom'] ) ? absint( $atts['link_margin_bottom'] ) : $default_link_margin_bottom;
+// Set link margin side
+$link_margin_side = '';
+if ( ! empty( $atts['link_margin_side'] ) ) {
+	$link_margin_side = absint( $atts['link_margin_side'] );
+} else {
+	if ( 'none' !== $preset_design ) {
+		$link_margin_side = '10';
+	} elseif ( ! in_array( $button_layout, [ 'expanded', 'list' ], true ) ) {
+		$link_margin_side = '5';
+	}
+}
+
+// Set link margin bottom
+$link_margin_bottom = '';
+if ( ! empty( $atts['link_margin_bottom'] ) ) {
+	$link_margin_bottom = absint( $atts['link_margin_bottom'] );
+} elseif ( 'none' === $preset_design ) {
+	$link_margin_bottom = $link_margin_side ? $link_margin_side : '5';
+}
 
 // Hover animation
 if ( ! empty( $atts['hover_animation'] ) ) {
@@ -116,16 +166,14 @@ if ( ! empty( $atts['hover_animation'] ) ) {
 }
 
 // Wrap classes
-$wrap_classes = [
-	'vcex-navbar',
-];
+$wrap_classes = [ 'vcex-navbar' ];
 
 if ( $preset_design && 'none' !== $preset_design ) {
-	$wrap_classes[] = 'vcex-navbar--' . sanitize_html_class( $preset_design );
+	$wrap_classes[] = sanitize_html_class( "vcex-navbar--{$preset_design}" );
 }
 
 if ( $button_layout ) {
-	$wrap_classes[] = 'vcex-navbar--' . sanitize_html_class( $button_layout );
+	$wrap_classes[] = sanitize_html_class( "vcex-navbar--{$button_layout}" );
 }
 
 $wrap_classes[] = 'vcex-module';
@@ -140,11 +188,11 @@ if ( $filter_menu ) {
 		case 'ajax':
 			$wrap_data[] = 'data-vcex-ajax-filter="1"';
 			$wrap_data[] = 'data-vcex-ajax-filter-target="' . trim( esc_attr( $filter_menu ) ) . '"';
-			$filter_relation = ! empty( $atts['filter_relation'] ) ? strtoupper( $atts['filter_relation'] ) : '';
+			$filter_relation = ! empty( $atts['filter_relation'] ) ? strtoupper( sanitize_text_field( $atts['filter_relation'] ) ) : '';
 
-			if ( in_array( $filter_relation, [ 'AND', 'OR' ] ) ) {
+			if ( 'AND' === $filter_relation || 'OR' === $filter_relation ) {
 				$wrap_data[] = 'data-vcex-ajax-filter-multiple="1"';
-				$wrap_data[] = 'data-vcex-ajax-filter-relation="' . trim( esc_attr( $filter_relation ) ) . '"';
+				$wrap_data[] = 'data-vcex-ajax-filter-relation="' . esc_attr( $filter_relation ) . '"';
 			} else {
 				$wrap_data[] = 'data-vcex-ajax-filter-multiple="0"';
 			}
@@ -154,7 +202,7 @@ if ( $filter_menu ) {
 			}
 
 			if ( $show_term_count ) {
-				if ( 'and' === strtolower( $filter_relation ) ) {
+				if ( 'AND' ===  $filter_relation ) {
 					$wrap_data[] = 'data-vcex-ajax-filter-update-counts="1"';
 				}
 				$wrap_data[] = 'data-vcex-ajax-filter-set-counts="' . trim( absint( $show_term_count ) ) . '"';
@@ -216,7 +264,7 @@ if ( 'none' !== $preset_design ) {
 	}
 }
 
-if ( vcex_validate_att_boolean( 'sticky', $atts, false ) ) {
+if ( vcex_validate_att_boolean( 'sticky', $atts ) ) {
 	$wrap_classes[] = 'vcex-navbar-sticky';
 	$wrap_classes[] = 'wpex-transition-opacity';
 	$wrap_classes[] = 'wpex-duration-300';
@@ -237,7 +285,7 @@ if ( $atts['bottom_margin'] ) {
 	$wrap_classes[] = vcex_parse_margin_class( $atts['bottom_margin'], 'bottom' );
 }
 
-if ( $align ) {
+if ( $align && ! $has_flex_layout ) {
 	$wrap_classes[] = 'align-' . sanitize_html_class( $align );
 	switch ( $align ) {
 		case 'center':
@@ -279,57 +327,106 @@ $output .= '<nav' . vcex_parse_html_attributes( $wrap_attrs ) . '>';
 	// Inner classes
 	$inner_classes = 'vcex-navbar-inner';
 
-	switch ( $align ) {
-		case 'right':
-			$inner_classes .= ' wpex-float-right';
-			break;
-		case 'left':
-			$inner_classes .= ' wpex-float-left';
-			break;
-	}
-
-	switch ( $button_layout ) {
-		case 'spaced_out':
-			$inner_classes .= ' wpex-flex wpex-flex-wrap wpex-justify-between wpex-items-center';
+	if ( $has_flex_layout ) {
+		$inner_classes .= ' wpex-flex wpex-flex-wrap';
+		if ( 'spaced_out' === $button_layout ) {
+			if ( $stack_breakpoint ) {
+				$inner_classes .= " wpex-{$stack_breakpoint}-justify-between wpex-{$stack_breakpoint}-items-center";
+			} else {
+				$inner_classes .= ' wpex-justify-between wpex-items-center';
+			}
+			if ( $link_margin_side ) {
+				$inner_classes .= ' wpex-gap-x-' . absint( $link_margin_side );
+			}
 			$inner_classes .= ' wpex-last-mr-0';
-			break;
-		default:
-			$inner_classes .= ' wpex-clr';
-			break;
+		} elseif ( 'list' === $button_layout ) {
+			$inner_classes .= ' wpex-flex-col';
+			$align = $align ?: 'start';
+			$inner_classes .= ' ' . vcex_parse_align_items_class( $align );
+			if ( $link_margin_side ) {
+				$inner_classes .= ' wpex-gap-x-' . absint( $link_margin_side );
+			}
+			if ( $link_margin_bottom ) {
+				$inner_classes .= ' wpex-gap-y-' . absint( $link_margin_bottom );
+			}
+		} else {
+			if ( $align ) {
+				if ( $stack_breakpoint && 'plain-text' === $button_style ) {
+					$inner_classes .= ' ' . vcex_parse_align_items_class( $align );
+					$inner_classes .= ' ' . vcex_parse_align_items_class( 'start', $stack_breakpoint );
+					$inner_classes .= ' ' . vcex_parse_justify_content_class( $align, $stack_breakpoint );
+				} else {
+					$inner_classes .= ' ' . vcex_parse_justify_content_class( $align );
+				}
+			} else {
+				$inner_classes .= ' wpex-items-center';
+			}
+			if ( $link_margin_side ) {
+				$inner_classes .= ' wpex-gap-x-' . absint( $link_margin_side );
+			}
+			if ( $link_margin_bottom ) {
+				$inner_classes .= ' wpex-gap-y-' . absint( $link_margin_bottom );
+			}
+		}
+		if ( $stack_breakpoint ) {
+			$inner_classes .= " wpex-flex-col wpex-{$stack_breakpoint}-flex-row";
+		}
+	} else {
+		$inner_classes .= ' wpex-clr';
+		switch ( $align ) {
+			case 'right':
+				$inner_classes .= ' wpex-float-right';
+				break;
+			case 'left':
+				$inner_classes .= ' wpex-float-left';
+				break;
+		}
+		if ( $link_margin_side ) {
+			$inner_classes .= ' wpex-last-mr-0';
+		}
 	}
 
-	if ( vcex_validate_att_boolean( 'full_screen_center', $atts, false ) ) {
+	if ( vcex_validate_att_boolean( 'full_screen_center', $atts ) ) {
 		$inner_classes .= ' container';
 	}
 
-	if ( $link_margin_side ) {
-		$inner_classes .= ' wpex-last-mr-0';
-	}
-
 	if ( $has_mobile_select ) {
-		$inner_classes .= ' visible-desktop';
+		$inner_classes .= " {$inner_visibility_class}";
 	}
 
 	// Beginner inner output
-	$output .= '<div class="'. esc_attr( $inner_classes ) .'">';
+	$output .= '<div class="'. esc_attr( trim( $inner_classes ) ) .'">';
 
 		// Classes added to all links
 		$all_link_class = [
 			'vcex-navbar-link',
 		];
 
-		if ( 'center' === $align || 'dark' === $preset_design ) {
-			$all_link_class[] = 'wpex-inline-block';
+		if ( $has_flex_layout ) {
+			$all_link_class[] = 'wpex-block';
+			if ( 'spaced_out' === $button_layout && $link_margin_bottom ) {
+				// this is how it always has worked, but would be good to consider switching to gap
+				$all_link_class[] = 'wpex-mb-' . absint( $link_margin_bottom );
+			}
 		} else {
-			if ( 'plain-text' === $button_style ) {
+			if ( 'center' === $align || 'dark' === $preset_design ) {
 				$all_link_class[] = 'wpex-inline-block';
 			} else {
-				$all_link_class[] = 'wpex-block';
+				if ( 'plain-text' === $button_style ) {
+					$all_link_class[] = 'wpex-inline-block';
+				} else {
+					$all_link_class[] = 'wpex-block';
+				}
 			}
-		}
-
-		if ( 'center' !== $align ) {
-			$all_link_class[] = ( 'right' === $align && 'list' === $button_layout ) ? 'wpex-float-right' : 'wpex-float-left';
+			if ( 'center' !== $align ) {
+				$all_link_class[] = ( 'right' === $align && 'list' === $button_layout ) ? 'wpex-float-right' : 'wpex-float-left';
+			}
+			if ( $link_margin_side ) {
+				$all_link_class[] = 'wpex-mr-' . absint( $link_margin_side );
+			}
+			if ( $link_margin_bottom ) {
+				$all_link_class[] = 'wpex-mb-' . absint( $link_margin_bottom );
+			}
 		}
 
 		switch ( $preset_design ) {
@@ -342,32 +439,23 @@ $output .= '<nav' . vcex_parse_html_attributes( $wrap_attrs ) . '>';
 				$all_link_class[] = 'wpex-active-opacity-100';
 				$all_link_class[] = 'wpex-transition-1500';
 				break;
-		}
-
-		if ( $link_margin_side ) {
-			$all_link_class[] = 'wpex-mr-' . absint( $link_margin_side );
-		}
-
-		if ( $link_margin_bottom ) {
-			$all_link_class[] = 'wpex-mb-' . absint( $link_margin_bottom );
-		}
-
-		if ( 'none' === $preset_design ) {
-			$all_link_class[] = vcex_get_button_classes( $button_style, $atts['button_color'] );
-			if ( 'spaced_out' === $button_layout ) {
-				if ( vcex_validate_att_boolean( 'expand_links', $atts, false ) ) {
-					$all_link_class[] = 'wpex-flex-grow wpex-text-center';
+			case 'none':
+				$all_link_class[] = vcex_get_button_classes( $button_style, $atts['button_color'] );
+				if ( 'spaced_out' === $button_layout ) {
+					if ( vcex_validate_att_boolean( 'expand_links', $atts ) ) {
+						$all_link_class[] = 'wpex-flex-grow wpex-text-center';
+					}
+				} else {
+					$all_link_class[] = $button_layout;
 				}
-			} else {
-				$all_link_class[] = $button_layout;
-			}
+				break;
 		}
 
 		if ( ! empty( $atts['font_weight'] ) ) {
 			$all_link_class[] = vcex_font_weight_class( $atts['font_weight'] );
 		}
 
-		if ( vcex_validate_att_boolean( 'local_scroll', $atts, false ) ) {
+		if ( $is_local_scroll ) {
 			$all_link_class[] = 'local-scroll';
 		}
 
@@ -380,7 +468,7 @@ $output .= '<nav' . vcex_parse_html_attributes( $wrap_attrs ) . '>';
 		}
 
 		if ( ! empty( $atts['hover_animation'] ) ) {
-			$all_link_class[] = $atts['hover_animation'];
+			$all_link_class[] = sanitize_text_field( $atts['hover_animation'] );
 		}
 
 		if ( ! empty( $atts['hover_bg'] ) ) {
@@ -436,8 +524,8 @@ $output .= '<nav' . vcex_parse_html_attributes( $wrap_attrs ) . '>';
 			// Add to counter
 			$counter++;
 
-			// Link Classes.
-			$link_class = $all_link_class; // !! must reset link_class on each iteration !!
+			// Link Classes
+			$link_class = array_filter( array_unique( $all_link_class ) ); // !! must reset link_class on each iteration !!
 
 			if ( $menu_item_obj_id ) {
 				array_splice( $link_class, 1, 0, "vcex-navbar-link--{$menu_item_obj_id}" );
@@ -544,7 +632,7 @@ $output .= '<nav' . vcex_parse_html_attributes( $wrap_attrs ) . '>';
 								$menu_item_term = get_term_by( 'id', $menu_item_obj_id, $menu_item_obj );
 								if ( $menu_item_term ) {
 									$menu_item_filter_slug = $menu_item_term->slug ?? '';
-									// Check for hexidecimal text as it could be Hebrew or another language.
+									// Check for hexidecimal text as it could be Hebrew or another language
 									if ( $menu_item_filter_slug && str_contains( $menu_item_filter_slug, '%d' ) ) {
 										$menu_item_filter_slug = str_replace( '.', '', $data_filter );
 									}
@@ -574,8 +662,8 @@ $output .= '<nav' . vcex_parse_html_attributes( $wrap_attrs ) . '>';
 			}
 
 			// Define href
-			if ( $filter_menu && $data_filter ) {
-				if ( ! empty( $menu_item_filter_slug ) ) {
+			if ( $filter_menu ) {
+				if ( $data_filter && ! empty( $menu_item_filter_slug ) ) {
 					$current_url = $current_url ?? wpex_get_current_url();
 					$filter_url_param = $filter_url_param ?? vcex_grid_filter_url_param();
 					$href = "{$current_url}?{$filter_url_param}={$menu_item_filter_slug}";
@@ -583,13 +671,18 @@ $output .= '<nav' . vcex_parse_html_attributes( $wrap_attrs ) . '>';
 					$href = '#';
 				}
 			} else {
-				$href = $menu_item->url;
+				$href = $menu_item->url ?? '';
 			}
 
 			// Sanitize link classes
 			$link_class = array_filter( array_unique( $link_class ) );
 			$link_class = array_filter( $link_class, 'trim' );
 			$link_class = array_filter( $link_class, 'esc_attr' );
+
+			// Sanitize href
+			if ( $href && $is_local_scroll && is_callable( 'TotalTheme\Local_Scroll::normalize_id' ) ) {
+				$href = TotalTheme\Local_Scroll::normalize_id( $href );
+			}
 
 			// Link attributes
 			$link_attrs = [
@@ -602,16 +695,19 @@ $output .= '<nav' . vcex_parse_html_attributes( $wrap_attrs ) . '>';
 			// Add data filter for masonry/simple filter
 			if ( $data_filter ) {
 				$link_attrs['data-filter'] = $data_filter;
+				$link_attrs['rel'] = 'nofollow';
 			}
 
 			// Add ajax data attributes
 			if ( $filter_menu && 'ajax' === $filter_mode ) {
+				$link_attrs['rel'] = 'nofollow';
 				if ( 'custom' === $menu_item_type
 					|| ( in_array( $menu_id, [ 'post_terms', 'dynamic_terms', 'current_tax_terms' ], true ) && false === $menu_item_type )
 				) {
 					if ( '#' === $menu_item->url ) {
 						$is_all_link = true;
 						$link_attrs['data-vcex-type'] = 'all';
+						
 					}
 				} else {
 					if ( $menu_item_obj ) {
@@ -645,9 +741,9 @@ $output .= '<nav' . vcex_parse_html_attributes( $wrap_attrs ) . '>';
 				$output .= '<a' . vcex_parse_html_attributes( $link_attrs ) .'>';
 
 					// Display meta defined icon
-					$icon = ( $menu_item_id && $icon = \get_post_meta( $menu_item_id, '_menu_item_totaltheme_icon', true ) ) ? \sanitize_text_field( $icon ) : '';
+					$icon = ( $menu_item_id && $icon = get_post_meta( $menu_item_id, '_menu_item_totaltheme_icon', true ) ) ? \sanitize_text_field( $icon ) : '';
 					if ( $icon ) {
-						$link_text = \vcex_get_theme_icon_html( $icon, 'vcex-navbar-link-icon wpex-mr-5 wpex-icon--w' ) . $link_text;
+						$link_text = vcex_get_theme_icon_html( $icon, 'vcex-navbar-link-icon wpex-mr-5 wpex-icon--w' ) . $link_text;
 					}
 					// Add margins to icons inside links
 					else {
@@ -673,10 +769,9 @@ $output .= '<nav' . vcex_parse_html_attributes( $wrap_attrs ) . '>';
 				$output .= '</div>';
 			}
 
-			// Save links into select options array.
+			// Save links into select options array
 			$select_args = [
-				'href'         => $href,
-				'text_escaped' => $link_text,
+				'text' => $link_text,
 			];
 
 			if ( $is_active ) {
@@ -685,21 +780,13 @@ $output .= '<nav' . vcex_parse_html_attributes( $wrap_attrs ) . '>';
 
 			$select_ops[] = $select_args;
 
-		endforeach; // End menu item loop.
+		endforeach; // End menu item loop
 
 	$output .= '</div>';
 
 	if ( $has_mobile_select && ! empty( $select_ops ) ) {
 
-		/*
-		// @todo display an html dropdown instead to allow multi select?
-		$is_multiple_select = false;
-		if ( ! empty( $filter_relation ) && in_array( $filter_relation, [ 'AND', 'OR' ] ) ) {
-			$is_multiple_select = true;
-		}
-		*/
-
-		$output .= '<div class="vcex-navbar-mobile-select hidden-desktop wpex-select-wrap">';
+		$output .= '<div class="vcex-navbar-mobile-select ' . $mobile_select_visibility_class . ' wpex-select-wrap">';
 
 			$output .= '<select autocomplete="off">';
 
@@ -714,7 +801,7 @@ $output .= '<nav' . vcex_parse_html_attributes( $wrap_attrs ) . '>';
 						$has_selected = true;
 						$selected = ' selected';
 					}
-					$output .= '<option value="' . esc_attr( $option['href'] ) . '"' . $selected . '>' . wp_strip_all_tags( $option['text_escaped'] ) . '</option>';
+					$output .= '<option' . $selected . '>' . wp_strip_all_tags( $option['text'] ) . '</option>';
 				}
 
 			$output .= '</select>';

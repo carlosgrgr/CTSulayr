@@ -5,7 +5,7 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 2.0
+ * @version 2.4
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -18,6 +18,8 @@ $clickable_boxes = [ 'four', 'five', 'six' ];
 $style = ! empty( $atts['style'] ) ? sanitize_text_field( $atts['style'] ) : 'one';
 $has_side_icon = in_array( $style, [ 'one', 'seven' ], true );
 $has_top_icon = in_array( $style, [ 'two', 'three', 'four', 'five', 'six', 'eight' ], true );
+$has_bottom_icon = ( 'nine' === $style ); // technically 8 does also but we use col-reverse for that style
+$transition_duration = ! empty( $atts['transition_duration'] ) ? absint( $atts['transition_duration'] ) : '';
 $heading = ! empty( $atts['heading'] ) ? vcex_parse_text( $atts['heading'] ) : '';
 $url_wrap = ( in_array( $style, $clickable_boxes, true ) || vcex_validate_att_boolean( 'url_wrap', $atts ) ) && ! str_contains( $content, '<a' );
 $icon_spacing = ! empty( $atts['icon_spacing'] ) ? absint( $atts['icon_spacing'] ) : '20';
@@ -111,6 +113,9 @@ if ( 'eight' === $style ) {
 	$wrap_class[] = 'wpex-flex';
 	$wrap_class[] = 'wpex-flex-col';
 	$wrap_class[] = 'wpex-flex-col-reverse';
+} elseif ( $has_bottom_icon ) {
+	$wrap_class[] = 'wpex-flex';
+	$wrap_class[] = 'wpex-flex-col';
 }
 
 // Add block class if flex isn't added to prevent issues with URL wrap
@@ -148,10 +153,15 @@ if ( ! empty( $atts['shadow'] ) ) {
 // Shadow: Hover
 if ( ! empty( $atts['shadow_hover'] ) ) {
 	$wrap_class[] = sanitize_html_class( "wpex-hover-{$atts['shadow_hover']}" );
-	if ( empty( $atts['hover_animation'] ) && empty( $atts['hover_background'] ) ) {
+	if ( empty( $atts['hover_animation'] ) && empty( $atts['hover_background'] ) && empty( $atts['transition_duration'] ) ) {
 		$wrap_class[] = 'wpex-transition-shadow';
 		$wrap_class[] = 'wpex-duration-300';
 	}
+}
+
+// Transition duration
+if ( $transition_duration && empty( $atts['hover_animation'] ) ) {
+	$wrap_class[] = "wpex-duration-{$transition_duration}";
 }
 
 // Bottom Margin
@@ -169,7 +179,7 @@ if ( ! empty( $atts['padding_x'] ) ) {
 }
 
 // Custom text align for Top/Bottom Icon only
-if ( $atts['alignment'] && ( 'two' === $style || 'eight' === $style ) ) {
+if ( $atts['alignment'] && ( 'two' === $style || 'eight' === $style || 'nine' === $style ) ) {
 	$wrap_class[] = vcex_parse_text_align_class( $atts['alignment'] );
 }
 
@@ -211,10 +221,6 @@ switch ( $style ) {
 			$wrap_class[] = 'wpex-p-30';
 		}
 		$wrap_class[] = 'wpex-bordered';
-		$border_width = ! empty( $border_width ) ? absint( $border_width ) : 1;
-		if ( $border_width > 1 ) {
-			$wrap_class[] = 'wpex-border-' . sanitize_html_class( $border_width );
-		}
 		break;
 	// Top Icon w Gray Background
 	case 'five':
@@ -233,7 +239,19 @@ switch ( $style ) {
 			$wrap_class[] = 'wpex-p-30';
 		}
 		break;
+}
 
+if ( ! empty( $atts['border_width'] ) ) {
+	$wrap_class[] = vcex_parse_border_width_class( $atts['border_width'] );
+	if ( 'four' !== $style ) {
+		$wrap_class[] = 'wpex-p-20';
+		$wrap_class[] = 'wpex-border-solid';
+	}
+}
+
+if ( ! empty( $atts['border_style'] ) ) {
+	// added outside of border width check because it's also needed for style four
+	$wrap_class[] = vcex_parse_border_style_class( $atts['border_style'] );
 }
 
 if ( ! empty( $atts['hover_animation'] ) ) {
@@ -266,6 +284,8 @@ $wrap_attrs['class'] = vcex_parse_shortcode_classes( $wrap_class, 'vcex_icon_box
 $el_attrs_string = vcex_parse_html_attributes( $wrap_attrs );
 
 $output .= "<{$el_tag_safe}{$el_attrs_string}>";
+
+	$symbol_html = '';
 
 	/*-------------------------------------------------------------------------------*/
 	/* [ Container for Icon/Image ]
@@ -311,6 +331,8 @@ $output .= "<{$el_tag_safe}{$el_attrs_string}>";
 						} else {
 							$symbol_classes[] = "wpex-mb-{$icon_spacing}";
 						}
+					} elseif ( $has_bottom_icon ) {
+						$symbol_classes[] = "wpex-my-{$icon_spacing}";
 					}
 					break;
 			}
@@ -320,7 +342,7 @@ $output .= "<{$el_tag_safe}{$el_attrs_string}>";
 		$symbol_classes = (array) apply_filters( 'vcex_icon_box_symbol_class', $symbol_classes );
 
 		// Open .vcex-icon-box-symbol element
-		$output .= '<div class="' . esc_attr( implode( ' ', $symbol_classes ) )  . '">';
+		$symbol_html .= '<div class="' . esc_attr( implode( ' ', $symbol_classes ) )  . '">';
 
 		$symbol_link = (string) apply_filters( 'vcex_icon_box_symbol_link', $url, $atts );
 
@@ -331,7 +353,7 @@ $output .= "<{$el_tag_safe}{$el_attrs_string}>";
 			}
 			$symbol_link_attrs['href'] = esc_url( $symbol_link );
 			$symbol_link_attrs['class'][] = 'wpex-no-underline';
-			$output .= '<a' . vcex_parse_html_attributes( $symbol_link_attrs ) . '>';
+			$symbol_html .= '<a' . vcex_parse_html_attributes( $symbol_link_attrs ) . '>';
 		}
 
 	}
@@ -382,7 +404,7 @@ $output .= "<{$el_tag_safe}{$el_attrs_string}>";
 				$thumbnail_args['attributes']['fetchpriority'] = esc_attr( $atts['img_fetchpriority'] );
 			}
 
-			$output .= vcex_get_post_thumbnail( $thumbnail_args );
+			$symbol_html .= vcex_get_post_thumbnail( $thumbnail_args );
 
 		}
 
@@ -431,7 +453,7 @@ $output .= "<{$el_tag_safe}{$el_attrs_string}>";
 			}
 
 			if ( ! empty( $img_args['src'] ) ) {
-				$output .= '<img' . vcex_parse_html_attributes( $img_args ) . '>';
+				$symbol_html .= '<img' . vcex_parse_html_attributes( $img_args ) . '>';
 			}
 
 		}
@@ -452,6 +474,10 @@ $output .= "<{$el_tag_safe}{$el_attrs_string}>";
 			'wpex-text-center',
 			'wpex-leading-none',
 		];
+
+		if ( $transition_duration ) {
+			$icon_classes[] = "wpex-duration-{$transition_duration}";
+		}
 
 		if ( $has_side_icon ) {
 			$icon_classes[] = 'wpex-flex'; // inline-flex can cause some extra space at top from line-height
@@ -502,25 +528,29 @@ $output .= "<{$el_tag_safe}{$el_attrs_string}>";
 		$icon_classes = (array) apply_filters( 'vcex_icon_box_icon_class', $icon_classes );
 
 		// Display Icon
-		$output .= '<div class="' . esc_attr( implode( ' ', $icon_classes ) ) . '">';
+		$symbol_html .= '<div class="' . esc_attr( implode( ' ', $icon_classes ) ) . '">';
 			if ( $icon_alt_classes ) {
-				$output .= '<span class="' . esc_attr( do_shortcode( $icon_alt_classes ) ) . '" aria-hidden="true"></span>';
+				$symbol_html .= '<span class="' . esc_attr( do_shortcode( $icon_alt_classes ) ) . '" aria-hidden="true"></span>';
 			} elseif ( $icon_alt_char ) {
-				$output .= vcex_parse_text_safe( $icon_alt_char );
+				$symbol_html .= vcex_parse_text_safe( $icon_alt_char );
 			} else {
-				$output .= $icon_html;
+				$symbol_html .= $icon_html;
 			}
-		$output .= '</div>';
+		$symbol_html .= '</div>';
 	}
 
 	// Close symbol link
 	if ( ! empty( $symbol_link ) && ! $url_wrap && ! $show_button ) {
-		$output .= '</a>';
+		$symbol_html .= '</a>';
 	}
 
 	// Close symbol div (icon/image)
 	if ( $image || $has_icon ) {
-		$output .= '</div>';
+		$symbol_html .= '</div>';
+	}
+
+	if ( ! $has_bottom_icon ) {
+		$output .= $symbol_html;
 	}
 
 	/*-------------------------------------------------------------------------------*/
@@ -554,6 +584,10 @@ $output .= "<{$el_tag_safe}{$el_attrs_string}>";
 			$heading_class = [
 				'vcex-icon-box-heading',
 			];
+
+			if ( $transition_duration ) {
+				$heading_class[] = "wpex-duration-{$transition_duration}";
+			}
 
 			if ( ! empty( $atts['heading_typography_style'] ) ) {
 				$heading_class[] = vcex_parse_typography_style_class( $atts['heading_typography_style'] );
@@ -621,11 +655,15 @@ $output .= "<{$el_tag_safe}{$el_attrs_string}>";
 				'wpex-clr',
 			];
 
+			if ( $transition_duration ) {
+				$content_class[] = "wpex-duration-{$transition_duration}";
+			}
+
 			if ( empty( $atts['heading_bottom_margin'] ) && ! empty( $atts['heading_typography_style'] ) ) {
 				$content_class[] = 'wpex-mt-10';
 			}
 
-			if ( $url && $show_button ) {
+			if ( $url && $show_button && ! $has_bottom_icon ) {
 				$content_class[] = 'wpex-mb-20';
 			}
 
@@ -645,10 +683,15 @@ $output .= "<{$el_tag_safe}{$el_attrs_string}>";
 		/* [ Button ]
 		/*-------------------------------------------------------------------------------*/
 		if ( $url && $show_button ) {
-			$output .= '<div class="vcex-icon-box-button-wrap wpex-mt-auto">';
-				$button_class = 'vcex-icon-box-button theme-button';
+			$button_html = '';
+			$button_html .= '<div class="vcex-icon-box-button-wrap wpex-mt-auto">';
+				$button_class = 'vcex-icon-box-button';
+				$button_class .= ' ' . vcex_get_button_classes( [
+					'style' => ! empty( $atts['button_style'] ) ? sanitize_text_field( $atts['button_style'] ) : '',
+					'color' => ! empty( $atts['button_style_color'] ) ? sanitize_text_field( $atts['button_style_color'] ) : '',
+				] );
 				if ( ! empty( $atts['button_class'] ) && is_string( $atts['button_class'] ) ) {
-					$button_class .= ' ' . trim( esc_attr( $atts['button_class'] ) );
+					$button_class .= ' ' . wp_strip_all_tags( $atts['button_class'] );
 				}
 				$button_text_safe = ! empty( $atts['button_text'] ) ? vcex_parse_text_safe( $atts['button_text'] ) : esc_html__( 'Learn more', 'total-theme-core' );
 				if ( ! empty( $atts['button_hover_background'] ) ) {
@@ -657,18 +700,44 @@ $output .= "<{$el_tag_safe}{$el_attrs_string}>";
 				if ( ! empty( $atts['button_hover_color'] ) ) {
 					$btn_hover_color = $atts['button_hover_color'];
 				}
+				if ( ! empty( $atts['button_icon'] ) ) {
+					$button_icon_html = vcex_render_icon( $atts['button_icon'], 'ticons' );
+					if ( $button_icon_html ) {
+						$button_placement = ( ! empty( $atts['button_icon_placement'] ) && 'start' === $atts['button_icon_placement'] ) ? 'start' : 'end';
+						$button_icon_class = 'vcex-icon-box-button__icon theme-button-icon-' . ( 'start' === $button_placement ? 'left' : 'right' );
+						$button_icon_html  = "<span class=\"{$button_icon_class}\">{$button_icon_html}</span>";
+						if ( 'start' === $button_placement ) {
+							$button_text_safe = $button_icon_html . $button_text_safe;
+						} else {
+							$button_text_safe .= $button_icon_html;
+						}
+					}
+				}
 				if ( $url_wrap ) {
-					$output .= '<span class="' . esc_attr( $button_class ) . '">' . $button_text_safe . '</span>';
+					$button_html .= '<span class="' . esc_attr( trim(  $button_class ) ) . '">' . $button_text_safe . '</span>';
 				} elseif ( ! empty( $onclick_attrs ) ) {
 					$link_attrs = $onclick_attrs;
 					$link_attrs['class'][] = $button_class;
-					$output .= '<a' . vcex_parse_html_attributes( $link_attrs ) . '>' . $button_text_safe . '</a>';
+					$button_html .= '<a' . vcex_parse_html_attributes( $link_attrs ) . '>' . $button_text_safe . '</a>';
 				}
-			$output .= '</div>';
+			$button_html .= '</div>';
+			if ( ! $has_bottom_icon ) {
+				$output .= $button_html;
+			}
 		}
 
 	// Close heading/text wrapper
 	$output .= '</div>';
+
+	// Insert button and icon for style 9
+	if ( $has_bottom_icon ) {
+		if ( isset( $symbol_html ) ) {
+			$output .= $symbol_html;
+		}
+		if ( isset( $button_html ) ) {
+			$output .= $button_html;
+		}
+	}
 
 // Close Icon Box element
 $output .= "</{$el_tag_safe}>";

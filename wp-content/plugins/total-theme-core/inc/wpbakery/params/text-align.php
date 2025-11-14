@@ -2,7 +2,7 @@
 
 namespace TotalThemeCore\WPBakery\Params;
 
-\defined( 'ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 /**
  * WPBakery Param => Text Align.
@@ -15,18 +15,21 @@ final class Text_Align {
 	 * @note Used for Elementor integration.
 	 */
 	public static function get_choices( $settings ): array {
+		if ( ! empty( $settings['choices'] ) ) {
+			return $settings['choices'];
+		}
 		$choices = [
-			''       => \esc_html( 'Inherit', 'total-theme-core' ),
-			'left'   => \esc_html( 'Start', 'total-theme-core' ),
-			'center' => \esc_html( 'Center', 'total-theme-core' ),
-			'right'  => \esc_html( 'End', 'total-theme-core' ),
+			''       => esc_html( 'Inherit', 'total-theme-core' ),
+			'left'   => esc_html( 'Start', 'total-theme-core' ),
+			'center' => esc_html( 'Center', 'total-theme-core' ),
+			'right'  => esc_html( 'End', 'total-theme-core' ),
 		];
 		if ( ! empty( $settings['std'] ) ) {
-			$choices = [ 'none' => \esc_html( 'None', 'total-theme-core' ) ] + $choices;
+			$choices = [ 'none' => esc_html( 'None', 'total-theme-core' ) ] + $choices;
 			unset( $choices[''] );
 		}
-		if ( ! empty( $settings['exclude_choices'] ) && \is_array( $settings['exclude_choices'] ) ) {
-			$choices = \array_diff_key( $choices, $settings['exclude_choices'] );
+		if ( ! empty( $settings['exclude_choices'] ) && is_array( $settings['exclude_choices'] ) ) {
+			$choices = array_diff_key( $choices, $settings['exclude_choices'] );
 		}
 		return $choices;
 	}
@@ -51,16 +54,20 @@ final class Text_Align {
 						$choice = '';
 						$active = ! $value ? ' vcex-active' : '';
 					}
-					$output .= '<button type="button" class="vcex-opt vcex-default' . $active . '" data-value="' . \esc_attr( $choice ) . '">' . \esc_html( $label ) . '</button>';
+					$output .= '<button type="button" class="vcex-opt vcex-default' . $active . '" data-value="' . esc_attr( $choice ) . '">' . esc_html( $label ) . '</button>';
 				} else {
 					$active = $value === $choice ? ' vcex-active' : '';
-					$output .= '<button type="button" title="' . \esc_attr( $label ) . '" class="vcex-opt' . $active . '" data-value="' . \esc_attr( $choice )  . '" arial-label="' . \esc_attr( $label ) . '">' . self::get_option_svg( $choice )  .'</button>';
+					$output .= '<button type="button" title="' . esc_attr( $label ) . '" class="vcex-opt' . $active . '" data-value="' . esc_attr( $choice )  . '" arial-label="' . esc_attr( $label ) . '">' . self::get_option_svg( $choice )  .'</button>';
 				}
 			}
 
-		$output .= '<input name="' . \esc_attr( $settings['param_name'] ) . '" class="' . \esc_attr( "vcex-hidden-input wpb-input wpb_vc_param_value {$settings['param_name']} {$settings['type']}_field" ) . '" type="hidden" value="' . \esc_attr( $value ) . '">';
+		$output .= '<input name="' . esc_attr( $settings['param_name'] ) . '" class="' . esc_attr( "vcex-hidden-input wpb-input wpb_vc_param_value {$settings['param_name']} {$settings['type']}_field" ) . '" type="hidden" value="' . esc_attr( $value ) . '">';
 
 		$output .= '</div>';
+
+		if ( ! empty( $settings['notice'] ) ) {
+			$output .= '<div class="vcex-vc-notice vc_description vc_clearfix">' . wp_kses_post( $settings['notice'] ) . '</div>';
+		}
 
 		return $output;
 	}
@@ -69,7 +76,7 @@ final class Text_Align {
 	 * Returns option svg icon.
 	 */
 	private static function get_option_svg( $option ): string {
-		if ( \is_rtl()
+		if ( is_rtl()
 			&& function_exists( 'vcex_is_bidirectional' )
 			&& vcex_is_bidirectional()
 			&& function_exists( 'vcex_parse_direction' )

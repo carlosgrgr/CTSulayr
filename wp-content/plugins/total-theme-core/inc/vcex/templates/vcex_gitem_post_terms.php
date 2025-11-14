@@ -4,38 +4,51 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 1.3.1
+ * @version 2.4
  */
 
 defined( 'ABSPATH' ) || exit;
 
-// Taxonomy is required
-if ( ! $atts['taxonomy'] ) {
+$taxonomy = ! empty( $atts['taxonomy'] ) ? sanitize_key( $atts['taxonomy'] ) : '';
+
+if ( ! $taxonomy || ! taxonomy_exists( $taxonomy ) ) {
 	return;
 }
 
 // Get terms for live preview
 if ( 'vc_grid_item' == get_post_type( $post->ID ) ) {
-
-	$terms = get_terms( $atts['taxonomy'], array(
+	$terms = get_terms( $taxonomy, [
 		'hide_empty' => false,
 		'number'     => 4,
-	) );
-
+	] );
 }
 
 // Get terms for live site
 else {
 
-	$query_args = array(
-		'order'   => $atts['order'],
-		'orderby' => $atts['orderby'],
+	// Sanitize order
+	if ( isset( $atts['order'] ) && in_array( strtoupper( $atts['order'] ), [ 'ASC', 'DESC' ], true ) ) {
+		$order = $atts['order'];
+	} else {
+		$order = 'DESC';
+	}
+
+	// Sanitize orderby
+	if ( isset( $atts['orderby'] ) && in_array( $atts['orderby'], [ 'name', 'slug', 'term_group', 'term_id', 'id', 'description' ], true ) ) {
+		$orderby = $atts['orderby'];
+	} else {
+		$orderby = 'name';
+	}
+
+	$query_args = [
+		'order'   => $order,
+		'orderby' => $orderby,
 		'fields'  => 'all',
-	);
+	];
 
 	$query_args = apply_filters( 'vcex_post_terms_query_args', $query_args );
 
-	$terms = wp_get_post_terms( get_the_ID(), $atts['taxonomy'], $query_args );
+	$terms = wp_get_post_terms( get_the_ID(), $taxonomy, $query_args );
 }
 
 // Terms needed
@@ -114,46 +127,28 @@ $wrap_classes = vcex_parse_shortcode_classes( $wrap_classes, 'vcex_post_terms', 
 // Begin output
 $output .= '<div class="' . esc_attr( $wrap_classes ) . '">';
 
-	// Loop through terms
 	foreach ( $terms as $term ) :
 
-		// Skip excluded terms
 		if ( in_array( $term->slug, $exclude_terms ) ) {
 			continue;
 		}
 
-		// Open link if enabled
 		if ( 'true' == $atts['archive_link'] ) {
-
 			$output .= '<a href="' . get_term_link( $term, $atts['taxonomy'] ) . '" class="' . esc_attr( $button_classes ) . '"' . $button_style . $button_data . '>';
-
-		}
-
-		// Span
-		else {
-
+		} else {
 			$output .= '<span class="' . esc_attr( $button_classes ) . '"' . $button_style . $button_data . '>';
-
 		}
 
-		// Display title
 		$output .= $term->name;
 
-		// Close link if enabled
 		if ( 'true' == $atts['archive_link'] ) {
-
 			$output .= '</a>';
-
-		}
-
-		// Close span
-		else {
+		} else {
 			$output .= '</span>';
 		}
 
 	endforeach;
 
-// Close main wrapper
 $output .= '</div>';
 
 // @codingStandardsIgnoreLine

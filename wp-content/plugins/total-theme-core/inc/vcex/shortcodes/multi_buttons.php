@@ -40,11 +40,10 @@ if ( ! class_exists( 'VCEX_Multi_Buttons_Shortcode' ) ) {
 		 */
 		public static function get_params_list(): array {
 			return array(
-				// Buttons
+				// General
 				array(
 					'type' => 'param_group',
 					'param_name' => 'buttons',
-					'group' => esc_html__( 'Buttons', 'total-theme-core' ),
 					'value' => urlencode( json_encode( array(
 						array(
 							'text' => esc_html__( 'Button 1', 'total-theme-core' ),
@@ -121,80 +120,6 @@ if ( ! class_exists( 'VCEX_Multi_Buttons_Shortcode' ) ) {
 						),
 					),
 				),
-				// General
-				array(
-					'type' => 'vcex_select',
-					'heading' => esc_html__( 'Bottom Margin', 'total-theme-core' ),
-					'param_name' => 'bottom_margin',
-					'admin_label' => true,
-				),
-				array(
-					'type' => 'vcex_text_align',
-					'heading' => esc_html__( 'Align', 'total-theme-core' ),
-					'param_name' => 'align',
-					'std' => 'center',
-					'exclude_choices' => array( '' ),
-				),
-				array(
-					'type' => 'textfield',
-					'heading' => esc_html__( 'Button Width', 'total-theme-core' ),
-					'param_name' => 'width',
-					'css' => [
-						'selector' => [ '.theme-button', '.theme-txt-link' ],
-					],
-					'description' => self::param_description( 'px' ),
-				),
-				array(
-					'type' => 'textfield',
-					'heading' => esc_html__( 'Line Height', 'total-theme-core' ),
-					'param_name' => 'line_height',
-					'css' => [
-						'selector' => [ '.theme-button', '.theme-txt-link' ],
-					],
-					'description' => self::param_description( 'line_height' ),
-				),
-				array(
-					'type' => 'vcex_trbl',
-					'heading' => esc_html__( 'Button Padding', 'total-theme-core' ),
-					'param_name' => 'padding',
-					'css' => [
-						'selector' => [ '.theme-button', '.theme-txt-link' ],
-					],
-					'description' => self::param_description( 'padding' ),
-				),
-				array(
-					'type' => 'textfield',
-					'heading' => esc_html__( 'Gap', 'total-theme-core' ),
-					'param_name' => 'spacing',
-					'css' => [ 'property' => 'gap' ],
-					'description' => esc_html__( 'Enter a custom spacing in pixels that will be added between the buttons.', 'total-theme-core' ),
-				),
-				array(
-					'type' => 'vcex_preset_textfield',
-					'heading' => esc_html__( 'Border Radius', 'total-theme-core' ),
-					'param_name' => 'border_radius',
-					'css' => [
-						'selector' => [ '.theme-button', '.theme-txt-link' ],
-						'property' => 'border-radius',
-					],
-				),
-				array(
-					'type' => 'textfield',
-					'heading' => esc_html__( 'Border Width', 'total-theme-core' ),
-					'param_name' => 'border_width',
-					'css' => [
-						'selector' => [ '.theme-button', '.theme-txt-link' ],
-						'property' => 'border-width',
-					],
-					'description' => esc_html__( 'Please enter a px value. This will control the border width when using the outline style button. Default is 3px.', 'total-theme-core' ),
-				),
-				array(
-					'type' => 'vcex_ofswitch',
-					'std' => 'false',
-					'heading' => esc_html__( 'Full-Width on Small Screens', 'total-theme-core' ),
-					'param_name' => 'small_screen_full_width',
-					'description' => esc_html__( 'If enabled the buttons will render at 100% width on devices under 480px.', 'total-theme-core' ),
-				),
 				array(
 					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Visibility', 'total-theme-core' ),
@@ -207,50 +132,117 @@ if ( ! class_exists( 'VCEX_Multi_Buttons_Shortcode' ) ) {
 					'param_name' => 'el_class',
 					'description' => esc_html__( 'Style particular content element differently - add a class name and refer to it in custom CSS.', 'total-theme-core' ),
 				),
-				// Typography
+				// Style
 				array(
-					'type' => 'vcex_font_family_select',
-					'heading' => esc_html__( 'Font Family', 'total-theme-core' ),
-					'param_name' => 'font_family',
-					'css' => [
-						'selector' => [ '.theme-button', '.theme-txt-link' ],
-					],
-					'group' => esc_html__( 'Typography', 'total-theme-core' ),
+					'type' => 'vcex_select',
+					'heading' => esc_html__( 'Bottom Margin', 'total-theme-core' ),
+					'param_name' => 'bottom_margin',
+					'admin_label' => true,
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
 				),
+				array(
+					'type' => 'vcex_text_align',
+					'heading' => esc_html__( 'Align', 'total-theme-core' ),
+					'param_name' => 'align',
+					'std' => 'center',
+					'exclude_choices' => [ '' ], // exclude empty option
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				),
+				array(
+					'type' => 'vcex_ofswitch',
+					'std' => 'false',
+					'heading' => esc_html__( 'Full-Width on Small Screens', 'total-theme-core' ),
+					'param_name' => 'small_screen_full_width',
+					'description' => esc_html__( 'If enabled the buttons will render at 100% width on devices under 480px.', 'total-theme-core' ),
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				),
+				array(
+					'type' => 'textfield',
+					'heading' => esc_html__( 'Gap', 'total-theme-core' ),
+					'param_name' => 'spacing',
+					'css' => [ 'property' => 'gap' ],
+					'description' => esc_html__( 'Enter a custom spacing in pixels that will be added between the buttons.', 'total-theme-core' ),
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				),
+				array(
+					'type' => 'textfield',
+					'heading' => esc_html__( 'Button Width', 'total-theme-core' ),
+					'param_name' => 'width',
+					'css' => [ 'selector' => [ '.theme-button', '.theme-txt-link' ] ],
+					'description' => self::param_description( 'px' ),
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				),
+				array(
+					'type' => 'vcex_trbl',
+					'heading' => esc_html__( 'Button Padding', 'total-theme-core' ),
+					'param_name' => 'padding',
+					'css' => [ 'selector' => [ '.theme-button', '.theme-txt-link' ] ],
+					'description' => self::param_description( 'padding' ),
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				),
+				array(
+					'type' => 'vcex_preset_textfield',
+					'heading' => esc_html__( 'Border Radius', 'total-theme-core' ),
+					'param_name' => 'border_radius',
+					'css' => [ 'selector' => [ '.theme-button', '.theme-txt-link' ], 'property' => 'border-radius' ],
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				),
+				array(
+					'type' => 'textfield',
+					'heading' => esc_html__( 'Border Width', 'total-theme-core' ),
+					'param_name' => 'border_width',
+					'css' => [ 'selector' => [ '.theme-button', '.theme-txt-link' ], 'property' => 'border-width' ],
+					'description' => esc_html__( 'Please enter a px value. This will control the border width when using the outline style button. Default is 3px.', 'total-theme-core' ),
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+				),
+				// Typography
 				array(
 					'type' => 'vcex_font_size',
 					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
 					'param_name' => 'font_size',
-					'css' => [
-						'selector' => [ '.theme-button', '.theme-txt-link' ],
-					],
+					'css' => [ 'selector' => [ '.theme-button', '.theme-txt-link' ] ],
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 				),
 				array(
-					'type' => 'vcex_preset_textfield',
-					'heading' => esc_html__( 'Letter Spacing', 'total-theme-core' ),
-					'param_name' => 'letter_spacing',
-					'css' => [
-						'selector' => [ '.theme-button', '.theme-txt-link' ],
-					],
+					'type' => 'vcex_font_family_select',
+					'heading' => esc_html__( 'Font Family', 'total-theme-core' ),
+					'param_name' => 'font_family',
+					'css' => [ 'selector' => [ '.theme-button', '.theme-txt-link' ] ],
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 				),
 				array(
 					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Font Weight', 'total-theme-core' ),
 					'param_name' => 'font_weight',
-					'css' => [
-						'selector' => [ '.theme-button', '.theme-txt-link' ],
-					],
+					'css' => [ 'selector' => [ '.theme-button', '.theme-txt-link' ] ],
+					'group' => esc_html__( 'Typography', 'total-theme-core' ),
+				),
+				array(
+					'type' => 'vcex_select',
+					'heading' => esc_html__( 'Font Style', 'total-theme-core' ),
+					'param_name' => 'font_style',
+					'css' => [ 'selector' => [ '.theme-button', '.theme-txt-link' ] ],
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 				),
 				array(
 					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Text Transform', 'total-theme-core' ),
 					'param_name' => 'text_transform',
-					'css' => [
-						'selector' => [ '.theme-button', '.theme-txt-link' ],
-					],
+					'css' => [ 'selector' => [ '.theme-button', '.theme-txt-link' ] ],
+					'group' => esc_html__( 'Typography', 'total-theme-core' ),
+				),
+				array(
+					'type' => 'vcex_preset_textfield',
+					'heading' => esc_html__( 'Line Height', 'total-theme-core' ),
+					'param_name' => 'line_height',
+					'css' => [ 'selector' => [ '.theme-button', '.theme-txt-link' ] ],
+					'group' => esc_html__( 'Typography', 'total-theme-core' ),
+				),
+				array(
+					'type' => 'vcex_preset_textfield',
+					'heading' => esc_html__( 'Letter Spacing', 'total-theme-core' ),
+					'param_name' => 'letter_spacing',
+					'css' => [ 'selector' => [ '.theme-button', '.theme-txt-link' ] ],
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 				),
 			);

@@ -202,6 +202,13 @@ if ( ! class_exists( 'VCEX_Callout_Shortcode' ) ) {
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
+					'type' => 'vcex_font_size',
+					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
+					'param_name' => 'content_font_size',
+					'css' => [ 'selector' => '.vcex-callout-caption', 'property' => 'font-size' ],
+					'group' => esc_html__( 'Typography', 'total-theme-core' ),
+				],
+				[
 					'type' => 'vcex_font_family_select',
 					'heading' => esc_html__( 'Font Family', 'total-theme-core' ),
 					'param_name' => 'content_font_family',
@@ -214,13 +221,6 @@ if ( ! class_exists( 'VCEX_Callout_Shortcode' ) ) {
 					'heading' => esc_html__( 'Font Weight', 'total-theme-core' ),
 					'param_name' => 'content_font_weight',
 					'css' => [ 'selector' => '.vcex-callout-caption', 'property' => 'font-weight' ],
-					'group' => esc_html__( 'Typography', 'total-theme-core' ),
-				],
-				[
-					'type' => 'vcex_font_size',
-					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
-					'param_name' => 'content_font_size',
-					'css' => [ 'selector' => '.vcex-callout-caption', 'property' => 'font-size' ],
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 				],
 				[
@@ -360,6 +360,13 @@ if ( ! class_exists( 'VCEX_Callout_Shortcode' ) ) {
 					'group' => esc_html__( 'Button', 'total-theme-core' ),
 				],
 				[
+					'type' => 'vcex_font_size',
+					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
+					'param_name' => 'button_font_size',
+					'css' => [ 'selector' => '.vcex-callout-link', 'property' => 'font-size' ],
+					'group' => esc_html__( 'Button', 'total-theme-core' ),
+				],
+				[
 					'type' => 'vcex_font_family_select',
 					'heading' => esc_html__( 'Font Family', 'total-theme-core' ),
 					'param_name' => 'button_font_family',
@@ -372,13 +379,6 @@ if ( ! class_exists( 'VCEX_Callout_Shortcode' ) ) {
 					'heading' => esc_html__( 'Font Weight', 'total-theme-core' ),
 					'param_name' => 'button_font_weight',
 					'css' => [ 'selector' => '.vcex-callout-link', 'property' => 'font-weight' ],
-					'group' => esc_html__( 'Button', 'total-theme-core' ),
-				],
-				[
-					'type' => 'vcex_font_size',
-					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
-					'param_name' => 'button_font_size',
-					'css' => [ 'selector' => '.vcex-callout-link', 'property' => 'font-size' ],
 					'group' => esc_html__( 'Button', 'total-theme-core' ),
 				],
 				[

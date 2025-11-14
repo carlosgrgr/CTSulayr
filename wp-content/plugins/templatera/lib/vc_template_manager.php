@@ -895,7 +895,7 @@ HTML;
 				while ( $my_query->have_posts() ) {
 					$my_query->the_post();
 					if ( get_the_ID() === (int) $id ) {
-						$output .= '<div class="templatera_shortcode' . ( $el_class ? ' ' . $el_class : '' ) . '">';
+						$output .= '<div class="templatera_shortcode' . ( $el_class ? ' ' . esc_attr( $el_class ) : '' ) . '">';
 						ob_start();
 						visual_composer()->addFrontCss();
 						$content = get_the_content();
@@ -915,7 +915,7 @@ HTML;
 					return '';
 				}
 				$output = '';
-				$output .= '<div class="templatera_shortcode' . ( $el_class ? ' ' . $el_class : '' ) . '">';
+				$output .= '<div class="templatera_shortcode' . ( $el_class ? ' ' . esc_attr( $el_class ) : '' ) . '">';
 				ob_start();
 				if ( $this->isNewVcVersion( '7.7' ) ) {
 					if ( vc_modules_manager()->is_module_on( 'vc-custom-css' ) ) {

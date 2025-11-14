@@ -121,9 +121,9 @@ function vcex_parse_html_attributes( array $attrs = [] ) {
 /**
  * Parses the inline gallery lightbox html.
  */
-function vcex_parse_inline_lightbox_gallery( $attachements = '' ) {
+function vcex_parse_inline_lightbox_gallery( $attachements = '', $options = [] ) {
 	if ( function_exists( 'wpex_parse_inline_lightbox_gallery' ) ) {
-		return wpex_parse_inline_lightbox_gallery( $attachements );
+		return wpex_parse_inline_lightbox_gallery( $attachements, $options );
 	}
 }
 
@@ -304,7 +304,7 @@ function vcex_parse_text_align_class( $align = '' ): string {
 }
 
 /**
- * Parses justify_content class.
+ * Parses justify-content class.
  */
 function vcex_parse_justify_content_class( $position = '', $prefix = '' ) {
 	if ( ! $position ) {
@@ -324,11 +324,52 @@ function vcex_parse_justify_content_class( $position = '', $prefix = '' ) {
 		'space-evenly'  => 'justify-evenly',
 	];
 	if ( isset( $class_map[ $position ] ) ) {
-		$justify_class = $class_map[ $position ];
+		$sufix = $class_map[ $position ];
 		if ( $prefix ) {
-			return "wpex-{$prefix}-{$justify_class}";
+			return "wpex-{$prefix}-{$sufix}";
 		} else {
-			return "wpex-{$justify_class}";
+			return "wpex-{$sufix}";
+		}
+	}
+}
+
+/**
+ * Parses transition-duration class.
+ */
+function vcex_parse_transition_duration_class( $transition = '', $bk = '' ) {
+	if ( ! $transition ) {
+		return;
+	}
+	$transition_safe = absint( $transition );
+	if ( $transition_safe ) {
+		if ( $bk ) {
+			return "wpex-{$bk}-duration-{$transition_safe}";
+		} else {
+			return "wpex-duration-{$transition_safe}";
+		}
+	}
+}
+
+/**
+ * Parses justify-items class.
+ */
+function vcex_parse_justify_items_class( $position = '', $prefix = '' ) {
+	if ( ! $position ) {
+		return;
+	}
+	$class_map = [
+		'left'   => 'justify-items-start',
+		'start'  => 'justify-items-start',
+		'center' => 'justify-items-center',
+		'right'  => 'justify-items-end',
+		'end'    => 'justify-items-end',
+	];
+	if ( isset( $class_map[ $position ] ) ) {
+		$sufix = $class_map[ $position ];
+		if ( $prefix ) {
+			return "wpex-{$prefix}-{$sufix}";
+		} else {
+			return "wpex-{$sufix}";
 		}
 	}
 }
@@ -350,11 +391,11 @@ function vcex_parse_align_items_class( $align = '', $prefix = '' ) {
 		'baseline'   => 'items-baseline',
 	];
 	if ( isset( $align_map[ $align ] ) ) {
-		$align_class = $align_map[ $align ];
+		$sufix = $align_map[ $align ];
 		if ( $prefix ) {
-			return "wpex-{$prefix}-{$align_class}";
+			return "wpex-{$prefix}-{$sufix}";
 		} else {
-			return "wpex-{$align_class}";
+			return "wpex-{$sufix}";
 		}
 	}
 }
@@ -514,26 +555,55 @@ function vcex_parse_margin_class( $margin = '', $sides = 'all' ) {
 }
 
 /**
+ * Returns font weight map.
+ */
+function vcex_get_font_weight_map(): array {
+	return [
+		'100'     => 'hairline',
+		'200'     => 'thin',
+		'300'     => 'light',
+		'400'     => 'normal',
+		'500'     => 'medium',
+		'600'     => 'semibold',
+		'700'     => 'bold',
+		'800'     => 'extrabold',
+		'900'     => 'black',
+		'bolder'  => 'bolder',
+		'lighter' => 'lighter',
+	];
+}
+
+/**
+ * Parse font weight.
+ */
+function vcex_parse_font_weight( $font_weight = '' ) {
+	if ( ! $font_weight ) {
+		return null;
+	}
+	$font_weight = strtolower( (string) $font_weight );
+	$font_map    = vcex_get_font_weight_map();
+	if ( isset( $font_map[ $font_weight ] ) ) {
+		return $font_weight;
+	}
+	$key = array_search( $font_weight, $font_map, false );
+	if ( false !== $key ) {
+		return $key;
+	}
+	return null;
+}
+
+/**
  * Parses font weight class.
  */
 function vcex_parse_font_weight_class( $font_weight = '' ) {
-	$allowed = [ 'hairline', 'thin', 'light', 'normal', 'medium', 'semibold', 'bold', 'extrabold', 'black', 'bolder', 'lighter', '100', '200', '300', '400', '500', '600', '700', '800', '900' ];
-	if ( ! $font_weight || ! in_array( $font_weight, $allowed, true ) ) {
-		return;
+	$parsed = vcex_parse_font_weight( $font_weight );
+	if ( $parsed ) {
+		$font_weight_name = vcex_get_font_weight_map()[ $parsed ] ?? '';
+		if ( $font_weight_name ) {
+			return "wpex-font-{$font_weight_name}";
+		}
 	}
-	$font_map = [
-		'100' => 'hairline',
-		'200' => 'thin',
-		'300' => 'light',
-		'400' => 'normal',
-		'500' => 'medium',
-		'600' => 'semibold',
-		'700' => 'bold',
-		'800' => 'extrabold',
-		'900' => 'black',
-	];
-	$font_weight = $font_map[ $font_weight ] ?? $font_weight;	
-	return "wpex-font-{$font_weight}";
+	return '';
 }
 
 /**

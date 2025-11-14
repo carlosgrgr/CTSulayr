@@ -3,7 +3,7 @@
  * Plugin Name: Total Theme Core
  * Plugin URI: https://totalwptheme.com/docs/total-theme-core-plugin/
  * Description: Adds core functionality to the Total WordPress theme including post types, shortcodes, builder elements, meta options and more. This is an optional plugin but highly recommended so you don't miss out on functionality.
- * Version: 2.3
+ * Version: 2.4.2
  * Author: WPExplorer
  * Author URI: https://www.wpexplorer.com/
  * License: Custom license
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'TTC_VERSION', '2.3' );
+define( 'TTC_VERSION', '2.4.2' );
 define( 'TTC_MAIN_FILE_PATH', __FILE__ );
 define( 'TTC_PLUGIN_DIR_PATH', plugin_dir_path( TTC_MAIN_FILE_PATH ) );
 define( 'TTC_PLUGIN_DIR_URL', plugin_dir_url( TTC_MAIN_FILE_PATH ) );

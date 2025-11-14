@@ -97,7 +97,7 @@ if ( ! class_exists( 'Vcex_Author_Bio_Shortcode' ) ) {
 				array(
 					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Bottom Margin', 'total-theme-core' ),
-					'description' => esc_html__( 'Note: The "Theme Default" style has a 40px bottom margin by default.', 'total-theme-core' ),
+					'notice' => esc_html__( 'Note: The "Theme Default" style has a 40px bottom margin by default.', 'total-theme-core' ),
 					'param_name' => 'bottom_margin', // can't name it margin_bottom due to WPBakery parsing issue.
 					'admin_label' => true,
 					'group' => esc_html__( 'Style', 'total-theme-core' ),

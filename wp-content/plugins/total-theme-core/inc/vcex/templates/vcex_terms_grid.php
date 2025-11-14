@@ -133,7 +133,7 @@ $output .= '<div class="' . esc_attr( $wrap_classes ) . '"' . vcex_get_unique_id
 				$entry_classes[] = 'vcex-isotope-entry';
 			}
 
-			$entry_classes[] = vcex_get_grid_column_class( $atts );;
+			$entry_classes[] = vcex_get_grid_column_class( $atts );
 
 			if ( 'false' == $columns_responsive ) {
 				$entry_classes[] = 'nr-col';

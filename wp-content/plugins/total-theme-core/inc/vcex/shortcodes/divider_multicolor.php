@@ -56,7 +56,7 @@ if ( ! class_exists( 'Vcex_Multi_Color_Divider_Shortcode' ) ) {
 					'value' => urlencode( json_encode( $default_colors ) ),
 					'params' => [
 						[
-							'type' => 'colorpicker',
+							'type' => 'vcex_colorpicker',
 							'heading' => esc_html__( 'Color', 'total-theme-core' ),
 							'param_name' => 'value',
 							'admin_label' => true,

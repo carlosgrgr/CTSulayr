@@ -1,6 +1,6 @@
 <?php
 
-namespace TotalThemeCore\Vcex\Elementor\Widgets;
+namespace TotalThemeCore\Vcex\Elementor;
 
 use VCEX_Just_Events_Time_Shortcode as Shortcode;
 use TotalThemeCore\Vcex\Elementor;

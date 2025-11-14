@@ -222,7 +222,7 @@ if ( ! class_exists( 'VCEX_Post_Type_Grid_Shortcode' ) ) {
 				),
 				array(
 					'type' => 'autocomplete',
-					'heading' => esc_html__( 'Query Specific Posts', 'total-theme-core' ),
+					'heading' => esc_html__( 'Only Include These Posts or Pages', 'total-theme-core' ),
 					'param_name' => 'posts_in',
 					'group' => esc_html__( 'Query', 'total-theme-core' ),
 					'settings' => array(
@@ -234,7 +234,7 @@ if ( ! class_exists( 'VCEX_Post_Type_Grid_Shortcode' ) ) {
 						'delay' => 0,
 						'auto_focus' => true,
 					),
-					'description' => esc_html__( 'Start typing a post name to locate and add it. Make sure you have selected the Post Types above so they match the post types of the selected posts.', 'total-theme-core' ),
+					'description' => esc_html__( 'Ensure the Post Types selected above correspond to the items you choose.', 'total-theme-core' ),
 					'dependency' => array( 'element' => 'custom_query', 'value' => 'false' ),
 				),
 				array(

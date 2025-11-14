@@ -178,14 +178,10 @@ if ( ! class_exists( 'VCEX_Leader_Shortcode' ) ) {
 					'group' => esc_html__( 'Label', 'total-theme-core' ),
 				],
 				[
+					'type' => 'vcex_select',
+					'choices' => 'font_style',
 					'heading' => esc_html__( 'Font Style', 'total-theme-core' ),
 					'param_name' => 'label_font_style',
-					'type' => 'vcex_select_buttons',
-					'std' => '',
-					'choices' => [
-						'' => esc_html__( 'Normal', 'total-theme-core' ),
-						'italic' => esc_html__( 'Italic', 'total-theme-core' ),
-					],
 					'css' => [ 'selector' => '.vcex-leader-item__label', 'property' => 'font-style' ],
 					'group' => esc_html__( 'Label', 'total-theme-core' ),
 				],
@@ -222,14 +218,10 @@ if ( ! class_exists( 'VCEX_Leader_Shortcode' ) ) {
 					'css' => [ 'selector' => '.vcex-leader-item__value', 'property' => 'font-weight' ],
 				],
 				[
+					'type' => 'vcex_select',
+					'choices' => 'font_style',
 					'heading' => esc_html__( 'Font Style', 'total-theme-core' ),
 					'param_name' => 'value_font_style',
-					'type' => 'vcex_select_buttons',
-					'std' => '',
-					'choices' => [
-						'' => esc_html__( 'Normal', 'total-theme-core' ),
-						'italic' => esc_html__( 'Italic', 'total-theme-core' ),
-					],
 					'group' => esc_html__( 'Value', 'total-theme-core' ),
 					'css' => [ 'selector' => '.vcex-leader-item__value', 'property' => 'font-style' ],
 				],

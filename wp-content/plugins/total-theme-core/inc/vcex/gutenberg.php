@@ -2,10 +2,10 @@
 
 namespace TotalThemeCore\Vcex;
 
-defined( 'ABSPATH' ) || exit;
+\defined( 'ABSPATH' ) || exit;
 
 /**
- * Gutenberg Integration for vcex shortcodes.
+ * Gutenberg Integration.
  */
 class Gutenberg {
 

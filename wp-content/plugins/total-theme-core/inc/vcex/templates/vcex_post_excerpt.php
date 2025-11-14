@@ -5,7 +5,7 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 2.0.2
+ * @version 2.4.2
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -50,22 +50,29 @@ if ( empty( $excerpt ) ) {
 	return;
 }
 
-$shortcode_class = [
+$wrap_class = [
 	'vcex-post-excerpt',
 	'vcex-module',
 	'wpex-text-pretty',
 	'wpex-last-mb-0',
 ];
 
+if ( ! empty( $atts['max_lines'] ) ) {
+	$max_lines_safe = absint( $atts['max_lines'] );
+	if ( $max_lines_safe && in_array( $max_lines_safe, [ 1, 2, 3, 4, 5 ], true ) ) {
+		$wrap_class[] = "wpex-line-clamp-{$max_lines_safe}";
+	}
+}
+
 $extra_classes = vcex_get_shortcode_extra_classes( $atts, 'vcex_post_excerpt' );
 
 if ( $extra_classes ) {
-	$shortcode_class = array_merge( $shortcode_class, $extra_classes );
+	$wrap_class = array_merge( $wrap_class, $extra_classes );
 }
 
-$shortcode_class = vcex_parse_shortcode_classes( $shortcode_class, 'vcex_post_excerpt', $atts );
+$wrap_class = vcex_parse_shortcode_classes( $wrap_class, 'vcex_post_excerpt', $atts );
 
-$html = '<div class="' . esc_attr( trim( $shortcode_class ) ) . '"' . vcex_get_unique_id( $atts['unique_id'] ) . '>';
+$html = '<div class="' . esc_attr( trim( $wrap_class ) ) . '"' . vcex_get_unique_id( $atts['unique_id'] ) . '>';
 	$html .= wpautop( vcex_parse_text_safe( $excerpt ) );
 $html .= '</div>';
 

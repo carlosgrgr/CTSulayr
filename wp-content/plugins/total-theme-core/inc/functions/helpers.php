@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Call a static class method.
  */
-function totalthemecore_call_static( string $class_name, string $method, ...$params ) {
+function totalthemecore_call_static( string $class_name, string $method, ...$args ) {
 	if ( ! str_starts_with( $class_name, 'TotalThemeCore' ) ) {
 		$class_name = 'TotalThemeCore\\' . $class_name;
 	}
@@ -14,10 +14,10 @@ function totalthemecore_call_static( string $class_name, string $method, ...$par
 			$method = 'instance';
 		}
 		if ( 'instance' === $method && ! method_exists( $class_name, 'instance' ) ) {
-			return new $class_name( ...$params );
+			return new $class_name( ...$args );
 		}
-		if ( is_callable( $class_name, $method ) ) {
-			return $class_name::$method( ...$params );
+		if ( is_callable( [ $class_name, $method ] ) ) {
+			return $class_name::$method( ...$args );
 		}
 	}
 }
@@ -25,10 +25,10 @@ function totalthemecore_call_static( string $class_name, string $method, ...$par
 /**
  * Call a non static class method.
  */
-function totalthemecore_call_non_static( string $class_name, string $method, ...$params ) {
+function totalthemecore_call_non_static( string $class_name, string $method, ...$args ) {
 	$instance = totalthemecore_call_static( $class_name, 'instance' );
 	if ( $instance && method_exists( $instance, $method ) ) {
-		return $instance->$method( ...$params );
+		return $instance->$method( ...$args );
 	}
 }
 

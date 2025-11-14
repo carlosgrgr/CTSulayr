@@ -2,7 +2,7 @@
 
 namespace TotalThemeCore;
 
-\defined( 'ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Adds thumbnail options to taxonomies.
@@ -18,15 +18,15 @@ final class Term_Thumbnails {
 	 * Init.
 	 */
 	public static function init(): void {
-		$is_admin = \is_admin();
+		$is_admin = is_admin();
 
 		if ( $is_admin ) {
-			\add_action( 'admin_init', [ self::class, 'on_admin_init' ] );
+			add_action( 'admin_init', [ self::class, 'on_admin_init' ] );
 		}
 
-		if ( ( ! $is_admin || \wp_doing_ajax() ) && self::page_header_image_enabled() ) {
-			\add_filter( 'totaltheme/page/header/style', [ self::class, 'filter_page_header_style' ] );
-			\add_filter( 'wpex_page_header_background_image', [ self::class, 'filter_page_header_bg' ] );
+		if ( ( ! $is_admin || wp_doing_ajax() ) && self::page_header_image_enabled() ) {
+			add_filter( 'totaltheme/page/header/style', [ self::class, 'filter_page_header_style' ] );
+			add_filter( 'wpex_page_header_background_image', [ self::class, 'filter_page_header_bg' ] );
 		}
 	}
 
@@ -37,27 +37,16 @@ final class Term_Thumbnails {
 		$taxonomies = (array) get_taxonomies( [
 			'public' => true,
 		], 'names' );
-
-		if ( \function_exists( 'wpex_get_ptu_tax_mod' ) ) {
+		if ( function_exists( 'wpex_get_ptu_tax_mod' ) ) {
 			foreach ( $taxonomies as $taxonomy ) {
-				$ptu_check = \wpex_get_ptu_tax_mod( $taxonomy, 'term_thumbnails', true );
-				if ( isset( $ptu_check ) && ! \wp_validate_boolean( $ptu_check ) ) {
+				$ptu_check = wpex_get_ptu_tax_mod( $taxonomy, 'term_thumbnails', true );
+				if ( isset( $ptu_check ) && ! wp_validate_boolean( $ptu_check ) ) {
 					unset( $taxonomies[ $taxonomy ] );
 				}
 			}
 		}
-
-		/**
-		 * Filters the supported taxonomies for the term color meta option (wpex_color).
-		 *
-		 * @param array $taxonomies
-		 */
-		$taxonomies = \apply_filters( 'totalthemecore/term_thumbnails/supported_taxonomies', $taxonomies );
-
-		/*** deprecated ***/
-		$taxonomies = \apply_filters( 'wpex_thumbnail_taxonomies', $taxonomies );
-
-		return (array) $taxonomies;
+		$taxonomies = apply_filters( 'wpex_thumbnail_taxonomies', $taxonomies ); // @deprecated
+		return (array) apply_filters( 'totalthemecore/term_thumbnails/supported_taxonomies', $taxonomies );
 	}
 
 	/**
@@ -66,15 +55,15 @@ final class Term_Thumbnails {
 	public static function on_admin_init(): void {
 		foreach ( self::supported_taxonomies() as $taxonomy ) {
 			if ( self::page_header_image_enabled() || 'product_cat' !== $taxonomy ) {
-				\add_action( "wpex_{$taxonomy}_form_fields_top", [ self::class, 'on_wpex_form_fields_top' ] );
+				add_action( "wpex_{$taxonomy}_form_fields_top", [ self::class, 'on_wpex_form_fields_top' ] );
 			}
 			if ( 'product_cat' !== $taxonomy ) {
-				\add_action( "{$taxonomy}_add_form_fields", [ self::class, 'add_form_fields'], 10 );
-				\add_filter( "manage_edit-{$taxonomy}_columns", [ self::class, 'admin_columns' ] );
-				\add_filter( "manage_{$taxonomy}_custom_column", [ self::class, 'admin_column' ], 10, 3 );
+				add_action( "{$taxonomy}_add_form_fields", [ self::class, 'add_form_fields'], 10 );
+				add_filter( "manage_edit-{$taxonomy}_columns", [ self::class, 'admin_columns' ] );
+				add_filter( "manage_{$taxonomy}_custom_column", [ self::class, 'admin_column' ], 10, 3 );
 			}
-			\add_action( "created_{$taxonomy}", [ self::class, 'on_term_created' ] );
-			\add_action( "edit_{$taxonomy}", [ self::class, 'on_term_edit' ] );
+			add_action( "created_{$taxonomy}", [ self::class, 'on_term_created' ] );
+			add_action( "edit_{$taxonomy}", [ self::class, 'on_term_edit' ] );
 		}
 	}
 
@@ -82,16 +71,16 @@ final class Term_Thumbnails {
 	 * Add Thumbnail field to add form fields.
 	 */
 	public static function add_form_fields( $taxonomy ): void {
-		\wp_nonce_field( 'wpex_term_thumbnail_meta_nonce', 'wpex_term_thumbnail_meta_nonce' );
+		wp_nonce_field( 'wpex_term_thumbnail_meta_nonce', 'wpex_term_thumbnail_meta_nonce' );
 
 		self::enqueue_admin_scripts();
 		?>
 		<div class="form-field">
-			<label for="term-thumbnail"><?php \esc_html_e( 'Image', 'total-theme-core' ); ?></label>
+			<label for="term-thumbnail"><?php esc_html_e( 'Image', 'total-theme-core' ); ?></label>
 			<div>
 				<input type="hidden" id="wpex_term_thumbnail" name="wpex_term_thumbnail">
-				<button id="wpex-add-term-thumbnail" class="button-secondary"><?php \esc_attr_e( 'Select', 'total-theme-core' ); ?></button>
-				<button id="wpex-term-thumbnail-remove" class="button-secondary" style="display:none;"><?php \esc_html_e( 'Remove', 'total-theme-core' ); ?></button>
+				<button id="wpex-add-term-thumbnail" class="button-secondary"><?php esc_attr_e( 'Select', 'total-theme-core' ); ?></button>
+				<button id="wpex-term-thumbnail-remove" class="button-secondary" style="display:none;"><?php esc_html_e( 'Remove', 'total-theme-core' ); ?></button>
 				<div id="wpex-term-thumbnail-preview" data-image-size="80"></div>
 			</div>
 			<div class="clear"></div>
@@ -103,7 +92,7 @@ final class Term_Thumbnails {
 	 * Add Thumbnail field to edit form fields.
 	 */
 	public static function on_wpex_form_fields_top( $term ): void {
-		if ( empty( $term ) || ! \is_object( $term ) ) {
+		if ( empty( $term ) || ! is_object( $term ) ) {
 			return;
 		}
 
@@ -121,7 +110,7 @@ final class Term_Thumbnails {
 			$thumbnail_id  = self::get_term_thumbnail_id( $term_id, false );
 
 			if ( $thumbnail_id ) {
-				$thumbnail_src = \wp_get_attachment_image_src( $thumbnail_id, 'thumbnail', false );
+				$thumbnail_src = wp_get_attachment_image_src( $thumbnail_id, 'thumbnail', false );
 				$thumbnail_url = $thumbnail_src[0] ?? '';
 			}
 
@@ -130,15 +119,15 @@ final class Term_Thumbnails {
 
 			<tr class="form-field">
 				<th scope="row" valign="top">
-					<label for="wpex-add-term-thumbnail"><?php \esc_html_e( 'Image', 'total-theme-core' ); ?></label>
+					<label for="wpex-add-term-thumbnail"><?php esc_html_e( 'Image', 'total-theme-core' ); ?></label>
 				</th>
 				<td>
 					<input type="hidden" id="wpex_term_thumbnail" name="wpex_term_thumbnail" value="<?php echo esc_attr( $thumbnail_id ); ?>">
-					<button id="wpex-add-term-thumbnail" class="button-secondary"><?php \esc_attr_e( 'Select', 'total-theme-core' ); ?></button>
-					<button id="wpex-term-thumbnail-remove" class="button-secondary"<?php if ( ! $thumbnail_id ) echo ' style="display:none;"'; ?>><?php \esc_html_e( 'Remove', 'total-theme-core' ); ?></button>
+					<button id="wpex-add-term-thumbnail" class="button-secondary"><?php esc_attr_e( 'Select', 'total-theme-core' ); ?></button>
+					<button id="wpex-term-thumbnail-remove" class="button-secondary"<?php if ( ! $thumbnail_id ) echo ' style="display:none;"'; ?>><?php esc_html_e( 'Remove', 'total-theme-core' ); ?></button>
 					<div id="wpex-term-thumbnail-preview" data-image-size="80">
 						<?php if ( ! empty( $thumbnail_url ) ) { ?>
-							<img class="wpex-term-thumbnail-img" src="<?php echo \esc_url( $thumbnail_url ); ?>" width="80" height="80" style="margin-block-start:10px;">
+							<img class="wpex-term-thumbnail-img" src="<?php echo esc_url( $thumbnail_url ); ?>" width="80" height="80" style="margin-block-start:10px;">
 						<?php } ?>
 					</div>
 				</td>
@@ -150,16 +139,16 @@ final class Term_Thumbnails {
 			$page_header_bg = self::get_term_meta( $term_id, 'page_header_bg', true );
 			?>
 			<tr class="form-field">
-				<th scope="row" valign="top"><label for="wpex_term_page_header_image"><?php \esc_html_e( 'Page Header Image', 'total-theme-core' ); ?></label></th>
+				<th scope="row" valign="top"><label for="wpex_term_page_header_image"><?php esc_html_e( 'Page Header Image', 'total-theme-core' ); ?></label></th>
 				<td>
 					<select id="wpex_term_page_header_image" name="wpex_term_page_header_image" class="postform">
-						<option value="" <?php \selected( $page_header_bg, '' ); ?>><?php \esc_html_e( 'Default', 'total-theme-core' ); ?></option>
-						<option value="false" <?php \selected( $page_header_bg, 'false' ); ?>><?php \esc_html_e( 'No', 'total-theme-core' ); ?></option>
-						<option value="true" <?php \selected( $page_header_bg, 'true' ); ?>><?php \esc_html_e( 'Yes', 'total-theme-core' ); ?></option>
+						<option value="" <?php selected( $page_header_bg, '' ); ?>><?php esc_html_e( 'Default', 'total-theme-core' ); ?></option>
+						<option value="false" <?php selected( $page_header_bg, 'false' ); ?>><?php esc_html_e( 'No', 'total-theme-core' ); ?></option>
+						<option value="true" <?php selected( $page_header_bg, 'true' ); ?>><?php esc_html_e( 'Yes', 'total-theme-core' ); ?></option>
 					</select>
 					<?php
 					/*
-					if ( \current_user_can( 'edit_theme_options' ) && \is_callable( 'TotalTheme\Admin\Theme_Panel::get_setting_link' ) ) { ?>
+					if ( current_user_can( 'edit_theme_options' ) && is_callable( 'TotalTheme\Admin\Theme_Panel::get_setting_link' ) ) { ?>
 						<p class="description"><?php echo sprintf(
 							esc_html_x( 'You can disable this globally via the %1$sTheme Panel%2$s.', '1: Open link to the theme panel 2: Close Link', 'total-theme-core' ),
 							'<a href="' . \TotalTheme\Admin\Theme_Panel::get_setting_link( 'term_page_header_image_enable' ) . '" target="_blank">',
@@ -178,10 +167,10 @@ final class Term_Thumbnails {
 	 * Enqueue Admin scripts for uploading/selecting thumbnails.
 	 */
 	private static function enqueue_admin_scripts(): void {
-		\wp_enqueue_media();
-		\wp_enqueue_script(
+		wp_enqueue_media();
+		wp_enqueue_script(
 			'totalthemecore-admin-term-thumbnails',
-			\totalthemecore_get_js_file( 'admin/term-thumbnails' ),
+			totalthemecore_get_js_file( 'admin/term-thumbnails' ),
 			[ 'jquery' ],
 			TTC_VERSION,
 			true
@@ -192,7 +181,7 @@ final class Term_Thumbnails {
 	 * Saves term data in database.
 	 */
 	private static function add_term_data( $term_id, $meta_key, $meta_value, $prev_value = '' ): void {
-		\update_term_meta( $term_id, $meta_key, \sanitize_text_field( $meta_value ), $prev_value );
+		update_term_meta( $term_id, $meta_key, sanitize_text_field( $meta_value ), $prev_value );
 	}
 
 	/**
@@ -200,7 +189,7 @@ final class Term_Thumbnails {
 	 */
 	private static function remove_term_data( $term_id, $key ): void {
 		if ( ! empty( $term_id ) && ! empty( $key ) ) {
-			\delete_term_meta( $term_id, $key );
+			delete_term_meta( $term_id, $key );
 		}
 	}
 
@@ -213,21 +202,21 @@ final class Term_Thumbnails {
 		}
 
 		// Get deprecated data.
-		$term_data = \get_option( 'wpex_term_data' );
+		$term_data = get_option( 'wpex_term_data' );
 
 		// Add to options.
 		if ( isset( $term_data[ $term_id ][ $key ] ) ) {
 			unset( $term_data[ $term_id ][ $key ] );
 		}
 
-		\update_option( 'wpex_term_data', $term_data );
+		update_option( 'wpex_term_data', $term_data );
 	}
 
 	/**
 	 * Update thumbnail value.
 	 */
 	private static function update_thumbnail( $term_id, $thumbnail_id ): void {
-		$safe_thumbnail_id = \absint( $thumbnail_id );
+		$safe_thumbnail_id = absint( $thumbnail_id );
 
 		if ( ! empty( $safe_thumbnail_id ) ) {
 			self::add_term_data( $term_id, 'thumbnail_id', $safe_thumbnail_id );
@@ -242,7 +231,7 @@ final class Term_Thumbnails {
 	 * Update page header image option.
 	 */
 	private static function update_page_header_img( $term_id, $value ): void {
-		if ( \is_bool( $value ) ) {
+		if ( is_bool( $value ) ) {
 			$value = $value ? 'true' : 'false';
 		}
 
@@ -259,8 +248,8 @@ final class Term_Thumbnails {
 	 * Runs when a new term is created.
 	 */
 	public static function on_term_created( $term_id ): void {
-		if ( \array_key_exists( 'wpex_term_thumbnail_meta_nonce', $_POST )
-			&& \wp_verify_nonce( \sanitize_text_field( \wp_unslash( $_POST['wpex_term_thumbnail_meta_nonce'] ) ), 'wpex_term_thumbnail_meta_nonce' )
+		if ( array_key_exists( 'wpex_term_thumbnail_meta_nonce', $_POST )
+			&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpex_term_thumbnail_meta_nonce'] ) ), 'wpex_term_thumbnail_meta_nonce' )
 		) {
 			self::save_forms( $term_id );
 		}
@@ -270,8 +259,8 @@ final class Term_Thumbnails {
 	 * Runs when a new term is edited.
 	 */
 	public static function on_term_edit( $term_id ): void {
-		if ( \array_key_exists( 'wpex_term_meta_nonce', $_POST )
-			&& \wp_verify_nonce( \sanitize_text_field( \wp_unslash( $_POST['wpex_term_meta_nonce'] ) ), 'wpex_term_meta_nonce' )
+		if ( array_key_exists( 'wpex_term_meta_nonce', $_POST )
+			&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpex_term_meta_nonce'] ) ), 'wpex_term_meta_nonce' )
 		) {
 			self::save_forms( $term_id );
 		}
@@ -281,10 +270,10 @@ final class Term_Thumbnails {
 	 * Save Forms.
 	 */
 	private static function save_forms( $term_id ): void {
-		if ( \array_key_exists( 'wpex_term_thumbnail', $_POST ) ) {
+		if ( array_key_exists( 'wpex_term_thumbnail', $_POST ) ) {
 			self::update_thumbnail( $term_id, $_POST['wpex_term_thumbnail' ] );
 		}
-		if ( \array_key_exists( 'wpex_term_page_header_image', $_POST ) ) {
+		if ( array_key_exists( 'wpex_term_page_header_image', $_POST ) ) {
 			self::update_page_header_img( $term_id, $_POST['wpex_term_page_header_image' ] );
 		}
 	}
@@ -293,7 +282,7 @@ final class Term_Thumbnails {
 	 * Thumbnail column added to category admin.
 	 */
 	public static function admin_columns( $columns ) {
-		$columns['wpex-term-thumbnail-col'] = \esc_attr__( 'Image', 'total-theme-core' );
+		$columns['wpex-term-thumbnail-col'] = esc_attr__( 'Image', 'total-theme-core' );
 		return $columns;
 	}
 
@@ -304,10 +293,10 @@ final class Term_Thumbnails {
 		if ( 'wpex-term-thumbnail-col' === $column ) {
 			$thumbnail_id = self::get_term_thumbnail_id( $id, false );
 			if ( $thumbnail_id ) {
-				$thumbnail = \wp_get_attachment_image_src( $thumbnail_id, 'thumbnail' );
+				$thumbnail = wp_get_attachment_image_src( $thumbnail_id, 'thumbnail' );
 			}
 			if ( ! empty( $thumbnail ) ) {
-				$columns .= '<img loading="lazy" src="' . \esc_url( $thumbnail[0] ) . '" class="wp-post-image" height="40" width="40" style="object-fit:cover;border:1px solid rgba(0,0,0,.07);">';
+				$columns .= '<img loading="lazy" src="' . esc_url( $thumbnail[0] ) . '" class="wp-post-image" height="40" width="40" style="object-fit:cover;border:1px solid rgba(0,0,0,.07);">';
 			} else {
 				$columns .= '&#8212;';
 			}
@@ -320,17 +309,17 @@ final class Term_Thumbnails {
 	 */
 	private static function get_term_meta( $term_id = null, $key = '', $single = true ) {
 		if ( ! $term_id ) {
-			$term_id = \get_queried_object()->term_id;
+			$term_id = get_queried_object()->term_id;
 		}
 
 		$value = '';
 
 		if ( $term_id ) {
-			$value = \get_term_meta( $term_id, $key, $single );
+			$value = get_term_meta( $term_id, $key, $single );
 			if ( isset( $value ) ) {
 				return $value;
 			}
-			$term_data = \get_option( 'wpex_term_data' );
+			$term_data = get_option( 'wpex_term_data' );
 			$term_data = $term_data[ $term_id ] ?? '';
 			if ( $term_data && ! empty( $term_data[ $key ] ) ) {
 				return $term_data[ $key ];
@@ -361,7 +350,7 @@ final class Term_Thumbnails {
 		if ( self::is_tax_archive() && self::term_page_header_image_enabled() ) {
 			$term_thumbnail = self::get_term_thumbnail_id();
 			if ( $term_thumbnail ) {
-				$image_url = \wp_get_attachment_image_url( $term_thumbnail, 'full' );
+				$image_url = wp_get_attachment_image_url( $term_thumbnail, 'full' );
 				if ( $image_url ) {
 					$image = $image_url;
 				}
@@ -375,15 +364,15 @@ final class Term_Thumbnails {
 	 */
 	public static function get_term_thumbnail_id( $term_id = null, $apply_filters = true ) {
 		$thumbnail_id = '';
-		$term_id      = $term_id ?: \get_queried_object_id();
+		$term_id      = $term_id ?: get_queried_object_id();
 		if ( $term_id ) {
-			if ( \is_object( $term_id ) && \is_a( $term_id, 'WP_Term' ) ) {
+			if ( is_object( $term_id ) && is_a( $term_id, 'WP_Term' ) ) {
 				$term_id = $term_id->term_id;
 			}
-			$thumbnail_id = \get_term_meta( $term_id, 'thumbnail_id', true );
-			// Check old options.
+			$thumbnail_id = get_term_meta( $term_id, 'thumbnail_id', true );
+			// Check old options
 			if ( empty( $thumbnail_id ) ) {
-				$term_data = \get_option( 'wpex_term_data' );
+				$term_data = get_option( 'wpex_term_data' );
 				$term_data = $term_data[ $term_id ] ?? '';
 				if ( $term_data && ! empty( $term_data[ 'thumbnail' ] ) ) {
 					return $term_data[ 'thumbnail' ];
@@ -398,7 +387,7 @@ final class Term_Thumbnails {
 		 * @param int $term_id
 		 */
 		if ( $apply_filters ) {
-			$thumbnail_id = \apply_filters( 'wpex_get_term_thumbnail_id', $thumbnail_id );
+			$thumbnail_id = apply_filters( 'wpex_get_term_thumbnail_id', $thumbnail_id );
 		}
 
 		return $thumbnail_id;
@@ -408,14 +397,14 @@ final class Term_Thumbnails {
 	 * Checks that the functionality is enabled.
 	 */
 	public static function page_header_image_enabled(): bool {
-		return (bool) \apply_filters( 'wpex_enable_term_page_header_image', \get_theme_mod( 'term_page_header_image_enable', true ) );
+		return (bool) apply_filters( 'wpex_enable_term_page_header_image', get_theme_mod( 'term_page_header_image_enable', true ) );
 	}
 
 	/**
 	 * Check if on a tax archive.
 	 */
 	private static function is_tax_archive(): bool {
-		return ( ! \is_search() && ( \is_tax() || \is_category() || \is_tag() ) );
+		return ( ! is_search() && ( is_tax() || is_category() || is_tag() ) );
 	}
 
 	/**
@@ -423,7 +412,7 @@ final class Term_Thumbnails {
 	 */
 	private static function term_page_header_image_enabled(): bool {
 		return ( function_exists( 'wpex_term_page_header_image_enabled' )
-			&& \wpex_term_page_header_image_enabled()
+			&& wpex_term_page_header_image_enabled()
 			&& in_array( self::get_current_taxonomy(), self::supported_taxonomies() )
 		);
 	}
@@ -432,15 +421,13 @@ final class Term_Thumbnails {
 	 * Returns the current taxonomy name.
 	 */
 	private static function get_current_taxonomy(): string {
-		$taxonomy = \get_query_var( 'taxonomy' );
-		if ( ! $taxonomy ) {
-			if ( \is_category() ) {
-				$taxonomy = 'category';
-			} elseif ( \is_tag() ) {
-				$taxonomy = 'post_tag';
-			}
+		if ( is_category() ) {
+			return 'category';
+		} elseif ( is_tag() ) {
+			return 'post_tag';
+		} else {
+			return (string) get_query_var( 'taxonomy' ) ?: '';
 		}
-		return $taxonomy;
 	}
 
 }

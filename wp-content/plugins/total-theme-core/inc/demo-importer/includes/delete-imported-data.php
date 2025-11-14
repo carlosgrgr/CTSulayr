@@ -2,7 +2,7 @@
 
 namespace TotalTheme\Demo_Importer;
 
-\defined( 'ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 class Delete_Imported_Data {
 
@@ -35,7 +35,7 @@ class Delete_Imported_Data {
 
 		foreach ( $imported_data_list as $part => $items ) {
 			$method = "delete_{$part}";
-			if ( \method_exists( $this, $method ) ) {
+			if ( method_exists( $this, $method ) ) {
 				$this->$method( $items );
 			}
 		}
@@ -51,17 +51,17 @@ class Delete_Imported_Data {
 	 * Delete nav menu locations.
 	 */
 	private function delete_nav_menu_locations( $locations ): void {
-		if ( ! \current_user_can( 'edit_theme_options' ) ) {
+		if ( ! current_user_can( 'edit_theme_options' ) ) {
 			return;
 		}
 
-		$current_locations = (array) \get_theme_mod( 'nav_menu_locations' );
+		$current_locations = (array) get_theme_mod( 'nav_menu_locations' );
 
 		foreach ( $locations as $location ) {
 			unset( $current_locations[ $location ] );
 		}
 
-		$result = \set_theme_mod( 'nav_menu_locations', $current_locations );	
+		$result = set_theme_mod( 'nav_menu_locations', $current_locations );	
 
 		if ( true === $result ) {
 			$this->deleted_items['nav_menu_locations'] = $locations;
@@ -74,23 +74,39 @@ class Delete_Imported_Data {
 	 * Delete Widgets.
 	 */
 	private function delete_widgets( array $sidebars = [] ): void {
-		if ( ! \current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
-		$wp_sidebars = (array) get_option( 'sidebars_widgets' );
+		$wp_sidebars = get_option( 'sidebars_widgets' );
+
+		if ( ! $wp_sidebars || ! is_array( $wp_sidebars ) ) {
+			return;
+		}
+
+		$should_update = false;
 		
 		foreach ( $sidebars as $sidebar => $widgets ) {
-			foreach ( (array) $widgets as $widget_k => $widget_v ) {
-				if ( in_array( $widget_v, $wp_sidebars[ $sidebar ], true ) ) {
+			if ( ! is_array( $widgets ) ) {
+				continue;
+			}
+			foreach ( $widgets as $widget_k => $widget_v ) {
+				if ( isset( $wp_sidebars[ $sidebar ] ) && in_array( $widget_v, $wp_sidebars[ $sidebar ], true ) ) {
+					if ( ! $should_update ) {
+						$should_update = true;
+					}
 					unset( $wp_sidebars[ $sidebar ][ array_search( $widget_v, $wp_sidebars[ $sidebar ] ) ] );
 				}
 			}
 		}
 
-		$widgets_updated = (bool) \update_option( 'sidebars_widgets', $wp_sidebars );
+		if ( $should_update ) {
+			$widgets_updated = update_option( 'sidebars_widgets', $wp_sidebars, false );
+		} else {
+			$widgets_updated = true;
+		}
 
-		if ( $widgets_updated ) {
+		if ( true === $widgets_updated ) {
 			$this->deleted_items['widgets'] = $sidebars;
 		} else {
 			$this->failed_items['widgets'] = $sidebars;
@@ -101,12 +117,12 @@ class Delete_Imported_Data {
 	 * Delete Posts.
 	 */
 	private function delete_posts( $posts ): void {
-		if ( \current_user_can( 'delete_posts' ) && \current_user_can( 'delete_pages' ) ) {
+		if ( current_user_can( 'delete_posts' ) && current_user_can( 'delete_pages' ) ) {
 			foreach ( $posts as $post_id ) {
 				if ( 'elementor_library' === get_post_type( $post_id ) ) {
 					continue; // Skip Elementor library posts - it causes Elementor debug errors.
 				}
-				$deleted = \wp_delete_post( $post_id, true );
+				$deleted = wp_delete_post( $post_id, true );
 				if ( $deleted ) {
 					$this->add_deleted_item( 'posts', $post_id );
 				} elseif ( get_post( $post_id ) ) {
@@ -120,9 +136,9 @@ class Delete_Imported_Data {
 	 * Delete Menu Items.
 	 */
 	private function delete_menu_items( $menu_items ): void {
-		if ( $menu_items && is_array( $menu_items ) && \current_user_can( 'delete_posts' ) && \current_user_can( 'delete_pages' ) ) {
+		if ( $menu_items && is_array( $menu_items ) && current_user_can( 'delete_posts' ) && current_user_can( 'delete_pages' ) ) {
 			foreach ( $menu_items as $menu_item_id ) {
-				$deleted = \wp_delete_post( $menu_item_id, true );
+				$deleted = wp_delete_post( $menu_item_id, true );
 				if ( $deleted ) {
 					$this->add_deleted_item( 'menu_items', $menu_item_id );
 				} elseif ( get_post( $menu_item_id ) ) {
@@ -136,9 +152,9 @@ class Delete_Imported_Data {
 	 * Delete Attachments.
 	 */
 	private function delete_attachments( $attachments ): void {
-		if ( \current_user_can( 'delete_posts' ) ) {
+		if ( current_user_can( 'delete_posts' ) ) {
 			foreach ( $attachments as $attachment ) {
-				$deleted = \wp_delete_attachment( $attachment, true );
+				$deleted = wp_delete_attachment( $attachment, true );
 				if ( $deleted ) {
 					$this->add_deleted_item( 'attachments', $attachment );
 				} elseif ( get_post( $attachment ) ) {
@@ -152,12 +168,12 @@ class Delete_Imported_Data {
 	 * Delete Categories.
 	 */
 	private function delete_categories( $categories ): void {
-		if ( \current_user_can( 'manage_categories' ) ) {
+		if ( current_user_can( 'manage_categories' ) ) {
 			foreach ( $categories as $category ) {
-				$deleted = \wp_delete_category( $category );
+				$deleted = wp_delete_category( $category );
 				if ( true === $deleted ) {
 					$this->add_deleted_item( 'categories', $category );
-				} elseif ( \get_category( $category ) ) {
+				} elseif ( get_category( $category ) ) {
 					$this->add_failed_item( 'categories', $category );
 				}
 			}
@@ -168,11 +184,11 @@ class Delete_Imported_Data {
 	 * Delete Terms.
 	 */
 	private function delete_terms( $terms ): void {
-		if ( \current_user_can( 'manage_options' ) ) {
+		if ( current_user_can( 'manage_options' ) ) {
 			foreach ( $terms as $term_tax_id ) {
-				$term = \get_term_by( 'term_taxonomy_id', $term_tax_id );
-				if ( \is_a( $term, 'WP_Term' ) ) {
-					$result = \wp_delete_term( $term->term_id, $term->taxonomy );
+				$term = get_term_by( 'term_taxonomy_id', $term_tax_id );
+				if ( is_a( $term, 'WP_Term' ) ) {
+					$result = wp_delete_term( $term->term_id, $term->taxonomy );
 					if ( 0 === $result ) {
 						$this->add_failed_item( 'terms', $term_tax_id );
 					} else {

@@ -2,12 +2,14 @@
 
 namespace TotalThemeCore\Widgets;
 
+use TotalThemeCore\WidgetBuilder;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Facebook Page widget.
  */
-class Widget_Facebook extends \TotalThemeCore\WidgetBuilder {
+class Widget_Facebook extends WidgetBuilder {
 
 	/**
 	 * Widget args.

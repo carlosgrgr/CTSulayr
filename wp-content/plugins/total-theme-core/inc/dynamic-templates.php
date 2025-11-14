@@ -180,11 +180,9 @@ class Dynamic_Templates {
 	 * Define new admin dashboard columns.
 	 */
 	public static function add_admin_columns( $columns ): array {
-		$columns['wpex_template_type'] = \esc_html__( 'Type', 'total-theme-core' );
-		if ( isset( $_GET['wpex_template_type'] ) && 'part' === \sanitize_text_field( \wp_unslash( $_GET['wpex_template_type'] ) ) ) {
-			$columns['wpex_template_shortcode'] = \esc_html__( 'Shortcode', 'total-theme-core' );
-		}
-		$columns['wpex_template_id'] = \esc_html__( 'ID', 'total-theme-core' );
+		$columns['wpex_template_type']      = \esc_html__( 'Type', 'total-theme-core' );
+		$columns['wpex_template_id']        = \esc_html__( 'ID', 'total-theme-core' );
+		$columns['wpex_template_shortcode'] = \esc_html__( 'Shortcode', 'total-theme-core' );
 		return $columns;
 	}
 
@@ -194,24 +192,20 @@ class Dynamic_Templates {
 	public static function display_admin_columns( $column, $post_id ): void {
 		$template_type = self::get_template_type( $post_id );
 		switch ( $column ) {
-			case 'wpex_template_type' :
+			case 'wpex_template_type':
 				if ( $template_type ) {
 					echo '<a href="' . \esc_url( \admin_url( 'edit.php?post_type=wpex_templates&wpex_template_type=' . $template_type ) ) . '">' . \esc_html( self::get_template_type_name( $post_id ) ) . '</a>';
 				} else {
 					echo '&mdash;';
 				}
 				echo '<input type="hidden" value="' . \esc_attr( $template_type ) . '" disabled>';
-			break;
-			case 'wpex_template_shortcode' :
-				if ( 'part' === $template_type ) {
-					echo '<input type="text" onClick="this.select();" value=\'[wpex_template id="' . \esc_attr( \absint( $post_id ) ) . '"]\' readonly>';
-				} else {
-					echo '&mdash;';
-				}
-			break;
-			case 'wpex_template_id' :
+				break;
+			case 'wpex_template_id':
 				echo \esc_html( \absint( $post_id ) );
-			break;
+				break;
+			case 'wpex_template_shortcode':
+				echo '<input type="text" onClick="this.select();" value=\'[wpex_template id="' . \esc_attr( \absint( $post_id ) ) . '"]\' readonly>';
+				break;
 		}
 	}
 
@@ -222,28 +216,23 @@ class Dynamic_Templates {
 		if ( 'wpex_template_type' !== $column_name || self::POST_TYPE !== $post_type ) {
 			return;
 		}
-
 		?>
-
 		<fieldset class="inline-edit-col-right">
 			<div class="inline-edit-col">
 				<div class="inline-edit-group wp-clearfix">
 					<label class="inline-edit-wpex_template_type alignleft">
 						<span class="title"><?php \esc_html_e( 'Type', 'total-theme-core' ); ?></span>
 						<span class="input-text-wrap">
-							<select name="wpex_template_type">
-								<?php
+							<select name="wpex_template_type"><?php
 								foreach ( self::get_template_type_choices() as $key => $value ) {
 									echo '<option value="' . \esc_attr( $key ) . '">' . \esc_html( $value ) . '</option>';
 								}
-								?>
-							</select>
+							?></select>
 						</span>
 					</label>
 				</div>
 			</div>
 		</fieldset>
-
 		<?php
 	}
 
@@ -259,7 +248,7 @@ class Dynamic_Templates {
 			return;
 		}
 
-		// Save inline edit.
+		// Save inline edit
 		if ( isset( $_POST['_inline_edit'] )
 			&& \wp_verify_nonce( \sanitize_text_field( \wp_unslash( $_POST['_inline_edit'] ) ), 'inlineeditnonce' )
 			&& isset( $_POST['wpex_template_type'] )
@@ -290,16 +279,12 @@ class Dynamic_Templates {
 	public static function admin_tabs( $views ) {
 		$types  = self::get_template_types();
 		$active = isset( $_GET['wpex_template_type'] ) ? \sanitize_text_field( \wp_unslash( $_GET['wpex_template_type'] ) ) : '';
-
 		foreach ( $types as $key => $value ) {
 			$current_class = ( $key === $active ) ? ' class="current"' : '';
 			$views["wpex_template_type_{$key}"] = '<a href="' . \esc_url( \admin_url( "edit.php?post_type=wpex_templates&wpex_template_type={$key}" ) ) . '"' . $current_class . '>' . \esc_html( $value ) . '</a>';
 		}
-
 		$current_class = ( 'none' === $active ) ? ' class="current"' : '';
-
 		$views['wpex_template_type_none'] = '<a href="' . \esc_url( \admin_url( "edit.php?post_type=wpex_templates&wpex_template_type=none" ) ) . '"' . $current_class . '>' . \esc_html__( 'Uncategorized', 'total-theme-core' ) . '</a>';
-
 		return $views;
 	}
 
@@ -308,7 +293,6 @@ class Dynamic_Templates {
 	 */
 	public static function admin_filter_results( $query ) {
 		global $pagenow;
-
 		if ( ! is_admin()
 			|| 'edit.php' !== $pagenow
 			|| empty( $_GET['wpex_template_type'] )
@@ -318,11 +302,8 @@ class Dynamic_Templates {
 		) {
 			return;
 		}
-
 		$query->query_vars['meta_key'] = 'wpex_template_type';
-
 		$safe_template_type = \sanitize_text_field( \wp_unslash( $_GET['wpex_template_type'] ) );
-
 		if ( 'none' === $safe_template_type ) {
 			$query->query_vars['meta_compare'] = 'NOT EXISTS';
 		} else {

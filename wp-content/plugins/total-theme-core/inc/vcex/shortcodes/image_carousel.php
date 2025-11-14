@@ -119,6 +119,14 @@ if ( ! class_exists( 'VCEX_Image_Carousel' ) ) {
 					'group' => esc_html__( 'Gallery', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
+				[
+					'type' => 'vcex_ofswitch',
+					'std' => 'false',
+					'heading' => esc_html__( 'Include Featured Image', 'total-theme-core' ),
+					'param_name' => 'include_featured',
+					'group' => esc_html__( 'Gallery', 'total-theme-core' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
 				// General
 				[
 					'type' => 'textfield',
@@ -165,18 +173,18 @@ if ( ! class_exists( 'VCEX_Image_Carousel' ) ) {
 				],
 				// Style
 				[
-					'type' => 'vcex_ofswitch',
-					'std' => 'false',
-					'heading'  => esc_html__( 'Vertical Align Items', 'total-theme-core' ),
-					'param_name' => 'vertical_align',
-					'group' => esc_html__( 'Style', 'total-theme-core' ),
-					'editors' => [ 'wpbakery', 'elementor' ],
-				],
-				[
 					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Bottom Margin', 'total-theme-core' ),
 					'param_name' => 'bottom_margin', // can't name it margin_bottom due to WPBakery parsing issue
 					'admin_label' => true,
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
+					'type' => 'vcex_ofswitch',
+					'std' => 'false',
+					'heading'  => esc_html__( 'Vertically Center Items', 'total-theme-core' ),
+					'param_name' => 'vertical_align',
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
@@ -434,6 +442,7 @@ if ( ! class_exists( 'VCEX_Image_Carousel' ) ) {
 						'title' => esc_html__( 'Title', 'total-theme-core' ),
 						'alt' => esc_html__( 'Alt', 'total-theme-core' ),
 					],
+					'dependency' => array( 'element' => 'title', 'value' => 'yes' ),
 					'group' => esc_html__( 'Title', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
@@ -443,7 +452,17 @@ if ( ! class_exists( 'VCEX_Image_Carousel' ) ) {
 					'param_name' => 'content_heading_color',
 					'css' => [ 'selector' => '.entry-title', 'property' => 'color' ],
 					'group' => esc_html__( 'Title', 'total-theme-core' ),
+					'dependency' => array( 'element' => 'title', 'value' => 'yes' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
+					'type' => 'vcex_font_size',
+					'responsive' => false,
+					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
+					'param_name' => 'content_heading_size',
+					'css' => [ 'selector' => '.entry-title', 'property' => 'font_size' ],
+					'dependency' => array( 'element' => 'title', 'value' => 'yes' ),
+					'group' => esc_html__( 'Title', 'total-theme-core' ),
 				],
 				[
 					'type' => 'vcex_select',
@@ -451,6 +470,7 @@ if ( ! class_exists( 'VCEX_Image_Carousel' ) ) {
 					'heading' => esc_html__( 'Font Weight', 'total-theme-core' ),
 					'param_name' => 'content_heading_weight',
 					'css' => [ 'selector' => '.entry-title', 'property' => 'font-weight' ],
+					'dependency' => array( 'element' => 'title', 'value' => 'yes' ),
 					'group' => esc_html__( 'Title', 'total-theme-core' ),
 				],
 				[
@@ -459,14 +479,7 @@ if ( ! class_exists( 'VCEX_Image_Carousel' ) ) {
 					'param_name' => 'content_heading_transform',
 					'choices' => 'text_transform',
 					'css' => [ 'selector' => '.entry-title', 'property' => 'text-transform' ],
-					'group' => esc_html__( 'Title', 'total-theme-core' ),
-				],
-				[
-					'type' => 'vcex_font_size',
-					'responsive' => false,
-					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
-					'param_name' => 'content_heading_size',
-					'css' => [ 'selector' => '.entry-title', 'property' => 'font_size' ],
+					'dependency' => array( 'element' => 'title', 'value' => 'yes' ),
 					'group' => esc_html__( 'Title', 'total-theme-core' ),
 				],
 				[
@@ -475,6 +488,7 @@ if ( ! class_exists( 'VCEX_Image_Carousel' ) ) {
 					'param_name' => 'content_heading_margin',
 					'css' => [ 'selector' => '.entry-title', 'property' => 'margin' ],
 					'description' => self::param_description( 'margin_shorthand' ),
+					'dependency' => array( 'element' => 'title', 'value' => 'yes' ),
 					'group' => esc_html__( 'Title', 'total-theme-core' ),
 				],
 				[
@@ -483,6 +497,7 @@ if ( ! class_exists( 'VCEX_Image_Carousel' ) ) {
 					'param_name' => 'title_typo',
 					'selector' => '.entry-title',
 					'group' => esc_html__( 'Title', 'total-theme-core' ),
+					'dependency' => array( 'element' => 'title', 'value' => 'yes' ),
 					'editors' => [ 'elementor' ],
 				],
 				// Caption
@@ -490,7 +505,7 @@ if ( ! class_exists( 'VCEX_Image_Carousel' ) ) {
 					'type' => 'vcex_ofswitch',
 					'std' => 'no',
 					'vcex' => [ 'on' => 'yes', 'off' => 'no' ],
-					'heading' => esc_html__( 'Display Caption', 'total-theme-core' ),
+					'heading' => esc_html__( 'Caption', 'total-theme-core' ),
 					'param_name' => 'caption',
 					'group' => esc_html__( 'Caption', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
@@ -501,6 +516,7 @@ if ( ! class_exists( 'VCEX_Image_Carousel' ) ) {
 					'param_name' => 'content_color',
 					'css' => [ 'selector' => '.entry-details', 'property' => 'color' ],
 					'group' => esc_html__( 'Caption', 'total-theme-core' ),
+					'dependency' => array( 'element' => 'caption', 'value' => 'yes' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
@@ -510,6 +526,7 @@ if ( ! class_exists( 'VCEX_Image_Carousel' ) ) {
 					'param_name' => 'content_font_size',
 					'css' => [ 'selector' => '.entry-details', 'property' => 'font-size' ],
 					'group' => esc_html__( 'Caption', 'total-theme-core' ),
+					'dependency' => array( 'element' => 'caption', 'value' => 'yes' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
@@ -518,6 +535,7 @@ if ( ! class_exists( 'VCEX_Image_Carousel' ) ) {
 					'param_name' => 'content_typo',
 					'selector' => '.entry-excerpt',
 					'group' => esc_html__( 'Caption', 'total-theme-core' ),
+					'dependency' => array( 'element' => 'caption', 'value' => 'yes' ),
 					'editors' => [ 'elementor' ],
 				],
 				// CSS

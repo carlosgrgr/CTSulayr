@@ -1,4 +1,5 @@
 <?php
+
 namespace TotalThemeCore\Vcex;
 
 defined( 'ABSPATH' ) || exit;
@@ -38,8 +39,8 @@ final class User_Callback_Functions {
 			// Theme functions
 			'wpex_title',
 		];
-		if ( \defined( 'VCEX_CALLBACK_FUNCTION_WHITELIST' ) && is_array( \VCEX_CALLBACK_FUNCTION_WHITELIST ) ) {
-			$whitelist = \array_merge( $whitelist, \VCEX_CALLBACK_FUNCTION_WHITELIST );
+		if ( defined( 'VCEX_CALLBACK_FUNCTION_WHITELIST' ) && is_array( VCEX_CALLBACK_FUNCTION_WHITELIST ) ) {
+			$whitelist = array_merge( $whitelist, VCEX_CALLBACK_FUNCTION_WHITELIST );
 		}
 		return $whitelist;
 	}
@@ -48,7 +49,7 @@ final class User_Callback_Functions {
 	 * Check if a function is whitelisted.
 	 */
 	public function is_whitelisted( $function_name = '' ) {
-		return \in_array( $function_name, $this->get_whitelist(), true );
+		return in_array( $function_name, $this->get_whitelist(), true );
 	}
 
 }

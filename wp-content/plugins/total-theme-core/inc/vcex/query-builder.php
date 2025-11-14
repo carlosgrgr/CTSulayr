@@ -2,7 +2,12 @@
 
 namespace TotalThemeCore\Vcex;
 
-\defined( 'ABSPATH' ) || exit;
+use WP_Query;
+use DateTime;
+use DateTimeImmutable;
+use TotalThemeCore\Post_Series;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Used to build WP Queries for vcex elements.
@@ -10,6 +15,11 @@ namespace TotalThemeCore\Vcex;
  * @todo rename class to Post_Query for consistency with new Term_Query
  */
 class Query_Builder {
+
+	/**
+	 * Query type.
+	 */
+	protected $query_type = null;
 
 	/**
 	 * Defines the pre_query var.
@@ -63,41 +73,60 @@ class Query_Builder {
 		$this->atts          = $atts;
 		$this->shortcode_tag = $shortcode_tag;
 		$this->fields        = $fields;
+		$this->query_type    = $this->atts['query_type'] ?? '';
 
+		// Check if it's a tribe events query type as these use their own functions rather then the WP_Query class
+		if ( $this->query_type && str_starts_with( $this->query_type, 'tribe_events_' ) ) {
+			$this->pre_query = $this->query_type_tribe_events( str_replace( 'tribe_events_', '', $this->query_type ) );
+			return;
+		}
+
+		// Get pre query, this allows setting a custom query via a filter
 		$pre_query = $this->get_pre_query();
 
-		if ( $pre_query && \is_a( $pre_query, 'WP_Query' ) ) {
+		if ( $pre_query && is_a( $pre_query, 'WP_Query' ) ) {
 			$this->pre_query = $pre_query;
 			return;
 		}
 
-		$this->doing_ajax = \wp_doing_ajax();
-		$this->post_id = $this->get_current_post_ID(); // must run after the doing_ajax check.
+		// Check if running a query in ajax and store current post ID
+		$this->doing_ajax = wp_doing_ajax();
+		$this->post_id = $this->get_current_post_ID(); // must run after the doing_ajax check
 
-		// Ajax fix.
+		// Make sure ajax requests only display published posts
 		if ( $this->doing_ajax ) {
 			$this->args['post_status'] = [ 'publish' ];
 		}
 
-		// Auto Query.
+		// Auto Query
 		if ( $this->is_auto_query() ) {
 			return $this->auto_query();
 		}
 
-		// Custom query.
+		// Custom query
 		if ( $this->is_custom_query() ) {
 			return $this->custom_query( $this->atts['custom_query_args'] );
 		}
 
-		// Custom query types.
-		if ( isset( $atts['query_type'] ) && 'custom' !== $atts['query_type'] ) {
-			switch ( $atts['query_type'] ) {
+		// Custom query types
+		if ( $this->query_type && 'custom' !== $this->query_type ) {
+			switch ( $this->query_type ) {
 				case 'callback':
 					if ( isset( $atts['query_callback'] ) ) {
 						$callback = $atts['query_callback'];
-						if ( \vcex_validate_user_func( $callback ) && \is_callable( $callback ) ) {
-							$query = \call_user_func( $callback, $this->atts );
-							if ( $query && \is_array( $query ) ) {
+						$is_valid_callback = false;
+						if ( 'wpex_post_cards' === $this->shortcode_tag ) {
+							$user_callbacks = apply_filters( 'wpex_post_cards_query_callback_choices', [] );
+							if ( is_array( $user_callbacks ) && in_array( $callback, array_keys( $user_callbacks ), true ) ) {
+								$is_valid_callback = true;
+							}
+						}
+						if ( ! $is_valid_callback ) {
+							$is_valid_callback = vcex_validate_user_func( $callback );
+						}
+						if ( $is_valid_callback && is_callable( $callback ) ) {
+							$query = call_user_func( $callback, $this->atts );
+							if ( $query && is_array( $query ) ) {
 								$this->args = $query;
 							} else {
 								$this->args = [];
@@ -110,28 +139,81 @@ class Query_Builder {
 					}
 					break;
 				default:
-					$query_method = "query_type_{$atts['query_type']}";
-					if ( \method_exists( $this, $query_method ) ) {
+					$query_method = "query_type_{$this->query_type}";
+					if ( method_exists( $this, $query_method ) ) {
 						return $this->$query_method();
 					}
 					break;
 			}
 		}
 
-		// Loop through shortcode atts and run class methods.
+		// Loop through shortcode atts and run class methods
 		foreach ( $atts as $key => $value ) {
 			$method = "parse_{$key}";
-			if ( \method_exists( $this, $method ) ) {
+			if ( method_exists( $this, $method ) ) {
 				$this->$method( $value );
 			}
 		}
 	}
 
 	/**
+	 * Returns a list of query types.
+	 */
+	public static function get_query_type_choices(): array {
+		$choices = [
+			''              => esc_html__( 'Default', 'total-theme-core' ),
+			'auto'          => esc_html__( 'Auto (dynamic templates)', 'total-theme-core' ),
+			'custom'        => esc_html__( 'Advanced (custom arguments)', 'total-theme-core' ),
+			'callback'      => esc_html__( 'Callback (child theme function)', 'total-theme-core' ),
+			'post_gallery'  => esc_html__( 'Post Gallery', 'total-theme-core' ),
+			'attachments'   => esc_html__( 'Custom Gallery', 'total-theme-core' ),
+			'custom_field'  => esc_html__( 'Custom Field', 'total-theme-core' ),
+			'post_children' => esc_html__( 'Child Pages', 'total-theme-core' ),
+			'term_card'     => esc_html__( 'Term Card', 'total-theme-core' ),
+			'related'       => esc_html__( 'Related by Taxonomy', 'total-theme-core' ),
+			'author'        => esc_html__( 'Related by Author', 'total-theme-core' ),
+		];
+
+		/*if ( taxonomy_exists( 'post_series' ) ) {
+			$choices['post_series'] = esc_html__( 'Post Series', 'total-theme-core' );
+		}*/
+
+		if ( get_theme_mod( 'staff_enable', true ) && post_type_exists( 'staff' ) ) {
+			$choices['author'] = esc_html__( 'Related by Author or Current Staff Member', 'total-theme-core' );
+		}
+
+		if ( class_exists( 'Just_Events\Plugin', false ) ) {
+			$choices['just_events_all']      = esc_html__( 'All Events', 'total-theme-core' );
+			$choices['just_events_upcoming'] = esc_html__( 'Upcoming Events', 'total-theme-core' );
+			$choices['just_events_today']    = esc_html__( 'Today\'s Events', 'total-theme-core' );
+			$choices['just_events_ongoing']  = esc_html__( 'Ongoing Events', 'total-theme-core' );
+			$choices['just_events_past']     = esc_html__( 'Past Events', 'total-theme-core' );
+		}
+
+		if ( class_exists( 'WooCommerce', false ) ) {
+			$choices['woo_featured']     = esc_html__( 'WooCommerce - Featured', 'total-theme-core' );
+			$choices['woo_onsale']       = esc_html__( 'WooCommerce - On Sale', 'total-theme-core' );
+			$choices['woo_best_selling'] = esc_html__( 'WooCommerce - Best Selling', 'total-theme-core' );
+			$choices['woo_related']      = esc_html__( 'WooCommerce - Related', 'total-theme-core' );
+			$choices['woo_upsells']      = esc_html__( 'WooCommerce - Upsells', 'total-theme-core' );
+		}
+
+		if ( class_exists( 'Tribe__Events__Main', false ) ) {
+			$choices['tribe_events_all']      = esc_html__( 'All Events', 'total-theme-core' );
+			$choices['tribe_events_upcoming'] = esc_html__( 'Upcoming Events', 'total-theme-core' );
+			$choices['tribe_events_today']    = esc_html__( 'Today\'s Events', 'total-theme-core' );
+			$choices['tribe_events_ongoing']  = esc_html__( 'Ongoing Events', 'total-theme-core' );
+			$choices['tribe_events_past']     = esc_html__( 'Past Events', 'total-theme-core' );
+		}
+
+		return $choices;
+	}
+
+	/**
 	 * Pre-Query.
 	 */
 	private function get_pre_query() {
-		return \apply_filters( 'vcex_pre_query', null, $this->atts, $this->shortcode_tag, $this->fields );
+		return apply_filters( 'vcex_pre_query', null, $this->atts, $this->shortcode_tag, $this->fields );
 	}
 
 	/**
@@ -141,7 +223,7 @@ class Query_Builder {
 		if ( isset( $this->atts['query_type'] ) ) {
 			return ( 'auto' === $this->atts['query_type'] ) ? true : false;
 		} else {
-			return \vcex_validate_att_boolean( 'auto_query', $this->atts );
+			return vcex_validate_att_boolean( 'auto_query', $this->atts );
 		}
 	}
 
@@ -154,8 +236,101 @@ class Query_Builder {
 		}
 		if ( isset( $this->atts['query_type'] ) ) {
 			return ( 'custom' === $this->atts['query_type'] ) ? true : false;
-		} elseif ( \vcex_validate_att_boolean( 'custom_query', $this->atts ) ) {
+		} elseif ( vcex_validate_att_boolean( 'custom_query', $this->atts ) ) {
 			return true;
+		}
+	}
+
+	/**
+	 * Tribe events query type.
+	 */
+	private function query_type_tribe_events( $type ) {
+		if ( ! post_type_exists( 'tribe_events' ) ) {
+			return $this->set_empty_query();
+		}
+
+		$this->add_tribe_event_args( $type );
+
+		if ( vcex_validate_att_boolean( 'tribe_events_featured', $this->atts ) ) {
+			$this->args['featured'] = true;
+		}
+
+		$order = ( ! empty( $this->atts['order'] ) && 'default' !== $this->atts['order'] ) ? $this->atts['order'] : 'ASC';
+
+		$this->parse_order( $order );
+		$this->parse_terms_in_out();
+		$this->parse_pagination( null );
+		$this->parse_posts_per_page( null );
+
+		// Add series
+		if ( ! empty( $this->atts['tribe_events_series'] ) && $series = absint( $this->atts['tribe_events_series'] ) ) {
+			$this->args['series'] = $series; 
+		}
+
+		// Only show singular recurring events
+		if ( vcex_validate_att_boolean( 'tribe_events_hide_recurrence', $this->atts, true ) ) {
+			$this->args['tribeHideRecurrence'] = true;
+		}
+
+		// @important since we return early
+		$this->final_checks();
+		$this->apply_filters_to_args();
+		$this->set_unfiltered_args();
+
+		$tribe_events = tribe_get_events( $this->args, true );
+		
+		return is_a( $tribe_events, 'WP_Query' ) ? $tribe_events : $this->set_empty_query();
+	}
+
+	/**
+	 * Helper function for setting tribe events args.
+	 */
+	private function add_tribe_event_args( $query_type, $reset = false ) {
+		if ( ! in_array( $query_type, [ 'upcoming', 'past', 'ongoing', 'today' ], true ) ) {
+			return;
+		}
+		if ( $reset ) {
+			unset(
+				$this->args['starts_before'],
+				$this->args['starts_after'],
+				$this->args['ends_before'],
+				$this->args['ends_after']
+			);
+			if ( isset( $this->args['meta_query']['tribe_events_today_clause'] ) ) {
+				unset( $this->args['meta_query']['tribe_events_today_clause'] );
+			}
+		}
+		switch ( $query_type ) {
+			case 'upcoming':
+				$this->args['ends_after'] = 'now';
+				break;
+			case 'past':
+				$this->args['ends_before'] = 'now';
+				break;
+			case 'ongoing':
+				$this->args['starts_before'] = 'now';
+				$this->args['ends_after'] = 'now';
+				break;
+			case 'today':
+				$timezone = wp_timezone();
+				$this->args['meta_query'] = [
+					'tribe_events_today_clause' => [
+						'relation' => 'AND',
+						[
+							'key'     => '_EventStartDate',
+							'value'   => (new DateTime( 'tomorrow', $timezone ))->format( 'Y-m-d H:i:s' ),
+							'compare' => '<',
+							'type'    => 'DATETIME'
+						],
+						[
+							'key'     => '_EventEndDate',
+							'value'   => (new DateTime( 'today', $timezone ))->format( 'Y-m-d H:i:s' ),
+							'compare' => '>=',
+							'type'    => 'DATETIME'
+						],
+					],
+				];
+				break;
 		}
 	}
 
@@ -188,20 +363,20 @@ class Query_Builder {
 	 * Set args for the post_children query type.
 	 */
 	private function query_type_post_series() {
-		if ( ! \taxonomy_exists( 'post_series' )
-			|| ! \class_exists( '\TotalThemeCore\Post_Series', false )
+		if ( ! taxonomy_exists( 'post_series' )
+			|| ! class_exists( '\TotalThemeCore\Post_Series', false )
 		) {
 			return $this->set_empty_query();
 		}
 
-		$terms = \get_the_terms( $this->post_id, 'post_series' );
+		$terms = get_the_terms( $this->post_id, 'post_series' );
 
-		if ( empty( $terms ) || \is_wp_error( $terms ) ) {
+		if ( empty( $terms ) || is_wp_error( $terms ) ) {
 			return $this->set_empty_query();
 		}
 
 		$this->args = [
-			'post_type'      => \get_post_type( $this->post_id ),
+			'post_type'      => get_post_type( $this->post_id ),
 			'posts_per_page' => -1,
 			'no_found_rows'  => true,
 		//	'post__not_in'   => [ $this->post_id ],
@@ -212,7 +387,7 @@ class Query_Builder {
 			] ],
 		];
 
-		$order = ( ! empty( $this->atts['order'] ) && 'default' !== $this->atts['order'] ) ? $this->atts['order'] : \TotalThemeCore\Post_Series::instance()->get_query_order();
+		$order = ( ! empty( $this->atts['order'] ) && 'default' !== $this->atts['order'] ) ? $this->atts['order'] : TotalThemeCore\Post_Series::instance()->get_query_order();
 		$orderby = ( ! empty( $this->atts['orderby'] ) && 'default' !== $this->atts['orderby'] ) ? $this->atts['orderby'] : 'date';
 
 		$this->parse_order( $order );
@@ -224,7 +399,7 @@ class Query_Builder {
 	 */
 	private function query_type_post_children() {
 		$this->args = [
-			'post_type'   => \get_post_type( $this->post_id ),
+			'post_type'   => get_post_type( $this->post_id ),
 			'post_parent' => $this->post_id,
 		];
 
@@ -241,17 +416,17 @@ class Query_Builder {
 	 * Set args for the custom field query type.
 	 */
 	private function query_type_custom_field() {
-		$custom_field = ! empty( $this->atts['query_custom_field'] ) ? \sanitize_text_field( $this->atts['query_custom_field'] ) : '';
+		$custom_field = ! empty( $this->atts['query_custom_field'] ) ? sanitize_text_field( $this->atts['query_custom_field'] ) : '';
 		
 		if ( ! $custom_field ) {
 			return $this->set_empty_query();
 		}
 
 		$post_ids = [];
-		$posts = \vcex_get_meta_value( $custom_field );
+		$posts = vcex_get_meta_value( $custom_field );
 
-		if ( $posts && \is_string( $posts ) ) {
-			$posts = \wp_parse_list( $posts );
+		if ( $posts && is_string( $posts ) ) {
+			$posts = wp_parse_list( $posts );
 		}
 
 		if ( ! $posts || ! is_array( $posts ) ) {
@@ -259,16 +434,16 @@ class Query_Builder {
 		}
 
 		foreach ( $posts as $post ) {
-			if ( \is_a( $post, 'WP_Post' ) ) {
+			if ( is_a( $post, 'WP_Post' ) ) {
 				if ( isset( $post->ID ) ) {
 					$post_ids[] = $post->ID;
 				}
-			} elseif ( \is_numeric( $post ) ) {
+			} elseif ( is_numeric( $post ) ) {
 				$post_ids[] = $post;
 			}
 		}
 
-		$post_ids = \array_filter( \array_unique( \array_map( 'absint', $post_ids ) ) );
+		$post_ids = array_filter( array_unique( array_map( 'absint', $post_ids ) ) );
 
 		if ( ! $post_ids ) {
 			return $this->set_empty_query();
@@ -300,15 +475,16 @@ class Query_Builder {
 	private function query_type_author() {
 		$post_id = $this->post_id;
 
-		if ( 'staff' === \get_post_type( $post_id ) && \function_exists( 'wpex_get_user_assigned_to_staff_member' ) ) {
-			$post_author = \wpex_get_user_assigned_to_staff_member( $post_id );
+		if ( 'staff' === get_post_type( $post_id ) && function_exists( 'wpex_get_user_assigned_to_staff_member' ) ) {
+			$post_author = wpex_get_user_assigned_to_staff_member( $post_id );
 		}
 
-		$post_author = $post_author ?? \get_post_field( 'post_author', $post_id );
+		// @important we use ?? because if the check above returns false or null we want to query by Assign_Staff_Author_Total
+		$post_author = $post_author ?? get_post_field( 'post_author', $post_id );
 
 		if ( $post_author ) {
 			$this->args = [
-				'author'       => \absint( $post_author ),
+				'author'       => absint( $post_author ),
 				'post__not_in' => [ $post_id ],
 			];
 		} elseif ( class_exists( 'Assign_Staff_Author_Total' ) ) {
@@ -324,6 +500,11 @@ class Query_Builder {
 		$this->parse_terms_in_out();
 		$this->parse_order( null );
 		$this->parse_orderby( null );
+		$this->parse_ignore_sticky_posts( $this->atts['show_sticky_posts'] ?? false );
+		$this->parse_show_sticky_posts( $this->atts['show_sticky_posts'] ?? false );
+		$this->parse_exclude_sticky_posts( $this->atts['exclude_sticky_posts'] ?? false );
+		$this->parse_exclude_current_post( $this->atts['exclude_current_post'] ?? false );
+		$this->parse_thumbnail_query( $this->atts['thumbnail_query'] ?? false );
 		$this->parse_posts_per_page( null );
 		$this->parse_pagination( null ); // needed for ajax.
 	}
@@ -332,7 +513,7 @@ class Query_Builder {
 	 * Set args to query related posts.
 	 */
 	private function query_type_related() {
-		$this->parse_post_type( $this->atts['post_types'] ?? \get_post_type( $this->post_id ) );
+		$this->parse_post_type( $this->atts['post_types'] ?? get_post_type( $this->post_id ) );
 		$this->parse_order( null );
 		$this->parse_orderby( null );
 		$this->parse_posts_per_page( null );
@@ -342,7 +523,7 @@ class Query_Builder {
 			$this->args['taxonomy'] = $this->atts['related_taxonomy'];
 		}
 
-		if ( \vcex_is_frontend_edit_mode() ) {
+		if ( vcex_is_frontend_edit_mode() ) {
 			return;
 		}
 
@@ -388,7 +569,7 @@ class Query_Builder {
 	 * Set args to query onsale products.
 	 */
 	private function query_type_woo_onsale() {
-		if ( ! \function_exists( 'wc_get_product_ids_on_sale' ) ) {
+		if ( ! function_exists( 'wc_get_product_ids_on_sale' ) ) {
 			return $this->set_empty_query();
 		}
 		$this->args = [
@@ -406,13 +587,13 @@ class Query_Builder {
 	 * Set args to query related products.
 	 */
 	private function query_type_woo_related() {
-		if ( ! \function_exists( 'wc_get_related_products' ) ) {
+		if ( ! function_exists( 'wc_get_related_products' ) ) {
 			return $this->set_empty_query();
 		}
-		$related = (array) \wc_get_related_products( $this->post_id );
+		$related = (array) wc_get_related_products( $this->post_id );
 		$this->args = [
 			'post_type' => 'product',
-			'post__in' => \array_map( 'absint', \array_values( $related ) ),
+			'post__in' => array_map( 'absint', array_values( $related ) ),
 		];
 		$this->parse_order( null );
 		$this->parse_orderby( null );
@@ -424,22 +605,22 @@ class Query_Builder {
 	 * Set args to query upsells products.
 	 */
 	private function query_type_woo_upsells() {
-		if ( ! \function_exists( 'wc_get_product' ) || ! \function_exists( 'wc_products_array_filter_visible' ) ) {
+		if ( ! function_exists( 'wc_get_product' ) || ! function_exists( 'wc_products_array_filter_visible' ) ) {
 			return $this->set_empty_query();
 		}
 		$post_id = $this->post_id;
-		$product = \wc_get_product( $post_id );
+		$product = wc_get_product( $post_id );
 		$upsell_ids = ! empty( $product ) ? $product->get_upsell_ids() : '';
 		if ( ! $upsell_ids ) {
 			return $this->set_empty_query();
 		}
-		$orderby = \apply_filters( 'woocommerce_upsells_orderby', 'post__in' );
-		$order   = \apply_filters( 'woocommerce_upsells_order', 'desc' );
-		$limit   = \apply_filters( 'woocommerce_upsells_total', '-1' );
-		$upsells = \array_filter( \array_map( 'wc_get_product', $upsell_ids ), 'wc_products_array_filter_visible' );
+		$orderby = apply_filters( 'woocommerce_upsells_orderby', 'post__in' );
+		$order   = apply_filters( 'woocommerce_upsells_order', 'desc' );
+		$limit   = apply_filters( 'woocommerce_upsells_total', '-1' );
+		$upsells = array_filter( array_map( 'wc_get_product', $upsell_ids ), 'wc_products_array_filter_visible' );
 		$upsell_ids = [];
 		foreach ( $upsells as $upsell ) {
-			$upsell_ids[] = \absint( $upsell->get_id() );
+			$upsell_ids[] = absint( $upsell->get_id() );
 		}
 		$this->args = [
 			'posts_per_page' => $limit,
@@ -524,24 +705,20 @@ class Query_Builder {
 	 */
 	private function query_type_just_events_today(): void {
 		$this->just_events_common_args();
-		$timezone = \wp_timezone();
-		$current_date_time_datetime = new \DateTime( 'today', $timezone );
-		$current_date_time_start = $current_date_time_datetime->format( 'Y-m-d H:i:s' );
-		$tomorrow_datetime = new \DateTime( 'tomorrow', $timezone );
-		$tomorrow_start = $tomorrow_datetime->format( 'Y-m-d H:i:s' );
+		$timezone = wp_timezone();
 		$this->args['meta_query'] = [
 			'just_events_clause' => [
 				'relation' => 'AND',
 				[
 					'key'     => '_just_events_start_date',
-					'value'   => $current_date_time_start,
-					'compare' => '>=',
+					'value'   => (new DateTime( 'tomorrow', $timezone ))->format( 'Y-m-d H:i:s' ),
+					'compare' => '<',
 					'type'    => 'CHAR'
 				],
 				[
 					'key'     => '_just_events_end_date',
-					'value'   => $tomorrow_start,
-					'compare' => '<=',
+					'value'   => (new DateTime( 'today', $timezone ))->format( 'Y-m-d H:i:s' ),
+					'compare' => '>=',
 					'type'    => 'CHAR'
 				],
 			],
@@ -552,7 +729,7 @@ class Query_Builder {
 	 * Common args for just_events queries.
 	 */
 	private function just_events_common_args() {
-		if ( ! \post_type_exists( 'just_event' ) ) {
+		if ( ! post_type_exists( 'just_event' ) ) {
 			return $this->set_empty_query();
 		}
 
@@ -570,16 +747,16 @@ class Query_Builder {
 	 * Parse auto query args.
 	 */
 	private function auto_query() {
-		if ( \vcex_is_frontend_edit_mode() ) {
+		if ( vcex_is_frontend_edit_mode() ) {
 			$this->args['post_type'] = ! empty( $this->atts['auto_query_preview_pt'] ) ? $this->atts['auto_query_preview_pt'] : 'post';
-			$this->args['posts_per_page'] = \get_option( 'posts_per_page' );
+			$this->args['posts_per_page'] = floatval( get_option( 'posts_per_page' ) );
 		} elseif ( ! empty( $this->atts['query_vars'] ) ) {
 			$query_vars = $this->atts['query_vars'];
-			if ( \is_array( $query_vars ) ) {
+			if ( is_array( $query_vars ) ) {
 				$this->args = $query_vars;
-			} elseif ( \is_string( $query_vars ) ) {
-				$query_vars = \stripslashes_deep( $query_vars );
-				$this->args = \json_decode( $query_vars, true );
+			} elseif ( is_string( $query_vars ) ) {
+				$query_vars = json_decode( $query_vars, true );
+				$this->args = wp_unslash( $query_vars );
 			}
 			if ( ! empty( $this->atts['paged'] ) ) {
 				$this->args['paged'] = $this->atts['paged'];
@@ -594,14 +771,14 @@ class Query_Builder {
 	 * Custom Query.
 	 */
 	private function custom_query( $query ) {
-		if ( \is_string( $query ) ) {
-			$query = \wp_strip_all_tags( $query );
+		if ( is_string( $query ) ) {
+			$query = wp_strip_all_tags( $query );
 
 			// Check if it's a callable function.
-			if ( \is_callable( $query ) ) {
-				if ( \vcex_validate_user_func( $query ) ) {
-					$query = \call_user_func( $query, $this->atts );
-					if ( $query && \is_array( $query ) ) {
+			if ( is_callable( $query ) ) {
+				if ( vcex_validate_user_func( $query ) ) {
+					$query = call_user_func( $query, $this->atts );
+					if ( $query && is_array( $query ) ) {
 						$this->args = $query;
 					} else {
 						$this->args = [];
@@ -613,19 +790,19 @@ class Query_Builder {
 			// Not callable.
 			else {
 
-				if ( \function_exists( 'vc_value_from_safe' ) ) {
+				if ( function_exists( 'vc_value_from_safe' ) ) {
 					// Fix for threaded arrays. Ex: &orderby[meta_value_num]=ASC&orderby[menu_order]=ASC&orderby[date]=DESC
 					// VC saves the [] as {} to prevent conflicts since shortcodes use []
-					$query = \str_replace( '`{`', '[', $query );
-					$query = \str_replace( '`}`', ']', $query );
-					$query = \html_entity_decode( \vc_value_from_safe( $query ), ENT_QUOTES, 'utf-8' );
+					$query = str_replace( '`{`', '[', $query );
+					$query = str_replace( '`}`', ']', $query );
+					$query = html_entity_decode( vc_value_from_safe( $query ), ENT_QUOTES, 'utf-8' );
 				}
 
-				\parse_str( $query, $this->args );
+				parse_str( $query, $this->args );
 				$this->parse_custom_query_args();
 				$this->parse_dynamic_values();
 			}
-		} elseif ( \is_array( $query ) ) {
+		} elseif ( is_array( $query ) ) {
 			$this->args = $query;
 		}
 
@@ -652,7 +829,7 @@ class Query_Builder {
 		}
 
 		// Add related args if enabled.
-		if ( 'product' === $this->args['post_type'] && ! empty( $this->args['featured'] ) && \vcex_validate_boolean( $this->args['featured'] ) ) {
+		if ( 'product' === $this->args['post_type'] && ! empty( $this->args['featured'] ) && vcex_validate_boolean( $this->args['featured'] ) ) {
 			$this->parse_featured_products_only( true );
 		}
 
@@ -660,7 +837,7 @@ class Query_Builder {
 		if ( ! empty( $this->atts['pagination'] ) && 'false' !== $this->atts['pagination'] ) {
 			$has_pagination = $this->atts['pagination'];
 		} else {
-			$has_pagination = \vcex_validate_boolean( $this->args['pagination'] ?? false );
+			$has_pagination = vcex_validate_boolean( $this->args['pagination'] ?? false );
 		}
 
 		$this->parse_pagination( $has_pagination );
@@ -677,7 +854,7 @@ class Query_Builder {
 		$meta_query_items = $this->atts['meta_query_items'];
 
 		if ( ! is_array( $meta_query_items ) ) {
-			$meta_query_items = \vcex_vc_param_group_parse_atts( $meta_query_items );
+			$meta_query_items = vcex_vc_param_group_parse_atts( $meta_query_items );
 		}
 
 		if ( ! $meta_query_items ) {
@@ -693,7 +870,7 @@ class Query_Builder {
 			if ( $meta_value && str_contains( $meta_value, ',' ) ) {
 				$meta_value = $this->string_to_array( $meta_value );
 			}
-			$meta_args[] = \array_filter( [
+			$meta_args[] = array_filter( [
 				'key'     => $meta_query_item['key'] ?? '',
 				'value'   => $this->parse_dynamic_value( $meta_value ),
 				'compare' => $meta_query_item['compare'] ?? '',
@@ -709,7 +886,7 @@ class Query_Builder {
 	 */
 	private function parse_post_status( $value ): void {
 		if ( $value ) {
-			$this->args['post_status'] = \sanitize_text_field( $value );
+			$this->args['post_status'] = sanitize_text_field( $value );
 		}
 	}
 
@@ -721,7 +898,7 @@ class Query_Builder {
 			$value = $this->string_to_array( $value );
 			if ( $value ) {
 				$value = array_map( 'absint', $value );
-				\array_walk( $value, [ $this, 'add_post__in' ] );
+				array_walk( $value, [ $this, 'add_post__in' ] );
 			}
 			$this->args['ignore_sticky_posts'] = true;
 		}
@@ -735,7 +912,7 @@ class Query_Builder {
 			$value = $this->string_to_array( $value );
 			if ( $value ) {
 				$value = array_map( 'absint', $value );
-				\array_walk( $value, [ $this, 'add_post__in' ] );
+				array_walk( $value, [ $this, 'add_post__in' ] );
 			}
 			$this->args['ignore_sticky_posts'] = true;
 		}
@@ -745,7 +922,7 @@ class Query_Builder {
 	 * Parse show sticky posts setting.
 	 */
 	private function parse_show_sticky_posts( $value ): void {
-		if ( \vcex_validate_boolean( $value ) ) {
+		if ( vcex_validate_boolean( $value ) ) {
 			$this->show_sticky_posts();
 		}
 	}
@@ -754,7 +931,7 @@ class Query_Builder {
 	 * Exclude sticky posts.
 	 */
 	private function parse_exclude_sticky_posts( $value ): void {
-		if ( $value && \vcex_validate_boolean( $value ) ) {
+		if ( $value && vcex_validate_boolean( $value ) ) {
 			$this->exclude_sticky_posts();
 		}
 	}
@@ -763,7 +940,7 @@ class Query_Builder {
 	 * Exclude current post
 	 */
 	private function parse_exclude_current_post( $value ): void {
-		if ( $value && \vcex_validate_boolean( $value ) && $this->post_id ) {
+		if ( $value && vcex_validate_boolean( $value ) && $this->post_id ) {
 			$this->exclude_post_id( $this->post_id );
 		}
 	}
@@ -773,7 +950,7 @@ class Query_Builder {
 	 */
 	private function parse_offset( $value ): void {
 		if ( $value ) {
-			$this->args['offset'] = \absint( $value );
+			$this->args['offset'] = absint( $value );
 		}
 	}
 
@@ -782,7 +959,7 @@ class Query_Builder {
 	 */
 	private function parse_author_in( $value ): void {
 		if ( $value ) {
-			$this->args['author__in'] = \array_map( 'absint', $this->string_to_array( $value ) );
+			$this->args['author__in'] = array_map( 'absint', $this->string_to_array( $value ) );
 			$this->args['ignore_sticky_posts'] = true;
 		}
 	}
@@ -791,7 +968,7 @@ class Query_Builder {
 	 * Show only items with thumbnails.
 	 */
 	private function parse_thumbnail_query( $value ): void {
-		if ( $value && \vcex_validate_boolean( $value ) ) {
+		if ( $value && vcex_validate_boolean( $value ) ) {
 			$this->add_meta_query( [
 				'key' => '_thumbnail_id',
 			] );
@@ -826,10 +1003,10 @@ class Query_Builder {
 				$value = true; // always true when loadmore is enabled.
 			}
 			if ( $value ) {
-				if ( \get_query_var( 'page' ) ) {
-					$paged = \get_query_var( 'page' );
-				} elseif ( \get_query_var( 'paged' ) ) {
-					$paged = \get_query_var( 'paged' );
+				if ( get_query_var( 'page' ) ) {
+					$paged = get_query_var( 'page' );
+				} elseif ( get_query_var( 'paged' ) ) {
+					$paged = get_query_var( 'paged' );
 				} else {
 					$paged = 1;
 				}
@@ -844,7 +1021,7 @@ class Query_Builder {
 	 * Ignore sticky posts.
 	 */
 	private function parse_ignore_sticky_posts( $value ): void {
-		if ( $value && \vcex_validate_boolean( $value ) ) {
+		if ( $value && vcex_validate_boolean( $value ) ) {
 			$this->args['ignore_sticky_posts'] = true;
 		}
 	}
@@ -865,8 +1042,8 @@ class Query_Builder {
 			$this->add_clause( [ $this, 'post_clauses_orderby_rating' ] );
 		} elseif ( ! empty( $this->atts['posts_in'] ) && ! $value ) {
 			$this->args['orderby'] = 'post__in';
-		} elseif ( ! empty( $value ) && \is_string( $value ) && 'default' !== $value ) {
-			$this->args['orderby'] = \sanitize_sql_orderby( $value );
+		} elseif ( ! empty( $value ) && is_string( $value ) && 'default' !== $value ) {
+			$this->args['orderby'] = sanitize_sql_orderby( $value );
 		}
 	}
 
@@ -876,9 +1053,9 @@ class Query_Builder {
 	private function parse_orderby_meta_key( $value ): void {
 		if ( $value
 			&& ! empty( $this->args['orderby'] )
-			&& \in_array( $this->args['orderby'], [ 'meta_value', 'meta_value_num' ], true )
+			&& in_array( $this->args['orderby'], [ 'meta_value', 'meta_value_num' ], true )
 		) {
-			$this->args['meta_key'] = \sanitize_text_field( $value );
+			$this->args['meta_key'] = sanitize_text_field( $value );
 		}
 	}
 
@@ -887,7 +1064,7 @@ class Query_Builder {
 	 */
 	private function parse_order( $value ): void {
 		$value = $value ?? $this->atts['order'] ?? '';
-		$this->args['order'] = ( 'ASC' === \strtoupper( $value ) ) ? 'ASC' : 'DESC';
+		$this->args['order'] = ( 'ASC' === strtoupper( $value ) ) ? 'ASC' : 'DESC';
 	}
 
 	/**
@@ -911,7 +1088,7 @@ class Query_Builder {
 	 */
 	private function parse_authors( $value ): void {
 		if ( $value ) {
-			$this->args['author'] = \sanitize_text_field( $value );
+			$this->args['author'] = sanitize_text_field( $value );
 		}
 	}
 
@@ -951,7 +1128,7 @@ class Query_Builder {
 		if ( empty( $this->atts['tax_query_taxonomy'] )
 			|| empty( $this->atts['tax_query_terms'] )
 			|| ( 'wpex_post_cards' === $this->shortcode_tag && ! empty( $this->atts['terms_in'] ) )
-			|| ! \taxonomy_exists( $this->atts['tax_query_taxonomy'] )
+			|| ! taxonomy_exists( $this->atts['tax_query_taxonomy'] )
 		) {
 			return;
 		}
@@ -963,7 +1140,7 @@ class Query_Builder {
 			return;
 		}
 
-		if ( 'post_format' === $tax_query_taxonomy && \in_array( 'post-format-standard', $tax_query_terms ) ) {
+		if ( 'post_format' === $tax_query_taxonomy && in_array( 'post-format-standard', $tax_query_terms ) ) {
 
 			$all_formats = [
 				'post-format-aside',
@@ -978,7 +1155,7 @@ class Query_Builder {
 			];
 
 			foreach ( $tax_query_terms as $k => $v ) {
-				if ( \in_array( $v, $all_formats ) ) {
+				if ( in_array( $v, $all_formats ) ) {
 					unset( $all_formats[ $k ] );
 				}
 			}
@@ -1020,11 +1197,11 @@ class Query_Builder {
 
 		$terms = $this->atts[ $att ];
 
-		if ( \is_string( $terms ) ) {
+		if ( is_string( $terms ) ) {
 			$terms = preg_split( '/\,[\s]*/', $terms );
 		}
 
-		if ( ! $terms || ! \is_array( $terms ) ) {
+		if ( ! $terms || ! is_array( $terms ) ) {
 			return;
 		}
 
@@ -1045,9 +1222,9 @@ class Query_Builder {
 					$tax_queries[ $term_obj->taxonomy ] = [ $term ];
 				}
 			}
-			// Non- existing category.
+			// Non- existing category
 			elseif ( 'in' === $in_out ) {
-				// Do nothing - let the query display all items.
+				// Do nothing - let the query display all items
 			}
 		}
 
@@ -1058,7 +1235,7 @@ class Query_Builder {
 				'taxonomy' => $taxonomy,
 				'operator' => $operator,
 				'terms'    => $terms,
-				'field'    => 'term_taxonomy_id', // !!! important !!!
+				'field'    => 'term_taxonomy_id', // !!! important !!! We use the term_taxonomy_id or get_term_by() above won't work
 			];
 		}
 
@@ -1074,22 +1251,21 @@ class Query_Builder {
 
 		$terms = $this->get_terms();
 
-		// Return if no terms.
+		// Return if no terms
 		if ( empty( $terms ) ) {
 			$this->args['tax_query'] = NULL;
 		}
 
-		// The tax query relation.
+		// The tax query relation
 		$this->args['tax_query'] = [
 			'relation' => 'AND',
 		];
 
-		// Get taxonomies.
+		// Get taxonomies
 		$taxonomies = $this->get_taxonomies();
 
-		if ( 1 === \count( $taxonomies ) ) {
-
-			// Includes.
+		// Single taxonomy query
+		if ( 1 === count( $taxonomies ) ) {
 			if ( ! empty( $terms['include'] ) ) {
 				$this->args['tax_query'][] = [
 					'taxonomy' => $taxonomies[0],
@@ -1098,8 +1274,6 @@ class Query_Builder {
 					'operator' => 'IN',
 				];
 			}
-
-			// Excludes.
 			if ( ! empty( $terms['exclude'] ) ) {
 				$this->args['tax_query'][] = [
 					'taxonomy' => $taxonomies[0],
@@ -1108,21 +1282,20 @@ class Query_Builder {
 					'operator' => 'NOT IN',
 				];
 			}
-
 		}
 
-		// More then 1 taxonomy.
+		// More then 1 taxonomy
 		elseif ( $taxonomies ) {
 
-			// Merge terms.
-			$merge_terms = \array_merge( $terms['include'], $terms['exclude'] );
+			// Merge terms
+			$merge_terms = array_merge( $terms['include'], $terms['exclude'] );
 
-			// Loop through terms to build tax_query.
-			$get_terms = \get_terms( $taxonomies, [
+			// Loop through terms to build tax_query
+			$get_terms = get_terms( $taxonomies, [
 				'include' => $merge_terms,
 			] );
 			foreach ( $get_terms as $term ) {
-				$operator = \in_array( $term->term_id, $terms['exclude'] ) ? 'NOT IN' : 'IN';
+				$operator = in_array( $term->term_id, $terms['exclude'] ) ? 'NOT IN' : 'IN';
 				$this->args['tax_query'][] = [
 					'field'    => 'term_id',
 					'taxonomy' => $term->taxonomy,
@@ -1204,7 +1377,7 @@ class Query_Builder {
 	 * Featured products only.
 	 */
 	private function parse_featured_products_only( $value ): void {
-		if ( $value && \vcex_validate_boolean( $value ) ) {
+		if ( $value && vcex_validate_boolean( $value ) ) {
 			if ( empty( $this->args['tax_query'] ) ) {
 				$this->args['tax_query'] = [];
 			}
@@ -1221,7 +1394,7 @@ class Query_Builder {
 	 * Products out of stock.
 	 */
 	private function parse_exclude_products_out_of_stock( $value ): void {
-		if ( $value && \vcex_validate_boolean( $value ) ) {
+		if ( $value && vcex_validate_boolean( $value ) ) {
 			$this->args['meta_query'] = [
 				[
 					'key'     => '_stock_status',
@@ -1236,7 +1409,7 @@ class Query_Builder {
 	 * Returns today's date.
 	 */
 	private function get_current_date_time(): string {
-		$datetime = new \DateTimeImmutable( 'now', \wp_timezone() );
+		$datetime = new DateTimeImmutable( 'now', wp_timezone() );
 		return $datetime->format( 'Y-m-d H:i:s' );
 	}
 
@@ -1245,13 +1418,13 @@ class Query_Builder {
 	 */
 	private function string_to_array( $value ) {
 		if ( $value ) {
-			if ( \is_array( $value ) ) {
+			if ( is_array( $value ) ) {
 				return $value;
 			}
 			$array = [];
-			$items = \preg_split( '/\,[\s]*/', $value );
+			$items = preg_split( '/\,[\s]*/', $value );
 			foreach ( $items as $item ) {
-				if ( \strlen( $item ) > 0 ) {
+				if ( strlen( $item ) > 0 ) {
 					$array[] = $item;
 				}
 			}
@@ -1271,8 +1444,8 @@ class Query_Builder {
 	 */
 	private function add_clause_filters(): void {
 		foreach ( $this->clauses as $k => $callback ) {
-			if ( \is_callable( $callback ) ) {
-				\add_filter( 'posts_clauses', $callback );
+			if ( is_callable( $callback ) ) {
+				add_filter( 'posts_clauses', $callback );
 			} else {
 				unset( $this->clauses[ $k ] );
 			}
@@ -1284,7 +1457,7 @@ class Query_Builder {
 	 */
 	private function remove_clause_filters(): void {
 		foreach ( $this->clauses as $callback ) {
-			\remove_filter( 'posts_clauses', $callback );
+			remove_filter( 'posts_clauses', $callback );
 		}
 	}
 
@@ -1292,24 +1465,24 @@ class Query_Builder {
 	 * Sanitizes relation.
 	 */
 	private function sanitize_relation( string $relation = '' ): string {
-		$relation = $relation ? \strtoupper( \sanitize_text_field( $relation ) ) : 'AND';
-		return \in_array( $relation, [ 'AND', 'OR' ], true ) ? $relation : 'AND';
+		$relation = $relation ? strtoupper( sanitize_text_field( $relation ) ) : 'AND';
+		return in_array( $relation, [ 'AND', 'OR' ], true ) ? $relation : 'AND';
 	}
 
 	/**
 	 * Sanitizes autocomplete data and returns ID's of terms to include or exclude.
 	 */
 	private function sanitize_autocomplete( $terms, $taxonomy ) {
-		if ( \is_string( $terms ) ) {
-			$terms = \preg_split( '/\,[\s]*/', $terms );
+		if ( is_string( $terms ) ) {
+			$terms = preg_split( '/\,[\s]*/', $terms );
 		}
-		if ( ! \is_array( $terms ) ) {
+		if ( ! is_array( $terms ) ) {
 			return;
 		}
 		$return = [];
 		foreach ( $terms as $term ) {
-			$field = ( \is_numeric( $term ) ) ? 'id' : 'slug';
-			$term_data = \get_term_by( $field, $term, $taxonomy );
+			$field = ( is_numeric( $term ) ) ? 'id' : 'slug';
+			$term_data = get_term_by( $field, $term, $taxonomy );
 			if ( $term_data ) {
 				$return[] = $term_data->term_id;
 			}
@@ -1326,10 +1499,10 @@ class Query_Builder {
 		$related_taxonomy = '';
 
 		if ( empty( $this->args['post_type'] ) ) {
-			$this->args['post_type'] = \get_post_type( $post_id );
+			$this->args['post_type'] = get_post_type( $post_id );
 		}
 
-		if ( isset( $this->args['post__not_in'] ) && \is_array( $this->args['post__not_in'] ) ) {
+		if ( isset( $this->args['post__not_in'] ) && is_array( $this->args['post__not_in'] ) ) {
 			$this->args['post__not_in'][] = $post_id;
 		} else {
 			$this->args['post__not_in'] = [ $post_id ];
@@ -1339,25 +1512,25 @@ class Query_Builder {
 			$related_taxonomy = $this->args['taxonomy'];
 			unset( $this->args['taxonomy'] );
 		} else {
-			$post_type = \is_array( $this->args['post_type'] ) ? $this->args['post_type'][0] : $this->args['post_type'];
-			if ( \function_exists( '\wpex_get_ptu_type_mod' ) ) {
-				$related_taxonomy = \wpex_get_ptu_type_mod( $post_type, 'related_taxonomy' );
+			$post_type = is_array( $this->args['post_type'] ) ? $this->args['post_type'][0] : $this->args['post_type'];
+			if ( function_exists( 'wpex_get_ptu_type_mod' ) ) {
+				$related_taxonomy = wpex_get_ptu_type_mod( $post_type, 'related_taxonomy' );
 			}
-			if ( ! $related_taxonomy && \function_exists( 'wpex_get_post_type_cat_tax' ) ) {
-				$related_taxonomy = \wpex_get_post_type_cat_tax( $post_type );
+			if ( ! $related_taxonomy && function_exists( 'wpex_get_post_type_cat_tax' ) ) {
+				$related_taxonomy = wpex_get_post_type_cat_tax( $post_type );
 			}
 		}
 
-		if ( $related_taxonomy && \taxonomy_exists( $related_taxonomy ) ) {
-			if ( \function_exists( 'totaltheme_get_post_primary_term' ) ) {
-				$primary_term = \totaltheme_get_post_primary_term( $post_id, $related_taxonomy, false );
+		if ( $related_taxonomy && taxonomy_exists( $related_taxonomy ) ) {
+			if ( function_exists( 'totaltheme_get_post_primary_term' ) ) {
+				$primary_term = totaltheme_get_post_primary_term( $post_id, $related_taxonomy, false );
 			}
 			if ( ! empty( $primary_term ) ) {
 				$related_terms = [ $primary_term->term_id ];
 			} else {
-				$get_terms = \get_the_terms( $post_id, $related_taxonomy );
-				if ( $get_terms && ! \is_wp_error( $get_terms ) ) {
-					$related_terms = \wp_list_pluck( $get_terms, 'term_id' );
+				$get_terms = get_the_terms( $post_id, $related_taxonomy );
+				if ( $get_terms && ! is_wp_error( $get_terms ) ) {
+					$related_terms = wp_list_pluck( $get_terms, 'term_id' );
 				}
 			}
 			if ( $related_terms ) {
@@ -1369,7 +1542,7 @@ class Query_Builder {
 						'terms'    => $related_terms,
 					]
 				];
-			} elseif ( ! \apply_filters( 'vcex_query_builder_related_fallback_items', true ) ) {
+			} elseif ( ! apply_filters( 'vcex_query_builder_related_fallback_items', true ) ) {
 				$this->args['tax_query'] = [
 					'relation' => 'AND',
 					[
@@ -1397,14 +1570,14 @@ class Query_Builder {
 			'current_term'   => $this->get_current_term(),
 			'current_author' => $this->get_current_author(),
 			'current_user'   => 'get_current_user_id',
-			'today'          => \date( 'Ymd' ),
+			'today'          => date( 'Ymd' ),
 			'gt'             => '>',
 			'gte'            => '>=',
 			'lt'             => '<',
 			'lte'            => '<=',
 		];
 
-		$this->dynamic_strings = (array) \apply_filters( 'vcex_grid_advanced_query_dynamic_values', $strings );
+		$this->dynamic_strings = (array) apply_filters( 'vcex_grid_advanced_query_dynamic_values', $strings );
 
 		return $this->dynamic_strings;
 	}
@@ -1413,7 +1586,7 @@ class Query_Builder {
 	 * This function allows for dynamic values when building queries.
 	 */
 	private function parse_dynamic_values() {
-		if ( ! \is_array( $this->args ) ) {
+		if ( ! is_array( $this->args ) ) {
 			return $this->args;
 		}
 		$this->args = $this->array_search_replace_dynamic_value( $this->args );
@@ -1423,7 +1596,7 @@ class Query_Builder {
 	 * This function allows for dynamic values when building queries.
 	 */
 	private function parse_custom_query_args() {
-		if ( ! \is_array( $this->args ) ) {
+		if ( ! is_array( $this->args ) ) {
 			return $this->args;
 		}
 		$this->args = $this->array_search_replace_custom_arg( $this->args );
@@ -1434,14 +1607,14 @@ class Query_Builder {
 	 */
 	private function array_search_replace_custom_arg( $array = [] ) {
 		foreach ( $array as $key => $val ) {
-			if ( \is_array( $val ) ) {
+			if ( is_array( $val ) ) {
 				$array[ $key ] = $this->array_search_replace_custom_arg( $val );
 			} elseif (
-				\in_array( $key, $this->array_supported_params() )
-				&& \is_string( $val )
-				&& false !== \strpos( $val, ',' )
+				in_array( $key, $this->array_supported_params() )
+				&& is_string( $val )
+				&& false !== strpos( $val, ',' )
 			) {
-				$array[ $key ] = \explode( ',', $val );
+				$array[ $key ] = explode( ',', $val );
 			}
 		}
 		return $array;
@@ -1452,7 +1625,7 @@ class Query_Builder {
 	 */
 	private function array_search_replace_dynamic_value( $array = [] ) {
 		foreach ( $array as $key => $val ) {
-			if ( \is_array( $val ) ) {
+			if ( is_array( $val ) ) {
 				$array[ $key ] = $this->array_search_replace_dynamic_value( $val );
 			} else {
 				$array[ $key ] = $this->parse_dynamic_value( $val );
@@ -1465,10 +1638,10 @@ class Query_Builder {
 	 * Parses a specific dynamic value.
 	 */
 	private function parse_dynamic_value( $val = '' ) {
-		if ( $val && \is_string( $val ) ) {
+		if ( $val && is_string( $val ) ) {
 			$dynamic_strings = $this->get_dynamic_strings();
 			// Must be a registered dynamic string.
-			if ( \array_key_exists( $val, $dynamic_strings ) ) {
+			if ( array_key_exists( $val, $dynamic_strings ) ) {
 				$dynamic_val = $dynamic_strings[ $val ];
 				$strings_w_value = [
 					'current_post',
@@ -1481,8 +1654,8 @@ class Query_Builder {
 					'lt',
 					'lte',
 				];
-				if ( ! \in_array( $dynamic_val, $strings_w_value, true ) && \is_callable( $dynamic_val ) ) {
-					$val = \call_user_func( $dynamic_val );
+				if ( ! in_array( $dynamic_val, $strings_w_value, true ) && is_callable( $dynamic_val ) ) {
+					$val = call_user_func( $dynamic_val );
 				} else {
 					$val = $dynamic_val;
 				}
@@ -1495,7 +1668,7 @@ class Query_Builder {
 	 * Check if loadmore is enabled.
 	 */
 	private function has_loadmore() {
-		if ( ( ! empty( $this->atts['pagination'] ) && \in_array( $this->atts['pagination'], [ 'loadmore', 'infinite_scroll' ] ) ) || \vcex_validate_att_boolean( 'pagination_loadmore', $this->atts ) ) {
+		if ( ( ! empty( $this->atts['pagination'] ) && in_array( $this->atts['pagination'], [ 'loadmore', 'infinite_scroll' ] ) ) || vcex_validate_att_boolean( 'pagination_loadmore', $this->atts ) ) {
 			return true;
 		}
 		return false;
@@ -1516,27 +1689,27 @@ class Query_Builder {
 	 */
 	private function get_current_post_ID() {
 		if ( ! empty( $this->atts['post_id'] ) ) {
-			return $this->atts['post_id']; // used for threaded cards using ajax.
+			return $this->atts['post_id']; // used for threaded cards using ajax
 		}
 		$id = 0;
-		if ( $this->doing_ajax && ! \totalthemecore_call_static( 'Vcex\Post_Cards', 'is_threaded' ) ) {
-			$id = \url_to_postid( \wp_get_referer() );
+		if ( $this->doing_ajax && ! totalthemecore_call_static( 'Vcex\Post_Cards', 'is_threaded' ) ) {
+			$id = url_to_postid( wp_get_referer() );
 		}
-		return $id ?: \get_the_ID();
+		return $id ?: get_the_ID();
 	}
 
 	/**
 	 * Return current user ID.
 	 */
 	private function get_current_author() {
-		return \get_the_author_meta( 'ID' );
+		return get_the_author_meta( 'ID' );
 	}
 
 	/**
 	 * Get current term.
 	 */
 	private function get_current_term() {
-		return \is_tax() ? \get_queried_object()->term_id : '';
+		return is_tax() ? get_queried_object()->term_id : '';
 	}
 
 	/**
@@ -1546,9 +1719,9 @@ class Query_Builder {
 		$post_type = null;
 
 		if ( isset( $this->args['post_type'] ) ) {
-			if ( \is_string( $this->args['post_type'] ) ) {
+			if ( is_string( $this->args['post_type'] ) ) {
 				return $this->args['post_type'];
-			} elseif ( \is_array( $this->args['post_type'] ) && 1 === \count( $this->args['post_type'] ) ) {
+			} elseif ( is_array( $this->args['post_type'] ) && 1 === count( $this->args['post_type'] ) ) {
 				return $this->args['post_type'][0];
 			}
 		}
@@ -1569,21 +1742,21 @@ class Query_Builder {
 		$query_args['fields'] = 'ids';
 
 		// Exclude sticky posts when finding the offset items.
-		if ( isset( $this->args['post__not_in'] ) && \is_array( $this->args['post__not_in'] ) ) {
-			$query_args['post__not_in'] = \array_merge( $this->args['post__not_in'], \get_option( 'sticky_posts' ) );
+		if ( isset( $this->args['post__not_in'] ) && is_array( $this->args['post__not_in'] ) ) {
+			$query_args['post__not_in'] = array_merge( $this->args['post__not_in'], get_option( 'sticky_posts' ) );
 		} else {
-			$query_args['post__not_in'] = \get_option( 'sticky_posts' );
+			$query_args['post__not_in'] = get_option( 'sticky_posts' );
 		}
 
 		unset( $query_args['offset'] );
 
-		$excluded_posts = new \WP_Query( $query_args );
+		$excluded_posts = new WP_Query( $query_args );
 
 		if ( $excluded_posts->have_posts() ) {
 			$excluded_posts = $excluded_posts->posts;
-			if ( \is_array( $excluded_posts ) ) {
-				if ( isset( $this->args['post__not_in'] ) && \is_array( $this->args['post__not_in'] ) ) {
-					$this->args['post__not_in'] = \array_merge( $this->args['post__not_in'], $excluded_posts );
+			if ( is_array( $excluded_posts ) ) {
+				if ( isset( $this->args['post__not_in'] ) && is_array( $this->args['post__not_in'] ) ) {
+					$this->args['post__not_in'] = array_merge( $this->args['post__not_in'], $excluded_posts );
 				} else {
 					$this->args['post__not_in'] = $excluded_posts;
 				}
@@ -1596,18 +1769,18 @@ class Query_Builder {
 	 * Exclude featured card from query.
 	 */
 	private function maybe_exclude_featured_card() {
-		if ( ! \vcex_validate_att_boolean( 'featured_card', $this->atts )
+		if ( ! vcex_validate_att_boolean( 'featured_card', $this->atts )
 			|| empty( $this->atts['featured_post_id'] )
 		) {
 			return;
 		}
 
 		$this->exclude_post_id( $this->atts['featured_post_id'] );
-		if ( $this->args['posts_per_page'] && \floatval( $this->args['posts_per_page'] ) > 1 ) {
-			if ( $this->is_auto_query() && ( \vcex_doing_ajax() || \vcex_doing_loadmore() ) ) {
+		if ( $this->args['posts_per_page'] && floatval( $this->args['posts_per_page'] ) > 1 ) {
+			if ( $this->is_auto_query() && ( vcex_doing_ajax() || vcex_doing_loadmore() ) ) {
 				return; // not needed here.
 			}
-			$this->args['posts_per_page'] = \absint( $this->args['posts_per_page'] ) - 1;
+			$this->args['posts_per_page'] = absint( $this->args['posts_per_page'] ) - 1;
 		}
 	}
 
@@ -1622,8 +1795,8 @@ class Query_Builder {
 		$this->add_post__not_in( $post_id );
 
 		// Needs to be removed from post__in if it was there for some reason - important!
-		if ( isset( $this->args['post__in'] ) && \is_array( $this->args['post__in'] ) ) {
-			if ( ( $key = \array_search( $post_id, $this->args['post__in'] ) ) !== false ) {
+		if ( isset( $this->args['post__in'] ) && is_array( $this->args['post__in'] ) ) {
+			if ( ( $key = array_search( $post_id, $this->args['post__in'] ) ) !== false ) {
 				unset( $this->args['post__in'][ $key ] );
 			}
 		}
@@ -1658,6 +1831,7 @@ class Query_Builder {
 	 * Check URL sorting.
 	 */
 	private function check_url_sort() {
+		// This class has been soft deprecated in 2.4
 		if ( $url_sort = totalthemecore_call_static( 'Vcex\Url_Sort_Query', 'get_query' ) ) {
 			$this->atts['ajax_filter'] = [ 'selection' => $url_sort ];
 		}
@@ -1669,7 +1843,7 @@ class Query_Builder {
 	private function filter() {
 		if ( ! $this->doing_ajax
 			&& empty( $this->atts['ajax_filter'] )
-			&& \vcex_validate_att_boolean( 'url_sort', $this->atts )
+			&& vcex_validate_att_boolean( 'url_sort', $this->atts )
 		) {
 			$this->check_url_sort();
 		}
@@ -1680,11 +1854,11 @@ class Query_Builder {
 
 		$ajax_args = $this->atts['ajax_filter'];
 
-		if ( \is_string( $ajax_args ) ) {
-			$ajax_args = \json_decode( \stripslashes( $ajax_args ), true );
+		if ( is_string( $ajax_args ) ) {
+			$ajax_args = wp_unslash( json_decode( $ajax_args, true ) );
 		}
 
-		if ( ! \is_array( $ajax_args ) ) {
+		if ( ! is_array( $ajax_args ) ) {
 			return;
 		}
 
@@ -1692,7 +1866,7 @@ class Query_Builder {
 
 		$filter_selection = $ajax_args['selection'] ?? null;
 
-		if ( ! \is_array( $filter_selection ) || ! $filter_selection ) {
+		if ( ! is_array( $filter_selection ) || ! $filter_selection ) {
 			return;
 		}
 
@@ -1701,29 +1875,88 @@ class Query_Builder {
 
 		// Loop through selection.
 		foreach ( $filter_selection as $type => $value ) {
-			$safe_type  = \sanitize_text_field( $type );
-			$safe_value = \sanitize_text_field( $value );
+			$safe_type  = sanitize_text_field( $type );
+			$safe_value = sanitize_text_field( $value );
 
 			if ( ! $safe_value && '0' !== $safe_value ) {
 				continue; // sanity check / @note some values can be 0 if checking for false or 0 meta values.
 			}
 
-			if ( \in_array( $safe_type, [ 'search', 'order', 'orderby', 'post_type', 'post', 'sticky' ] ) ) {
+			$allowed_filter_types = [
+				'search'     => 'search',
+				'order'      => 'order',
+				'orderby'    => 'orderby',
+				'post_type'  => 'post_type',
+				'post'       => 'post',
+				'sticky'     => 'sticky',
+			];
+
+			// Tribe event specific query param types
+			if ( $this->query_type && str_starts_with( $this->query_type, 'tribe_events_' ) ) {
+				$allowed_filter_types = array_merge( $allowed_filter_types, [
+					'tribe_events'    => 'tribe_events',
+					'start_date'      => 'start_date',
+					'end_date'        => 'end_date',
+					'venue'           => 'venue',
+					'organizer'       => 'organizer',
+					'featured'        => 'featured',
+					'geoloc'          => 'tribe_geoloc',
+					'geoloc_lat'      => 'tribe_geoloc_lat',
+					'geoloc_lng'      => 'tribe_geoloc_lng',
+					'starts_before'   => 'starts_before',
+					'starts_after'    => 'starts_after',
+					'ends_before'     => 'ends_before',
+					'ends_after'      => 'ends_after',
+					'ticketed'        => 'ticketed',
+					'series'          => 'series',
+					'hide_recurrence' => 'hide_recurrence',
+				] );
+			}
+
+			if ( in_array( $safe_type, $allowed_filter_types, true ) ) {
 				$query_type = $safe_type;
 			} else {
-				$query_type = \taxonomy_exists( $safe_type ) ? 'taxonomy' : 'meta';
+				$query_type = taxonomy_exists( $safe_type ) ? 'taxonomy' : 'meta';
 			}
 
 			switch ( $query_type ) {
-				case 'order':
-				case 'orderby':
-					$this->args[ $query_type ] = $safe_value;
-					break;
 				case 'search':
 					$this->args['s'] = $safe_value;
 					break;
+				case 'order':
+					$order = strtoupper( $safe_value );
+					if ( 'ASC' === $order || 'DESC' === $order ) {
+						$this->args['order'] = $order;
+					}
+					break;
+				case 'orderby':
+					$allowed_orderby = [
+						'date',
+						'title',
+						'name',
+						'modified',
+						'author',
+						'ID',
+						'comment_count',
+						'menu_order',
+						'post__in',
+						'parent',
+						'type',
+						'meta_value',
+						'meta_value_num',
+						//	'rand', // not allowed, database intensive
+					];
+					if ( ! empty( $this->args['s'] ) ) {
+						$allowed_orderby[] = 'relevance';
+					}
+					if ( in_array( $safe_value, $allowed_orderby, true ) ) {
+						$this->args['orderby'] = $safe_value;
+					}
+					break;
 				case 'post_type':
-					$this->args['post_type'] = $this->string_to_array( $safe_value );
+					if ( isset( $this->args['post_type'] ) && is_array( $this->args['post_type'] ) ) {
+						$this->args['post_type'] = array_intersect( $this->string_to_array( $safe_value ), $this->args['post_type'] );
+					}
 					break;
 				case 'meta':
 					$meta_item = $this->parse_filter_meta_val( $safe_value );
@@ -1734,22 +1967,22 @@ class Query_Builder {
 					break;
 				case 'taxonomy':
 					$tax_item = $this->parse_filter_tax_val( $safe_value );
-					if ( isset( $tax_item['value'] ) && \is_array( $tax_item['value'] ) ) {
+					if ( isset( $tax_item['value'] ) && is_array( $tax_item['value'] ) ) {
 						$tax_item_terms = $tax_item['value'];
 
-						// Default tax item args.
+						// Default tax item args
 						$tax_item_args = [
 							'taxonomy'         => $safe_type,
-							'field'            => \is_numeric( $tax_item_terms[0] ) ? 'term_id' : 'slug',
+							'field'            => is_numeric( $tax_item_terms[0] ) ? 'term_id' : 'slug',
 							'operator'         => $tax_item['operator'] ?? 'IN',
-							'include_children' => $tax_item['include_children'] ?? $ajax_args['include_children'] ?? true,
+							'include_children' => wp_validate_boolean( $tax_item['include_children'] ?? $ajax_args['include_children'] ?? true ),
 						];
 
-						// Single tax term.
-						if ( 1 === \count( $tax_item['value'] ) ) {
-							if ( \is_numeric( $tax_item['value'][0] ) && \floatval( $tax_item['value'][0] ) < 0 ) {
+						// Single tax term
+						if ( 1 === count( $tax_item['value'] ) ) {
+							if ( is_numeric( $tax_item['value'][0] ) && floatval( $tax_item['value'][0] ) < 0 ) {
 								$tax_item_args['operator'] = 'NOT IN';
-								$tax_item['value'] = [ \absint( $tax_item['value'][0] ) ];
+								$tax_item['value'] = [ absint( $tax_item['value'][0] ) ];
 							}
 							$tax_item_args['terms'] = $tax_item['value'];
 							$tax_args[] = $tax_item_args;
@@ -1773,9 +2006,9 @@ class Query_Builder {
 							foreach ( $tax_item_terms as $tax_item_term ) {
 								$tax_item_term_args = $tax_item_args; // must reset for each item.
 								// Allows using negative numbers as NOT IN checks.
-								if ( \is_numeric( $tax_item_term ) && \floatval( $tax_item_term ) < 0 ) {
+								if ( is_numeric( $tax_item_term ) && floatval( $tax_item_term ) < 0 ) {
 									$tax_item_term_args['operator'] = 'NOT IN';
-									$tax_item_term = \absint( $tax_item_term );
+									$tax_item_term = absint( $tax_item_term );
 								}
 								$tax_item_term_args['terms'] = $tax_item_term;
 								$tax_item_array[] = $tax_item_term_args;
@@ -1786,15 +2019,15 @@ class Query_Builder {
 					}
 					break;
 				case 'sticky':
-					if ( \vcex_validate_boolean( $safe_value ) ) {
+					if ( vcex_validate_boolean( $safe_value ) ) {
 						$this->show_sticky_posts();
 					} else {
 						$this->exclude_sticky_posts();
 					}
 					break;
 				case 'post':
-					$operator = \strtoupper( \sanitize_text_field( $filter_item['operator'] ?? 'IN' ) );
-					if ( \str_contains( $safe_value, ',' ) ) {
+					$operator = strtoupper( sanitize_text_field( $filter_item['operator'] ?? 'IN' ) );
+					if ( str_contains( $safe_value, ',' ) ) {
 						$posts = $this->string_to_array( $safe_value );
 					} else {
 						$posts = [ $safe_value ];
@@ -1812,13 +2045,52 @@ class Query_Builder {
 						}
 					}
 					break;
+				// Tribe event specific query types.
+				case 'tribe_events':
+					$this->add_tribe_event_args( $safe_value, true );
+					break;
+				case 'start_date':
+				case 'end_date':
+				case 'starts_before':
+				case 'starts_after':
+				case 'ends_before':
+				case 'ends_after':
+					if ( strtotime( $safe_value ) ) {
+						$this->args[ $query_type ] = $safe_value;
+					}
+					break;
+				case 'venue':
+				case 'organizer':
+					if ( $post_id = absint( $safe_value ) ) {
+						$this->args[ $query_type ] = $post_id;
+					}
+					break;
+				case 'hide_recurrence':
+					$this->args['tribeHideRecurrence'] = vcex_validate_boolean( $safe_value );
+					break;
+				case 'featured':
+				case 'ticketed':
+					$this->args[ $query_type ] = vcex_validate_boolean( $safe_value );
+					break;
+				case 'geoloc':
+					$this->args[ $query_type ] = $safe_value;
+					break;
+				case 'geoloc_lat':
+				case 'geoloc_lng':
+					if ( is_numeric( $safe_value ) ) {
+						$this->args[ $query_type ] = floatval( $safe_value );
+					}
+				case 'series':
+					if ( $safe_value = absint( $safe_value ) ) {
+						$this->args[ $query_type ] = $safe_value;
+					}
+					break;
 			}
-
 		}
 
 		if ( $tax_args ) {
-			if ( \count( $tax_args ) > 1 ) {
-				$tax_args = \array_merge( [
+			if ( count( $tax_args ) > 1 ) {
+				$tax_args = array_merge( [
 					'relation' => $this->sanitize_relation( $ajax_args['tax_relation'] ?? $ajax_args['relation'] ?? 'AND' ),
 				], $tax_args );
 			}
@@ -1826,14 +2098,14 @@ class Query_Builder {
 		}
 
 		if ( $meta_args ) {
-			if ( \count( $meta_args ) > 1 ) {
-				$meta_args = \array_merge( [
+			if ( count( $meta_args ) > 1 ) {
+				$meta_args = array_merge( [
 					'relation' => $this->sanitize_relation( $ajax_args['meta_relation'] ?? $ajax_args['relation'] ?? 'AND' ),
 				], $meta_args );
 				$this->add_meta_query( $meta_args );
 			} else {
 				if ( ! empty( $this->args['meta_query'] ) ) {
-					$this->args['meta_query'] = \array_merge( $this->args['meta_query'], $meta_args );
+					$this->args['meta_query'] = array_merge( $this->args['meta_query'], $meta_args );
 				} else {
 					$this->args['meta_query'] = $meta_args;
 				}
@@ -1846,15 +2118,15 @@ class Query_Builder {
 	 * Parses filter item taxonomy value.
 	 */
 	private function parse_filter_tax_val( string $val ) {
-		if ( \str_contains( $val, '|' ) ) {
-			$array = \explode( '|', $val );
+		if ( str_contains( $val, '|' ) ) {
+			$array = explode( '|', $val );
 			return [
-				'value'    => \array_map( '\sanitize_text_field', $this->string_to_array( $array[0] ) ),
-				'relation' => \strtoupper( \html_entity_decode( \sanitize_text_field( $array[1] ) ) )
+				'value'    => array_map( 'sanitize_text_field', $this->string_to_array( $array[0] ) ),
+				'relation' => strtoupper( html_entity_decode( sanitize_text_field( $array[1] ) ) )
 			];
 		}
 		return [
-			'value' => \array_map( '\sanitize_text_field', $this->string_to_array( $val ) ),
+			'value' => array_map( 'sanitize_text_field', $this->string_to_array( $val ) ),
 		];
 	}
 
@@ -1864,21 +2136,21 @@ class Query_Builder {
 	private function parse_filter_meta_val( string $val ) {
 		if ( ! str_contains( $val, '|' ) ) {
 			return [
-				'value'   => \sanitize_text_field( $val ),
+				'value'   => sanitize_text_field( $val ),
 				'type'    => 'CHAR',
 				'compare' => '=',
 			];
 		}
-		if ( $array = \explode( '|', $val ) ) {
+		if ( $array = explode( '|', $val ) ) {
 			$new_val = [
 				'value'   => '',
 				'type'    => 'CHAR',
 				'compare' => '=',
 			];
-			$new_val['value'] = \sanitize_text_field( $array[0] );
+			$new_val['value'] = sanitize_text_field( $array[0] );
 			if ( isset( $array[2] ) ) {
-				$new_val['compare'] = \html_entity_decode( \sanitize_text_field( $array[1] ) );
-				$new_val['type'] = \sanitize_text_field( $array[2] );
+				$new_val['compare'] = html_entity_decode( sanitize_text_field( $array[1] ) );
+				$new_val['type'] = sanitize_text_field( $array[2] );
 			} elseif ( isset( $array[1] ) ) {
 				$meta_types = [
 					'NUMERIC',
@@ -1891,15 +2163,15 @@ class Query_Builder {
 					'TIME',
 					'UNSIGNED'
 				];
-				if ( \in_array( $array[1], $meta_types, true ) ) {
+				if ( in_array( $array[1], $meta_types, true ) ) {
 					$new_val['type'] = $array[1];
 				} else {
-					$new_val['compare'] = \html_entity_decode( \sanitize_text_field( $array[1] ) );
+					$new_val['compare'] = html_entity_decode( sanitize_text_field( $array[1] ) );
 				}
 			}
 
 			// Sanitize value.
-			$new_val['value'] = ( 'INT' === $new_val['type'] ) ? \floatval( $new_val['value'] ) : \sanitize_text_field( $new_val['value'] );
+			$new_val['value'] = ( 'INT' === $new_val['type'] ) ? floatval( $new_val['value'] ) : sanitize_text_field( $new_val['value'] );
 
 			return $new_val;
 		}
@@ -1909,7 +2181,7 @@ class Query_Builder {
 	 * Checks if the original tax query should be ignored or not.
 	 */
 	private function ignore_tax_query(): bool {
-		return ( isset( $this->atts['ignore_tax_query'] ) && \vcex_validate_boolean( $this->atts['ignore_tax_query'] ) ) || ( isset( $this->atts['ajax_filter']['ignore_tax_query'] ) && \vcex_validate_boolean( $this->atts['ajax_filter']['ignore_tax_query'] ) );
+		return ( isset( $this->atts['ignore_tax_query'] ) && vcex_validate_boolean( $this->atts['ignore_tax_query'] ) ) || ( isset( $this->atts['ajax_filter']['ignore_tax_query'] ) && vcex_validate_boolean( $this->atts['ajax_filter']['ignore_tax_query'] ) );
 	}
 
 	/**
@@ -1920,7 +2192,7 @@ class Query_Builder {
 		if ( ! $sticky_posts ) {
 			$this->set_empty_query();
 		} else {
-			\array_walk( $sticky_posts, [ $this, 'add_post__in' ] );
+			array_walk( $sticky_posts, [ $this, 'add_post__in' ] );
 			$this->args['ignore_sticky_posts'] = true;
 			unset( $this->args['offset'] );
 		}
@@ -1933,7 +2205,7 @@ class Query_Builder {
 	private function exclude_sticky_posts(): void {
 		$sticky_posts = $this->get_sticky_posts();
 		if ( $sticky_posts ) {
-			\array_walk( $sticky_posts, [ $this, 'add_post__not_in' ] );
+			array_walk( $sticky_posts, [ $this, 'add_post__not_in' ] );
 			$this->args['ignore_sticky_posts'] = true;
 		}
 	}
@@ -1999,18 +2271,18 @@ class Query_Builder {
 
 		// Remove relation on single taxonomy arrays.
 		if ( isset( $this->args['tax_query'] )
-			&& \is_array( $this->args['tax_query'] )
+			&& is_array( $this->args['tax_query'] )
 			&& isset( $this->args['tax_query']['relation'] )
-			&& 2 === \count( $this->args['tax_query'] )
+			&& 2 === count( $this->args['tax_query'] )
 		) {
 			unset( $this->args['tax_query']['relation'] );
 		}
 
 		// Check URL search param.
 		if ( ! empty( $this->atts['url_search_param'] ) ) {
-			$url_search_param_safe = \sanitize_text_field( $this->atts['url_search_param'] );
+			$url_search_param_safe = sanitize_text_field( $this->atts['url_search_param'] );
 			if ( $url_search_param_safe && isset( $_GET[ $url_search_param_safe ] ) ) {
-				$search_terms_safe = \sanitize_text_field( \urldecode( $_GET[ $url_search_param_safe ] ) );
+				$search_terms_safe = sanitize_text_field( urldecode( $_GET[ $url_search_param_safe ] ) );
 				if ( $search_terms_safe ) {
 					$this->args['s'] = str_replace( ' ', '+', $search_terms_safe ); // WP uses + between keywords.
 				}
@@ -2031,13 +2303,13 @@ class Query_Builder {
 	 * Returns sticky posts.
 	 */
 	private function get_sticky_posts() {
-		$sticky_posts = \get_option( 'sticky_posts' );
-		if ( $sticky_posts && \is_array( $sticky_posts ) ) {
-			// Limit sticky post queries to 50 posts to prevent long queries.
+		$sticky_posts = get_option( 'sticky_posts' );
+		if ( $sticky_posts && is_array( $sticky_posts ) ) {
+			// Limit sticky post queries to 50 posts to prevent long queries
 			if ( count( $sticky_posts ) > 50 ) {
 				$sticky_posts = array_slice( $sticky_posts, 0, (int) apply_filters( 'totalthemecore/vcex/post_query/max_sticky_posts', 50 ) );
 			}
-			return \array_map( 'absint', $sticky_posts );
+			return array_map( 'absint', $sticky_posts );
 		}
 	}
 
@@ -2094,41 +2366,51 @@ class Query_Builder {
 	}
 
 	/**
-	 * Build and return the query.
-	 *
-	 * @todo rename filter to vcex_shortcode_query_args
+	 * Apply filters to the args.
 	 */
-	public function build() {
-		if ( ! \is_null( $this->pre_query ) ) {
-			return $this->pre_query;
-		}
-
-		$this->final_checks();
-
-		$this->args = (array) \apply_filters(
+	private function apply_filters_to_args() {
+		$this->args = (array) apply_filters(
 			'totalthemecore/vcex/post_query/args', // consistent with term_query class.
 			$this->args,
 			$this->atts,
 			$this->shortcode_tag
 		);
+		$this->args = apply_filters( 'vcex_grid_query', $this->args, $this->atts ); // @deprecated
+		$this->args = apply_filters( 'vcex_query_args', $this->args, $this->atts, $this->shortcode_tag ); // @deprecated
+	}
 
-		/*** deprecated ***/
-		$this->args = \apply_filters( 'vcex_grid_query', $this->args, $this->atts );
-		$this->args = \apply_filters( 'vcex_query_args', $this->args, $this->atts, $this->shortcode_tag );
-
-		/** These args can not be filtered since they are used for theme functions ***/
+	/**
+	 * Set unfiltered args.
+	 * 
+	 * This are args that can't be filtered via hooks.
+	 */
+	private function set_unfiltered_args() {
 		if ( $this->fields && 'all' !== $this->fields ) {
 			$this->args['fields'] = $this->fields;
 		}
-		if ( isset( $this->atts['unfiltered_query_args'] ) && \is_array( $this->atts['unfiltered_query_args'] ) ) {
+		if ( isset( $this->atts['unfiltered_query_args'] ) && is_array( $this->atts['unfiltered_query_args'] ) ) {
 			foreach ( $this->atts['unfiltered_query_args'] as $k => $v ) {
 				$this->args[ $k ] = $v;
 			}
 		}
+	}
 
+	/**
+	 * Build and return the query.
+	 *
+	 * @todo rename filter to vcex_shortcode_query_args
+	 */
+	public function build() {
+		if ( ! is_null( $this->pre_query ) ) {
+			return $this->pre_query;
+		}
+
+		$this->final_checks();
+		$this->apply_filters_to_args();
+		$this->set_unfiltered_args();
 		$this->add_clause_filters();
 		
-		$new_query = new \WP_Query( $this->args );
+		$new_query = new WP_Query( $this->args );
 
 		$this->remove_clause_filters();
 

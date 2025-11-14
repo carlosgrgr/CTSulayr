@@ -5,7 +5,7 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 2.0
+ * @version 2.4
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -38,24 +38,21 @@ if ( $extra_classes ) {
 	$wrap_class = array_merge( $wrap_class, $extra_classes );
 }
 
-// Turn classes into string, sanitize and apply filters.
+// Turn classes into string, sanitize and apply filters
 $wrap_class = vcex_parse_shortcode_classes( $wrap_class, 'vcex_acf_repeater', $atts );
 
-$output = '<div class="' . \esc_attr( $wrap_class ) . '">';
+// Begin output
+$output = '<div class="' . esc_attr( $wrap_class ) . '">';
+
+// Get the template content
 $template_content = get_post_field( 'post_content', $atts['template'] );
 
 if ( ! $template_content ) {
 	return;
 }
 
-$template_type = totaltheme_get_post_builder_type( $atts['template'] );
-
-if ( 'wpbakery' === $template_type && is_callable( 'TotalTheme\Integration\WPBakery\Shortcode_Inline_Style::instance' ) ) {
-	$wpb_style = TotalTheme\Integration\WPBakery\Shortcode_Inline_Style::instance();
-	$output .= $wpb_style->get_style( $atts['template'], true );
-}
-
-$heading = ! empty( $atts['heading'] ) ? \vcex_parse_text_safe( $atts['heading'] ) : '';
+// Get the heading which can display if there are items or a fallback message
+$heading = ! empty( $atts['heading'] ) ? vcex_parse_text_safe( $atts['heading'] ) : '';
 $heading_html = '';
 
 if ( $heading && function_exists( 'wpex_get_heading' ) ) {
@@ -68,15 +65,27 @@ if ( $heading && function_exists( 'wpex_get_heading' ) ) {
 	] );
 }
 
+// Get template and ACF data
 $template_edit_mode = vcex_get_template_edit_mode();
-$post_id = ( $template_edit_mode && ! empty( $atts['preview_id'] ) ) ? $atts['preview_id'] : false;
-$field_val = get_field( $atts['key'], $post_id );
-$total_rows = is_array( $field_val ) ? count( $field_val ) : 1;
+$post_id            = ( $template_edit_mode && ! empty( $atts['preview_id'] ) ) ? $atts['preview_id'] : false;
+$field_val          = get_field( $atts['key'], $post_id );
+$total_rows         = is_array( $field_val ) ? count( $field_val ) : 1;
 
+// ACF items found
 if ( have_rows( $atts['key'], $post_id ) ) :
 
+	// Get inline styles
+	$template_type = totaltheme_get_post_builder_type( $atts['template'] );
+
+	if ( 'wpbakery' === $template_type && is_callable( 'TotalTheme\Integration\WPBakery\Shortcode_Inline_Style::instance' ) ) {
+		$wpb_style = TotalTheme\Integration\WPBakery\Shortcode_Inline_Style::instance();
+		$output .= $wpb_style->get_style( $atts['template'], true );
+	}
+
+	// Add heading to the output
 	$output .= $heading_html;
 
+	// Start list display
 	$list_tag_safe = $item_tag_safe = 'div';
 
 	$list_class = [
@@ -112,20 +121,20 @@ if ( have_rows( $atts['key'], $post_id ) ) :
 			}
 			break;
 		case 'carousel':
-			\vcex_enqueue_carousel_scripts();
+			vcex_enqueue_carousel_scripts();
 
-			// All carousels need a unique classname.
+			// All carousels need a unique classname
 			if ( empty( $atts['vcex_class'] ) ) {
-				$atts['vcex_class'] = \vcex_element_unique_classname();
+				$atts['vcex_class'] = vcex_element_unique_classname();
 			}
 
-			// Get carousel settings.
-			$carousel_settings = \vcex_get_carousel_settings( $atts, 'vcex_acf_repeater', false );
-			$carousel_css = \vcex_get_carousel_inline_css( $atts['vcex_class'] . ' .vcex-acf-repeater__list', $carousel_settings );
+			// Get carousel settings
+			$carousel_settings = vcex_get_carousel_settings( $atts, 'vcex_acf_repeater', false );
+			$carousel_css = vcex_get_carousel_inline_css( $atts['vcex_class'] . ' .vcex-acf-repeater__list', $carousel_settings );
 
 			$list_class[] = 'wpex-carousel';
 
-			if ( ! empty( $atts['carousel_bleed'] ) && \in_array( $atts['carousel_bleed'], [ 'end', 'start-end' ], true ) ) {
+			if ( ! empty( $atts['carousel_bleed'] ) && in_array( $atts['carousel_bleed'], [ 'end', 'start-end' ], true ) ) {
 				$list_class[] = "wpex-carousel--bleed-{$atts['carousel_bleed']}";
 			}
 
@@ -133,7 +142,7 @@ if ( have_rows( $atts['key'], $post_id ) ) :
 				$list_class[] = 'wpex-carousel--single';
 			}
 
-			if ( \totalthemecore_call_static( 'Vcex\Carousel\Core', 'use_owl_classnames' ) ) {
+			if ( totalthemecore_call_static( 'Vcex\Carousel\Core', 'use_owl_classnames' ) ) {
 				$list_class[] = 'owl-carousel';
 			}
 
@@ -150,7 +159,7 @@ if ( have_rows( $atts['key'], $post_id ) ) :
 			// No margins.
 			if ( isset( $atts['items_margin'] )
 				&& '' !== $atts['items_margin']
-				&& 0 === \absint( $atts['items_margin'] )
+				&& 0 === absint( $atts['items_margin'] )
 			) {
 				$list_class[] = 'wpex-carousel--no-margins';
 			} elseif ( ! vcex_validate_att_boolean( 'center', $atts, false ) ) {
@@ -158,17 +167,17 @@ if ( have_rows( $atts['key'], $post_id ) ) :
 			}
 
 			// Arrow style.
-			$arrows_style = ! empty( $atts['arrows_style'] ) ? \sanitize_text_field( $atts['arrows_style'] ) : 'default';
+			$arrows_style = ! empty( $atts['arrows_style'] ) ? sanitize_text_field( $atts['arrows_style'] ) : 'default';
 			$list_class[] = "arrwstyle-{$arrows_style}";
 
 			// Arrow position.
-			$arrow_position = ! empty( $atts['arrows_position'] ) ? \sanitize_text_field( $atts['arrows_position'] ) : 'default';
+			$arrow_position = ! empty( $atts['arrows_position'] ) ? sanitize_text_field( $atts['arrows_position'] ) : 'default';
 			$list_class[] = "arrwpos-{$arrow_position}";
 			break;
 		case 'flex_wrap':
 			$list_class[] = 'wpex-flex wpex-flex-wrap';
 			if ( ! empty( $atts['flex_justify'] ) ) {
-				$list_class[] = \vcex_parse_justify_content_class( $atts['flex_justify'] );
+				$list_class[] = vcex_parse_justify_content_class( $atts['flex_justify'] );
 			}
 			break;
 		case 'flex':
@@ -179,14 +188,14 @@ if ( have_rows( $atts['key'], $post_id ) ) :
 				$list_class[] = "wpex-{$flex_bk}-flex-row";
 			}
 			if ( ! empty( $atts['flex_justify'] ) ) {
-				$list_class[] = \vcex_parse_justify_content_class( $atts['flex_justify'], $flex_bk );
+				$list_class[] = vcex_parse_justify_content_class( $atts['flex_justify'], $flex_bk );
 				if ( $flex_bk && 'false' !== $flex_bk ) {
-					$list_class[] = \vcex_parse_align_items_class( $atts['flex_justify'] );
-					$list_class[] = \vcex_parse_align_items_class( 'stretch', $flex_bk );
+					$list_class[] = vcex_parse_align_items_class( $atts['flex_justify'] );
+					$list_class[] = vcex_parse_align_items_class( 'stretch', $flex_bk );
 				}
 			}
 			$list_class[] = 'wpex-overflow-x-auto';
-			if ( \vcex_validate_att_boolean( 'hide_scrollbar', $atts ) ) {
+			if ( vcex_validate_att_boolean( 'hide_scrollbar', $atts ) ) {
 				$list_class[] = 'wpex-hide-scrollbar';
 			}
 			$snap_type = ! empty( $atts['flex_scroll_snap_type'] ) ? sanitize_text_field( $atts['flex_scroll_snap_type'] ) : 'proximity';
@@ -208,7 +217,7 @@ if ( have_rows( $atts['key'], $post_id ) ) :
 
 	$output .= '<' . $list_tag_safe . ' class="' . esc_attr( implode( ' ', $list_class ) ) . '"';
 		if ( ! empty( $carousel_settings ) ) {
-			$output .= ' data-wpex-carousel="' . esc_attr( \vcex_carousel_settings_to_json( $carousel_settings ) ) . '"';
+			$output .= ' data-wpex-carousel="' . esc_attr( vcex_carousel_settings_to_json( $carousel_settings ) ) . '"';
 		}
 	$output .= '>';
 
@@ -244,17 +253,21 @@ if ( have_rows( $atts['key'], $post_id ) ) :
 				break;
 		}
 
+		if ( ! empty( $atts['item_el_class'] ) ) {
+			$item_class[] = vcex_parse_text_safe( $atts['item_el_class'] );
+		}
+
 		$divider_html = '';
 
-		if ( in_array( $display_type, [ 'list', 'ul_list', 'ol_list' ], true ) && vcex_validate_att_boolean( 'list_divider', $atts ) ) {
+		if ( in_array( $display_type, [ 'list', 'ul_list', 'ol_list' ], true ) && ! empty( $atts['list_divider'] ) ) {
 			$divider_class = [
 				'vcex-acf-repeater__divider',
 				'wpex-divider',
-				'wpex-divider-' . \sanitize_html_class( $atts['list_divider'] ),
+				'wpex-divider-' . sanitize_html_class( $atts['list_divider'] ),
 				'wpex-my-0',
 			];
 			if ( ! empty( $atts['list_divider_size'] ) ) {
-				$divider_size = \absint( $atts['list_divider_size'] );
+				$divider_size = absint( $atts['list_divider_size'] );
 				if ( 1 === $divider_size ) {
 					$divider_class[] = 'wpex-border-b';
 				} else {
@@ -305,6 +318,9 @@ if ( have_rows( $atts['key'], $post_id ) ) :
 else :
 	if ( ! empty( $atts['fallback'] ) ) {
 		$output .= $heading_html . '<p>' . vcex_parse_text_safe( $atts['fallback'] ) . '</p>';
+	} else {
+		// return early to prevent empty div
+		return;
 	}
 endif;
 

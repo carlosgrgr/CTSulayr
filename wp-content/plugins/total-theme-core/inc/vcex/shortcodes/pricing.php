@@ -43,13 +43,13 @@ if ( ! class_exists( 'VCEX_Pricing_Shortcode' ) ) {
 				// General
 				[
 					'type' => 'vcex_select_buttons',
-					'heading' => esc_html__( 'Style', 'total-theme-core' ),
+					'heading' => esc_html__( 'Design', 'total-theme-core' ),
 					'param_name' => 'style',
 					'choices' => [
-					'' => esc_html__( 'Default', 'total-theme-core' ),
-					'alt-1' => esc_html__( 'Alt 1', 'total-theme-core' ),
-					'alt-2' => esc_html__( 'Alt 2', 'total-theme-core' ),
-					'alt-3' => esc_html__( 'Alt 3', 'total-theme-core' ),
+						'' => esc_html__( 'Classic', 'total-theme-core' ),
+						'alt-1' => esc_html__( 'Clean', 'total-theme-core' ),
+						'alt-2' => esc_html__( 'Tech', 'total-theme-core' ),
+						'alt-3' => esc_html__( 'Flat', 'total-theme-core' ),
 					],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
@@ -65,7 +65,7 @@ if ( ! class_exists( 'VCEX_Pricing_Shortcode' ) ) {
 					<li>1,000 Emails</li>
 					<li>25GB Bandwidth</li>
 					</ul>',
-					'description' => esc_html__( 'Enter your pricing content. You can use a UL list as shown by default but anything would really work!', 'total-theme-core' ),
+					'description' => esc_html__( 'Enter your pricing content. We recommend a bulleted list.', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
@@ -121,7 +121,28 @@ if ( ! class_exists( 'VCEX_Pricing_Shortcode' ) ) {
 					'param_name' => 'advanced_settings',
 					'std' => 'true',
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
-					'description' => esc_html__( 'Important: If you disable this option and save your module it will reset your styling options.', 'total-theme-core' ),
+					'notice' => esc_html__( 'Enables customization of backgrounds, colors, borders, and margins for individual pricing elements. Note: Disabling this option and saving the element will reset any previously applied styling.', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_text_align',
+					'heading' => esc_html__( 'Text Align', 'total-theme-core' ),
+					'param_name' => 'text_align',
+					'choices' => [
+						''       => esc_html( 'Default', 'total-theme-core' ),
+						'left'   => esc_html( 'Start', 'total-theme-core' ),
+						'center' => esc_html( 'Center', 'total-theme-core' ),
+						'right'  => esc_html( 'End', 'total-theme-core' ),
+					],
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
+					'type' => 'vcex_colorpicker',
+					'heading' => esc_html__( 'Background', 'total-theme-core' ),
+					'param_name' => 'background_color',
+					'css' => [ 'property' => 'background-color' ],
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
 					'type' => 'vcex_select',
@@ -135,14 +156,6 @@ if ( ! class_exists( 'VCEX_Pricing_Shortcode' ) ) {
 					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Shadow', 'total-theme-core' ),
 					'param_name' => 'shadow',
-					'group' => esc_html__( 'Style', 'total-theme-core' ),
-					'editors' => [ 'wpbakery', 'elementor' ],
-				],
-				[
-					'type' => 'vcex_colorpicker',
-					'heading' => esc_html__( 'Background', 'total-theme-core' ),
-					'param_name' => 'background_color',
-					'css' => [ 'property' => 'background-color' ],
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
@@ -446,6 +459,21 @@ if ( ! class_exists( 'VCEX_Pricing_Shortcode' ) ) {
 					'group' => esc_html__( 'Features', 'total-theme-core' ),
 				],
 				[
+					'type' => 'vcex_select_icon',
+					'heading' => esc_html__( 'Icon', 'total-theme-core' ),
+					'description' => esc_html__( 'Choose an icon to display next to each pricing feature when using a bulleted list. To use different icons for each item, use the [ticon] shortcode instead.', 'total-theme-core' ),
+					'param_name' => 'features_icon',
+					'group' => esc_html__( 'Features', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_preset_textfield',
+					'choices' => 'gap',
+					'heading' => esc_html__( 'Spacing Between Features', 'total-theme-core' ),
+					'param_name' => 'features_gap',
+					'css' => [ 'selector' => '.vcex-pricing-content ul', 'property' => 'gap' ],
+					'group' => esc_html__( 'Features', 'total-theme-core' ),
+				],
+				[
 					'type' => 'vcex_font_family_select',
 					'heading' => esc_html__( 'Font Family', 'total-theme-core' ),
 					'param_name' => 'font_family',
@@ -536,7 +564,7 @@ if ( ! class_exists( 'VCEX_Pricing_Shortcode' ) ) {
 					'type' => 'textfield',
 					'heading' => esc_html__( 'Text', 'total-theme-core' ),
 					'param_name' => 'button_text',
-					'value' => esc_html__( 'Text', 'total-theme-core' ),
+					'value' => esc_html__( 'Choose Plan', 'total-theme-core' ),
 					'group' => esc_html__( 'Button', 'total-theme-core' ),
 					'description' => self::param_description( 'text' ),
 					'dependency' => [ 'element' => 'custom_button', 'is_empty' => true ],

@@ -24,17 +24,23 @@ if ( ! $menu_id
 $output = '';
 $gap_class = vcex_parse_gap_class( ! empty( $atts['extra_items_gap'] ) ? sanitize_text_field( $atts['extra_items_gap'] ) : 15 );
 $under_header = vcex_validate_att_boolean( 'under_header', $atts );
+$toggle_full_width = vcex_validate_att_boolean( 'toggle_full_width', $atts );
+$toggle_animation_speed_class = ! empty( $atts['toggle_transition_duration'] ) ? vcex_parse_transition_duration_class( $atts['toggle_transition_duration'] ) : '';
 
 $class = [
 	'vcex-off-canvas-menu',
 	'wpex-flex',
-	'wpex-items-center',
-	'wpex-gap-15',
 	$gap_class,
 ];
 
-if ( ! empty( $atts['toggle_align'] ) ) {
-	$class[] = vcex_parse_justify_content_class( $atts['toggle_align'] );
+if ( $toggle_full_width ) {
+	$toggle_full_width_btn_class = 'wpex-bg-accent wpex-p-10';
+} else {
+	$class[] = 'wpex-items-center';
+
+	if ( ! empty( $atts['toggle_align'] ) ) {
+		$class[] = vcex_parse_justify_content_class( $atts['toggle_align'] );
+	}
 }
 
 if ( ! empty( $atts['bottom_margin'] ) ) {
@@ -53,7 +59,7 @@ $class = vcex_parse_shortcode_classes( $class, 'vcex_off_canvas_menu', $atts );
 
 $off_canvas_menu_id = ! empty( $atts['unique_id'] ) ? sanitize_text_field( $atts['unique_id'] ) : uniqid( 'wpex-off-canvas-' );
 
-// Extras.
+// Extras
 $extras = ! empty( $atts['extra_items'] ) ? $atts['extra_items'] : '';
 
 if ( $extras && ! is_array( $extras ) ) {
@@ -61,14 +67,23 @@ if ( $extras && ! is_array( $extras ) ) {
 }
 
 if ( $extras && is_array( $extras ) ) {
-	$extra_class = "vcex-off-canvas-menu__extra wpex-text-lg wpex-flex wpex-items-center {$gap_class}";
+	$extra_class = "vcex-off-canvas-menu__extra wpex-text-lg wpex-items-center wpex-flex {$gap_class}";
 
 	if ( ! empty( $atts['extra_items_position'] ) && 'end' === $atts['extra_items_position'] ) {
 		$extra_class .= ' wpex-order-2';
 	}
 
 	$output .= '<div class="' . esc_attr( $extra_class ) . '">';
-		$extra_button_class = 'vcex-off-canvas-menu__extra-item wpex-unstyled-button wpex-inline-flex wpex-items-center wpex-justify-center';
+		$extra_button_class = 'vcex-off-canvas-menu__extra-item wpex-unstyled-button';
+		if ( $toggle_full_width ) {
+			$extra_button_class .= " wpex-flex wpex-flex-grow wpex-self-stretch {$toggle_full_width_btn_class}";
+		} else {
+			$extra_button_class .= ' wpex-inline-flex';
+		}
+		$extra_button_class .= ' wpex-items-center wpex-justify-center';
+		if ( $toggle_animation_speed_class ) {
+			$extra_button_class .= " wpex-transition-colors {$toggle_animation_speed_class}";
+		}
 		foreach ( $extras as $extra ) {
 			switch ( $extra ) {
 				case 'search_toggle':
@@ -126,6 +141,12 @@ if ( $extras && is_array( $extras ) ) {
 // Toggle
 $toggle_style = ! empty( $atts['toggle_style'] ) && 'icon' === $atts['toggle_style'] ? 'icon' : 'hamburger';
 $toggle_class = 'vcex-off-canvas-menu__toggle wpex-unstyled-button wpex-inline-flex wpex-items-center wpex-justify-center wpex-gap-10';
+if ( $toggle_full_width ) {
+	$toggle_class .= " wpex-flex-grow {$toggle_full_width_btn_class}";
+}
+if ( $toggle_animation_speed_class ) {
+	$toggle_class .= " wpex-transition-colors {$toggle_animation_speed_class}";
+}
 if ( 'hamburger' !== $toggle_style ) {
 	$toggle_class .= ' wpex-text-lg';
 }
@@ -139,12 +160,12 @@ $output .= '<button aria-controls="' . esc_attr( $off_canvas_menu_id ) .'" data-
 		] );
 	} else {
 		if ( ! empty( $atts['toggle_icon'] ) ) {
-			$toggle_icon = vcex_get_icon_html( $atts, 'toggle_icon', 'wpex-flex' );
+			$toggle_icon = vcex_render_icon( $atts['toggle_icon'], 'ticons', 'wpex-flex' );
 		} else {
 			$toggle_icon = vcex_get_theme_icon_html( 'bars', 'wpex-flex' );
 		}
 		if ( ! empty( $atts['toggle_icon_active'] ) ) {
-			$toggle_icon_active = vcex_get_icon_html( $atts, 'toggle_icon_active', 'wpex-flex' );
+			$toggle_icon_active = vcex_render_icon( $atts['toggle_icon_active'], 'ticons', 'wpex-flex' );
 		} else {
 			$toggle_icon_active = '';
 		}
@@ -187,8 +208,8 @@ $off_canvas_content = '<template class="wpex-template"><nav class="' . esc_attr(
 	$atts['item_divider'] = vcex_validate_att_boolean( 'item_divider', $atts );
 	$atts['sub_border_enable'] = ! $atts['nav_centered'] && vcex_validate_att_boolean( 'sub_border_enable', $atts, true );
 	$atts['sub_arrow_enable'] = vcex_validate_att_boolean( 'sub_arrow_enable', $atts, true );
-	$atts['item_transition_duration'] = ! empty( $atts['item_transition_duration'] ) ? \absint( $atts['item_transition_duration'] ) : 0;
-	$atts['sub_arrow_icon'] = ! empty( $atts['sub_arrow_icon'] ) ? \sanitize_text_field( $atts['sub_arrow_icon'] ) : 'chevron';
+	$atts['item_transition_duration'] = ! empty( $atts['item_transition_duration'] ) ? absint( $atts['item_transition_duration'] ) : 0;
+	$atts['sub_arrow_icon'] = ! empty( $atts['sub_arrow_icon'] ) ? sanitize_text_field( $atts['sub_arrow_icon'] ) : 'chevron';
 
 	// Get wp nav
 	$off_canvas_content .= wp_nav_menu( [

@@ -349,10 +349,7 @@ if ( ! class_exists( 'VCEX_Countdown_Shortcode' ) ) {
 					'type' => 'vcex_colorpicker',
 					'heading' => esc_html__( 'Background', 'total-theme-core' ),
 					'param_name' => 'item_background',
-					'css' => [
-						'selector' => '.vcex-countdown__item',
-						'property' => 'background-color',
-					],
+					'css' => [ 'selector' => '.vcex-countdown__item', 'property' => 'background-color' ],
 					'dependency' => [ 'element' => 'style', 'value' => [ 'outline', 'boxed' ] ],
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
@@ -367,27 +364,41 @@ if ( ! class_exists( 'VCEX_Countdown_Shortcode' ) ) {
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
-					'type' => 'vcex_colorpicker',
-					'heading' => esc_html__( 'Border Color', 'total-theme-core' ),
-					'param_name' => 'item_border_color',
-					'css' => [
-						'selector' => '.vcex-countdown__item',
-						'property' => 'border-color',
-					],
-					'dependency' => [ 'element' => 'style', 'value' => [ 'outline' ] ],
+					'type' => 'vcex_select',
+					'choices' => 'border_radius',
+					'heading' => esc_html__( 'Border Radius', 'total-theme-core' ),
+					'param_name' => 'item_border_radius',
+					'css' => [ 'selector' => '.vcex-countdown__item', 'property' => 'border-radius' ],
+					'dependency' => [ 'element' => 'style', 'value' => [ 'outline', 'boxed' ] ],
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
-					'editors' => [ 'wpbakery', 'elementor' ],
+					'editors' => [ 'wpbakery' ],
+				],
+				[
+					'type' => 'vcex_select',
+					'choices' => 'border_style',
+					'heading' => esc_html__( 'Border Style', 'total-theme-core' ),
+					'param_name' => 'item_border_style',
+					'css' => [ 'selector' => '.vcex-countdown__item', 'property' => 'border-style' ],
+					'dependency' => [ 'element' => 'style', 'value' => [ 'outline', 'boxed' ] ],
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+					'editors' => [ 'wpbakery' ],
 				],
 				[
 					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Border Width', 'total-theme-core' ),
 					'param_name' => 'item_border_width',
 					'choices' => 'border_width',
-					'css' => [
-						'selector' => '.vcex-countdown__item',
-						'property' => 'border-width',
-					],
-					'dependency' => [ 'element' => 'style', 'value' => [ 'outline' ] ],
+					'css' => [ 'selector' => '.vcex-countdown__item', 'property' => 'border-width' ],
+					'dependency' => [ 'element' => 'style', 'value' => [ 'outline', 'boxed' ] ],
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
+					'type' => 'vcex_colorpicker',
+					'heading' => esc_html__( 'Border Color', 'total-theme-core' ),
+					'param_name' => 'item_border_color',
+					'css' => [ 'selector' => '.vcex-countdown__item', 'property' => 'border-color' ],
+					'dependency' => [ 'element' => 'style', 'value' => [ 'outline', 'boxed' ] ],
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
@@ -395,10 +406,7 @@ if ( ! class_exists( 'VCEX_Countdown_Shortcode' ) ) {
 					'type' => 'vcex_trbl',
 					'heading' => esc_html__( 'Padding', 'total-theme-core' ),
 					'param_name' => 'item_padding',
-					'css' => [
-						'selector' => '.vcex-countdown__item',
-						'property' => 'padding',
-					],
+					'css' => [ 'selector' => '.vcex-countdown__item', 'property' => 'padding' ],
 					'description' => self::param_description( 'padding' ),
 					'dependency' => [ 'element' => 'style', 'value' => [ 'outline', 'boxed' ] ],
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
@@ -408,10 +416,7 @@ if ( ! class_exists( 'VCEX_Countdown_Shortcode' ) ) {
 					'type' => 'vcex_text',
 					'heading' => esc_html__( 'Width', 'total-theme-core' ),
 					'param_name' => 'item_width',
-					'css' => [
-						'selector' => '.vcex-countdown__item',
-						'property' => 'width',
-					],
+					'css' => [ 'selector' => '.vcex-countdown__item', 'property' => 'width' ],
 					'description' => self::param_description( 'px' ),
 					'dependency' => [ 'element' => 'style', 'value' => [ 'outline', 'boxed' ] ],
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
@@ -449,20 +454,16 @@ if ( ! class_exists( 'VCEX_Countdown_Shortcode' ) ) {
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 				],
 				[
-					'type' => 'dropdown',
-					'heading' => esc_html__( 'Font Style', 'total-theme-core' ),
-					'param_name' => 'italic',
-					'css' => true,
-					'group' => esc_html__( 'Typography', 'total-theme-core' ),
-					'value' => [
-						esc_html__( 'Normal', 'total-theme-core' ) => '',
-						esc_html__( 'Italic', 'total-theme-core' ) => 'true',
-					],
-				],
-				[
 					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Font Weight', 'total-theme-core' ),
 					'param_name' => 'font_weight',
+					'css' => true,
+					'group' => esc_html__( 'Typography', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_select',
+					'heading' => esc_html__( 'Font Style', 'total-theme-core' ),
+					'param_name' => 'font_style',
 					'css' => true,
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 				],
@@ -534,18 +535,18 @@ if ( ! class_exists( 'VCEX_Countdown_Shortcode' ) ) {
 				],
 				[
 					'type' => 'vcex_select',
-					'heading' => esc_html__( 'Font Style', 'total-theme-core' ),
-					'param_name' => 'label_italic',
-					'choices' => 'font_style',
-					'css' => [ 'selector' => '.vcex-countdown__label', 'property' => 'font_style' ],
-					'group' => esc_html__( 'Labels', 'total-theme-core' ),
-				],
-				[
-					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Font Weight', 'total-theme-core' ),
 					'param_name' => 'label_font_weight',
 					'choices' => 'font_weight',
 					'css' => [ 'selector' => '.vcex-countdown__label', 'property' => 'font-weight' ],
+					'group' => esc_html__( 'Labels', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_select',
+					'choices' => 'font_style',
+					'heading' => esc_html__( 'Font Style', 'total-theme-core' ),
+					'param_name' => 'label_font_style',
+					'css' => [ 'selector' => '.vcex-countdown__label', 'property' => 'font-style' ],
 					'group' => esc_html__( 'Labels', 'total-theme-core' ),
 				],
 				[
@@ -563,7 +564,41 @@ if ( ! class_exists( 'VCEX_Countdown_Shortcode' ) ) {
 					'param_name' => 'css',
 					'group' => esc_html__( 'CSS', 'total-theme-core' ),
 				],
+				// Deprecated
+				[ 'type' => 'hidden', 'param_name' => 'italic' ],
+				[ 'type' => 'hidden', 'param_name' => 'label_italic' ],
 			];
+		}
+
+		/**
+		 * Parse WPBakery attributes on edit.
+		 */
+		public static function vc_edit_form_fields_attributes( $atts = [] ) {
+			return self::parse_deprecated_attributes( $atts );
+		}
+
+		/**
+		 * Parses deprecated params.
+		 */
+		public static function parse_deprecated_attributes( $atts = [] ) {
+			if ( empty( $atts ) || ! is_array( $atts ) ) {
+				return $atts;
+			}
+			if ( ! empty( $atts['italic'] ) ) {
+				if ( empty( $atts['font_style'] ) ) {
+					if ( 'true' == $atts['italic'] || 'yes' === $atts['italic'] ) {
+						$atts['font_style'] = 'italic';
+					}
+				}
+				unset( $atts['italic'] );
+			}
+			if ( ! empty( $atts['label_italic'] ) ) {
+				if ( empty( $atts['label_font_style'] ) ) {
+					$atts['label_font_style'] = $atts['label_italic'];
+				}
+				unset( $atts['label_italic'] );
+			}
+			return $atts;
 		}
 
 	}

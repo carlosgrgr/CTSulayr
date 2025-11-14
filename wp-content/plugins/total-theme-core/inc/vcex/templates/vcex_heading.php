@@ -15,6 +15,9 @@ defined( 'ABSPATH' ) || exit;
 /*-------------------------------------------------*/
 if ( ! empty( $atts['source'] ) && 'custom' !== $atts['source'] ) {
 	$text = vcex_get_source_value( $atts['source'], $atts );
+	if ( is_array( $text ) ) {
+		$text = $text['url'] ?? $text['id'] ?? $text[0] ?? ''; // fix for if user selects a weird acf field
+	}
 } elseif ( isset( $atts['text'] ) && is_string( $atts['text'] ) ) {
 	$text = trim( $atts['text'] );
 }
@@ -170,10 +173,6 @@ if ( ! empty( $atts['width'] ) ) {
 
 if ( ! empty( $atts['css_animation'] ) ) {
 	$wrap_class[] = vcex_get_css_animation( $atts['css_animation'] );
-}
-
-if ( vcex_validate_att_boolean( 'italic', $atts ) ) {
-	$wrap_class[] = 'wpex-italic';
 }
 
 if ( ! empty( $atts['visibility'] ) ) {

@@ -5,7 +5,7 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 2.0
+ * @version 2.4
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -22,7 +22,11 @@ $wrap_class = [
 	'vcex-toggle-group',
 ];
 
+// wpb frontend editor fixes
 if ( $vc_inline ) {
+	if ( 'boxed' === $style ) {
+		$wrap_class[] = 'vcex-vc_inline-toggle-group-boxed';
+	}
 	if ( ! empty( $atts['icon_position'] ) && 'right' === $atts['icon_position'] ) {
 		$wrap_class[] = 'vcex-toggle-group--icon-end';
 	}
@@ -31,7 +35,7 @@ if ( $vc_inline ) {
 	}
 }
 
-if ( $style ) {
+if ( $style && 'boxed' !== $style ) {
 	$wrap_class[] = 'vcex-toggle-group--' . sanitize_html_class( $style );
 	if ( 'w-borders' === $style ) {
 		if ( vcex_validate_att_boolean( 'no_top_border', $atts ) ) {
@@ -54,7 +58,7 @@ if ( $extra_classes ) {
 
 $wrap_class = vcex_parse_shortcode_classes( $wrap_class, 'vcex_toggle_group', $atts );
 
-$output .= '<div' . vcex_get_unique_id( $atts ) . ' class="' . esc_attr( $wrap_class ) . '">';
+$output .= '<div' . vcex_get_unique_id( $atts ) . ' class="' . esc_attr( $wrap_class ) . '" data-vcex-accordion="' . esc_attr( absint( vcex_validate_att_boolean( 'accordion', $atts, true ) ) ) . '">';
 	if ( $vc_inline ) {
 		$output .= do_shortcode( $content );
 	} else {
@@ -68,10 +72,23 @@ $output .= '<div' . vcex_get_unique_id( $atts ) . ' class="' . esc_attr( $wrap_c
 			$single_attrs = [
 				'animate'        => ! empty( $atts['animate'] ) ? sanitize_text_field( $atts['animate']  ) : '',
 				'faq_microdata'  => ! empty( $atts['faq_microdata'] ) ? sanitize_text_field( $atts['faq_microdata']  ) : '',
-				'icon_type'      => ( ! empty( $atts['icon_type'] ) && 'angle' === $atts['icon_type'] ) ? 'angle' : '',
 				'icon_position'  => ( ! empty( $atts['icon_position'] ) && 'right' === $atts['icon_position'] ) ? 'right' : '',
-				'heading_inline' => ( ! empty( $atts['heading_inline'] ) && 'true' === $atts['heading_inline'] ) ? 'true' : '',
 			];
+			if ( 'boxed' !== $style && vcex_validate_att_boolean( 'heading_inline', $atts ) ) {
+				$single_attrs['heading_inline'] = true;
+			}
+			if ( ! empty( $atts['heading_tag'] ) ) {
+				$single_attrs['heading_tag'] = $atts['heading_tag'];
+			}
+			if ( 'boxed' === $style ) {
+				$single_attrs['style'] = 'boxed';
+			}
+			if ( ! empty( $atts['icon_type'] ) && 'plus' !== $atts['icon_type'] ) {
+				$single_attrs['icon_type'] = $atts['icon_type'];
+			}
+			if ( ! empty( $atts['icon_spacing'] ) ) {
+				$single_attrs['icon_spacing'] = $atts['icon_spacing'];
+			}
 			foreach ( array_filter( $single_attrs ) as $k => $v ) {
 				$content_sanitized = str_replace( '[vcex_toggle', '[vcex_toggle ' . $k . '="' . $v . '"', $content_sanitized );
 			}

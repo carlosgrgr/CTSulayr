@@ -2,12 +2,15 @@
 
 namespace TotalThemeCore\Widgets;
 
+use WP_Query;
+use TotalThemeCore\WidgetBuilder;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Post Grid widget.
  */
-class Widget_Recent_Posts_Thumb_Grid extends \TotalThemeCore\WidgetBuilder {
+class Widget_Recent_Posts_Thumb_Grid extends WidgetBuilder {
 
 	/**
 	 * Widget args.
@@ -16,11 +19,8 @@ class Widget_Recent_Posts_Thumb_Grid extends \TotalThemeCore\WidgetBuilder {
 
 	/**
 	 * Register widget with WordPress.
-	 *
-	 * @since 1.0
 	 */
 	public function __construct() {
-
 		$this->args = array(
 			'id_base' => 'wpex_recent_posts_thumb_grid',
 			'name'    => $this->branding() . esc_html__( 'Posts Thumbnail Grid', 'total-theme-core' ),
@@ -105,7 +105,7 @@ class Widget_Recent_Posts_Thumb_Grid extends \TotalThemeCore\WidgetBuilder {
 				),
 				array(
 					'id'      => 'img_aspect_ratio',
-					'label'   => \esc_html__( 'Image Aspect Ratio', 'total-theme-core' ),
+					'label'   => esc_html__( 'Image Aspect Ratio', 'total-theme-core' ),
 					'type'    => 'select',
 					'choices' => 'aspect_ratio',
 				),
@@ -146,19 +146,11 @@ class Widget_Recent_Posts_Thumb_Grid extends \TotalThemeCore\WidgetBuilder {
 				),
 			),
 		);
-
 		$this->create_widget( $this->args );
-
 	}
 
 	/**
 	 * Front-end display of widget.
-	 *
-	 * @see WP_Widget::widget()
-	 * @since 1.0
-	 *
-	 * @param array $args     Widget arguments.
-	 * @param array $instance Saved values from database.
 	 */
 	public function widget( $args, $instance ) {
 
@@ -175,90 +167,81 @@ class Widget_Recent_Posts_Thumb_Grid extends \TotalThemeCore\WidgetBuilder {
 		$output = '';
 
 		// Grid class.
-		$grid_class = array(
+		$grid_class = [
 			'wpex-recent-posts-thumb-grid',
 			'wpex-inline-grid',
 			'wpex-grid-cols-' . absint( $columns ?: 3 ),
 			'wpex-gap-' . absint( $gap ?: 5 ),
-		);
+		];
 
 		if ( $img_lightbox ) {
 			$grid_class[] = 'wpex-lightbox-group';
-			vcex_enqueue_lightbox_scripts();
+			if ( function_exists( 'wpex_enqueue_lightbox_scripts' ) ) {
+				wpex_enqueue_lightbox_scripts();
+			}
 		}
 
 		$grid_class = array_map( 'sanitize_html_class', $grid_class );
 
 		$output .= '<div class="' . esc_attr( implode( ' ', $grid_class ) ) . '">';
 
-			// Query args.
-			$query_args = array(
-				'post_type'      => $post_type,
-				'posts_per_page' => $number,
-				'no_found_rows'  => true,
-				'tax_query'      => array( 'relation' => 'AND' ),
-				'meta_query'     => array(
-					array( 'key' => '_thumbnail_id' ) // thumbnails are required
-				),
-			);
+			// Define query args
+			$query_args = [
+				'post_type' => ! empty( $post_type ) ? sanitize_key( $post_type ) : 'post',
+				'posts_per_page' => intval( $number ),
+				'no_found_rows' => true,
+				'meta_query' => [
+					[ 'key' => '_thumbnail_id' ]
+				],
+			];
 
-			// Order params - needs FALLBACK don't ever edit!
+			// Define tax query
+			$tax_query = [];
+
+			// Order params - needs FALLBACK don't remove ( orderby used to be called order ).
 			if ( ! empty( $orderby ) ) {
-				$query_args['order']   = $order;
-				$query_args['orderby'] = $orderby;
+				$query_args['order'] = in_array( strtolower( sanitize_key( $order ) ), array_keys( $this->choices_query_order() ), true ) ? $order : 'desc';
+				$query_args['orderby'] = in_array( $orderby, array_keys( $this->choices_query_orderby() ), true ) ? $orderby : 'date';
 			} else {
-				$query_args['orderby'] = $order; // THIS IS THE FALLBACK
+				$query_args['orderby'] = in_array( $order, array_keys( $this->choices_query_orderby() ), true ) ? $order : 'date';
 			}
 
-			// Tax Query.
+			// Tax Query
 			if ( ! empty( $taxonomy ) ) {
-
-				// Include Terms.
-				if (  ! empty( $terms ) ) {
-
-					// Sanitize terms and convert to array.
-					$terms = str_replace( ', ', ',', $terms );
-					$terms = explode( ',', $terms );
-
-					// Add to query arg.
-					$query_args['tax_query'][] = array(
-						'taxonomy' => $taxonomy,
-						'field'    => 'slug',
-						'terms'    => $terms,
-						'operator' => 'IN',
-					);
-
+				$taxonomy = sanitize_key( $taxonomy );
+				if ( taxonomy_exists( $taxonomy ) ) {
+					if ( ! empty( $terms ) && $include_list = $this->parse_terms( $terms, $taxonomy ) ) {
+						$tax_query['include'] = [
+							'taxonomy' => $taxonomy,
+							'terms'    => $include_list,
+							'operator' => 'IN',
+						];
+					}
+					if ( ! empty( $terms_exclude ) && $exclude_list = $this->parse_terms( $terms_exclude, $taxonomy ) ) {
+						$tax_query['exclude'] = [
+							'taxonomy' => $taxonomy,
+							'terms'    => $exclude_list,
+							'operator' => 'NOT IN',
+						];
+					}
 				}
-
-				// Exclude Terms.
-				if ( ! empty( $terms_exclude ) ) {
-
-					// Sanitize terms and convert to array.
-					$terms_exclude = str_replace( ', ', ',', $terms_exclude );
-					$terms_exclude = explode( ',', $terms_exclude );
-
-					// Add to query arg.
-					$query_args['tax_query'][] = array(
-						'taxonomy' => $taxonomy,
-						'field'    => 'slug',
-						'terms'    => $terms_exclude,
-						'operator' => 'NOT IN',
-					);
-
-				}
-
 			}
 
-			// Exclude current post.
+			// Exclude current post
 			if ( is_singular() ) {
-				$query_args['post__not_in'] = array( get_the_ID() );
+				$query_args['post__not_in'] = [ get_the_ID() ];
 			}
 
-			// Query posts.
-			$wpex_query = new \WP_Query( $query_args );
+			// Add tax query to args
+			if ( $tax_query ) {
+				$query_args['tax_query'] = array_merge( [ 'relation' => 'AND' ], $tax_query );
+			}
 
-			// Loop through posts.
-			while ( post_type_exists( $post_type ) && $wpex_query->have_posts() ) : $wpex_query->the_post();
+			// Query posts
+			$wpex_query = new WP_Query( $query_args );
+
+			// Loop through posts
+			while ( $wpex_query->have_posts() ) : $wpex_query->the_post();
 
 				$thumbnail_id = get_post_thumbnail_id();
 
@@ -269,7 +252,11 @@ class Widget_Recent_Posts_Thumb_Grid extends \TotalThemeCore\WidgetBuilder {
 				$output .= '<div class="wpex-recent-posts-thumb-grid__item">';
 
 					if ( $img_lightbox ) {
-						$link = vcex_get_lightbox_image( $thumbnail_id );
+						if ( function_exists( 'wpex_get_lightbox_image' ) ) {
+							$link = wpex_get_lightbox_image( $thumbnail_id );
+						} else {
+							$link = wp_get_attachment_image_url( $thumbnail_id, 'full' );
+						}
 						$link_class = 'wpex-lightbox-group-item';
 					} else {
 						$link = function_exists( 'wpex_get_permalink' ) ? wpex_get_permalink() : get_the_permalink();
@@ -287,25 +274,21 @@ class Widget_Recent_Posts_Thumb_Grid extends \TotalThemeCore\WidgetBuilder {
 						$link_class .= ' ' . wpex_image_filter_class( $img_filter );
 					}
 
-					// Open link tag.
+					// Open link tag
 					$output .= '<a href="' . esc_url( $link ) . '"';
+						$title_attr = the_title_attribute( [ 'echo' => false ] );
 
 						if ( $link_class ) {
 							$output .= ' class="' . esc_attr( $link_class ) .'"';
 						}
 
 						if ( $img_lightbox ) {
-
-							$output .= ' data-title="' . vcex_esc_title() .'"';
-
+							$output .= ' data-title="' . esc_attr( $title_attr ) .'"';
 							if ( $caption = wp_get_attachment_caption( $thumbnail_id ) ) {
 								$output .= ' data-caption="' . esc_attr( $caption ) .'"';
 							}
-
 						} else {
-
-							$output .= ' title="' . vcex_esc_title() .'"';
-
+							$output .= ' title="' . esc_attr( $title_attr ) .'"';
 						}
 
 					$output .= '>';
@@ -317,8 +300,8 @@ class Widget_Recent_Posts_Thumb_Grid extends \TotalThemeCore\WidgetBuilder {
 						}
 
 						if ( ! empty( $img_aspect_ratio )
-							&& \function_exists( 'totaltheme_get_aspect_ratio_choices' )
-							&& \array_key_exists( $img_aspect_ratio, \totaltheme_get_aspect_ratio_choices() )
+							&& function_exists( 'totaltheme_get_aspect_ratio_choices' )
+							&& array_key_exists( $img_aspect_ratio, totaltheme_get_aspect_ratio_choices() )
 						) {
 							$image_class .= ' wpex-object-cover wpex-aspect-' . str_replace( '/', '-', $img_aspect_ratio );
 						}
@@ -341,15 +324,15 @@ class Widget_Recent_Posts_Thumb_Grid extends \TotalThemeCore\WidgetBuilder {
 
 				$output .= '</div>';
 
-			// End loop.
+			// End loop
 			endwhile;
 
-			// Reset global query post data.
+			// Reset global query post data
 			wp_reset_postdata();
 
 		$output .= '</div>';
 
-		// Echo output.
+		// Echo output
 		echo $output;
 
 		echo wp_kses_post( $args['after_widget'] );

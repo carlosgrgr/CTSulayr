@@ -2,12 +2,12 @@
 
 namespace TotalThemeCore\Vcex;
 
-\defined( 'ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Returns inline style tag or inline CSS based on array of properties and values.
  */
-final class Inline_Style {
+class Inline_Style {
 
 	/**
 	 * CSS to return.
@@ -26,28 +26,28 @@ final class Inline_Style {
 		$this->style = [];
 		$this->add_style_tag = $add_style_tag;
 
-		// Loop through css properties.
+		// Loop through css properties
 		foreach ( $properties as $property => $value ) {
 
-			// If the value is an array the second parameter is the name of the sanitization callback function.
-			if ( \is_array( $value ) && isset( $value[0] ) ) {
+			// If the value is an array the second parameter is the name of the sanitization callback function
+			if ( is_array( $value ) && isset( $value[0] ) ) {
 				$sanitize = $value[1] ?? null;
 				$value = $value[0];
 				if ( $value && $sanitize ) {
 					$sanitize_method = "sanitize_{$sanitize}";
-					if ( \method_exists( $this, $sanitize_method ) ) {
+					if ( method_exists( $this, $sanitize_method ) ) {
 						$value = $this->$sanitize_method( $value );
 					}
 				}
 			}
 
-			// Run the method based on the property name.
-			if ( ! empty( $value ) && ( \is_string( $value ) || \is_numeric( $value ) ) ) {
+			// Run the method based on the property name
+			if ( ! empty( $value ) && ( is_string( $value ) || is_numeric( $value ) ) ) {
 				if ( $this->property_is_var( $property ) ) {
 					$this->parse_css_var( $property, $value );
 				} else {
 					$parse_method = 'parse_' . str_replace( '-', '_', $property );
-					if ( \method_exists( $this, $parse_method ) ) {
+					if ( method_exists( $this, $parse_method ) ) {
 						$this->$parse_method( $value );
 					} else {
 						$this->parse_other_property( $property, $value );
@@ -61,33 +61,33 @@ final class Inline_Style {
 	 * CSS variable.
 	 */
 	private function parse_css_var( $property, $value ) {
-		if ( '--wpex-border-main' === $property
-			|| \str_contains( $property, '-color' )
-			|| \str_contains( $property, '-bg' )
-			|| \str_contains( $property, '-accent' )
-			|| \str_contains( $property, '-palette' )
-		) {
-			$value_safe = $this->sanitize_color( $value );
-		} elseif ( str_contains( $property, '-gap' ) || str_contains( $property, '-gutter' ) ) {
-			$value_safe = $this->sanitize_gap( $value );
-		} elseif ( \str_contains( $property, '-margin' ) || '--vcex-spacing' === $property ) {
-			$value_safe = $this->sanitize_margin( $value );
-		} elseif ( \str_contains( $property, '-padding' ) ) {
-			$value_safe = $this->sanitize_padding( $value );
-		} elseif ( \str_contains( $property, '-border-radius' ) ) {
-			$value_safe = $this->sanitize_border_radius( $value );
-		} elseif ( \str_contains( $property, '-border-width' ) ) {
-			$value_safe = $this->sanitize_border_width( $value );
-		} elseif ( \str_contains( $property, '-width' ) || \str_contains( $property, '-height' ) ) {
-			$value_safe = $this->fallback_px( $value );
-		} elseif ( '--wpex-link-decoration-line' === $property || '--wpex-hover-link-decoration-line' === $property ) {
+		if ( '--wpex-link-decoration-line' === $property || '--wpex-hover-link-decoration-line' === $property ) {
 			$value_map = [
 				'false' => 'none',
 				'true'  => 'underline',
 			];
-			$value_safe = $value_map[ $value ] ?? \esc_attr( $value ); 
+			$value_safe = $value_map[ $value ] ?? esc_attr( $value ); 
+		} elseif ( '--wpex-border-main' === $property
+			|| str_contains( $property, '-color' )
+			|| str_contains( $property, '-bg' )
+			|| str_contains( $property, '-accent' )
+			|| str_contains( $property, '-palette' )
+		) {
+			$value_safe = $this->sanitize_color( $value );
+		} elseif ( str_contains( $property, '-gap' ) || str_contains( $property, '-gutter' ) ) {
+			$value_safe = $this->sanitize_gap( $value );
+		} elseif ( str_contains( $property, '-margin' ) || '--vcex-spacing' === $property ) {
+			$value_safe = $this->sanitize_margin( $value );
+		} elseif ( str_contains( $property, '-padding' ) ) {
+			$value_safe = $this->sanitize_padding( $value );
+		} elseif ( str_contains( $property, '-border-radius' ) ) {
+			$value_safe = $this->sanitize_border_radius( $value );
+		} elseif ( str_contains( $property, '-border-width' ) ) {
+			$value_safe = $this->sanitize_border_width( $value );
+		} elseif ( str_contains( $property, '-width' ) || str_contains( $property, '-height' ) ) {
+			$value_safe = $this->fallback_px( $value );
 		} else {
-			$value_safe = \esc_attr( $value );
+			$value_safe = esc_attr( $value );
 		}
 		$this->add_style( $property, $value_safe );
 	}
@@ -99,7 +99,7 @@ final class Inline_Style {
 		if ( 'center' === $input ) {
 			$this->style[] = 'margin-inline:auto;float:none;';
 		} else {
-			$this->add_style( 'float', \esc_attr( $input ) );
+			$this->add_style( 'float', esc_attr( $input ) );
 		}
 	}
 
@@ -130,7 +130,7 @@ final class Inline_Style {
 	 * Background Image.
 	 */
 	private function parse_background_image( $input ) {
-		if ( $bg_img_safe = \esc_attr( esc_url( $input ) ) ) {
+		if ( $bg_img_safe = esc_attr( esc_url( $input ) ) ) {
 			$this->add_style( 'background-image', "url({$bg_img_safe})" );
 		}
 	}
@@ -143,7 +143,7 @@ final class Inline_Style {
 		if ( 'border-width' === $property ) {
 			$this->parse_border_width( $input );
 		} else {
-			$this->add_style( 'border', \esc_attr( $input ) );
+			$this->add_style( 'border', esc_attr( $input ) );
 		}
 	}
 
@@ -205,7 +205,7 @@ final class Inline_Style {
 	 * Object Fit.
 	 */
 	private function parse_object_fit( $input ) {
-		if ( \in_array( $input, [ 'fill', 'contain', 'cover', 'scale-down' ], true ) ) {
+		if ( in_array( $input, [ 'fill', 'contain', 'cover', 'scale-down' ], true ) ) {
 			$this->add_style( 'object-fit', $input );
 		}
 	}
@@ -215,7 +215,7 @@ final class Inline_Style {
 	 */
 	private function parse_z_index( $input ) {
 		if ( $int = absint( $input ) ) {
-			$this->add_style( 'z-index', \esc_attr( $int ) );
+			$this->add_style( 'z-index', esc_attr( $int ) );
 		}
 	}
 
@@ -223,20 +223,29 @@ final class Inline_Style {
 	 * Icon Size.
 	 */
 	private function parse_icon_size( $input ) {
-		if ( $input && \in_array( $input, [ 'xs', 'sm', 'normal', 'md', 'lg', 'xl' ] ) ) {
+		if ( $input && in_array( $input, [ 'xs', 'sm', 'normal', 'md', 'lg', 'xl' ] ) ) {
 			$font_size = "var(--vcex-icon-{$input})";
 		} else {
 			$font_size = $this->parse_font_size( $input );
 		}
-		$this->add_style( 'font-size', \esc_attr( $font_size ) );
+		$this->add_style( 'font-size', esc_attr( $font_size ) );
 	}
 
 	/**
 	 * Font-Size.
 	 */
 	private function parse_font_size( $input ) {
-		if ( $input && ! \str_contains( $input, '|' ) ) {
-			$this->add_style( 'font-size', \esc_attr( $this->sanitize_font_size( $input ) ) );
+		if ( $input && ! str_contains( $input, '|' ) ) {
+			$this->add_style( 'font-size', esc_attr( $this->sanitize_font_size( $input ) ) );
+		}
+	}
+
+	/**
+	 * Font Style.
+	 */
+	private function parse_font_style( $input ) {
+		if ( in_array( $input, [ 'normal', 'italic', 'oblique' ], true ) ) {
+			$this->add_style( 'font-style', esc_attr( $input ) );
 		}
 	}
 
@@ -244,27 +253,21 @@ final class Inline_Style {
 	 * Font Weight.
 	 */
 	private function parse_font_weight( $input ) {
-		$weights = [
-			'normal'    => '400',
-			'medium'    => '500',
-			'semibold'  => '600',
-			'bold'      => '700',
-			'extrabold' => '800',
-			'black'     => '900',
-		];
-		$input = $weights[ $input ] ?? $input; 
-		$this->add_style( 'font-weight', \esc_attr( $input ) );
+		$parsed = vcex_parse_font_weight( $input );
+		if ( $parsed ) {
+			$this->add_style( 'font-weight', esc_attr( $parsed ) );
+		}
 	}
 
 	/**
 	 * Font Family.
 	 */
 	private function parse_font_family( $input ) {
-		\vcex_enqueue_font( $input );
-		if ( \function_exists( 'wpex_sanitize_font_family' ) ) {
-			$input_safe = \wpex_sanitize_font_family( $input );
+		vcex_enqueue_font( $input );
+		if ( function_exists( 'wpex_sanitize_font_family' ) ) {
+			$input_safe = wpex_sanitize_font_family( $input );
 		} else {
-			$input_safe = \sanitize_text_field( $input );
+			$input_safe = sanitize_text_field( $input );
 		}
 		$this->add_style( 'font-family', $input_safe );
 	}
@@ -273,15 +276,15 @@ final class Inline_Style {
 	 * Opacity.
 	 */
 	private function parse_opacity( $input ) {
-		$input = \str_replace( '%', '', $input ); // % is the only non numeric character allowed.
-		if ( ! \is_numeric( $input ) ) {
+		$input = str_replace( '%', '', $input ); // % is the only non numeric character allowed
+		if ( ! is_numeric( $input ) ) {
 			return;
 		}
 		if ( $input > 1 ) {
 			$input = $input / 100;
 		}
 		if ( $input <= 1 ) {
-			$this->add_style( 'opacity', \esc_attr( $input ) );
+			$this->add_style( 'opacity', esc_attr( $input ) );
 		}
 	}
 
@@ -301,7 +304,7 @@ final class Inline_Style {
 			'space-evenly',
 		];
 		if ( in_array( $input, $allowed, true ) ) {
-			$this->add_style( 'justify-content', \esc_attr( $input ) );
+			$this->add_style( 'justify-content', esc_attr( $input ) );
 		}
 	}
 
@@ -327,7 +330,7 @@ final class Inline_Style {
 			}
 		}
 		if ( $input ) {
-			$this->add_style( 'text-align', \esc_attr( $input ) );
+			$this->add_style( 'text-align', esc_attr( $input ) );
 		}
 	}
 
@@ -343,7 +346,7 @@ final class Inline_Style {
 			'initial',
 			'inherit',
 		];
-		if ( \in_array( $input, $allowed_values, true ) ) {
+		if ( in_array( $input, $allowed_values, true ) ) {
 			$this->add_style( 'text-transform', $input );
 		}
 	}
@@ -353,7 +356,7 @@ final class Inline_Style {
 	 */
 	private function parse_text_decoration_line( $input ) {
 		if ( in_array( $input, [ 'none', 'underline', 'overline', 'line-through', 'underline overline' ], true ) ) {
-			$this->add_style( 'text-decoration-line', \esc_attr( $input ) );
+			$this->add_style( 'text-decoration-line', esc_attr( $input ) );
 		}
 	}
 
@@ -375,8 +378,8 @@ final class Inline_Style {
 	 * Letter Spacing.
 	 */
 	private function parse_letter_spacing( $input ) {
-		if ( \function_exists( '\wpex_utl_letter_spacing' )
-			&& array_key_exists( $input, \wpex_utl_letter_spacing() )
+		if ( function_exists( 'wpex_utl_letter_spacing' )
+			&& array_key_exists( $input, wpex_utl_letter_spacing() )
 		) {
 			$input = "var(--wpex-tracking-{$input})";
 		}
@@ -387,12 +390,12 @@ final class Inline_Style {
 	 * Line-Height.
 	 */
 	private function parse_line_height( $input ) {
-		if ( \function_exists( '\wpex_utl_line_height' )
-			&& \array_key_exists( $input, \wpex_utl_line_height() )
+		if ( function_exists( 'wpex_utl_line_height' )
+			&& array_key_exists( $input, wpex_utl_line_height() )
 		) {
 			$input = "var(--wpex-leading-{$input})";
 		}
-		$this->add_style( 'line-height', \esc_attr( $input ) );
+		$this->add_style( 'line-height', esc_attr( $input ) );
 	}
 
 	/**
@@ -443,24 +446,24 @@ final class Inline_Style {
 	 * Parse top/right/bottom/left fields.
 	 */
 	private function parse_trbl_property( $value, $property ) {
-		if ( \function_exists( 'vcex_parse_multi_attribute' )
-			&& \str_contains( $value, ':' )
-			&& $values = \vcex_parse_multi_attribute( $value )
+		if ( function_exists( 'vcex_parse_multi_attribute' )
+			&& str_contains( $value, ':' )
+			&& $values = vcex_parse_multi_attribute( $value )
 		) {
 
 			// All values are the same
 			if ( isset( $values['top'] )
-				&& \count( $values ) == 4
-				&& \count( \array_unique( $values ) ) <= 1
+				&& count( $values ) == 4
+				&& count( array_unique( $values ) ) <= 1
 			) {
 				$value = $values['top'];
 				$value = ( 'none' === $value ) ? '0' : $value;
-				$value = \is_numeric( $value ) ? $value  . 'px' : $value;
-				$this->style[] = \esc_attr( \trim( $property ) ) . ':' . \esc_attr( $value ) . ';';
+				$value = is_numeric( $value ) ? $value  . 'px' : $value;
+				$this->style[] = esc_attr( trim( $property ) ) . ':' . esc_attr( $value ) . ';';
 			}
-			// Values are different.
+			// Values are different
 			else {
-				// If top/bottom or left/right are the same we can use block-{$property} and inline-{$property} instead.
+				// If top/bottom or left/right are the same we can use block-{$property} and inline-{$property} instead
 				if ( 'margin' === $property || 'padding' === $property ) {
 					if ( ! empty( $values['top'] ) && ! empty( $values['bottom'] ) && $values['top'] === $values['bottom'] ) {
 						$values['block'] = $values['top'];
@@ -473,7 +476,7 @@ final class Inline_Style {
 						unset( $values['right'] );
 					}
 				}
-				// Loop through values to add inline style.
+				// Loop through values to add inline style
 				foreach ( $values as $k => $v ) {
 					if ( ( 'left' === $k || 'right' === $k ) ) {
 						if ( vcex_is_bidirectional() ) {
@@ -489,7 +492,7 @@ final class Inline_Style {
 					}
 					if ( ! empty( $v ) ) {
 						$method = "parse_{$property}_{$k}";
-						if ( \method_exists( $this, $method ) ) {
+						if ( method_exists( $this, $method ) ) {
 							$this->$method( $v );
 						} else {
 							$this->parse_other_property( "{$property}-{$k}", $v );
@@ -505,24 +508,24 @@ final class Inline_Style {
 	 * Parse other properties that don't require their own method.
 	 */
 	private function parse_other_property( $property, $value ) {
-		$value_safe = \sanitize_text_field( (string) $value );
+		$value_safe = sanitize_text_field( (string) $value );
 		if ( $value_safe || '0' === $value_safe ) {
-			$property = \str_replace( '_', '-', $property );
-			if ( 'background' === $property || \str_ends_with( $property, 'color' ) ) {
+			$property = str_replace( '_', '-', $property );
+			if ( 'background' === $property || str_ends_with( $property, 'color' ) ) {
 				$value_safe = $this->sanitize_color( $value_safe );
-			} elseif ( \str_starts_with( $property, 'padding' ) ) {
+			} elseif ( str_starts_with( $property, 'padding' ) ) {
 				$value_safe = $this->sanitize_padding( $value_safe );
-			} elseif ( \str_starts_with( $property, 'margin' ) ) {
+			} elseif ( str_starts_with( $property, 'margin' ) ) {
 				$value_safe = $this->sanitize_margin( $value_safe );
 			} elseif ( 'gap' === $property || 'column-gap' === $property || 'row-gap' === $property ) {
 				$value_safe = $this->sanitize_gap( $value_safe );
 			} elseif ( 'animation-duration' === $property || 'animation-delay' === $property || 'transition-duration' === $property ) {
 				$value_safe = $this->fallback_seconds( $value_safe );
-			} elseif ( 'top' === $property || 'bottom' === $property || 'right' === $property || 'left' === $property || \str_starts_with( $property, 'inset' ) ) {
+			} elseif ( 'top' === $property || 'bottom' === $property || 'right' === $property || 'left' === $property || str_starts_with( $property, 'inset' ) ) {
 				$value_safe = $this->sanitize_position( $value_safe );
 			}
 			if ( $value_safe ) {
-				$this->add_style( $property, \esc_attr( $value_safe ) );
+				$this->add_style( $property, esc_attr( $value_safe ) );
 			}
 		}
 	}
@@ -542,15 +545,15 @@ final class Inline_Style {
 		if ( 'full' === $input ) {
 			return '9999px';
 		}
-		if ( \is_numeric( $input ) ) {
-			return "{$input}px"; // px is the default value.
+		if ( is_numeric( $input ) ) {
+			return "{$input}px"; // px is the default value
 		}
-		if ( \function_exists( '\wpex_utl_border_radius' )
-			&& \array_key_exists( $input, \wpex_utl_border_radius( true ) )
+		if ( function_exists( 'wpex_utl_border_radius' )
+			&& array_key_exists( $input, wpex_utl_border_radius( true ) )
 		) {
 			return "var(--wpex-{$input})";
 		}
-		return \esc_attr( $input );
+		return esc_attr( $input );
 	}
 
 	/**
@@ -579,11 +582,11 @@ final class Inline_Style {
 	 */
 	private function sanitize_gap( $input ) {
 		if ( 'none' === $input ) {
-			return '0';
-		} elseif ( \is_numeric( $input ) ) {
+			return '0px'; // @important can't return just 0
+		} elseif ( is_numeric( $input ) ) {
 			return "{$input}px";
 		} else {
-			return \esc_attr( $input );
+			return esc_attr( $input );
 		}
 	}
 
@@ -603,10 +606,10 @@ final class Inline_Style {
 				$color = 'currentColor';
 				break;
 			default:
-				$color = \vcex_parse_color( $color );
+				$color = vcex_parse_color( $color );
 				break;
 		}
-		return \esc_attr( $color );
+		return esc_attr( $color );
 	}
 
 	/**
@@ -615,10 +618,10 @@ final class Inline_Style {
 	private function sanitize_padding( $padding ) {
 		if ( 'none' === $padding ) {
 			return '0px';
-		} elseif ( \is_numeric( $padding ) ) {
+		} elseif ( is_numeric( $padding ) ) {
 			return "{$padding}px";
 		} else {
-			return \esc_attr( $padding );
+			return esc_attr( $padding );
 		}
 	}
 
@@ -628,10 +631,10 @@ final class Inline_Style {
 	private function sanitize_margin( $margin ) {
 		if ( 'none' === $margin ) {
 			return '0px';
-		} elseif ( \is_numeric( $margin ) ) {
+		} elseif ( is_numeric( $margin ) ) {
 			return "{$margin}px";
 		} else {
-			return \esc_attr( $margin );
+			return esc_attr( $margin );
 		}
 	}
 
@@ -641,10 +644,10 @@ final class Inline_Style {
 	private function sanitize_position( $input ) {
 		if ( 'none' === $input || '0px' === $input ) {
 			return '0px';
-		} elseif ( \is_numeric( $input ) ) {
+		} elseif ( is_numeric( $input ) ) {
 			return "{$input}px";
 		}
-		return \esc_attr( $input );
+		return esc_attr( $input );
 	}
 
 	/**
@@ -655,24 +658,24 @@ final class Inline_Style {
 			return; // these are not valid font sizes.
 		}
 
-		if ( \is_numeric( $input ) ) {
-			return \absint( $input ) . 'px';
+		if ( is_numeric( $input ) ) {
+			return absint( $input ) . 'px';
 		}
 
-		if ( \in_array( $input, [ 'sm', 'md', 'lg', 'base' ] ) || \str_ends_with( $input, 'xs' ) || \str_ends_with( $input, 'xl' ) ) {
+		if ( in_array( $input, [ 'sm', 'md', 'lg', 'base' ], true ) || str_ends_with( $input, 'xs' ) || str_ends_with( $input, 'xl' ) ) {
 			return "var(--wpex-text-{$input})";
 		}
 
 		if ( $this->is_value_a_function( $input ) ) {
-			return \strip_tags( $input );
+			return strip_tags( $input );
 		}
 
 		$allowed_units = [ 'px', 'em', 'rem', 'vw', 'vmin', 'vmax', 'vh', '%' ];
 		
 		if ( $this->is_value_a_valid_unit( $input, $allowed_units ) ) {
-			$input = \esc_attr( $input );
+			$input = esc_attr( $input );
 		} else {
-			$input = \abs( \floatval( $input ) ) . 'px'; // always return pixel value - important!
+			$input = abs( floatval( $input ) ) . 'px'; // always return pixel value - important!
 		}
 
 		if ( '0px' !== $input ) {
@@ -684,28 +687,28 @@ final class Inline_Style {
 	 * Fallback to px.
 	 */
 	private function fallback_px( $input ) {
-		return \is_numeric( $input ) ? "{$input}px" : \esc_attr( $input );
+		return is_numeric( $input ) ? "{$input}px" : esc_attr( $input );
 	}
 
 	/**
 	 * Fallback to seconds.
 	 */
 	private function fallback_seconds( $input ) {
-		return \is_numeric( $input ) ? "{$input}s" : $input;
+		return is_numeric( $input ) ? "{$input}s" : $input;
 	}
 
 	/**
 	 * Sanitize px input.
 	 */
 	private function sanitize_px( $input ) {
-		return \vcex_validate_px( $input );
+		return vcex_validate_px( $input );
 	}
 
 	/**
 	 * Checks if a property is a CSS variable.
 	 */
 	private function property_is_var( $property = '' ): bool {
-		return (bool) \str_starts_with( $property, '--' );
+		return (bool) str_starts_with( $property, '--' );
 	}
 
 	/**
@@ -721,7 +724,7 @@ final class Inline_Style {
 	private function is_value_a_function( $value = '' ): bool {
 		$check = false;
 		foreach ( $this->get_allowed_css_functions() as $function ) {
-			if ( \str_starts_with( $value, $function ) ) {
+			if ( str_starts_with( $value, $function ) ) {
 				$check = true;
 				break;
 			}
@@ -734,9 +737,9 @@ final class Inline_Style {
 	 */
 	private function is_value_a_valid_unit( $value = '', $allowed_units = [] ) {
 		$check = false;
-		$value = \trim( $value );
+		$value = trim( $value );
 		foreach ( $allowed_units as $allowed_unit ) {
-			if ( \str_ends_with( $value, $allowed_unit ) ) {
+			if ( str_ends_with( $value, $allowed_unit ) ) {
 				$check = true;
 				break;
 			}
@@ -758,11 +761,11 @@ final class Inline_Style {
 	 */
 	public function return_style() {
 		if ( ! empty( $this->style ) ) {
-			$this->style = \implode( false, $this->style );
-			$style_safe = \strip_tags( $this->style ); // @todo should use esc_attr()
+			$this->style = implode( false, $this->style );
+			$style_safe = strip_tags( $this->style ); // @todo should use esc_attr()
 			if ( $style_safe ) {
 				if ( $this->add_style_tag ) {
-					return " style=\"{$style_safe}\""; // always include extra space.
+					return " style=\"{$style_safe}\""; // always include extra space
 				} else {
 					return $style_safe;
 				}

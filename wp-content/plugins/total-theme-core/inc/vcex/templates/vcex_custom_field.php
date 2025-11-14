@@ -40,9 +40,9 @@ if ( function_exists( 'acf_is_field_key' ) && acf_is_field_key( $custom_field_na
 	if ( ! $cf_value ) {
 		$cf_value = vcex_get_acf_field( $custom_field_name );
 		if ( $cf_value ) {
-			// We always need a string value so if it's returning an array lets convert it to a string.
+			// We always need a string value so if it's returning an array lets convert it to a string
 			if ( is_array( $cf_value ) ) {
-				$cf_value = implode( ',', $cf_value );
+				$cf_value = implode( ',', array_filter( $cf_value, fn( $v ) => ! is_array( $v ) ) );
 			}
 			$cf_value = wp_kses_post( $cf_value );
 		}

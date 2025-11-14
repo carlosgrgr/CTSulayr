@@ -55,6 +55,11 @@ if ( ! class_exists( 'VCEX_WooCommerce_Loop_Carousel' ) ) {
 			$params = array(
 				// General
 				array(
+					'type' => 'vcex_notice',
+					'param_name' => 'main_notice',
+					'text' => esc_html__( 'We recommend you use the newer and more powerful "Post Cards" element instead.', 'total-theme-core' ),
+				),
+				array(
 					'type' => 'textfield',
 					'heading' => esc_html__( 'Element ID', 'total-theme-core' ),
 					'param_name' => 'unique_id',

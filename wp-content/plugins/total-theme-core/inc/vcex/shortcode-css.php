@@ -2,29 +2,42 @@
 
 namespace TotalThemeCore\Vcex;
 
-\defined( 'ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Generates the inline CSS for a shortcode.
- *
- * @todo Instead of targeting the element name like ".vcex-image.vcex_{uniqueid}" target via :is(vcex_{uniqueid}).
  */
-final class Shortcode_CSS {
+class Shortcode_CSS {
+
+	/**
+	 * Check storage.
+	 */
+	private static $check_storage = null;
+
+	/**
+	 * Determines if nested CSS syntax should be used.
+	 */
+	private static $use_nested_css = null;
 
 	/**
 	 * Holds array of styles generated for the page.
 	 */
-	static protected $styles_list = [];
+	protected static $styles_list = [];
 
 	/**
 	 * Holds a counter of shortcodes and the items that have shown/rendered to generate the unique classname.
 	 */
-	static protected $shortcodes_counter = [];
+	protected static $shortcodes_counter = [];
 
 	/**
 	 * The shortcode unique classname.
 	 */
-	public $unique_classname;
+	public $unique_classname = null;
+
+	/**
+	 * The shortode unique selector.
+	 */
+	public $unique_selector = null;
 
 	/**
 	 * The shortcode class.
@@ -50,7 +63,7 @@ final class Shortcode_CSS {
 	 * Class Constructor.
 	 */
 	public function __construct( string $shortcode_class = '', array $shortcode_atts = [] ) {
-		if ( ! \is_callable( [ $shortcode_class, 'get_params' ] ) ) {
+		if ( ! is_callable( [ $shortcode_class, 'get_params' ] ) ) {
 			return;
 		}
 
@@ -58,12 +71,12 @@ final class Shortcode_CSS {
 		$this->shortcode_tag   = $this->shortcode_class::TAG;
 		$shortcode_params      = $this->shortcode_class::get_params();
 
-		if ( ! $shortcode_params || ! \is_array( $shortcode_params ) ) {
+		if ( ! $shortcode_params || ! is_array( $shortcode_params ) ) {
 			return;
 		}
 
 		$this->unique_classname = $this->create_unique_classname();
-		$this->use_important = $this->important_check();
+		$this->use_important    = $this->important_check();
 
 		$css_params = [];
 
@@ -83,11 +96,11 @@ final class Shortcode_CSS {
 			$selector    = '';
 			$media_query = '';
 
-			if ( \is_array( $css_args ) ) {
+			if ( is_array( $css_args ) ) {
 				$property = $css_args['property'] ?? $param_v['param_name'];
 				if ( ! empty( $css_args['selector'] ) ) {
 					$selectors = $css_args['selector'];
-					if ( \is_array( $selectors ) ) {
+					if ( is_array( $selectors ) ) {
 						foreach ( $selectors as $k => $v ) {
 							if ( $parsed_selector = $this->parse_selector( $v, $shortcode_atts ) ) {
 								$selectors[ $k ] = $parsed_selector;
@@ -95,7 +108,7 @@ final class Shortcode_CSS {
 								unset( $selectors[ $k ] );
 							}
 						}
-						$selector = \implode( ',', $selectors );
+						$selector = implode( ',', $selectors );
 					} else {
 						$selector = $this->parse_selector( $selectors, $shortcode_atts );
 					}
@@ -123,6 +136,10 @@ final class Shortcode_CSS {
 				}
 			}
 
+			if ( isset( $css_args['important_in_editor'] ) && true === $css_args['important_in_editor'] && vcex_vc_is_inline() ) {
+				$css_args['important'] = true;
+			}
+
 			$param_settings = [
 				'selector'    => $selector,
 				'property'    => $property,
@@ -131,11 +148,11 @@ final class Shortcode_CSS {
 				'important'   => $css_args['important'] ?? false,
 			];
 
-			$css_params[] = \array_filter( $param_settings );
+			$css_params[] = array_filter( $param_settings );
 
 		} // end foreach
 
-		if ( \is_array( $css_params ) ) {
+		if ( is_array( $css_params ) ) {
 			foreach ( $css_params as $css_param ) {
 				$this->add_css_to_array( $css_param );
 			}
@@ -146,26 +163,26 @@ final class Shortcode_CSS {
 	 * Generates css for a specific param.
 	 */
 	public function add_css_to_array( $param ) {
-		if ( \is_array( $param['property'] ) ) {
-			$property = \array_map( [ $this, 'parse_property' ], $param['property'] );
+		if ( is_array( $param['property'] ) ) {
+			$property = array_map( [ $this, 'parse_property' ], $param['property'] );
 		} else {
 			$property = $this->parse_property( $param['property'] );
 		}
 
-		if ( \is_string( $property ) && ! \in_array( $property, [ 'margin', 'padding' ], true ) && \str_contains( $param['val'], '|' ) ) {
+		if ( is_string( $property ) && ! in_array( $property, [ 'margin', 'padding' ], true ) && str_contains( $param['val'], '|' ) ) {
 			$this->parse_responsive_param( $param['selector'], $property, $param['val'] );
 		} else {
 			$css_args = [];
-			if ( \is_array( $property ) ) {
+			if ( is_array( $property ) ) {
 				foreach ( $property as $single_property ) {
 					$css_args[ $single_property ] = $param['val'];
 				}
 			} else {
 				$css_args[ $property ] = $param['val'];
 			}
-			$css = \vcex_inline_style( $css_args, false );
+			$css = vcex_inline_style( $css_args, false );
 			if ( isset( $param['important'] ) && true === $param['important'] ) {
-				$css = \str_replace( ';', '!important;', $css );
+				$css = str_replace( ';', '!important;', $css );
 			}
 			if ( $css ) {
 				$media_query = $param['media_query'] ?? 0;
@@ -178,9 +195,15 @@ final class Shortcode_CSS {
 	 * Wrapper function for add_css_to_array with parsing for the selector.
 	 *
 	 * This function is intended to be used outside the class when adding extra styles to an
-	 * element.
+	 * element via css_pre_render()
 	 */
 	public function add_extra_css( array $param ): void {
+		if ( isset( $param[0] ) && is_array( $param[0] ) ) {
+			foreach ( $param as $item ) {
+				$this->add_extra_css( $item );
+			}
+			return;
+		}
 		if ( ! empty( $param['selector'] ) ) {
 			$param['selector'] = $this->parse_selector( $param['selector'], [] );
 			$this->add_css_to_array( $param );
@@ -191,8 +214,8 @@ final class Shortcode_CSS {
 	 * Parses property name.
 	 */
 	protected function parse_property( $property = '' ): string {
-		if ( ! \str_starts_with( $property, '--' ) ) {
-			$property = \str_replace( '-', '_', $property );
+		if ( ! str_starts_with( $property, '--' ) ) {
+			$property = str_replace( '-', '_', $property );
 		}
 		return $property;
  	}
@@ -201,12 +224,12 @@ final class Shortcode_CSS {
 	 * Parses property name.
 	 */
 	protected function parse_responsive_param( $selector = '', $property = '', $value = '' ) {
-		$parsed_value = \vcex_parse_multi_attribute( $value );
-		if ( ! \is_array( $parsed_value ) ) {
+		$parsed_value = vcex_parse_multi_attribute( $value );
+		if ( ! is_array( $parsed_value ) ) {
 			return;
 		}
 		foreach ( $parsed_value as $device => $device_value ) {
-			$css = \vcex_inline_style( [
+			$css = vcex_inline_style( [
 				$property => $device_value,
 			], false );
 			if ( $css ) {
@@ -229,9 +252,9 @@ final class Shortcode_CSS {
 	protected function parse_selectors_css( $selectors = [] ): string {
 		$css = '';
 		foreach ( $selectors as $selector => $properties ) {
-			$prop_string = \implode( '', $properties );
+			$prop_string = implode( '', $properties );
 			if ( $this->use_important ) {
-				$prop_string = \str_replace( ';', '!important;', $prop_string );
+				$prop_string = str_replace( ';', '!important;', $prop_string );
 			}
 			$css .= "{$selector}{{$prop_string}}";
 		}
@@ -239,12 +262,44 @@ final class Shortcode_CSS {
 	}
 
 	/**
+	 * Parse selectors but nested.
+	 */
+	protected function parse_selectors_css_nested( $selectors = [] ): string {
+		$parent_css = '';
+		$nested_css = '';
+		$unique_selector = $this->get_unique_selector();
+		foreach ( $selectors as $selector => $properties ) {
+			$prop_string = implode( '', $properties );
+			if ( $this->use_important ) {
+				$prop_string = str_replace( ';', '!important;', $prop_string );
+			}
+			if ( $selector === $unique_selector ) {
+				$parent_css .= $prop_string;
+			} else {
+				if ( $selector === "{$unique_selector}:hover"
+					|| $selector === "{$unique_selector}:active"
+					|| $selector === "{$unique_selector}:focus"
+				) {
+					$selector = '&';
+				} else {
+					$selector = trim( str_replace( $unique_selector, '', $selector ) );
+				}
+				$nested_css .= "{$selector}{{$prop_string}}";
+			}
+		}
+		if ( $parent_css || $nested_css ) {
+			return "{$unique_selector}{{$parent_css}{$nested_css}}";
+		}
+		return '';
+	}
+
+	/**
 	 * Returns media query based on device prefix.
 	 */
 	protected function get_media_query_from_device( $device ): ?string {
-		$breakpoints = \vcex_get_css_breakpoints();
+		$breakpoints = vcex_get_css_breakpoints();
 		if ( ! empty( $breakpoints[ $device ] ) ) {
-			$safe_bk = \esc_attr( $breakpoints[ $device ] );
+			$safe_bk = esc_attr( $breakpoints[ $device ] );
 			return "@media (max-width:{$safe_bk})";
 		}
 		return null;
@@ -255,9 +310,14 @@ final class Shortcode_CSS {
 	 */
 	public function get_css(): string {
 		$css = '';
+		$use_nested_css = $this->use_nested_css();
 		if ( $this->css_array ) {
 			foreach ( $this->css_array as $media_query => $selectors ) {
-				$parsed_css = $this->parse_selectors_css( $selectors );
+				if ( $use_nested_css ) {
+					$parsed_css = $this->parse_selectors_css_nested( $selectors );
+				} else {
+					$parsed_css = $this->parse_selectors_css( $selectors );
+				}
 				if ( $media_query ) {
 					$css .= "{$media_query}{{$parsed_css}}";
 				} else {
@@ -275,8 +335,8 @@ final class Shortcode_CSS {
 		$check_storage = $this->check_storage();
 		$css = $this->get_css();
 		if ( $check_storage ) {
-			$css_to_store = \str_replace( $this->unique_classname, 'vcex_unique_classname', $css );
-			if ( $key = \array_search( $css_to_store, self::$styles_list ) ) {
+			$css_to_store = str_replace( $this->unique_classname, 'vcex_unique_classname', $css );
+			if ( $key = array_search( $css_to_store, self::$styles_list ) ) {
 				$this->unique_classname = $key;
 				return true;
 			}
@@ -285,7 +345,7 @@ final class Shortcode_CSS {
 			if ( $check_storage ) {
 				self::$styles_list[ $this->unique_classname ] = $css_to_store;
 			}
-			$render_style = (bool) \apply_filters( 'vcex_shortcode_css_render_style', true );
+			$render_style = (bool) apply_filters( 'vcex_shortcode_css_render_style', true );
 			if ( $render_style ) {
 				if ( $echo_style ) {
 					echo "<style>{$css}</style>";
@@ -305,7 +365,7 @@ final class Shortcode_CSS {
 		/*if ( ! isset( $param['css_condition'] ) ) {
 			return true;
 		}
-		return \is_callable( $param['css_condition'] ) && \call_user_func( $param['css_condition'], $value );*/
+		return is_callable( $param['css_condition'] ) && \call_user_func( $param['css_condition'], $value );*/
 	}
 
 	/**
@@ -322,8 +382,8 @@ final class Shortcode_CSS {
 			return $target;
 		} else if ( 'vcex_off_canvas_menu' === $this->shortcode_tag && '.wpex-off-canvas' === $selector ) {
 			return "{$target}{$selector}";
-		} else if ( \str_contains( $selector, '{{WRAPPER}}' ) ) {
-			return \str_replace( '{{WRAPPER}}', $target, $selector );
+		} else if ( str_contains( $selector, '{{WRAPPER}}' ) ) {
+			return str_replace( '{{WRAPPER}}', $target, $selector );
 		} else {
 			return "{$target} {$selector}";
 		}
@@ -333,7 +393,9 @@ final class Shortcode_CSS {
 	 * Returns unique classname for element.
 	 */
 	protected function create_unique_classname(): string {
-		return \vcex_element_unique_classname();
+		// @todo update to use the shortcode attributes for the unique name
+		//return 'vcex_' . substr( md5( $this->shortcode_tag . serialize( $shortcode_atts ) ), 0, 12 );
+		return vcex_element_unique_classname();
 	}
 
 	/**
@@ -343,7 +405,7 @@ final class Shortcode_CSS {
 		if ( 'vcex_off_canvas_menu' == $this->shortcode_tag || 'vcex_horizontal_menu' == $this->shortcode_tag ) {
 			return ''; // don't use wrapper on newer elements - @todo remove from all elements in the future
 		}
-		$classname = \str_replace( '_', '-', $this->shortcode_tag );
+		$classname = str_replace( '_', '-', $this->shortcode_tag );
 		if ( $this->shortcode_has_wrapper( $this->shortcode_tag ) ) {
 			$classname .= '-wrap';
 		}
@@ -368,7 +430,7 @@ final class Shortcode_CSS {
 	 * Checks if a given shortcode has a wrapper.
 	 */
 	protected function shortcode_has_wrapper( $shortcode_tag ): bool {
-		return \in_array( $shortcode_tag, [
+		return in_array( $shortcode_tag, [
 			'vcex_recent_news',
 			'vcex_countdown',
 			'vcex_image_ba',
@@ -380,27 +442,33 @@ final class Shortcode_CSS {
 	}
 
 	/**
+	 * Check if nested css is enabled.
+	 */
+	private function use_nested_css(): bool {
+		if ( null === self::$use_nested_css ) {
+			self::$use_nested_css = (bool) apply_filters( 'vcex_shortcode_css_use_nested_css', false );
+		}
+		return self::$use_nested_css;
+	}
+
+	/**
 	 * Checks if we should check for existing styles and apply existing ones to shortcodes with the same styling.
 	 *
-	 * @todo this should perhaps be enabled by default but would need the ability to disable via the admin or
-	 * allow it to be enabled in the admin under "Optimizations".
-	 *
 	 * The issue with this function is if any theme function runs do_shortcode() on any content
-	 * before it's actually rendered, the CSS may not be inserted on the page. No way around that :/
+	 * before it's actually echoed, the CSS may not be inserted on the page. No way around that :/
 	 */
 	protected function check_storage(): bool {
-		$check = (bool) \apply_filters( 'vcex_shortcode_css_store_styles', false );
-		if ( $check && \vcex_vc_is_inline() ) {
-			$check = false;
+		if ( null === self::$check_storage ) {
+			self::$check_storage = apply_filters( 'vcex_shortcode_css_store_styles', false ) && ! vcex_vc_is_inline();
 		}
-		return $check;
+		return self::$check_storage;
 	}
 
 	/**
 	 * Checks if we should apply important attributes to all custom inline styles.
 	 */
 	protected function important_check(): bool {
-		return (bool) \apply_filters( 'vcex_shortcode_css_use_important_rule', $this->use_important, $this->shortcode_tag );
+		return (bool) apply_filters( 'vcex_shortcode_css_use_important_rule', $this->use_important, $this->shortcode_tag );
 	}
 
 	/**
@@ -421,8 +489,11 @@ final class Shortcode_CSS {
 	 * Returns unique selector.
 	 */
 	public function get_unique_selector(): string {
-		$shortcode_classname = $this->get_shortcode_classname();
-		return $shortcode_classname ? ".{$shortcode_classname}.{$this->unique_classname}" : ".{$this->unique_classname}";
+		if ( null === $this->unique_selector ) {
+			$shortcode_classname = $this->get_shortcode_classname();
+			$this->unique_selector = $shortcode_classname ? ".{$shortcode_classname}.{$this->unique_classname}" : ".{$this->unique_classname}";
+		}
+		return $this->unique_selector;
 	}
 
 	/**
@@ -433,13 +504,13 @@ final class Shortcode_CSS {
 		$new_val = [];
 		$directions = [ 'top', 'bottom', 'left', 'right' ];
 		foreach ( $directions as $dir ) {
-			$dir_val = isset( $value[ $dir ] ) ? \trim( (string) $value[ $dir ] ) : '';
+			$dir_val = isset( $value[ $dir ] ) ? trim( (string) $value[ $dir ] ) : '';
 			if ( $dir_val || '0' === $dir_val ) {
 				$dir_val = $value[ $dir ];
 				$new_val[] = "{$dir}:{$dir_val}{$unit}";
 			}
 		}
-		return \implode( '|', $new_val );
+		return implode( '|', $new_val );
 	}
 
 }

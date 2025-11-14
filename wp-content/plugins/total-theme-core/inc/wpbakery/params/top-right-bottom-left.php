@@ -79,6 +79,9 @@ final class Top_Right_Bottom_Left {
 			}
 		$output .= '</div>';
 		$output .= '<input name="' . \esc_attr( $settings['param_name'] ) . '" class="vcex-hidden-input wpb-input wpb_vc_param_value  ' . \esc_attr( $settings['param_name'] ) . ' ' . \esc_attr( $settings['type'] ) . '_field" type="hidden" value="' . \esc_attr( $value ) . '">';
+		if ( ! empty( $settings['notice'] ) ) {
+			$output .= '<div class="vcex-vc-notice vc_description vc_clearfix">' . wp_kses_post( $settings['notice'] ) . '</div>';
+		}
 		return $output;
 
 	}

@@ -30,14 +30,6 @@ final class Vcex {
 	}
 
 	/**
-	 * Run global classes.
-	 */
-	private static function init_classes(): void {
-		\totalthemecore_init_class( 'Vcex\Scripts' );
-		\totalthemecore_init_class( 'Vcex\Ajax' );
-	}
-
-	/**
 	 * Include helper functions.
 	 */
 	private static function include_functions(): void {
@@ -54,6 +46,14 @@ final class Vcex {
 	}
 
 	/**
+	 * Init global classes.
+	 */
+	private static function init_classes(): void {
+		\totalthemecore_init_class( 'Vcex\Scripts' );
+		\totalthemecore_init_class( 'Vcex\Ajax' );
+	}
+
+	/**
 	 * Check if we should register shortcodes or not.
 	 *
 	 * Prevent shortcode rendering via $_REQUEST - security patch for WP core issue.
@@ -66,7 +66,7 @@ final class Vcex {
 	 * Register shortcodes.
 	 */
 	private static function register_shortcodes(): void {
-		totalthemecore_call_non_static( 'Vcex\Shortcodes_Registry', 'register_all' );
+		\totalthemecore_call_non_static( 'Vcex\Shortcodes_Registry', 'register_all' );
 	}
 
 	/**
@@ -82,8 +82,6 @@ final class Vcex {
 		if ( \class_exists( '\Vc_Manager', false ) ) {
 			\totalthemecore_init_class( 'Vcex\WPBakery' );
 		}
-
-		// WPML
 		if ( \class_exists( 'SitePress', false ) ) {
 			\totalthemecore_init_class( 'Vcex\WPML' );
 		}

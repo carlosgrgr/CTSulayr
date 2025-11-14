@@ -2,26 +2,29 @@
 
 namespace TotalThemeCore\WPBakery\Autocomplete;
 
-\defined( 'ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 /**
  * WPBakery AutoComplete => Taxonomy Terms.
  */
 final class Taxonomy_Terms {
 
+	/**
+	 * Auto complete callback function.
+	 */
 	public static function callback( $search_string ) {
 		$terms_list = [];
 		$terms_list[] = [
-			'label'    => \esc_html__( 'Standard Posts', 'total-theme-core' ),
+			'label'    => esc_html__( 'Standard Posts', 'total-theme-core' ),
 			'value'    => 'post-format-standard',
 			'group_id' => 'format',
-			'group'    => \esc_html__( 'Formats', 'total-theme-core' ),
+			'group'    => esc_html__( 'Formats', 'total-theme-core' ),
 		];
-		$taxonomies = \get_taxonomies( [
+		$taxonomies = get_taxonomies( [
 			'public' => true
 		], 'objects' );
 		foreach ( $taxonomies as $taxonomy ) {
-			$terms = \get_terms( $taxonomy->name, [
+			$terms = get_terms( $taxonomy->name, [
 				'hide_empty' => false,
 				'search'     => $search_string,
 			] );
@@ -39,6 +42,9 @@ final class Taxonomy_Terms {
 		return $terms_list;
 	}
 
+	/**
+	 * Display the auto complete items.
+	 */
 	public static function render( $data ) {
 		return $data; // No way around it, must show slug :(
 	}

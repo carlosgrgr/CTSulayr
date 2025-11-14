@@ -44,6 +44,10 @@ final class On_Off_Switch {
 
 		$output .= '</div>';
 
+		if ( ! empty( $settings['notice'] ) ) {
+			$output .= '<div class="vcex-vc-notice vc_description vc_clearfix">' . wp_kses_post( $settings['notice'] ) . '</div>';
+		}
+
 		return $output;
 	}
 

@@ -214,7 +214,7 @@ if ( ! class_exists( 'Vcex_Tribe_Event_Data_Shortcode' ) ) {
 				[
 					'type' => 'dropdown',
 					'heading' => esc_html__( 'Font Style', 'total-theme-core' ),
-					'param_name' => 'italic',
+					'param_name' => 'italic', // @todo convert to font_style
 					'value' => [
 						esc_html__( 'Normal', 'total-theme-core' ) => '',
 						esc_html__( 'Italic', 'total-theme-core' ) => 'true',

@@ -348,13 +348,9 @@ if ( ! class_exists( 'VCEX_Post_Next_Prev_Shortcode' ) ) {
 					'dependency' => [ 'element' => 'link_format', 'value_not_equal_to' => 'card' ],
 				],
 				[
-					'type' => 'dropdown',
+					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Font Style', 'total-theme-core' ),
-					'param_name' => 'italic',
-					'value' => [
-						esc_html__( 'Normal', 'total-theme-core' ) => '',
-						esc_html__( 'Italic', 'total-theme-core' ) => 'true',
-					],
+					'param_name' => 'font_style',
 					'css' => true,
 					'group' => esc_html__( 'Buttons', 'total-theme-core' ),
 					'dependency' => [ 'element' => 'link_format', 'value_not_equal_to' => 'card' ],
@@ -421,8 +417,33 @@ if ( ! class_exists( 'VCEX_Post_Next_Prev_Shortcode' ) ) {
 					'group' => esc_html__( 'Buttons', 'total-theme-core' ),
 					'dependency' => [ 'element' => 'link_format', 'value_not_equal_to' => 'card' ],
 					'editors' => [ 'elementor' ],
-				]
+				],
+				// Deprecated
+				[ 'type' => 'hidden', 'param_name' => 'italic', 'std' => '' ],
 			];
+		}
+
+		/**
+		 * Parse WPBakery attributes on edit.
+		 */
+		public static function vc_edit_form_fields_attributes( $atts = [] ) {
+			return self::parse_deprecated_attributes( $atts );
+		}
+
+		/**
+		 * Parses deprecated params.
+		 */
+		public static function parse_deprecated_attributes( $atts = [] ) {
+			if ( empty( $atts ) || ! is_array( $atts ) ) {
+				return $atts;
+			}
+			if ( ! empty( $atts['italic'] ) ) {
+				if ( 'true' === $atts['italic'] && empty( $atts['font_style'] ) ) {
+					$atts['font_style'] = 'italic';
+				}
+				unset( $atts['italic'] );
+			}
+			return $atts;
 		}
 
 		/**
@@ -461,7 +482,7 @@ if ( ! class_exists( 'VCEX_Post_Next_Prev_Shortcode' ) ) {
 
 			if ( $in_same_term && $same_term_tax ) {
 				if ( ! taxonomy_exists( $same_term_tax ) || ! is_object_in_taxonomy( $post_type, $same_term_tax ) ) {
-					return;
+					return; // bail early
 				}
 
 				$term_array = wp_get_object_terms( $post->ID, $same_term_tax, [ 'fields' => 'ids' ] );
@@ -483,7 +504,7 @@ if ( ! class_exists( 'VCEX_Post_Next_Prev_Shortcode' ) ) {
 			$query_args = apply_filters( 'vcex_post_next_prev_first_last_post_query_args', $query_args, $which );
 
 			add_filter( 'pto/posts_order', [ self::class, 'filter_pto_posts_order' ], 15, 2 );
-			$query = new \WP_Query( $query_args );
+			$query = new WP_Query( $query_args );
 			remove_filter( 'pto/posts_order', [ self::class, 'filter_pto_posts_order' ], 15 );
 
 			if ( ! empty( $query->posts[0] ) && is_a( $query->posts[0], 'WP_Post' ) ) {

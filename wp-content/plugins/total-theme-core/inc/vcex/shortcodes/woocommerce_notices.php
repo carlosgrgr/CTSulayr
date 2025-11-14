@@ -56,16 +56,19 @@ if ( ! class_exists( 'VCEX_WooCommerce_Notices_Shortcode' ) ) {
 			if ( ! vcex_maybe_display_shortcode( self::TAG, $atts ) || ! function_exists( 'woocommerce_output_all_notices' ) ) {
 				return null;
 			}
+			if ( vcex_is_frontend_edit_mode() ) {
+				return esc_html( 'WooCommerce notices placeholder for the live builder.', 'total-theme-core' );
+			}
 			ob_start();
 				woocommerce_output_all_notices();
 			return ob_get_clean();
 		}
 
 		/**
-		 * Array of shortcode parameters.
+		 * Array of shortcode params.
 		 */
 		public static function get_params_list(): array {
-			return [];
+			return []; // This element has no params
 		}
 
 	}

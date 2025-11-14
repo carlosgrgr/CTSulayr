@@ -525,19 +525,16 @@ if ( ! class_exists( 'VCEX_Heading_Shortcode' ) ) {
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 				),
 				array(
-					'type' => 'dropdown',
-					'heading' => esc_html__( 'Font Style', 'total-theme-core' ),
-					'param_name' => 'italic',
-					'value' => array(
-						esc_html__( 'Normal', 'total-theme-core' ) => '',
-						esc_html__( 'Italic', 'total-theme-core' ) => 'true',
-					),
+					'type' => 'vcex_select',
+					'heading' => esc_html__( 'Font Weight', 'total-theme-core' ),
+					'param_name' => 'font_weight',
+					'css' => true,
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 				),
 				array(
 					'type' => 'vcex_select',
-					'heading' => esc_html__( 'Font Weight', 'total-theme-core' ),
-					'param_name' => 'font_weight',
+					'heading' => esc_html__( 'Font Style', 'total-theme-core' ),
+					'param_name' => 'font_style',
 					'css' => true,
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 				),
@@ -797,6 +794,7 @@ if ( ! class_exists( 'VCEX_Heading_Shortcode' ) ) {
 					'group' => esc_html__( 'CSS', 'total-theme-core' ),
 				],
 				// Hidden/Deprecated fields
+				[ 'type' => 'hidden', 'param_name' => 'italic', 'std' => '' ],
 				[ 'type' => 'hidden', 'param_name' => 'link', 'std' => '' ],
 				[ 'type' => 'hidden', 'param_name' => 'link_local_scroll', 'std' => '' ],
 				[ 'type' => 'hidden', 'param_name' => 'text_accent', 'std' => '' ],
@@ -864,6 +862,16 @@ if ( ! class_exists( 'VCEX_Heading_Shortcode' ) ) {
 
 			unset( $atts['hover_white_text'] );
 			unset( $atts['hover_text_accent'] );
+
+			// Italic
+			if ( ! empty( $atts['italic'] ) ) {
+				if ( empty( $atts['font_style'] ) ) {
+					if ( 'true' == $atts['italic'] || 'yes' === $atts['italic'] ) {
+						$atts['font_style'] = 'italic';
+					}
+				}
+				unset( $atts['italic'] );
+			}
 
 			return $atts;
 		}

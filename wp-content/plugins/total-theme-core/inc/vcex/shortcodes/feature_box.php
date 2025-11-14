@@ -94,6 +94,14 @@ if ( ! class_exists( 'VCEX_Feature_Box_Shortcode' ) ) {
 				],
 				// Style
 				[
+					'type' => 'vcex_ofswitch',
+					'std' => 'false',
+					'heading' => esc_html__( 'Vertically Center', 'total-theme-core' ),
+					'param_name' => 'content_vertical_align',
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
 					'type' => 'vcex_select_buttons',
 					'heading' => esc_html__( 'Style', 'total-theme-core' ),
 					'param_name' => 'style',
@@ -102,14 +110,6 @@ if ( ! class_exists( 'VCEX_Feature_Box_Shortcode' ) ) {
 						'left-content-right-image' => esc_html__( 'Right Image', 'total-theme-core' ),
 						'left-image-right-content' => esc_html__( 'Left Image', 'total-theme-core' ),
 					],
-					'group' => esc_html__( 'Style', 'total-theme-core' ),
-					'editors' => [ 'wpbakery', 'elementor' ],
-				],
-				[
-					'type' => 'vcex_ofswitch',
-					'std' => 'false',
-					'heading' => esc_html__( 'Vertical Align Center', 'total-theme-core' ),
-					'param_name' => 'content_vertical_align',
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
@@ -133,8 +133,6 @@ if ( ! class_exists( 'VCEX_Feature_Box_Shortcode' ) ) {
 					'type' => 'vcex_preset_textfield',
 					'heading' => esc_html__( 'Gap', 'total-theme-core' ),
 					'param_name' => 'gap',
-					'css' => true,
-					'description' => self::param_description( 'gap' ),
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
@@ -143,7 +141,6 @@ if ( ! class_exists( 'VCEX_Feature_Box_Shortcode' ) ) {
 					'heading' => esc_html__( 'Stacked Gap', 'total-theme-core' ),
 					'param_name' => 'stack_gap',
 					'choices' => 'gap',
-					'description' => self::param_description( 'gap' ),
 					'dependency' => [ 'element' => 'stack_bk', 'value_not_equal_to' => 'false' ],
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
@@ -194,28 +191,37 @@ if ( ! class_exists( 'VCEX_Feature_Box_Shortcode' ) ) {
 				],
 				// Widths
 				[
+					'type' => 'vcex_ofswitch',
+					'heading' => esc_html__( 'Media Bleed', 'total-theme-core' ),
+					'description' => esc_html__( 'Enable to make the image extend to the edge of the screen. Only works in full-width rows on pages without sidebars.', 'total-theme-core' ),
+					'param_name' => 'media_bleed',
+					'group' => esc_html__( 'Widths', 'total-theme-core' ),
+					'editors' => [ 'wpbakery' ],
+				],
+				[
 					'type' => 'vcex_select',
 					'choices' => 'justify_content',
 					'heading' => esc_html__( 'Justify Content', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'media_bleed', 'value_not_equal_to' => 'true' ],
 					'param_name' => 'justify',
 					'group' => esc_html__( 'Widths', 'total-theme-core' ),
 					'description' => esc_html__( 'Used to adjust the layout when the content and image widths don\'t add up to 100%.', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
-					'type' => 'textfield',
+					'type' => 'vcex_text',
+					'placeholder' => '50%',
 					'heading' => esc_html__( 'Content Width', 'total-theme-core' ),
 					'param_name' => 'content_width',
-					'value' => '50%',
 					'description' => self::param_description( 'width' ),
 					'group' => esc_html__( 'Widths', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
-					'type' => 'textfield',
-					'heading' => esc_html__( 'Image Width', 'total-theme-core' ),
+					'type' => 'vcex_text',
+					'placeholder' => '50%',
+					'heading' => esc_html__( 'Media Width', 'total-theme-core' ),
 					'param_name' => 'media_width',
-					'value' => '50%',
 					'description' => self::param_description( 'width' ),
 					'group' => esc_html__( 'Widths', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
@@ -273,6 +279,14 @@ if ( ! class_exists( 'VCEX_Feature_Box_Shortcode' ) ) {
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
+					'type' => 'vcex_colorpicker',
+					'heading' => esc_html__( 'Color', 'total-theme-core' ),
+					'param_name' => 'heading_color',
+					'css' => [ 'selector' => '.vcex-feature-box-heading', 'property' => 'color' ],
+					'group' => esc_html__( 'Heading', 'total-theme-core' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
 					'type' => 'vcex_font_size',
 					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
 					'param_name' => 'heading_size',
@@ -287,14 +301,6 @@ if ( ! class_exists( 'VCEX_Feature_Box_Shortcode' ) ) {
 					'css' => [ 'selector' => '.vcex-feature-box-heading', 'property' => 'font-family' ],
 					'group' => esc_html__( 'Heading', 'total-theme-core' ),
 					'editors' => [ 'wpbakery' ],
-				],
-				[
-					'type' => 'vcex_colorpicker',
-					'heading' => esc_html__( 'Color', 'total-theme-core' ),
-					'param_name' => 'heading_color',
-					'css' => [ 'selector' => '.vcex-feature-box-heading', 'property' => 'color' ],
-					'group' => esc_html__( 'Heading', 'total-theme-core' ),
-					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
 					'type' => 'vcex_select',
@@ -344,7 +350,7 @@ if ( ! class_exists( 'VCEX_Feature_Box_Shortcode' ) ) {
 					'type' => 'vcex_trbl',
 					'heading' => esc_html__( 'Margin (deprecated)', 'total-theme-core' ),
 					'param_name' => 'heading_margin',
-					'description' => esc_html__( 'This setting is soft deprecated, we recommend instead using the "Bottom Margin" setting at the top of this tab.', 'total-theme-core' ),
+					'notice' => esc_html__( 'This setting is soft deprecated, we recommend instead using the "Bottom Margin" setting at the top of this tab.', 'total-theme-core' ),
 					'css' => [ 'selector' => '.vcex-feature-box-heading', 'property' => 'margin' ],
 					'group' => esc_html__( 'Heading', 'total-theme-core' ),
 					'editors' => [ 'wpbakery' ],
@@ -358,6 +364,21 @@ if ( ! class_exists( 'VCEX_Feature_Box_Shortcode' ) ) {
 					'editors' => [ 'elementor' ],
 				],
 				// Content
+				[
+					'type' => 'vcex_colorpicker',
+					'heading' => esc_html__( 'Color', 'total-theme-core' ),
+					'param_name' => 'content_color',
+					'css' => [ 'selector' => '.vcex-feature-box-text', 'property' => 'color' ],
+					'group' => esc_html__( 'Content', 'total-theme-core' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
+					'type' => 'vcex_colorpicker',
+					'heading' => esc_html__( 'Background', 'total-theme-core' ),
+					'param_name' => 'content_background',
+					'css' => [ 'selector' => '.vcex-feature-box-content', 'property' => 'background' ],
+					'group' => esc_html__( 'Content', 'total-theme-core' ),
+				],
 				[
 					'type' => 'vcex_font_size',
 					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
@@ -373,14 +394,6 @@ if ( ! class_exists( 'VCEX_Feature_Box_Shortcode' ) ) {
 					'group' => esc_html__( 'Content', 'total-theme-core' ),
 				],
 				[
-					'type' => 'vcex_colorpicker',
-					'heading' => esc_html__( 'Color', 'total-theme-core' ),
-					'param_name' => 'content_color',
-					'css' => [ 'selector' => '.vcex-feature-box-text', 'property' => 'color' ],
-					'group' => esc_html__( 'Content', 'total-theme-core' ),
-					'editors' => [ 'wpbakery', 'elementor' ],
-				],
-				[
 					'type' => 'vcex_select',
 					'choices' => 'font_weight',
 					'heading' => esc_html__( 'Font Weight', 'total-theme-core' ),
@@ -389,18 +402,18 @@ if ( ! class_exists( 'VCEX_Feature_Box_Shortcode' ) ) {
 					'group' => esc_html__( 'Content', 'total-theme-core' ),
 				],
 				[
-					'type' => 'vcex_colorpicker',
-					'heading' => esc_html__( 'Background', 'total-theme-core' ),
-					'param_name' => 'content_background',
-					'css' => [ 'selector' => '.vcex-feature-box-content', 'property' => 'background' ],
+					'type' => 'vcex_trbl',
+					'heading' => esc_html__( 'Inner Padding', 'total-theme-core' ),
+					'param_name' => 'content_padding',
+					'description' => self::param_description( 'padding' ),
 					'group' => esc_html__( 'Content', 'total-theme-core' ),
 				],
 				[
 					'type' => 'vcex_trbl',
-					'heading' => esc_html__( 'Inner Padding', 'total-theme-core' ),
-					'param_name' => 'content_padding',
-					'css' => [ 'selector' => '.vcex-feature-box-padding-container', 'property' => 'padding' ],
+					'heading' => esc_html__( 'Stacked Inner Padding', 'total-theme-core' ),
+					'param_name' => 'stack_content_padding',
 					'description' => self::param_description( 'padding' ),
+					'dependency' => [ 'element' => 'stack_bk', 'value_not_equal_to' => 'false' ],
 					'group' => esc_html__( 'Content', 'total-theme-core' ),
 				],
 				[
@@ -473,8 +486,9 @@ if ( ! class_exists( 'VCEX_Feature_Box_Shortcode' ) ) {
 					'type' => 'vcex_text_align',
 					'heading' => esc_html__( 'Image Alignment', 'total-theme-core' ),
 					'param_name' => 'media_align',
-					'description' => esc_html__( 'Note: When stacked the image will be aligned according to your content aligment for consistency.', 'total-theme-core' ),
+					'notice' => esc_html__( 'Note: When stacked the image will be aligned according to your content aligment for consistency.', 'total-theme-core' ),
 					'group' => esc_html__( 'Image', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'equal_heights', 'value_not_equal_to' => 'true' ],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
@@ -744,6 +758,29 @@ if ( ! class_exists( 'VCEX_Feature_Box_Shortcode' ) ) {
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
+					'type' => 'vcex_select_buttons',
+					'std' => 'alt',
+					'heading' => esc_html__( 'Lightbox Title', 'total-theme-core' ),
+					'param_name' => 'onclick_lightbox_gallery_title',
+					'choices' => array(
+						'false' => esc_html__( 'None', 'total-theme-core' ),
+						'alt' => esc_html__( 'Alt', 'total-theme-core' ),
+						'title' => esc_html__( 'Title', 'total-theme-core' ),
+					),
+					'group' => esc_html__( 'Link', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'onclick', 'value' => 'lightbox_gallery' ],
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
+					'type' => 'vcex_ofswitch',
+					'std' => 'true',
+					'heading' => esc_html__( 'Lightbox Caption', 'total-theme-core' ),
+					'param_name' => 'onclick_lightbox_gallery_caption',
+					'group' => esc_html__( 'Link', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'onclick', 'value' => 'lightbox_gallery' ],
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
 					'type' => 'textfield',
 					'heading' => esc_html__( 'Title Attribute', 'total-theme-core' ),
 					'param_name' => 'onclick_title',
@@ -860,7 +897,6 @@ if ( ! class_exists( 'VCEX_Feature_Box_Shortcode' ) ) {
 			if ( empty( $atts ) || ! is_array( $atts ) ) {
 				return $atts;
 			}
-
 			if ( ! empty( $atts['tablet_widths'] ) ) {
 				$stack_bk = 'custom';
 				$atts['custom_stack_bk'] = '960px';
@@ -869,18 +905,226 @@ if ( ! class_exists( 'VCEX_Feature_Box_Shortcode' ) ) {
 				$stack_bk = 'md';
 				unset( $atts['phone_widths'] );
 			}
-
 			if ( isset( $stack_bk ) ) {
 				$atts['stack_bk'] = $stack_bk;
 			}
-
-			// Rename some settings.
 			if ( ! empty( $atts['image_object_fit'] ) ) {
 				$atts['img_object_fit'] = $atts['image_object_fit'];
 				unset( $atts['image_object_fit'] );
 			}
+			return $atts;
+		}
+
+		/**
+		 * Returns the shortcode atts.
+		 * 
+		 * Used primarily to create the dynamic breakpoint $att which is
+		 * used in the css_pre_render and the template - keep things DRY.
+		 */
+		public static function shortcode_atts( $atts ) {
+			$atts = vcex_shortcode_atts( self::TAG, $atts, self::class );
+
+			// Set breakpoint default
+			if ( ! empty( $atts['stack_bk'] ) ) {
+				$atts['breakpoint'] = sanitize_text_field( $atts['stack_bk'] );
+			} else {
+				$atts['breakpoint'] = apply_filters( 'vcex_feature_box_default_breakpoint', 'sm' );
+			}
+
+			// Sanitize breakpoint
+			if ( 'false' === $atts['breakpoint'] || 'null' === $atts['breakpoint'] ) {
+				$atts['breakpoint'] = '';
+			} elseif ( 'custom' === $atts['breakpoint'] && ! empty( $atts['custom_stack_bk'] ) ) {
+				$atts['breakpoint'] = absint( $atts['custom_stack_bk'] );
+			}
 
 			return $atts;
+		}
+
+		/**
+		 * Advanced CSS.
+		 */
+		protected static function css_pre_render( $css, $atts = [] ): void {
+			$style          = ! empty( $atts['style'] ) ? $atts['style'] : 'left-content-right-image';
+			$reverse_layout = 'left-content-right-image' === $style;
+			$has_bleed      = vcex_validate_att_boolean( 'media_bleed', $atts );
+			$media_width    = ! empty( $atts['media_width'] ) ? $atts['media_width'] : '50%';
+			$content_width  = ! empty( $atts['content_width'] ) ? $atts['content_width'] : '50%';
+			$breakpoint     = $atts['breakpoint'] ?? '';
+			$has_custom_bk  = $breakpoint && ! in_array( $breakpoint, [ 'sm', 'md', 'lg', 'xl' ], true );
+			$bk_px          = '';
+			$min_width_mq   = 0;
+
+			if ( $breakpoint ) {
+				switch ( $breakpoint ) {
+					case 'sm';
+						$bk_px = 640;
+						break;
+					case 'md';
+						$bk_px = 768;
+						break;
+					case 'lg';
+						$bk_px = 1024;
+						break;
+					case 'xl';
+						$bk_px = 1280;
+						break;
+					case 'custom':
+					default:
+						$has_custom_bk = true;
+						if ( ! empty( $atts['custom_stack_bk'] ) ) {
+							$bk_px = absint( $atts['custom_stack_bk'] );
+						} else {
+							// this means the default bk is a pixel
+							$bk_px = absint( $breakpoint );
+						}
+						break;
+				}
+			}
+
+			if ( $bk_px ) {
+				$min_width_mq = "@media (min-width:{$bk_px}px)";
+				$bk_minus_1 = $bk_px - 1;
+				$max_width_mq = "@media (max-width:{$bk_minus_1}px)";
+			}
+
+			// Media Bleed
+			if ( $has_bleed ) {
+				$bleed_dir     = $reverse_layout ? 'end' : 'start';
+				$media_width   = sanitize_text_field( $media_width );
+				$content_width = sanitize_text_field( $content_width );
+				if ( $min_width_mq ) {
+					$css->add_extra_css( [
+						'selector'    => '.vcex-feature-box-media',
+						'media_query' => $min_width_mq,
+						'property'    => $reverse_layout ? 'margin-inline-start' : 'margin-inline-end',
+						'val'         => '0',
+					] );
+				}
+				$css->add_extra_css( [
+					[
+						'selector'    => '.vcex-feature-box-content',
+						'media_query' => $min_width_mq,
+						'property'    => 'width',
+						'val'         => "calc({$content_width} - (var(--vcex-gap) / 2))",
+					],
+					[
+						'selector'    => '.vcex-feature-box-media',
+						'media_query' => $min_width_mq,
+						'property'    => "margin-inline-{$bleed_dir}",
+						'val'         => 'calc(-1 * var(--vcex-bleed-offset))',
+					],
+					[
+						'selector'    => '.vcex-feature-box-media',
+						'media_query' => $min_width_mq,
+						'property'    => 'width',
+						'val'         => "calc({$media_width} + var(--vcex-bleed-offset) - (var(--vcex-gap) / 2))",
+					],
+				] );
+			} else {
+
+				// Content width
+				if ( $content_width && ( '50%' !== $content_width || $has_custom_bk ) ) {
+					$css->add_extra_css( [
+						'selector'    => '.vcex-feature-box-content',
+						'media_query' => $min_width_mq,
+						'property'    => 'width',
+						'val'         => $content_width,
+					] );
+				}
+
+				// Media width
+				if ( $media_width && ( '50%' !== $media_width || $has_custom_bk ) ) {
+					$css->add_extra_css( [
+						'selector'    => '.vcex-feature-box-media',
+						'media_query' => $min_width_mq,
+						'property'    => 'width',
+						'val'         => $media_width,
+					] );
+				}
+			}
+
+			// Gap
+			if ( ! empty( $atts['gap'] ) ) {
+				$css->add_extra_css( [
+					'selector' => '{{WRAPPER}}',
+					'property' => $has_bleed ? '--vcex-gap' : 'gap',
+					'val'      => self::sanitize_gap( $atts['gap'] ),
+				] );
+			}
+
+			// Content Padding
+			if ( ! empty( $atts['stack_content_padding'] ) && $min_width_mq ) {
+				$css->add_extra_css( [
+					'selector'    => '.vcex-feature-box-padding-container',
+					'property'    => 'padding',
+					'val'         => $atts['stack_content_padding'],
+					'media_query' => $max_width_mq,
+				] );
+			}
+			if ( ! empty( $atts['content_padding'] ) ) {
+				$css->add_extra_css( [
+					'selector'    => '.vcex-feature-box-padding-container',
+					'property'    => 'padding',
+					'val'         => $atts['content_padding'],
+					'media_query' => ( ! empty( $atts['stack_content_padding'] ) && $min_width_mq ) ? $min_width_mq : '',
+				] );
+			}
+
+			// Stacked gap
+			if ( ! empty( $atts['stack_gap'] ) && $bk_px ) {
+				$css->add_extra_css( [
+					'selector'    => '{{WRAPPER}}',
+					'media_query' => $max_width_mq,
+					'property'    => $has_bleed ? '--vcex-gap' : 'gap',
+					'val'         => self::sanitize_gap( $atts['stack_gap'] ),
+				] );
+			}
+
+			// Custom breakpoint edits
+			if ( $has_custom_bk ) {
+
+				// Flex Direction
+				$css->add_extra_css( [
+					'selector'    => '{{WRAPPER}}',
+					'media_query' => $min_width_mq,
+					'property'    => 'flex-direction',
+					'val'         => $reverse_layout ? 'row-reverse' : 'row',
+				] );
+
+				// Vertical align
+				if ( vcex_validate_att_boolean( 'content_vertical_align', $atts ) ) {
+					$css->add_extra_css( [
+						'selector'    => '{{WRAPPER}}',
+						'media_query' => $min_width_mq,
+						'property'    => 'align-items',
+						'val'         => 'center',
+					] );
+				}
+			}
+
+			// Image Align
+			if ( $has_custom_bk && ! empty( $atts['media_align'] ) && empty( $atts['video'] ) ) {
+				$css->add_extra_css( [
+					'selector'    => '.vcex-feature-box-media',
+					'media_query' => $min_width_mq,
+					'property'    => 'text-align',
+					'val'         => $atts['media_align'],
+				] );
+			}
+
+		}
+
+		/**
+		 * Helper function used to sanitize gap property.
+		 */
+		private static function sanitize_gap( $gap ) {
+			if ( is_numeric( $gap ) ) {
+				return "{$gap}px";
+			} elseif ( 'none' === $gap ) {
+				return '0px';
+			}
+			return $gap;
 		}
 
 	}

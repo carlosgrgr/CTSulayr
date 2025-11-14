@@ -49,7 +49,13 @@ function vcex_get_shortcode_onclick_attributes( array $atts = [], string $shortc
 			}
 			break;
 		case 'post_permalink':
-			$attrs['href'] = get_permalink( vcex_get_the_ID() );
+			if ( is_post_type_viewable( get_post_type( vcex_get_the_ID() ) ) ) {
+				if ( function_exists( 'wpex_get_permalink' ) ) {
+					$attrs['href'] = wpex_get_permalink( vcex_get_the_ID() );
+				} else {
+					$attrs['href'] = get_permalink( vcex_get_the_ID() );
+				}
+			}
 			break;
 		case 'current_url':
 			global $wp;
@@ -71,6 +77,12 @@ function vcex_get_shortcode_onclick_attributes( array $atts = [], string $shortc
 				if ( ! $meta_href && vcex_is_template_edit_mode() ) {
 					$attrs['href'] = '#';
 				} elseif ( is_string( $meta_href ) ) {
+					if ( is_numeric( $meta_href )
+						&& 'attachment' === get_post_type( $meta_href )
+						&& $attachment_url = wp_get_attachment_url( $meta_href )
+					) {
+						$meta_href = $attachment_url;
+					}
 					$attrs['href'] = vcex_parse_text( $meta_href );
 				}
 			}
@@ -146,8 +158,23 @@ function vcex_get_shortcode_onclick_attributes( array $atts = [], string $shortc
 			}
 			if ( $lightbox_image && is_string( $lightbox_image ) ) {
 				$attrs['href'] = $lightbox_image;
+				if ( ! empty( $image_id ) ) {
+					$alt = vcex_get_attachment_data( $image_id, 'alt' );
+					if ( $alt ) {
+						$attrs['data-alt'] = esc_attr( $alt );
+					}
+				}
 			} elseif ( ! empty( $atts['onclick_url'] ) ) {
-				$attrs['href'] = vcex_parse_text( $atts['onclick_url'] );
+				$onclick_url = vcex_parse_text( $atts['onclick_url'] );
+				if ( is_numeric( $onclick_url )
+					&& 'attachment' === get_post_type( $onclick_url )
+					&& $attachment_url = wp_get_attachment_url( $onclick_url )
+				) {
+					$onclick_url = $attachment_url;
+				}
+				if ( $onclick_url ) {
+					$attrs['href'] = esc_url( $onclick_url );
+				}
 			}
 			break;
 		case 'lightbox_video':
@@ -177,15 +204,22 @@ function vcex_get_shortcode_onclick_attributes( array $atts = [], string $shortc
 			break;
 		case 'local_scroll':
 			if ( ! empty( $atts['onclick_url'] ) ) {
-				$url = $atts['onclick_url'];
-				if ( ! str_starts_with( $url, 'http' ) && ! str_starts_with( $url, 'www' ) ) {
-					$url = ltrim( (string) $atts['onclick_url'], '#' );
-					$url = "#{$url}";
+				$url = vcex_parse_text( $atts['onclick_url'] );
+				if ( $url ) {
+					if ( ! str_starts_with( $url, 'http' ) && ! str_starts_with( $url, 'www' ) ) {
+						$url = ltrim( $url, '#' );
+						$url = "#{$url}";
+					}
+					if ( is_callable( 'TotalTheme\Local_Scroll::normalize_id' ) ) {
+						$url = \TotalTheme\Local_Scroll::normalize_id( $url );
+					}
+					if ( $url ) {
+						$attrs['href'] = $url;
+						$attrs['class'][] = 'local-scroll-link';
+						unset( $atts['target'] );
+						unset( $atts['rel'] );
+					}
 				}
-				$attrs['href'] = $url;
-				$attrs['class'][] = 'local-scroll-link';
-				unset( $atts['target'] );
-				unset( $atts['rel'] );
 			}
 			break;
 		// @todo - add support for modal/dialogs.
@@ -199,6 +233,15 @@ function vcex_get_shortcode_onclick_attributes( array $atts = [], string $shortc
 			}
 			break;
 		*/
+		case 'toggle_playback':
+			if ( ! empty( $atts['onclick_url'] ) && $target = vcex_parse_text( $atts['onclick_url'] ) ) {
+				$target_el = ltrim( $target, '#' );
+				$attrs['href'] = "#{$target_el}";
+				$attrs['class'][] = 'wpex-toggle-playback-trigger';
+				$attrs['aria-controls'] = $target_el;
+				$attrs['aria-pressed'] = 'false';
+			}
+			break;
 		case 'toggle_element':
 			if ( ! empty( $atts['onclick_url'] ) && $target = vcex_parse_text( $atts['onclick_url'] ) ) {
 				$target_el = ltrim( $target, '#' );
@@ -208,7 +251,7 @@ function vcex_get_shortcode_onclick_attributes( array $atts = [], string $shortc
 				if ( empty( $atts['onclick_data_attributes'] )
 					|| ! str_contains( $atts['onclick_data_attributes'], 'aria-expanded' )
 				) {
-					$attrs['aria-expanded'] = 'false';
+					$attrs['aria-expanded'] = ( isset( $atts['state'] ) && 'active' === $atts['state'] ) ? 'true' : 'false';
 				}
 			}
 			break;
@@ -381,7 +424,14 @@ function vcex_get_shortcode_onclick_lightbox_settings( array $atts = [], string 
 				}
 			}
 			if ( ! empty( $lightbox_gallery_attachments ) && is_array( $lightbox_gallery_attachments ) ) {
-				$settings['gallery'] = vcex_parse_inline_lightbox_gallery( $lightbox_gallery_attachments );
+				$gallery_options = [];
+				if ( ! empty( $atts['onclick_lightbox_gallery_title'] ) ) {
+					$gallery_options['item_title'] = sanitize_text_field( $atts['onclick_lightbox_gallery_title'] );
+				}
+				if ( ! vcex_validate_att_boolean( 'onclick_lightbox_gallery_caption', $atts, true ) ) {
+					$gallery_options['item_caption'] = 'none';
+				}
+				$settings['gallery'] = vcex_parse_inline_lightbox_gallery( $lightbox_gallery_attachments, $gallery_options );
 			}
 			break;
 	}

@@ -2,12 +2,14 @@
 
 namespace TotalThemeCore\Widgets;
 
+use TotalThemeCore\WidgetBuilder;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Video widget.
  */
-class Widget_Video extends \TotalThemeCore\WidgetBuilder {
+class Widget_Video extends WidgetBuilder {
 
 	/**
 	 * Widget args.
@@ -16,8 +18,6 @@ class Widget_Video extends \TotalThemeCore\WidgetBuilder {
 
 	/**
 	 * Register widget with WordPress.
-	 *
-	 * @since 1.0
 	 */
 	public function __construct() {
 		$this->args = array(
@@ -67,12 +67,6 @@ class Widget_Video extends \TotalThemeCore\WidgetBuilder {
 
 	/**
 	 * Front-end display of widget.
-	 *
-	 * @see WP_Widget::widget()
-	 * @since 1.0
-	 *
-	 * @param array $args     Widget arguments.
-	 * @param array $instance Saved values from database.
 	 */
 	public function widget( $args, $instance ) {
 
@@ -90,30 +84,21 @@ class Widget_Video extends \TotalThemeCore\WidgetBuilder {
 
 		// Show video
 		if ( $video_url )  {
-
 			$output .= '<div class="responsive-video-wrap wpex-clr">';
-
 				$output .= wp_oembed_get( $video_url, array(
 					'width' => 270
 				) );
-
 			$output .= '</div>';
-
 		} else {
-
 			$output .= esc_html__( 'You forgot to enter a video URL.', 'total-theme-core' );
-
 		}
 
 		// Show video description if field isn't empty
 		if ( $video_description ) {
-
 			if ( true === wp_validate_boolean( $wpautop ) ) {
 				$video_description = wpautop( $video_description );
 			}
-
-			$output .= '<div class="wpex-video-widget-description text' . wp_strip_all_tags( $text_align ) . ' wpex-mt-15 wpex-last-mb-0">' . wp_kses_post( $video_description ) . '</div>';
-
+			$output .= '<div class="wpex-video-widget-description text' . sanitize_html_class( $text_align ) . ' wpex-mt-15 wpex-last-mb-0">' . wp_kses_post( $video_description ) . '</div>';
 		}
 
 		// Echo output
@@ -126,4 +111,4 @@ class Widget_Video extends \TotalThemeCore\WidgetBuilder {
 
 }
 
-register_widget( 'TotalThemeCore\Widgets\Widget_Video' );
+register_widget( 'TotalThemeCore\\Widgets\\Widget_Video' );

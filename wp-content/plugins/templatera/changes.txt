@@ -1,3 +1,6 @@
+04.08.2025 - ver 2.4.0
+   - Fix: XSS vulnerability has been addressed
+
 10.03.2025 - ver 2.3.0
    - Fix: Template save works properly
 

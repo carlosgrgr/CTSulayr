@@ -55,6 +55,11 @@ if ( ! class_exists( 'VCEX_Woocommerce_Carousel_Shortcode' ) ) {
 			$params = array(
 				// General
 				array(
+					'type' => 'vcex_notice',
+					'param_name' => 'main_notice',
+					'text' => esc_html__( 'We recommend you use the newer and more powerful "Post Cards" element instead.', 'total-theme-core' ),
+				),
+				array(
 					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Bottom Margin', 'total-theme-core' ),
 					'param_name' => 'bottom_margin',
@@ -344,7 +349,6 @@ if ( ! class_exists( 'VCEX_Woocommerce_Carousel_Shortcode' ) ) {
 					'choices' => 'font_weight',
 					'heading' => esc_html__( 'Font Weight', 'total-theme-core' ),
 					'param_name' => 'content_heading_weight',
-					'description' => esc_html__( 'Note: Not all font families support every font weight.', 'total-theme-core' ),
 					'group' => esc_html__( 'Title', 'total-theme-core' ),
 				),
 				array(

@@ -7,7 +7,7 @@ use TotalThemeCore\Vcex\Elementor;
 use TotalThemeCore\Vcex\Elementor\Register_Controls;
 use Elementor\Widget_Base;
 
-\defined( 'ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 class Image_Slider extends Widget_Base {
 

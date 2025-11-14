@@ -138,9 +138,7 @@ if ( ! class_exists( 'Vcex_Star_Rating_Shortcode' ) ) {
 					'type' => 'vcex_text_align',
 					'heading' => esc_html__( 'Align', 'total-theme-core' ),
 					'param_name' => 'align',
-					'css' => [
-						'property' => 'text_align',
-					],
+					'css' => [ 'property' => 'text_align' ],
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],

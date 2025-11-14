@@ -2,9 +2,11 @@
 
 namespace TotalThemeCore\Widgets;
 
-\defined( 'ABSPATH' ) || exit;
+use TotalThemeCore\WidgetBuilder;
 
-class Widget_Social_Profiles extends \TotalThemeCore\WidgetBuilder {
+defined( 'ABSPATH' ) || exit;
+
+class Widget_Social_Profiles extends WidgetBuilder {
 
 	/**
 	 * Widget args.
@@ -17,97 +19,97 @@ class Widget_Social_Profiles extends \TotalThemeCore\WidgetBuilder {
 	public function __construct() {
 		$this->args = [
 			'id_base' => 'wpex_fontawesome_social_widget',
-			'name'    => $this->branding() . \esc_html__( 'Social Links', 'total-theme-core' ),
+			'name'    => $this->branding() . esc_html__( 'Social Links', 'total-theme-core' ),
 			'options' => [
 				'customize_selective_refresh' => true,
 			],
 			'fields'  => [
 				[
 					'id'    => 'title',
-					'label' => \esc_html__( 'Title', 'total-theme-core' ),
+					'label' => esc_html__( 'Title', 'total-theme-core' ),
 					'type'  => 'text',
 				],
 				[
 					'id'      => 'description',
-					'label'   => \esc_html__( 'Description', 'total-theme-core' ),
+					'label'   => esc_html__( 'Description', 'total-theme-core' ),
 					'type'    => 'textarea',
 				],
 				[
 					'id'      => 'style',
-					'label'   => \esc_html__( 'Style', 'total-theme-core' ),
+					'label'   => esc_html__( 'Style', 'total-theme-core' ),
 					'type'    => 'select',
 					'default' => 'flat-color',
 					'choices' => $this->get_social_styles(),
 				],
 				[
 					'id'      => 'align',
-					'label'   => \esc_html__( 'Align', 'total-theme-core' ),
+					'label'   => esc_html__( 'Align', 'total-theme-core' ),
 					'type'    => 'select',
 					'choices' => [
-						''       => \esc_html__( 'Default', 'total-theme-core' ),
-						'left'   => \esc_html__( 'Left', 'total-theme-core' ),
-						'center' => \esc_html__( 'Center', 'total-theme-core' ),
-						'right'  => \esc_html__( 'Right', 'total-theme-core' ),
+						''   => esc_html__( 'Start', 'total-theme-core' ),
+						'center' => esc_html__( 'Center', 'total-theme-core' ),
+						'end'  => esc_html__( 'End', 'total-theme-core' ),
 					],
 				],
 				[
 					'id'      => 'target',
-					'label'   => \esc_html__( 'Link Target', 'total-theme-core' ),
+					'label'   => esc_html__( 'Link Target', 'total-theme-core' ),
 					'type'    => 'select',
 					'default' => 'blank',
 					'choices' => [
-						'blank' => \esc_html__( 'New Tab', 'total-theme-core' ),
-						'self' => \esc_html__( 'Same Tab', 'total-theme-core' ),
+						'blank' => esc_html__( 'New Tab', 'total-theme-core' ),
+						'self' => esc_html__( 'Same Tab', 'total-theme-core' ),
 					],
 				],
 				[
 					'id'      => 'space_between',
-					'label'   => \esc_html__( 'Spacing', 'total-theme-core' ),
+					'label'   => esc_html__( 'Spacing', 'total-theme-core' ),
 					'type'    => 'select',
-					'choices' => function_exists( 'wpex_utl_margins' ) ? \wpex_utl_margins() : [],
+					'choices' => function_exists( 'wpex_utl_margins' ) ? wpex_utl_margins() : [],
 				],
 				[
 					'id'          => 'size',
-					'label'       => \esc_html__( 'Dimensions', 'total-theme-core' ),
+					'label'       => esc_html__( 'Item Dimensions', 'total-theme-core' ),
+					'description' => esc_html__( 'Custom width and height for the icons.', 'total-theme-core' ),
 					'type'        => 'text',
-					'placeholder' => '40px',
+					'placeholder' => '2em',
 				],
 				[
 					'id'          => 'font_size',
-					'label'       => \esc_html__( 'Size', 'total-theme-core' ),
+					'label'       => esc_html__( 'Icon Size', 'total-theme-core' ),
 					'type'        => 'text',
 					'placeholder' => '1em',
 				],
 				[
 					'id'          => 'border_radius',
-					'label'       => \esc_html__( 'Border Radius', 'total-theme-core' ),
+					'label'       => esc_html__( 'Border Radius', 'total-theme-core' ),
+					'description' => esc_html__( 'Set the border radius for the social icons. Accepts any valid CSS value (e.g., 4px, 50%, 0.5rem) or CSS variable (e.g., var(--wpex-rounded-full)).', 'total-theme-core' ),
 					'type'        => 'text',
-					'placeholder' => '4px',
 				],
 				[
 					'id'    => 'nofollow',
-					'label' => \esc_html__( 'Nofollow?', 'total-theme-core' ),
+					'label' => esc_html__( 'Nofollow?', 'total-theme-core' ),
 					'type'  => 'checkbox',
 				],
 				[
 					'id'    => 'expand',
-					'label' => \esc_html__( 'Expand items to fit the widget area?', 'total-theme-core' ),
+					'label' => esc_html__( 'Expand items to fit the widget area?', 'total-theme-core' ),
 					'type'  => 'checkbox',
 				],
 				[
 					'id'     => 'social_profiles',
-					'label'  => \esc_html__( 'Profiles', 'total-theme-core' ),
+					'label'  => esc_html__( 'Profiles', 'total-theme-core' ),
 					'type'   => 'repeater',
 					'fields' => [
 						[
 							'id'      => 'site',
-							'label'   => \esc_html__( 'Site', 'total-theme-core' ),
+							'label'   => esc_html__( 'Site', 'total-theme-core' ),
 							'type'    => 'select',
 							'choices' => $this->get_social_choices(),
 						],
 						[
 							'id'       => 'url',
-							'label'    => \esc_html__( 'URL', 'total-theme-core' ),
+							'label'    => esc_html__( 'URL', 'total-theme-core' ),
 							'type'     => 'text',
 							'sanitize' => 'url',
 						],
@@ -126,94 +128,100 @@ class Widget_Social_Profiles extends \TotalThemeCore\WidgetBuilder {
 		$instance        = $this->parse_instance( $instance );
 		$social_profiles = $this->get_social_profiles( $instance );
 
-		// Return if no services defined.
+		// Return if no services defined
 		if ( ! $social_profiles ) {
 			return;
 		}
 
-		// Before widget hook.
-		echo \wp_kses_post( $args[ 'before_widget' ] );
+		// Before widget hook
+		echo wp_kses_post( $args[ 'before_widget' ] );
 
-		// Display widget title.
+		// Display widget title
 		$this->widget_title( $args, $instance );
 
-		// Define vars.
+		// Define vars
 		$output = '';
 		$is_legacy_preview = $this->is_legacy_preview_view_mode();
 		$type = $instance['type'] ?? ''; // deprecated
 		$style = $this->parse_style( $instance['style'], $type ); // Fallback for OLD styles pre-1.0.0
-		$space_between = ! empty( $instance['space_between'] ) ? \absint( $instance['space_between'] ) : '5';
-		$nofollow = $instance['nofollow'] ? \wp_validate_boolean( $instance['nofollow'] ) : false;
-		$expand = $instance['expand'] ? \wp_validate_boolean( $instance['expand'] ) : false;
-		$size = $instance['size'] ? \ttc_sanitize_data( $instance['size'], 'px' ) : '';
-		$font_size = $instance['font_size'] ? \ttc_sanitize_data( $instance['font_size'], 'font_size' ) : '';
-		$border_radius = $instance['border_radius'] ? \ttc_sanitize_data( $instance['border_radius'], 'border_radius' ) : '';
+		$space_between = ! empty( $instance['space_between'] ) ? absint( $instance['space_between'] ) : '5';
+		$nofollow = $instance['nofollow'] ? wp_validate_boolean( $instance['nofollow'] ) : false;
+		$expand = $instance['expand'] ? wp_validate_boolean( $instance['expand'] ) : false;
+		$size = $instance['size'] ? ttc_sanitize_data( $instance['size'], 'fallback_px' ) : '';
+		$font_size = $instance['font_size'] ? ttc_sanitize_data( $instance['font_size'], 'font_size' ) : '';
+		$border_radius = $instance['border_radius'] ? ttc_sanitize_data( $instance['border_radius'], 'border_radius' ) : '';
 		$link_target = $instance['target'] ?? '';
-
-		// Get align class.
-		$allowed_aligns = [ 'left', 'center', 'right' ];
-
-		if ( ! empty( $instance['align'] ) && in_array( $instance['align'], $allowed_aligns ) ) {
-			$align = ' text' . $instance['align'];
-		} else {
-			$align = '';
-		}
 
 		// Inline CSS
 		$inline_css = '';
 
 		if ( $font_size ) {
-			$inline_css .= 'font-size:' . \esc_attr( $font_size ) . ';';
+			$inline_css .= 'font-size:' . esc_attr( $font_size ) . ';';
 		}
 
 		if ( $size ) {
-			$inline_css .= 'height:' . \esc_attr( $size ) . ';';
+			$inline_css .= 'height:' . esc_attr( $size ) . ';';
 			if ( ! $expand ) {
-				$inline_css .= 'width:' . \esc_attr( $size ) . ';';
+				$inline_css .= 'width:' . esc_attr( $size ) . ';';
 			}
 		}
 
 		if ( $border_radius ) {
 			if ( $is_legacy_preview ) {
-				$inline_css .= 'border-radius:' . \esc_attr( $border_radius ) . ' !important;';
+				$inline_css .= 'border-radius:' . esc_attr( $border_radius ) . ' !important;';
 			} else {
-				$inline_css .= 'border-radius:' . \esc_attr( $border_radius ) . ';';
+				$inline_css .= 'border-radius:' . esc_attr( $border_radius ) . ';';
 			}
 		}
 
 		if ( $inline_css ) {
-			$css_target = $is_legacy_preview ? '.wpex-social-btn' : '#' . \esc_attr( $this->id ) .' .wpex-social-btn';
-			$output .= '<style>' . $css_target . '{' . \esc_attr( $inline_css ) . '}' . '</style>';
+			$css_target = $is_legacy_preview ? '.wpex-social-btn' : '#' . esc_attr( $this->id ) .' .wpex-social-btn';
+			$output .= '<style>' . $css_target . '{' . esc_attr( $inline_css ) . '}' . '</style>';
 		}
 
-		// Begin widget output.
-		$output .= '<div class="wpex-fa-social-widget' . \esc_attr( $align ) . '">';
+		// Begin widget output
+		$output .= '<div class="wpex-fa-social-widget">';
 
-			// Description.
-			if ( ! empty( $instance['description'] ) ) :
-
+			// Description
+			if ( ! empty( $instance['description'] ) ) {
 				$output .= '<div class="desc wpex-last-mb-0 wpex-mb-20 wpex-clr">';
-					$output .= \wp_kses_post( $instance['description'] );
+					$output .= wp_kses_post( $instance['description'] );
 				$output .= '</div>';
-
-			endif;
-
-			$ul_class = 'wpex-list-none wpex-m-0 wpex-last-mr-0 wpex-text-md';
-
-			if ( $expand ) {
-				$ul_class .= ' wpex-flex wpex-flex-wrap';
 			}
 
-			$output .= '<ul class="' . \esc_attr( $ul_class ) . '">';
+			$ul_class = "wpex-list-none wpex-m-0 wpex-last-mr-0 wpex-text-md wpex-flex wpex-flex-wrap wpex-gap-{$space_between}";
 
-				// Loop through each item in the array.
+			if ( ! $expand && ! empty( $instance['align'] ) ) {
+				$align = sanitize_text_field( $instance['align'] );
+				switch ( $align ) {
+					case 'center':
+						$ul_class .= ' wpex-justify-center';
+						break;
+					case 'end':
+						$ul_class .= ' wpex-justify-end';
+						break;
+					// Deprecated alignments
+					case 'left':
+						if ( is_rtl() ) {
+							$ul_class .= ' wpex-justify-end';
+						}
+						break;
+					case 'right':
+						$ul_class .= is_rtl() ? ' wpex-justify-start' : ' wpex-justify-end';
+						break;
+				}
+			}
+
+			$output .= '<ul class="' . esc_attr( $ul_class ) . '">';
+
+				// Loop through each item in the array
 				foreach ( $social_profiles as $profile ) :
 
 					if ( empty( $profile['site'] ) || empty( $profile['label'] ) || empty( $profile['url'] ) ) {
 						continue;
 					}
 
-					$link = ! empty( $profile['url'] ) ? \do_shortcode( $profile['url'] ) : null;
+					$link = ! empty( $profile['url'] ) ? do_shortcode( $profile['url'] ) : null;
 
 					if ( ! $link ) {
 						continue;
@@ -228,45 +236,49 @@ class Widget_Social_Profiles extends \TotalThemeCore\WidgetBuilder {
 					}
 
 					$site = $profile['site'];
+					$link = ( $link && str_contains( strtolower( $link ), 'wpexplorer' ) ) ? '#' : $link;
 
 					$a_attrs = [
-						'href'   => \esc_url( $link ),
+						'href'   => esc_url( $link ),
 						'class'  => $this->get_social_brand_classname( $site ),
 						'rel'    => $nofollow ? 'nofollow' : '',
 						'target' => $link_target,
 					];
 
-					if ( \function_exists( '\wpex_get_social_button_class' ) ) {
-						$a_attrs['class'] .= ' ' . \esc_attr( \wpex_get_social_button_class( $style ) );
+					if ( function_exists( 'wpex_get_social_button_class' ) ) {
+						$button_class = wpex_get_social_button_class( $style );
+						if ( $button_class ) {
+							$a_attrs['class'] .= ' ' . esc_attr( $button_class );
+						}
 					}
 
-					$li_class = 'wpex-inline-block wpex-mb-' . $space_between . ' wpex-mr-' . $space_between;
+					$li_class = "wpex-fa-social-widget__item";
 
 					if ( $expand ) {
 						$li_class .= ' wpex-flex-grow';
 						$a_attrs['class'] .= ' wpex-w-100';
 					}
 
-					$output .= '<li class="' . \esc_attr ( $li_class ) . '">';
+					$output .= '<li class="' . esc_attr ( $li_class ) . '">';
 
 						$output .= '<a';
 
-							if ( \function_exists( '\wpex_parse_attrs' ) ) {
-								$output .= ' ' . \wpex_parse_attrs( $a_attrs );
+							if ( function_exists( 'wpex_parse_attrs' ) ) {
+								$output .= ' ' . wpex_parse_attrs( $a_attrs );
 							} else {
 								foreach ( $a_attrs as $attr_k => $attr_v ) {
-									$output .= ' ' . $attr_k . '=' . '"' . \esc_attr( $attr_v ) . '"';
+									$output .= ' ' . $attr_k . '=' . '"' . esc_attr( $attr_v ) . '"';
 								}
 							}
 
 						$output .= '>';
 
-							if ( \function_exists( '\totaltheme_get_icon' ) ) {
-								$output .= \totaltheme_get_icon( $profile['icon'] );
+							if ( function_exists( 'totaltheme_get_icon' ) ) {
+								$output .= totaltheme_get_icon( $profile['icon'] );
 							}
 							
 							if ( ! empty( $profile['label'] ) ) {
-								$output .= '<span class="screen-reader-text">' . \esc_html( $profile['label'] ) . '</span>';
+								$output .= '<span class="screen-reader-text">' . esc_html( $profile['label'] ) . '</span>';
 							}
 
 						$output .= '</a>';
@@ -282,8 +294,8 @@ class Widget_Social_Profiles extends \TotalThemeCore\WidgetBuilder {
 		// @codingStandardsIgnoreLine
 		echo $output;
 
-		// After widget hook.
-		echo \wp_kses_post( $args[ 'after_widget' ] );
+		// After widget hook
+		echo wp_kses_post( $args[ 'after_widget' ] );
 	}
 
 	/**
@@ -313,7 +325,7 @@ class Widget_Social_Profiles extends \TotalThemeCore\WidgetBuilder {
 
 		foreach ( $profiles as $profile_k => $profile_v ) {
 			$site = $profile_v['site'] ?? null;
-			if ( empty( $site ) || ! \array_key_exists( $site, $choices ) ) {
+			if ( empty( $site ) || ! array_key_exists( $site, $choices ) ) {
 				unset( $profiles[ $profile_k ] );
 			} else {
 				$profiles[ $profile_k ]['label'] = $choices[ $site ]['name'] ?? $choices[ $site ]['label'] ?? $site;
@@ -328,7 +340,7 @@ class Widget_Social_Profiles extends \TotalThemeCore\WidgetBuilder {
 	 * Return social styles list.
 	 */
 	protected function get_social_styles() {
-		return function_exists( 'wpex_social_button_styles' ) ? \wpex_social_button_styles() : [];
+		return function_exists( 'wpex_social_button_styles' ) ? wpex_social_button_styles() : [];
 	}
 
 	/**
@@ -336,7 +348,7 @@ class Widget_Social_Profiles extends \TotalThemeCore\WidgetBuilder {
 	 */
 	protected function get_social_choices(): array {
 		$choices = [
-			'' => \esc_html__( '— Select —', 'total-theme-core' ),
+			'' => esc_html__( '— Select —', 'total-theme-core' ),
 		];
 		foreach ( $this->get_social_profile_options() as $option_k => $option_v ) {
 			$choices[ $option_k ] = $option_v['name'] ?? $option_v['label'] ?? $option_k;
@@ -349,18 +361,10 @@ class Widget_Social_Profiles extends \TotalThemeCore\WidgetBuilder {
 	 */
 	protected function get_social_profile_options(): array {
 		$options = [];
-
-		if ( \function_exists( 'wpex_social_profile_options_list' ) ) {
-			$options = \wpex_social_profile_options_list();
+		if ( function_exists( 'wpex_social_profile_options_list' ) ) {
+			$options = wpex_social_profile_options_list();
 		}
-
-		/**
-		 * Filters the list of available options for the social profiles widget.
-		 *
-		 * @deprecated 1.4.9
-		 */
-		$old_filter = (array) \apply_filters( 'wpex_social_widget_profiles', [] );
-
+		$old_filter = (array) \apply_filters( 'wpex_social_widget_profiles', [] ); // @deprecated 1.4.9
 		if ( ! empty( $old_filter ) && is_array( $old_filter ) ) {
 			foreach ( $old_filter as $k => $v ) {
 				$options[ $k ] = [
@@ -369,7 +373,6 @@ class Widget_Social_Profiles extends \TotalThemeCore\WidgetBuilder {
 				];
 			}
 		}
-
 		return $options;
 	}
 
@@ -402,9 +405,9 @@ class Widget_Social_Profiles extends \TotalThemeCore\WidgetBuilder {
 				$key = 'vimeo';
 				break;
 		}
-		return 'wpex-' . \sanitize_html_class( $key );
+		return 'wpex-' . sanitize_html_class( $key );
 	}
 
 }
 
-register_widget( 'TotalThemeCore\Widgets\Widget_Social_Profiles' );
+register_widget( 'TotalThemeCore\\Widgets\\Widget_Social_Profiles' );

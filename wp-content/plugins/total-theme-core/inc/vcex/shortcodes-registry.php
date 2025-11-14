@@ -2,7 +2,7 @@
 
 namespace TotalThemeCore\Vcex;
 
-\defined( 'ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Vcex Shortcodes Registry.
@@ -30,7 +30,7 @@ final class Shortcodes_Registry {
 	 * The instance will be created if it does not exist yet.
 	 */
 	public static function instance() {
-		if ( \is_null( self::$instance ) ) {
+		if ( is_null( self::$instance ) ) {
 			self::$instance = new self();
 		//	add_action( 'wp_body_open', [ self::$instance, 'run_test' ] );
 		}
@@ -141,20 +141,20 @@ final class Shortcodes_Registry {
 			'widget_modern_menu',
 		];
 
-		if ( \class_exists( '\acf_pro' ) ) {
+		if ( function_exists('acf_is_pro') && acf_is_pro() ) {
 			$shortcodes[] = 'acf_repeater';
 		}
 
-		if ( \function_exists( 'totaltheme_call_static' ) && \totaltheme_call_static( 'Dark_Mode', 'is_enabled' ) ) {
+		if ( function_exists( 'totaltheme_call_static' ) && totaltheme_call_static( 'Dark_Mode', 'is_enabled' ) ) {
 			$shortcodes[] = 'dark_mode_toggle';
 		}
 
-		if ( \class_exists( 'Just_Events\Plugin', false ) ) {
+		if ( class_exists( 'Just_Events\Plugin', false ) ) {
 			$shortcodes[] = 'just_events_date';
 			$shortcodes[] = 'just_events_time';
 		}
 
-		if ( \class_exists( 'WooCommerce', false ) ) {
+		if ( class_exists( 'WooCommerce', false ) ) {
 			$shortcodes[] = 'cart_link';
 			$shortcodes[] = 'woocommerce_carousel';
 			$shortcodes[] = 'woocommerce_loop_carousel';
@@ -163,17 +163,17 @@ final class Shortcodes_Registry {
 			$shortcodes[] = 'woocommerce_notices';
 		}
 
-		if ( \class_exists( 'Tribe__Events__Main', false ) ) {
+		if ( class_exists( 'Tribe__Events__Main', false ) ) {
 			$shortcodes[] = 'tribe_event_data';
 		}
 
-		if ( \class_exists( 'Disable_Elements_For_WPBakery_Page_Builder', false ) ) {
+		if ( class_exists( 'Disable_Elements_For_WPBakery_Page_Builder', false ) ) {
 			$shortcodes = self::parse_disabled_shortcodes( $shortcodes );
 		}
 
-		$shortcodes = \apply_filters( 'vcex_builder_modules', $shortcodes ); // @deprecated 1.2.8
+		$shortcodes = apply_filters( 'vcex_builder_modules', $shortcodes ); // @deprecated 1.2.8
 
-		return (array) \apply_filters( 'vcex_shortcodes_list', $shortcodes );
+		return (array) apply_filters( 'vcex_shortcodes_list', $shortcodes );
 	}
 
 	/**
@@ -184,7 +184,7 @@ final class Shortcodes_Registry {
 		if ( ! empty( $shortcodes ) ) {
 			foreach ( $shortcodes as $key => $val ) {
 				$file = '';
-				if ( \is_array( $val ) ) {
+				if ( is_array( $val ) ) {
 					$condition = $val['condition'] ?? true;
 					if ( $condition ) {
 						if ( isset( $val['file'] ) ) {
@@ -196,7 +196,7 @@ final class Shortcodes_Registry {
 				} else {
 					$file = self::SHORTCODE_CLASS_PATH . $val . '.php';
 				}
-				if ( $file && \file_exists( $file ) ) {
+				if ( $file && file_exists( $file ) ) {
 					require_once $file;
 					$this->registered_shortcodes[] = $val;
 				}
@@ -218,11 +218,11 @@ final class Shortcodes_Registry {
 		if ( is_admin() && isset( $_GET['page'] ) && 'vc-disable-elements' === $_GET['page'] ) {
 			return $shortcodes;
 		}
-		$disabled_elements = \get_option( 'wpex_wpb_disabled_elements' );
-		if ( $disabled_elements && \is_array( $disabled_elements ) ) {
+		$disabled_elements = get_option( 'wpex_wpb_disabled_elements' );
+		if ( $disabled_elements && is_array( $disabled_elements ) ) {
 			foreach ( $disabled_elements as $disabled_element ) {
-				if ( \str_starts_with( $disabled_element, 'vcex_' ) ) {
-					$disabled_element = \str_replace( 'vcex_', '', $disabled_element );
+				if ( str_starts_with( $disabled_element, 'vcex_' ) ) {
+					$disabled_element = str_replace( 'vcex_', '', $disabled_element );
 					$key = array_search( $disabled_element, $shortcodes );
 					if ( false !== $key ) {
 						unset( $shortcodes[ $key ] );
@@ -238,7 +238,7 @@ final class Shortcodes_Registry {
 	 */
 	public function run_test() {
 		foreach ( $this->get_all_registered() as $shortcode ) {
-			if ( ! \str_starts_with( $shortcode, 'wpex_' ) ) {
+			if ( ! str_starts_with( $shortcode, 'wpex_' ) ) {
 				$shortcode = "vcex_{$shortcode}";
 			}
 			print_r( do_shortcode( "<div class='container wpex-mb-50'>[{$shortcode}]</div>" ) );

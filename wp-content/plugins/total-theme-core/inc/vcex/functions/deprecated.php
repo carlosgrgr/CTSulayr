@@ -21,15 +21,15 @@ function vcex_vc_map_get_attributes( $shortcode = '', $atts = '', $class = '' ) 
 	return vcex_shortcode_atts( $shortcode, $atts, $class );
 }
 
-/* v1.4.3 */
+// 1.4.3
 function vcex_shortcodes_list() {
 	return totalthemecore_call_non_static( 'Vcex\Shortcodes_Registry', 'get_all_registered' );
 }
 
-/* v1.8.1 */
+// 1.8.1
 function vcex_get_schema_markup() {}
 
-/* 2.0 */
+// 2.0
 function vcex_asset_dir_path() {
 	_deprecated_function( 'vcex_asset_dir_path', 'Total Theme Core 2.0' );
 }
@@ -57,7 +57,12 @@ function vcex_acf_utils() {
 	_deprecated_function( 'vcex_acf_utils', 'Total Theme Core 2.0' );
 }
 
-/* 2.1 */
+// 2.1
 function vcex_get_elementor_global_color( $id ) {
 	_deprecated_function( 'vcex_get_elementor_global_color', 'Total Theme Core 2.1', 'Elementor\Helpers::get_global_color' );
+}
+
+// 2.4
+function vcex_shortcode_has_loadmore( $atts, $vcex_query ): bool {
+	_deprecated_function( 'vcex_shortcode_has_loadmore', 'Total Theme Core 2.4' );
 }

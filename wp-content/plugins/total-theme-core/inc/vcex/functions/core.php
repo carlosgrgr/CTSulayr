@@ -3,6 +3,16 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
+ * Wrapper for calling helper class methods.
+ */
+function vcex_call_helper( $class_name, $method, ...$args ) {
+	$class_name = 'TotalThemeCore\\Vcex\\Helpers\\' . $class_name;
+	if ( class_exists( $class_name ) && is_callable( [ $class_name, $method ] ) ) {
+		return $class_name::$method( ...$args );
+	}
+}
+
+/**
  * Return theme branding.
  */
 function vcex_shortcodes_branding() {
@@ -16,12 +26,21 @@ function vcex_total_exclusive_notice() {
 	return '<div class="vcex-t-exclusive">' . esc_html__( 'This is a Total theme exclusive function.', 'total-theme-core' ) . '</div>';
 }
 
-
 /**
  * Check if we are currently making Vcex ajax request.
  */
 function vcex_doing_ajax(): bool {
 	return ! empty( $_REQUEST['action'] ) && class_exists( 'TotalThemeCore\Vcex\Ajax' ) && $_REQUEST['action'] === TotalThemeCore\Vcex\Ajax::ACTION;
+}
+
+/**
+ * Theme version check.
+ */
+function vcex_theme_version_check( string $what, string $version, string $operator = '>=' ): bool {
+	if ( function_exists( 'totaltheme_version_check' ) ) {
+		return (bool) totaltheme_version_check( $what, $version, $operator );
+	}
+	return false;
 }
 
 /**
@@ -141,6 +160,16 @@ function vcex_get_template_edit_mode(): string {
 }
 
 /**
+ * Parse object id (used primarily for translating ids)
+ */
+function vcex_parse_obj_id( $id = '', $type = 'page', $key = '' ) {
+	if ( function_exists( 'wpex_parse_obj_id' ) ) {
+		return wpex_parse_obj_id( $id, $type, $key );
+	}
+	return $id;
+}
+
+/**
  * Get post type cat tax.
  */
 function vcex_get_post_type_cat_tax( $post_type = '' ) {
@@ -190,11 +219,9 @@ function vcex_vc_param_group_parse_atts( $atts_string = '' ) {
  */
 function vcex_validate_font_size( $input ) {
 	$preset_sizes = [ 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl', '6xl', '7xl' ];
-
 	if ( in_array( $input, $preset_sizes ) ) {
 		return "var(--wpex-text-{$input})";
 	}
-
 	if ( str_ends_with( $input, 'px' )
 		|| str_ends_with( $input, 'em' )
 		|| str_ends_with( $input, 'vw' )
@@ -571,26 +598,39 @@ function vcex_get_meta_value( $selector, $id = false, $format_value = true ) {
 		}
 		$id = get_the_id();
 	}
-	return get_post_meta( $id, $selector, true );
+	$meta_value = get_post_meta( $id, $selector, true );
+	if ( $meta_value && class_exists( 'WPEX_Meta_Factory', false ) && $render_callback = WPEX_Meta_Factory::get_render_callback( $selector ) ) {
+		$meta_value = call_user_func( $render_callback, $meta_value );
+	}
+	return $meta_value;
 }
 
 /**
  * A wrapper function for ACF get_field()
  */
 function vcex_get_acf_field( $selector, $id = false, $format_value = true ) {
-	if ( function_exists( 'get_field' ) ) {
+	if ( ! function_exists( 'get_field' ) ) {
+		return null;
+	}
+	if ( function_exists( 'acf_get_loop' ) && acf_get_loop() ) {
+		return get_sub_field( $selector, $format_value, false );
+	}
+	if ( str_contains( $selector, '|' ) ) {
+		$parts    = explode( '|', $selector, 2 );
+		$selector = $parts[0];
+		if ( isset( $parts[1] ) && 'option' === $parts[1] ) {
+			$id = 'option';
+		}
+	}
+	if ( ! $id ) {
 		$card = vcex_card_instance();
 		if ( ! empty( $card->term ) ) {
 			$id = $card->term;
 		} elseif ( ! $id && ! $card && ! in_the_loop() && ( is_tax() || is_tag() || is_category() ) ) {
 			$id = get_queried_object();
 		}
-		if ( function_exists( 'acf_get_loop' ) && acf_get_loop() ) {
-			return get_sub_field( $selector, $format_value, false );
-		} else {
-			return get_field( $selector, $id, $format_value );
-		}
 	}
+	return get_field( $selector, $id, $format_value );
 }
 
 /**
@@ -599,13 +639,27 @@ function vcex_get_acf_field( $selector, $id = false, $format_value = true ) {
 function vcex_get_meta_value_attachment_id( $selector, $id = false ) {
 	$attachment = vcex_get_meta_value( $selector, $id );
 	if ( ! is_numeric( $attachment ) ) {
-		if ( \is_array( $attachment ) ) {
+		if ( is_array( $attachment ) ) {
 			$attachment = $attachment['ID'] ?? $attachment['id'] ?? null;
-		} elseif ( \is_string( $attachment ) ) {
-			$attachment = \attachment_url_to_postid( $attachment );
+		} elseif ( is_string( $attachment ) ) {
+			$attachment = attachment_url_to_postid( $attachment );
 		}
 	}
 	return (int) $attachment;
+}
+
+/**
+ * Get the featured image id.
+ */
+function vcex_get_featured_image_id() {
+	$card = vcex_card_instance();
+	if ( ! empty( $card->term ) ) {
+		return vcex_get_term_thumbnail_id( $card->term->term_id ?? 0 );
+	} elseif ( ! $card && ! in_the_loop() && ( is_tax() || is_tag() || is_category() ) ) {
+		return vcex_get_term_thumbnail_id( get_queried_object() );
+	} else {
+		return get_post_thumbnail_id();
+	}
 }
 
 /**
@@ -787,9 +841,8 @@ function vcex_image_overlay( string $position = '', string $style = '', array $a
 function vcex_get_button_classes( $style = '', $color = '', $size = '', $align = '' ): string {
 	if ( function_exists( 'wpex_get_button_classes' ) ) {
 		return (string) wpex_get_button_classes( $style, $color, $size, $align );
-	} else {
-		return '';
 	}
+	return 'theme-button';
 }
 
 /**
@@ -885,10 +938,19 @@ function vcex_get_term_data() {
 /**
  * Get term thumbnail.
  */
-function vcex_get_term_thumbnail_id( $term = '' ) {
-	if ( function_exists( 'wpex_get_term_thumbnail_id' ) ) {
-		return wpex_get_term_thumbnail_id( $term );
+function vcex_get_term_thumbnail_id( $term_id = null ) {
+	if ( ! function_exists( 'wpex_get_term_thumbnail_id' ) ) {
+		return;
 	}
+	if ( null === $term_id ) {
+		$card = vcex_card_instance();
+		if ( ! empty( $card->term ) ) {
+			$term_id = $card->term->term_id ?? 0;
+		} else {
+			$term_id = get_queried_object_id();
+		}
+	}
+	return wpex_get_term_thumbnail_id( $term_id );
 }
 
 /**
@@ -1135,7 +1197,7 @@ function vcex_get_post_term_classes( $post_id = '', $post_type = '' ) {
 						$prefix = str_replace( [ "{$post_type}_category", "{$post_type}_tag" ], [ 'cat', 'tag' ], $prefix );
 					}
 					$classes[] = sanitize_html_class( "{$prefix}-{$term->term_id}" );
-					if ( $term->parent ) {
+					if ( ! empty( $term->parent ) ) {
 						$classes[] = sanitize_html_class( "{$prefix}-{$term->parent}" );
 					}
 				}
@@ -1713,7 +1775,7 @@ function vcex_get_shortcode_extra_classes( array $atts = [], string $shortcode_t
 		$extra_classes[] = vcex_parse_text_align_class( $atts['text_align'] );
 	}
 
-	if ( ! empty( $atts['font_size'] ) && ! in_array( $shortcode_tag, [ 'vcex_page_title', 'vcex_post_meta' ] ) ) {
+	if ( ! empty( $atts['font_size'] ) && ! in_array( $shortcode_tag, [ 'vcex_page_title', 'vcex_post_meta' ], true ) ) {
 		$extra_classes[] = vcex_parse_font_size_class( $atts['font_size'] );
 	}
 
@@ -1826,11 +1888,13 @@ function vcex_vc_map_add_css_animation( $args = [] ) {
 				],
 			],
 		],
-		'description' => esc_html__( 'Select a CSS animation for when the element "enters" the browser\'s viewport. Note: Animations will not work with grid filters as it creates a conflict with re-arranging items.', 'total-theme-core' ),
+		'description' => esc_html__( 'Select an animation to apply when the element enters the browser\'s viewport.', 'total-theme-core' ),
 		'editors' => [ 'wpbakery' ],
 	];
-	$args = wp_parse_args( $args, $defaults );
-	return (array) apply_filters( 'vc_map_add_css_animation', $args );
+	return (array) apply_filters(
+		'vc_map_add_css_animation',
+		wp_parse_args( $args, $defaults )
+	);
 }
 
 /**
@@ -1890,11 +1954,12 @@ function vcex_reset_postdata() {
 }
 
 /**
- * Returns icon HTML.
+ * Returns icon from shortcode atts.
  */
 function vcex_get_icon_html( $atts, $icon_location = 'icon', $extra_class = '' ) {
 	$icon_attrs = [];
 
+	// Handle extra class attributes
 	if ( $extra_class ) {
 		if ( is_array( $extra_class ) ) {
 			$icon_attrs = $extra_class;
@@ -1905,74 +1970,110 @@ function vcex_get_icon_html( $atts, $icon_location = 'icon', $extra_class = '' )
 
 	/*** Elementor Icons ***/
 	if ( isset( $atts[ $icon_location ] ) && is_array( $atts[ $icon_location ] ) ) {
-		if ( isset( $atts[ $icon_location ]['library'] ) && 'ticon' === $atts[ $icon_location ]['library'] ) {
-			if ( ! empty( $atts[ $icon_location ]['value'] ) ) {
-				return vcex_get_theme_icon_html( $atts[ $icon_location ]['value'], $icon_attrs );
-			}
+		return vcex_render_icon( $atts[ $icon_location ], '', $icon_attrs );
+	}
+
+	/*** Non-Elementor Icons ***/
+	$icon = '';
+	$icon_type = ! empty( $atts['icon_type'] ) ? sanitize_text_field( $atts['icon_type'] ) : 'ticons';
+
+	// Get custom icon  for specific library
+	// We must exclude ticons because originally there may not have been an option to choose the library type!
+	if ( 'ticons' !== $icon_type && ! empty( $atts[ "{$icon_location}_{$icon_type}" ] ) ) {
+		$icon = $atts[ "{$icon_location}_{$icon_type}" ];
+	}
+	// Parse the default icon parameter which could be anything really
+	elseif ( ! empty( $atts[ $icon_location ] ) ) {
+		$icon = (string) $atts[ $icon_location ];
+		$icon_type = vcex_get_icon_type_from_class( $icon );  // we must always make this check!
+
+		// Converts old 4.7 fontawesome icons to ticons
+		if ( 'ticons' === $icon_type ) {
+			$icon = str_replace( 'fa fa-', '', $icon );
+		}
+	}
+
+	// Determine the icon library if not explicitly passed
+	if ( ! $icon_type || 'icon' === $icon_type ) {
+		$icon_type = vcex_get_icon_type_from_class( $icon );
+	}
+
+	// Finally we can render the icon
+	return vcex_render_icon( $icon, $icon_type, $icon_attrs );
+}
+
+/**
+ * Renders a single icon.
+ */
+function vcex_render_icon( $icon = '', $icon_library = 'ticons', $extra_class = '' ) {
+	if ( ! $icon ) {
+		return;
+	}
+
+	$icon_attrs = [];
+
+	// Handle extra classes
+	if ( $extra_class ) {
+		if ( is_array( $extra_class ) ) {
+			$icon_attrs = $extra_class;
 		} else {
-			if ( is_callable( 'Elementor\Icons_Manager::render_icon' ) ) {
-				ob_start();
-					Elementor\Icons_Manager::render_icon( $atts[ $icon_location ] );
-				$icon = ob_get_clean();
-				if ( $icon ) {
-					if ( ! empty( $icon_attrs['class'] ) ) {
-						if ( is_array( $icon_attrs['class'] ) ) {
-							array_unshift( $icon_attrs['class'], 'vcex-elementor-icon wpex-icon' );
-						} elseif ( is_string( $icon_attrs['class'] ) ) {
-							$icon_attrs['class'] =  'vcex-elementor-icon wpex-icon ' . $icon_attrs['class'];
-						}
+			$icon_attrs['class'] = $extra_class;
+		}
+	}
+
+	// Handle Elementor Icons (array type)
+	if ( is_array( $icon ) ) {
+
+		// Check if it's a 'ticon' library and render theme icon
+		if ( isset( $icon['library'] ) && 'ticon' === $icon['library'] && ! empty( $icon['value'] ) ) {
+			return vcex_get_theme_icon_html( $icon['value'], $icon_attrs );
+		}
+
+		// General Elementor icon rendering
+		if ( is_callable( 'Elementor\Icons_Manager::render_icon' ) ) {
+			ob_start();
+				Elementor\Icons_Manager::render_icon( $icon );
+			$rendered_icon = ob_get_clean();
+			if ( $rendered_icon ) {
+				if ( ! empty( $icon_attrs['class'] ) ) {
+					if ( is_array( $icon_attrs['class'] ) ) {
+						array_unshift( $icon_attrs['class'], 'vcex-elementor-icon wpex-icon' );
 					} else {
-						$icon_attrs['class'] = 'vcex-elementor-icon wpex-icon';
+						$icon_attrs['class'] = 'vcex-elementor-icon wpex-icon ' . $icon_attrs['class'];
 					}
-					$icon_attrs['aria-hidden'] = 'true';
-					return vcex_parse_html( 'span', $icon_attrs, $icon );
+				} else {
+					$icon_attrs['class'] = 'vcex-elementor-icon wpex-icon';
 				}
+				$icon_attrs['aria-hidden'] = 'true';
+				return vcex_parse_html( 'span', $icon_attrs, $rendered_icon );
 			}
 		}
 	}
 
-	/*** Non-Elementor Icons ***/
-	else {
-		$icon = '';
-		$icon_type = ! empty( $atts['icon_type'] ) ? sanitize_text_field( $atts['icon_type'] ) : 'ticons';
+	// Sanitize icon - we sanitize here to allow passing strings or array
+	$icon = sanitize_text_field( $icon );
 
-		// Custom icon set for specific library
-		// We must exclude ticons because originally there may not have been an option to choose the library type!
-		if ( 'ticons' !== $icon_type && ! empty( $atts[ "{$icon_location}_{$icon_type}" ] ) ) {
-			$icon = $atts[ "{$icon_location}_{$icon_type}" ];
+	// Return if no icon
+	if ( ! is_string( $icon ) || '' === $icon || 'icon' === $icon || 'none' === $icon ) {
+		return '';
+	}
+
+	// Handle specific library (e.g. 'ticons' or 'fontawesome')
+	if ( 'ticons' === $icon_library ) {
+		$icon = str_replace( 'fa fa-', '', $icon );
+		return vcex_get_theme_icon_html( $icon, $icon_attrs );
+	} else {
+		// Enqueue necessary font for the icon library
+		if ( function_exists( 'vc_icon_element_fonts_enqueue' ) ) {
+			vc_icon_element_fonts_enqueue( $icon_library );
 		}
-
-		// Parse the default icon parameter which could be anything really
-		elseif ( ! empty( $atts[ $icon_location ] ) ) {
-			$icon = (string) $atts[ $icon_location ];
-			$icon_type = vcex_get_icon_type_from_class( $icon ); // we must always make this check!
-
-			// converts old 4.7 fontawesome icons to ticons.
-			if ( 'ticons' === $icon_type ) {
-				$icon = str_replace( 'fa fa-', '', $icon );
-			}
-		}
-
-		if ( ! $icon || 'icon' === $icon || 'none' === $icon ) {
-			return '';
-		}
-
-		if ( 'ticons' === $icon_type ) {
-			$icon_html = vcex_get_theme_icon_html( $icon, $icon_attrs );
+		$icon_attrs['aria-hidden'] = 'true';
+		if ( isset( $icon_attrs['class'] ) ) {
+			$icon_attrs['class'] .= " {$icon}";
 		} else {
-			if ( function_exists( 'vc_icon_element_fonts_enqueue' ) ) {
-				vc_icon_element_fonts_enqueue( $icon_type );
-			}
-			$icon_attrs['aria-hidden'] = 'true';
-			if ( isset( $icon_attrs['class'] ) ) {
-				$icon_attrs['class'] .= " {$icon}";
-			} else {
-				$icon_attrs['class'] = $icon;
-			}
-			$icon_html = '<span ' . trim( vcex_parse_html_attributes( $icon_attrs ) ) . '></span>';
+			$icon_attrs['class'] = $icon;
 		}
-
-		return $icon_html;
+		return '<span ' . trim( vcex_parse_html_attributes( $icon_attrs ) ) . '></span>';
 	}
 }
 

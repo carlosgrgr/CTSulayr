@@ -2,7 +2,7 @@
 
 namespace TotalThemeCore\WPBakery\Params;
 
-\defined( 'ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 /**
  * WPBakery Param => Select.
@@ -28,14 +28,14 @@ final class Select {
 
 		if ( ! empty( $settings['choices_callback'] ) ) {
 			$choices = is_callable( $settings['choices_callback'] ) ? call_user_func( $settings['choices_callback'] ) : [];
-		} elseif ( \class_exists( '\TotalThemeCore\Vcex\Setting_Choices' ) ) {
+		} elseif ( class_exists( 'TotalThemeCore\Vcex\Setting_Choices' ) ) {
 			$choices = (new \TotalThemeCore\Vcex\Setting_Choices( $type, $settings ))->get_choices();
 		}
 
 		// If we don't have any choices return a text field with the value
 		// This is important to prevent issues where the choices is empty but we had a value saved.
 		if ( empty( $choices ) ) {
-			return '<input name="' . \esc_attr( $settings['param_name'] ) . '" class="' . \esc_attr( "wpb_vc_param_value wpb-textinput {$settings['param_name']} {$settings['type']}" ) . '" type="text" value="' . \esc_attr( $value ) . '">';
+			return '<input name="' . esc_attr( $settings['param_name'] ) . '" class="' . esc_attr( "wpb_vc_param_value wpb-textinput {$settings['param_name']} {$settings['type']}" ) . '" type="text" value="' . esc_attr( $value ) . '">';
 		}
 
 		$select_class = "wpb_vc_param_value wpb-input wpb-select {$settings['param_name']} {$settings['type']}";
@@ -44,30 +44,34 @@ final class Select {
 			$select_class .= ' vcex-chosen';
 		}
 
-		$output = '<select name="' . \esc_attr( $settings['param_name'] ) . '" class="' . \esc_attr( $select_class ) .'">';
+		$output = '<select name="' . esc_attr( $settings['param_name'] ) . '" class="' . esc_attr( $select_class ) .'">';
 			$options_out = self::render_options( $choices, $value );
 			// If value isn't part of the choices we add it anyway to the select so it can be saved
 			if ( $value && ! self::$value_exists ) {
 				$option_name = $value;
 				if ( isset( $settings['choices'] ) && 'template' === $settings['choices'] ) {
-					$option_name = \get_the_title( $value ) ?: $value;
+					$option_name = get_the_title( $value ) ?: $value;
 				}
-				$options_out = '<option value="' . \esc_attr( $value )  . '" ' . \selected( $value, $value, false ) . '>' . \esc_html__( $option_name ) . '</option>' . $options_out;
+				$options_out = '<option value="' . esc_attr( $value )  . '" ' . selected( $value, $value, false ) . '>' . esc_html__( $option_name ) . '</option>' . $options_out;
 			}
 		$output .= $options_out;
 		$output .= '</select>';
 
 		if ( 'acf_repeater_templates' === $type && current_user_can( 'publish_wpex_templates' ) ) {
-			$description = \sprintf(
-				\esc_html__( '%sCreate new template &#8599;%s', 'total' ),
-				'<a class="vcex-create-template-link" href="' . \admin_url( 'post-new.php?post_type=wpex_templates&wpex_template_type=acf_repeater' ) . '" target="_blank" rel="noopener noreferrer">',
+			$description = sprintf(
+				esc_html__( '%sCreate new template &#8599;%s', 'total' ),
+				'<a class="vcex-create-template-link" href="' . admin_url( 'post-new.php?post_type=wpex_templates&wpex_template_type=acf_repeater' ) . '" target="_blank" rel="noopener noreferrer">',
 				'</a>',
 			);
-			$description .= \sprintf(
-				\esc_html__( '%sRefresh list%s', 'total' ),
+			$description .= sprintf(
+				esc_html__( '%sRefresh list%s', 'total' ),
 				'<span class="hidden"> | <a href="#" data-vcex-refresh-choices="acf_repeater_templates" data-vcex-nonce="' . wp_create_nonce( 'vcex_params_ajax' ) . '">',
 				'</a></span>'
 			);
+		}
+
+		if ( ! empty( $settings['notice'] ) ) {
+			$description = $settings['notice'];
 		}
 
 		if ( ! empty( $description ) ) {
@@ -84,7 +88,7 @@ final class Select {
 					'class' => [],
 				],
 			];
-			$output .= '<div class="vc_description vcex-param-description">' . \wp_kses( $description, $allowed_html ) . '</div>';
+			$output .= '<div class="vc_description vcex-param-description">' . wp_kses( $description, $allowed_html ) . '</div>';
 		}
 
 		return $output;
@@ -108,7 +112,7 @@ final class Select {
 				if ( $selected && ! self::$value_exists && $choice_k == $selected ) {
 					self::$value_exists = true;
 				}
-				$html .= '<option value="' . \esc_attr( $choice_k )  . '" ' . \selected( $selected, $choice_k, false ) . '>' . \esc_attr( $choice_v ) . '</option>';
+				$html .= '<option value="' . esc_attr( $choice_k )  . '" ' . selected( $selected, $choice_k, false ) . '>' . esc_attr( $choice_v ) . '</option>';
 			}
 		}
 		return $html;
@@ -121,8 +125,13 @@ final class Select {
 		if ( $value ) {
 			switch ( $choices ) {
 				case 'visibility':
-					$value = \str_replace( '-portrait', '', $value );
-					$value = \str_replace( '-landscape', '', $value );
+					$value = str_replace( '-portrait', '', $value );
+					$value = str_replace( '-landscape', '', $value );
+					break;
+				case 'font_weight':
+					if ( function_exists( 'vcex_parse_font_weight' ) ) {
+						$value = vcex_parse_font_weight( $value );
+					}
 					break;
 			}
 		}

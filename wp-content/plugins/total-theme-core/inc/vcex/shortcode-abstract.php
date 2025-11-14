@@ -2,7 +2,7 @@
 
 namespace TotalThemeCore\Vcex;
 
-\defined( 'ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 abstract class Shortcode_Abstract {
 
@@ -38,7 +38,7 @@ abstract class Shortcode_Abstract {
 
 		// Register shortcode with WP unless it's an alias.
 		if ( 'staff_social' !== static::TAG ) {
-			\add_shortcode( static::TAG, [ static::class, 'output' ] );
+			add_shortcode( static::TAG, [ static::class, 'output' ] );
 		}
 
 		// Register scripts.
@@ -52,8 +52,8 @@ abstract class Shortcode_Abstract {
 		}
 
 		// Register the shortcode with WPBakery.
-		if ( \function_exists( 'vc_lean_map' ) ) {
-			\add_action( 'vc_after_mapping', [ static::class, 'on_vc_after_mapping' ] );
+		if ( function_exists( 'vc_lean_map' ) ) {
+			add_action( 'vc_after_mapping', [ static::class, 'on_vc_after_mapping' ] );
 		}
 	}
 
@@ -62,7 +62,7 @@ abstract class Shortcode_Abstract {
 	 */
 	protected function scripts() {
 		foreach ( $this->scripts as $script_args ) {
-			\totalthemecore_call_non_static( 'TotalThemeCore\Vcex\Scripts', 'register_script', $script_args );
+			totalthemecore_call_non_static( 'TotalThemeCore\Vcex\Scripts', 'register_script', $script_args );
 		}
 	}
 
@@ -71,7 +71,7 @@ abstract class Shortcode_Abstract {
 	 */
 	protected function styles() {
 		foreach ( $this->styles as $style_args ) {
-			\totalthemecore_call_non_static( 'TotalThemeCore\Vcex\Scripts', 'register_style', $style_args );
+			totalthemecore_call_non_static( 'TotalThemeCore\Vcex\Scripts', 'register_style', $style_args );
 		}
 	}
 
@@ -94,7 +94,7 @@ abstract class Shortcode_Abstract {
 	 */
 	protected static function enqueue_styles( array $atts ): void {
 		foreach ( static::get_style_depends() as $style ) {
-			\wp_enqueue_style( $style );
+			wp_enqueue_style( $style );
 		}
 	}
 
@@ -103,7 +103,7 @@ abstract class Shortcode_Abstract {
 	 */
 	protected static function enqueue_scripts( array $atts ): void {
 		foreach ( static::get_script_depends() as $script ) {
-			\wp_enqueue_script( $script );
+			wp_enqueue_script( $script );
 		}
 	}
 
@@ -111,7 +111,7 @@ abstract class Shortcode_Abstract {
 	 * Return the shortcode parameters.
 	 */
 	public static function get_params(): array {
-		return (array) \apply_filters( 'vcex_shortcode_params', static::get_params_list(), static::TAG );
+		return (array) apply_filters( 'vcex_shortcode_params', static::get_params_list(), static::TAG );
 	}
 
 	/**
@@ -120,20 +120,35 @@ abstract class Shortcode_Abstract {
 	public static function output( $atts, $content = null, $shortcode_tag = '' ): ?string {
 		$shortcode_tag = $shortcode_tag ?: static::TAG;
 
-		if ( ! \vcex_maybe_display_shortcode( $shortcode_tag, $atts ) ) {
+		// Check if the shortcode should display
+		if ( ! vcex_maybe_display_shortcode( $shortcode_tag, $atts ) ) {
 			return null;
 		}
-	
-		if ( \method_exists( static::class, 'shortcode_atts' ) ) {
+
+		// Store raw atts for Ajaxed pagination
+		if ( isset( $atts['pagination_loadmore'] ) && vcex_validate_att_boolean( 'pagination_loadmore', $atts ) ) {
+			$raw_atts = $atts;
+		}
+
+		if ( 'vcex_image_grid' === $shortcode_tag
+			&& ! isset( $raw_atts )
+			&& isset( $atts['pagination'] )
+			&& in_array( $atts['pagination'], ['loadmore', 'infinite_scroll'], true )
+		) {
+			$raw_atts = $atts;
+		}
+
+		// Get attributes
+		if ( method_exists( static::class, 'shortcode_atts' ) ) {
 			$atts = static::shortcode_atts( $atts );
 		} else {
-			$atts = \vcex_shortcode_atts( $shortcode_tag, $atts, static::class );
+			$atts = vcex_shortcode_atts( $shortcode_tag, $atts, static::class );
 		}
 
 		// @todo add ability to define extra CSS to pass via $shortcode_css->add_css_to_array()
-		if ( \class_exists( '\TotalThemeCore\Vcex\Shortcode_CSS' ) ) {
+		if ( class_exists( 'TotalThemeCore\Vcex\Shortcode_CSS' ) ) {
 			$shortcode_css = new Shortcode_CSS( static::class, (array) $atts );
-			if ( $shortcode_css && \method_exists( static::class, 'css_pre_render' ) ) {
+			if ( $shortcode_css && method_exists( static::class, 'css_pre_render' ) ) {
 				static::css_pre_render( $shortcode_css, $atts );
 			}
 			$shortcode_style = $shortcode_css->render_style( false );
@@ -142,20 +157,24 @@ abstract class Shortcode_Abstract {
 			}
 		}
 
-		\ob_start();
-			\do_action( 'vcex_shortcode_before', $shortcode_tag, $atts );
-			include \vcex_get_shortcode_template( $shortcode_tag );
-			\do_action( 'vcex_shortcode_after', $shortcode_tag, $atts );
-		$html = (string) \ob_get_clean();
+		// Get shortcode html
+		ob_start();
+			do_action( 'vcex_shortcode_before', $shortcode_tag, $atts );
+			include vcex_get_shortcode_template( $shortcode_tag );
+			do_action( 'vcex_shortcode_after', $shortcode_tag, $atts );
+		$html = ob_get_clean();
 
+		// Enqueue scripts and styles and add inline css
 		if ( $html ) {
 			static::enqueue_styles( $atts );
 			static::enqueue_scripts( $atts );
-			if ( ! empty( $shortcode_style ) ) {
+			// @note $shortcode_style can return a bool
+			if ( ! empty( $shortcode_style ) && is_string( $shortcode_style ) ) {
 				$html = "<style>{$shortcode_style}</style>{$html}";
 			}
 		}
 
+		// Return shortcode html
 		return $html;
 	}
 
@@ -163,8 +182,8 @@ abstract class Shortcode_Abstract {
 	 * Return parameter description.
 	 */
 	protected static function param_description( string $type ): ?string {
-		if ( \wp_validate_boolean( \get_theme_mod( 'wpb_param_desc_enabled', true ) ) ) {
-			return \vcex_shortcode_param_description( $type );
+		if ( wp_validate_boolean( get_theme_mod( 'wpb_param_desc_enabled', true ) ) ) {
+			return vcex_shortcode_param_description( $type );
 		} else {
 			return '';
 		}
@@ -174,18 +193,18 @@ abstract class Shortcode_Abstract {
 	 * Runs on the vc_after_mapping_hook.
 	 */
 	public static function on_vc_after_mapping() {
-		\vc_lean_map( static::TAG, [ static::class, 'vc_lean_map' ] );
+		vc_lean_map( static::TAG, [ static::class, 'vc_lean_map' ] );
 
-		if ( ( \is_admin() || \wp_doing_ajax() ) && isset( $_POST['action'] ) ) {
+		if ( ( is_admin() || wp_doing_ajax() ) && isset( $_POST['action'] ) ) {
 			if ( 'vc_edit_form' === $_POST['action'] ) {
-				if ( \method_exists( static::class, 'vc_edit_form_fields_attributes' ) ) {
-					\add_filter( 'vc_edit_form_fields_attributes_' . static::TAG, [ static::class, 'vc_edit_form_fields_attributes' ] );
+				if ( method_exists( static::class, 'vc_edit_form_fields_attributes' ) ) {
+					add_filter( 'vc_edit_form_fields_attributes_' . static::TAG, [ static::class, 'vc_edit_form_fields_attributes' ] );
 				} elseif ( method_exists( static::class, 'parse_deprecated_attributes' ) ) {
-					\add_filter( 'vc_edit_form_fields_attributes_' . static::TAG, [ static::class, 'parse_deprecated_attributes' ] );
+					add_filter( 'vc_edit_form_fields_attributes_' . static::TAG, [ static::class, 'parse_deprecated_attributes' ] );
 				}
 			}
-			if ( \in_array( $_POST['action'], [ 'vc_get_autocomplete_suggestion', 'vc_edit_form' ], true )
-				&& \method_exists( static::class, 'register_vc_autocomplete_hooks' )
+			if ( in_array( $_POST['action'], [ 'vc_get_autocomplete_suggestion', 'vc_edit_form' ], true )
+				&& method_exists( static::class, 'register_vc_autocomplete_hooks' )
 			) {
 				static::register_vc_autocomplete_hooks();
 			}
@@ -198,7 +217,7 @@ abstract class Shortcode_Abstract {
 	public static function vc_lean_map(): array {
 		$params = [];
 
-		if ( \method_exists( static::class, 'get_params' ) ) {
+		if ( method_exists( static::class, 'get_params' ) ) {
 			$params = (array) static::get_params();
 			foreach ( $params as $param_k => $param_v ) {
 				// Remove empty params
@@ -213,7 +232,7 @@ abstract class Shortcode_Abstract {
 					// Fix some debug errors in WPB @todo remove once they update the plugin.
 					if ( ! isset( $params[ $param_k ]['value'] )
 						&& isset( $param_v['type'] )
-						&& \in_array( $param_v['type'], [ 'attach_image', 'attach_images', 'hidden', 'exploded_textarea', 'iconpicker' ], true )
+						&& in_array( $param_v['type'], [ 'attach_image', 'attach_images', 'hidden', 'exploded_textarea', 'iconpicker' ], true )
 					) {
 						$params[ $param_k ]['value'] = '';
 					}
@@ -223,27 +242,27 @@ abstract class Shortcode_Abstract {
 					unset( $params[ $param_k ]['css'] );
 				}
 			}
-			$params = \array_values( $params ); // fixes keys after unsetting - !!! very important !!!
+			$params = array_values( $params ); // fixes keys after unsetting - !!! very important !!!
 		}
 
 		$settings = [
 			'base'        => static::TAG,
 			'name'        => static::get_title(),
 			'description' => static::get_description(),
-			'category'    => \vcex_shortcodes_branding(),
+			'category'    => vcex_shortcodes_branding(),
 			'params'      => $params,
 			'icon'        => 'vcex_element-icon vcex_element-icon--' . static::TAG,
 		];
 
-		if ( \method_exists( static::class, 'get_vc_lean_map_settings' ) ) {
+		if ( method_exists( static::class, 'get_vc_lean_map_settings' ) ) {
 			$custom_settings = static::get_vc_lean_map_settings();
 			if ( $custom_settings ) {
-				$settings = \wp_parse_args( $custom_settings, $settings );
+				$settings = wp_parse_args( $custom_settings, $settings );
 			}
-			if ( isset( $settings['admin_enqueue_js'] ) && \is_admin() ) {
+			if ( isset( $settings['admin_enqueue_js'] ) && is_admin() ) {
 				$admin_view = $settings['admin_enqueue_js'];
-				if ( ! \str_ends_with( $admin_view, '.js' ) ) {
-					$settings['admin_enqueue_js'] = \vcex_get_js_file( "admin/wpbakery/views/{$admin_view}" );
+				if ( ! str_ends_with( $admin_view, '.js' ) ) {
+					$settings['admin_enqueue_js'] = vcex_get_js_file( "admin/wpbakery/views/{$admin_view}" );
 				}
 			}
 		}

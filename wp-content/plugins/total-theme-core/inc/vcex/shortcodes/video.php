@@ -71,7 +71,6 @@ if ( ! class_exists( 'Vcex_Video_Shortcode' ) ) {
 						'oembed' => esc_html__( 'WordPress oEmbed', 'total-theme-core' ),
 						'video_tag' => esc_html__( 'HTML Video (External or Self Hosted)', 'total-theme-core' ),
 					],
-					'description' => esc_html__( 'Note: The Iframe type will not allow you to insert iframe code for security reasons. You will need to provide a video URL and the <iframe> will be generated for you.', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
@@ -149,6 +148,16 @@ if ( ! class_exists( 'Vcex_Video_Shortcode' ) ) {
 					'description' => esc_html__( 'Enter your custom time in seconds (decimals allowed).', 'total-theme-core'),
 					'css' => true,
 					'editors' => [ 'wpbakery' ],
+				],
+				// Global settings
+				[
+					'type' => 'vcex_text',
+					'heading' => esc_html__( 'Video Description', 'total-theme-core' ),
+					'param_name' => 'title',
+					'description' => esc_html__( 'Used for the iframe title or video aria-label to provide an accessible description. If left blank, the video\'s description from your media library will be used as a fallback for self-hosted videos.', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'type', 'value_not_equal_to' => 'oembed' ],
+					'group' => esc_html__( 'Settings', 'total-theme-core' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				// Self Hosted/YouTube/Vimeo Settings
 				[
@@ -283,24 +292,16 @@ if ( ! class_exists( 'Vcex_Video_Shortcode' ) ) {
 				],
 				// Vimeo specific settings.
 				[
-					'type' => 'colorpicker',
+					'type' => 'vcex_colorpicker',
 					'heading' => esc_html__( 'Controls Color', 'total-theme-core' ),
 					'description' => esc_html__( 'Video must be hosted by a Starter, Standard, Advanced, Plus, Pro, Business, Premium, or Enterprise account.', 'total-theme-core' ),
 					'param_name' => 'vimeo_color',
+					'allow_global' => false,
 					'dependency' => [ 'element' => 'type', 'value' => [ 'vimeo' ] ],
 					'group' => esc_html__( 'Settings', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				// Iframe Settings
-				[
-					'type' => 'vcex_text',
-					'heading' => esc_html__( 'Iframe Title', 'total-theme-core' ),
-					'param_name' => 'title',
-					'description' => self::param_description( 'text' ),
-					'dependency' => [ 'element' => 'type', 'value' => 'iframe' ],
-					'group' => esc_html__( 'Settings', 'total-theme-core' ),
-					'editors' => [ 'wpbakery', 'elementor' ],
-				],
 				[
 					'type' => 'exploded_textarea',
 					'heading' => esc_html__( 'Iframe Extra URL Parameters', 'total-theme-core' ),
@@ -521,14 +522,13 @@ if ( ! class_exists( 'Vcex_Video_Shortcode' ) ) {
 
 			$video_html = '';
 			$type       = ! empty( $atts['type'] ) ? $atts['type'] : 'youtube';
-			$title      = ! empty( $atts['title'] ) ? vcex_parse_text( $atts['title'] ) : '';
 
-			// Check URLs.
+			// Check URLs
 			if ( ! self::verify_video_url( $video_url, $type ) ) {
 				return '';
 			}
 
-			// Generate video HTML.
+			// Generate video HTML
 			switch ( $type ) {
 				case 'oembed':
 					global $wp_embed;
@@ -557,14 +557,12 @@ if ( ! class_exists( 'Vcex_Video_Shortcode' ) ) {
 						if ( $iframe_params ) {
 							$video_url = add_query_arg( $iframe_params, $video_url );
 						}
-
 						if ( 'youtube' === $type && vcex_validate_att_boolean( 'privacy_mode', $atts ) ) {
 							$video_url = str_replace( 'youtube.com', 'youtube-nocookie.com', $video_url );
 							$video_url = str_replace( '/youtube-nocookie.com', '/www.youtube-nocookie.com', $video_url );
 						}
-
-						$video_url = str_replace( 'http://', 'https://', $video_url );
-
+						$video_url = str_replace( 'http://', 'https://', $video_url ); // Only allow safe embeds!
+						$title      = ! empty( $atts['title'] ) ? vcex_parse_text( $atts['title'] ) : '';
 						$video_html = self::get_video_iframe( $video_url, $title, $atts );
 					}
 					break;
@@ -612,10 +610,11 @@ if ( ! class_exists( 'Vcex_Video_Shortcode' ) ) {
 					if ( vcex_validate_att_boolean( 'loop', $atts ) ) {
 						$params['loop'] = '1';
 					}
-					if ( ! empty( $atts['vimeo_color'] )
-						&& $vimeo_color = sanitize_hex_color( $atts['vimeo_color'] )
-					) {
-						$params['color'] = esc_attr( ltrim( $vimeo_color, '#' ) );
+					if ( ! empty( $atts['vimeo_color'] ) ) {
+						$vimeo_color = vcex_parse_color( $atts['vimeo_color'] );
+						if ( $vimeo_color ) {
+							$params['color'] = esc_attr( ltrim( $vimeo_color, '#' ) );
+						}
 					}
 					break;
 				case 'youtube':
@@ -657,9 +656,7 @@ if ( ! class_exists( 'Vcex_Video_Shortcode' ) ) {
 				break;
 			}
 
-			$params = apply_filters( 'vcex_video_iframe_url_parameters', $params, $atts );
-
-			return (array) $params;
+			return (array) apply_filters( 'vcex_video_iframe_url_parameters', $params, $atts );
 		}
 
 		/**
@@ -711,6 +708,21 @@ if ( ! class_exists( 'Vcex_Video_Shortcode' ) ) {
 
 			if ( ! vcex_validate_att_boolean( 'allow_download', $atts, true ) ) {
 				$attrs['controlslist'] = 'nodownload';
+			}
+
+			$aria_label = '';
+
+			if ( ! empty( $atts['title'] ) ) {
+				$aria_label = $atts['title'];
+			} else {
+				$video_id = $atts['attachment_id']['id'] ?? $atts['attachment_id'] ?? '';
+				if ( $video_id && is_numeric( $video_id ) ) {
+					$aria_label = vcex_get_attachment_data( $video_id, 'description' );
+				}
+			}
+
+			if ( $aria_label ) {
+				$attrs['aria-label'] = esc_attr( vcex_parse_text( $aria_label ) );
 			}
 
 			if ( ! empty( $atts['poster_source' ] ) && 'none' !== $atts['poster_source'] ) {
@@ -812,7 +824,7 @@ if ( ! class_exists( 'Vcex_Video_Shortcode' ) ) {
 
 			$overlay_icon_safe = (string) apply_filters( 'vcex_video_overlay_play_icon', $overlay_icon_safe, $atts );
 
-			return "<div{$overlay_attrs_safe}>{$overlay_bg}{$overlay_icon_safe}</div>";;
+			return "<div{$overlay_attrs_safe}>{$overlay_bg}{$overlay_icon_safe}</div>";
 		}
 
 	}

@@ -6,6 +6,8 @@ namespace TotalThemeCore\Vcex;
 
 /**
  * Class used for query sorting based on URL params.
+ *
+ * @deprecated Since 2.4
  */
 class Url_Sort_Query {
 

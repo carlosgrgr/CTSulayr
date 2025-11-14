@@ -5,7 +5,7 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 2.1
+ * @version 2.4
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -802,8 +802,8 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 		if ( 'true' == $atts['pagination_loadmore'] ) {
 			if ( ! empty( $vcex_query->max_num_pages ) ) {
 				vcex_loadmore_scripts();
-				$atts['entry_count'] = $entry_count; // Update counter
-				$output .= vcex_get_loadmore_button( 'vcex_staff_grid', $atts, $vcex_query );
+				$raw_atts['entry_count'] = $entry_count; // Update counter
+				$output .= vcex_get_loadmore_button( 'vcex_staff_grid', $raw_atts, $vcex_query );
 			}
 		}
 

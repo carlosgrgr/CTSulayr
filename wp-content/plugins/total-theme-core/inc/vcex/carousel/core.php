@@ -2,7 +2,7 @@
 
 namespace TotalThemeCore\Vcex\Carousel;
 
-\defined( 'ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Core Carousel methods.
@@ -32,30 +32,30 @@ class Core {
 	 * Registers the carousel scripts.
 	 */
 	public static function register_scripts() {
-		\wp_register_style(
+		wp_register_style(
 			'wpex-owl-carousel',
-			\vcex_get_css_file( 'vendor/wpex-owl-carousel' ),
+			vcex_get_css_file( 'vendor/wpex-owl-carousel' ),
 			[],
 			TTC_VERSION
 		);
 
-		\wp_register_script(
+		wp_register_script(
 			'wpex-owl-carousel',
-			\vcex_get_js_file( self::use_owl_classnames() ? 'vendor/wpex-owl-carousel-classic' : 'vendor/wpex-owl-carousel' ),
+			vcex_get_js_file( self::use_owl_classnames() ? 'vendor/wpex-owl-carousel-classic' : 'vendor/wpex-owl-carousel' ),
 			[ 'jquery' ],
 			TTC_VERSION,
 			true
 		);
 
-		\wp_register_script(
+		wp_register_script(
 			'vcex-carousels',
-			\vcex_get_js_file( 'frontend/carousels' ),
+			vcex_get_js_file( 'frontend/carousels' ),
 			[ 'jquery', 'wpex-owl-carousel', 'imagesloaded' ],
 			TTC_VERSION,
 			true
 		);
 
-		\wp_localize_script( 'vcex-carousels', 'vcex_carousels', self::get_default_settings() );
+		wp_localize_script( 'vcex-carousels', 'vcex_carousels', self::get_default_settings() );
 	}
 
 	/**
@@ -63,11 +63,11 @@ class Core {
 	 */
 	public static function enqueue_scripts() {
 		foreach ( self::get_style_depends() as $style ) {
-			\wp_enqueue_style( $style );
+			wp_enqueue_style( $style );
 		}
 
 		foreach ( self::get_script_depends() as $script ) {
-			\wp_enqueue_script( $script );
+			wp_enqueue_script( $script );
 		}
 	}
 
@@ -80,234 +80,223 @@ class Core {
 			[
 				'type' => 'vcex_subheading',
 				'param_name' => 'vcex_subheading__carousel',
-				'text' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
+				'text' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 			],
 			[
 				'type' => 'vcex_ofswitch',
-				'heading' => \esc_html__( 'Arrows', 'total-theme-core' ),
+				'heading' => esc_html__( 'Arrows', 'total-theme-core' ),
 				'param_name' => 'arrows',
 				'std' => 'true',
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
 			[
 				'type' => 'vcex_select',
 				'choices' => 'carousel_arrow_styles',
-				'heading' => \esc_html__( 'Arrows Style', 'total-theme-core' ),
+				'heading' => esc_html__( 'Arrows Style', 'total-theme-core' ),
 				'param_name' => 'arrows_style',
 				'dependency' => [ 'element' => 'arrows', 'value' => 'true' ],
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
 			[
 				'type' => 'vcex_select',
 				'choices' => 'carousel_arrow_positions',
-				'heading' => \esc_html__( 'Arrows Position', 'total-theme-core' ),
+				'heading' => esc_html__( 'Arrows Position', 'total-theme-core' ),
 				'param_name' => 'arrows_position',
 				'dependency' => [ 'element' => 'arrows', 'value' => 'true' ],
 				'std' => 'default',
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
 			[
 				'type' => 'vcex_ofswitch',
-				'heading' => \esc_html__( 'Dot Navigation', 'total-theme-core' ),
+				'heading' => esc_html__( 'Dot Navigation', 'total-theme-core' ),
 				'param_name' => 'dots',
 				'std' => 'false',
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
 			[
 				'type' => 'vcex_ofswitch',
-				'heading' => \esc_html__( 'Auto Play', 'total-theme-core' ),
+				'heading' => esc_html__( 'Auto Play', 'total-theme-core' ),
 				'param_name' => 'auto_play',
 				'std' => 'false',
 				'admin_label' => true,
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
 			[
 				'type' => 'vcex_select',
-				'heading' => \esc_html__( 'Autoplay Type', 'total-theme-core' ),
+				'heading' => esc_html__( 'Autoplay Type', 'total-theme-core' ),
 				'param_name' => 'autoplay_type',
 				'std' => 'default',
 				'choices' => [
-					'default' => \esc_html__( 'Default', 'total-theme-core' ),
-					'smooth' => \esc_html__( 'Smooth', 'total-theme-core' ),
+					'default' => esc_html__( 'Default', 'total-theme-core' ),
+					'smooth' => esc_html__( 'Smooth', 'total-theme-core' ),
 				],
-				'description' => \esc_html__( 'The "Smooth" autoplay type will remove the carousel arrows and dot navigation. Items will scroll automatically and can\'t be paused, ideal for displaying logos.', 'total-theme-core' ),
+				'description' => esc_html__( 'The "Smooth" autoplay type will remove the carousel arrows and dot navigation. Items will scroll automatically and can\'t be paused, ideal for displaying logos.', 'total-theme-core' ),
 				'dependency' => [ 'element' => 'auto_play', 'value' => 'true' ],
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
 			[
 				'type' => 'vcex_text',
 				'input_type' => 'number',
-				'heading' => \esc_html__( 'Autoplay Interval Timeout', 'total-theme-core' ),
+				'heading' => esc_html__( 'Autoplay Interval Timeout', 'total-theme-core' ),
 				'param_name' => 'timeout_duration',
 				'placeholder' => $carousel_defaults['autoplayTimeout'] ?? '5000',
 				'description' => esc_html__( 'Time in milliseconds between each auto slide.', 'total-theme-core' ),
 				'dependency' => [ 'element' => 'autoplay_type', 'value' => 'default' ],
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
 			[
 				'type' => 'vcex_ofswitch',
-				'heading' => \esc_html__( 'Pause on Hover', 'total-theme-core' ),
+				'heading' => esc_html__( 'Pause on Hover', 'total-theme-core' ),
 				'param_name' => 'hover_pause',
 				'std' => 'true',
 				'dependency' => [ 'element' => 'autoplay_type', 'value' => 'default' ],
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
 			[
 				'type' => 'vcex_ofswitch',
-				'heading' => \esc_html__( 'Infinite Loop', 'total-theme-core' ),
-				'description' => \esc_html__( 'Enable to loop between slides. Disable to stop the carousel when it reaches the last slide.', 'total-theme-core' ),
+				'heading' => esc_html__( 'Infinite Loop', 'total-theme-core' ),
+				'description' => esc_html__( 'Enable to loop between slides. Disable to stop the carousel when it reaches the last slide.', 'total-theme-core' ),
 				'param_name' => 'infinite_loop',
 				'std' => 'true',
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
 			[
 				'type' => 'vcex_ofswitch',
-				'heading' => \esc_html__( 'Center Item', 'total-theme-core' ),
-				'description' => \esc_html__( 'Enable to center the middle slide when displaying slides divisible by 2.', 'total-theme-core' ),
+				'heading' => esc_html__( 'Center Item', 'total-theme-core' ),
+				'description' => esc_html__( 'Enable to center the middle slide when displaying slides divisible by 2.', 'total-theme-core' ),
 				'param_name' => 'center',
 				'std' => 'false',
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
 			[
-				'type' => 'vcex_text',
-				'input_type' => 'number',
-				'heading' => \esc_html__( 'Animation Speed', 'total-theme-core' ),
+				'type' => 'vcex_number',
+				'heading' => esc_html__( 'Animation Speed', 'total-theme-core' ),
 				'param_name' => 'animation_speed',
 				'placeholder' => $carousel_defaults['smartSpeed'] ?? '250',
-				'description' => \esc_html__( 'Time it takes to transition between slides.', 'total-theme-core' ),
+				'description' => esc_html__( 'Time it takes to transition between slides.', 'total-theme-core' ),
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
-					'label_block' => true,
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
 			[
 				'type' => 'vcex_ofswitch',
 				'std' => 'false',
-				'heading' => \esc_html__( 'Auto Width', 'total-theme-core' ),
+				'heading' => esc_html__( 'Auto Width', 'total-theme-core' ),
 				'param_name' => 'auto_width',
-				'description' => \esc_html__( 'If enabled the carousel will display items based on their width showing as many as possible.', 'total-theme-core' ),
+				'description' => esc_html__( 'If enabled the carousel will display items based on their width showing as many as possible.', 'total-theme-core' ),
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
 			[
-				'type' => 'vcex_text',
-				'input_type' => 'number',
-				'heading' => \esc_html__( 'Items To Display', 'total-theme-core' ),
+				'type' => 'vcex_number',
+				'heading' => esc_html__( 'Items To Display', 'total-theme-core' ),
 				'param_name' => 'items',
 				'placeholder' => $carousel_defaults['items'] ?? '4',
 				'dependency' => [ 'element' => 'auto_width', 'value' => 'false' ],
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
-					'label_block' => true,
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
 			[
 				'type' => 'vcex_ofswitch',
 				'std' => 'false',
-				'heading' => \esc_html__( 'Auto Height?', 'total-theme-core' ),
+				'heading' => esc_html__( 'Auto Height?', 'total-theme-core' ),
 				'param_name' => 'auto_height',
 				'dependency' => [ 'element' => 'items', 'value' => '1' ],
-				'description' => \esc_html__( 'Allows the carousel to change height based on the active item. This setting is used only when you are displaying 1 item per slide.', 'total-theme-core' ),
+				'description' => esc_html__( 'Allows the carousel to change height based on the active item. This setting is used only when you are displaying 1 item per slide.', 'total-theme-core' ),
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
 			[
-				'type' => 'vcex_text',
-				'input_type' => 'number',
-				'heading' => \esc_html__( 'Items To Scrollby', 'total-theme-core' ),
+				'type' => 'vcex_number',
+				'heading' => esc_html__( 'Items To Scrollby', 'total-theme-core' ),
 				'param_name' => 'items_scroll',
 				'placeholder' => $carousel_defaults['slideBy'] ?? '1',
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
-					'label_block' => true,
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
 			[
-				'type' => 'vcex_text',
-				'input_type' => 'number',
-				'heading' => \esc_html__( 'Tablet: Items To Display', 'total-theme-core' ),
+				'type' => 'vcex_number',
+				'heading' => esc_html__( 'Tablet: Items To Display', 'total-theme-core' ),
 				'param_name' => 'tablet_items',
 				'placeholder' => $carousel_defaults['responsive']['768']['items'] ?? '3',
 				'dependency' => [ 'element' => 'auto_width', 'value' => 'false' ],
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
-					'label_block' => true,
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
+					'placeholder' => '',
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
 			[
-				'type' => 'vcex_text',
-				'input_type' => 'number',
-				'heading' => \esc_html__( 'Mobile Landscape: Items To Display', 'total-theme-core' ),
+				'type' => 'vcex_number',
+				'heading' => esc_html__( 'Mobile Landscape: Items To Display', 'total-theme-core' ),
 				'param_name' => 'mobile_landscape_items',
 				'placeholder' => $carousel_defaults['responsive']['480']['items'] ?? '2',
 				'dependency' => [ 'element' => 'auto_width', 'value' => 'false' ],
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
-					'label_block' => true,
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
+					'placeholder' => '',
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
 			[
-				'type' => 'vcex_text',
-				'input_type' => 'number',
-				'heading' => \esc_html__( 'Mobile Portrait: Items To Display', 'total-theme-core' ),
+				'type' => 'vcex_number',
+				'heading' => esc_html__( 'Mobile Portrait: Items To Display', 'total-theme-core' ),
 				'param_name' => 'mobile_portrait_items',
 				'placeholder' => $carousel_defaults['responsive']['0']['items'] ?? '1',
 				'dependency' => [ 'element' => 'auto_width', 'value' => 'false' ],
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
-					'label_block' => true,
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
+					'placeholder' => '',
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
 			[
-				'type' => 'vcex_text',
-				'input_type' => 'number',
-				'heading' => \esc_html__( 'Margin Between Items', 'total-theme-core' ),
+				'type' => 'vcex_number',
+				'heading' => esc_html__( 'Margin Between Items', 'total-theme-core' ),
 				'description' => vcex_shortcode_param_description( 'px' ),
 				'param_name' => 'items_margin',
 				'placeholder' => $carousel_defaults['margin'] ?? '15',
 				'elementor' => [
-					'group' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
-					'label_block' => true,
+					'group' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 				],
 				'editors' => [ 'wpbakery', 'elementor' ],
 			],
@@ -374,16 +363,16 @@ class Core {
 			'prevIcon'             => self::get_prev_icon(),
 			'nextIcon'             => self::get_next_icon(),
 			'i18n'                 => [
-				'next'             => \esc_html__( 'Next', 'total-theme-core' ),
-				'prev'             => \esc_html__( 'Previous', 'total-theme-core' ),
-				'go_to_slide'      => \esc_html__( 'Go to slide', 'total-theme-core' ),
-				'nav_esc'          => \esc_html__( 'Press escape to go to the first slide', 'total-theme-core' ),
-				'instructions'     => \esc_html__( 'Use the left and right arrow keys to access the carousel navigation buttons', 'total-theme-core' ),
+				'next'             => esc_html__( 'Next', 'total-theme-core' ),
+				'prev'             => esc_html__( 'Previous', 'total-theme-core' ),
+				'go_to_slide'      => esc_html__( 'Go to slide', 'total-theme-core' ),
+				'nav_esc'          => esc_html__( 'Press escape to go to the first slide', 'total-theme-core' ),
+				'instructions'     => esc_html__( 'Use the left and right arrow keys to access the carousel navigation buttons', 'total-theme-core' ),
 			],
 		];
 
-		$settings = \apply_filters( 'vcex_carousel_default_settings', $settings ); // @deprecated
-		$settings = \apply_filters( 'totalthemecore/vcex/carousel/owl/default_options', $settings );
+		$settings = apply_filters( 'vcex_carousel_default_settings', $settings ); // @deprecated
+		$settings = apply_filters( 'totalthemecore/vcex/carousel/owl/default_options', $settings );
 
 		return self::parse_booleans( (array) $settings );
 	}
@@ -394,7 +383,7 @@ class Core {
 	 */
 	public static function get_settings( $atts, $shortcode ) {
 		$defaults = self::get_default_settings();
-		$margin   = $defaults['margin'] ?? '15';
+		$margin   = $defaults['margin'] ?? 15;
 		$slideby  = $settings['slideBy'] ?? 1;
 
 		$settings = [
@@ -404,35 +393,19 @@ class Core {
 			'loop'               => self::parse_setting_bool( 'infinite_loop', $atts, $defaults['loop'] ?? 'true' ),
 			'center'             => self::parse_setting_bool( 'center', $atts, $defaults['center'] ?? 'false' ),
 			'autoplayHoverPause' => self::parse_setting_bool( 'hover_pause', $atts, $defaults['autoplayHoverPause'] ?? 'true' ),
+			'slideBy'            => ! empty( $atts['items_scroll'] ) ? absint( $atts['items_scroll'] ) : $slideby,
 			// @important - We need to define all these settings so the inline CSS works correctly on load.
-			'margin'             => ( ! empty( $atts['items_margin'] ) || '0' === $atts['items_margin'] ) ? \absint( $atts['items_margin'] ) : $margin,
-			'slideBy'            => ! empty( $atts['items_scroll'] ) ? \absint( $atts['items_scroll'] ) : $slideby,
-			'items'              => ! empty( $atts['items'] ) ? \absint( $atts['items'] ) : '4',
+			'margin'             => ( ! empty( $atts['items_margin'] ) || '0' === $atts['items_margin'] ) ? absint( $atts['items_margin'] ) : $margin,
+			'items'              => ! empty( $atts['items'] ) ? absint( $atts['items'] ) : 4,
 			'responsive'         => $defaults['responsive'] ?? [],
 		];
 
 		if ( ! empty( $atts['animation_speed'] ) || '0' === $atts['animation_speed'] ) {
-			$settings['smartSpeed'] = \floatval( $atts['animation_speed'] );
+			$settings['smartSpeed'] = floatval( $atts['animation_speed'] );
 		}
 
 		if ( ! empty( $atts['timeout_duration'] ) ) {
-			$settings['autoplayTimeout'] = \absint( $atts['timeout_duration'] );
-		}
-
-		if ( ! empty( $atts['mobile_portrait_items'] ) ) {
-			$settings['responsive']['0']['items'] = \absint( $atts['mobile_portrait_items'] );
-		}
-
-		if ( ! empty( $atts['mobile_landscape_items'] ) ) {
-			$settings['responsive']['480']['items'] = \absint( $atts['mobile_landscape_items'] );
-		}
-
-		if ( ! empty( $atts['tablet_items'] ) ) {
-			$settings['responsive']['768']['items'] = \absint( $atts['tablet_items'] );
-		}
-
-		if ( ! empty( $atts['items'] ) ) {
-			$settings['responsive']['960']['items'] = \absint( $atts['items'] );
+			$settings['autoplayTimeout'] = absint( $atts['timeout_duration'] );
 		}
 
 		if ( ! empty( $atts['style'] ) && $atts['style'] == 'no-margins' ) {
@@ -447,15 +420,42 @@ class Core {
 			$settings['autoHeight'] = self::parse_setting_bool( 'auto_height', $atts );
 		}
 
-		if ( ! empty( $atts['animation_transition'] ) && \in_array( $atts['animation_transition'], [ 'ease-in', 'ease-out', 'linear' ], true ) ) {
-			$settings['slideTransition'] = \sanitize_text_field( $atts['animation_transition'] );
+		if ( ! empty( $atts['animation_transition'] )
+			&& in_array( $atts['animation_transition'], [ 'ease-in', 'ease-out', 'linear' ], true )
+		) {
+			$settings['slideTransition'] = sanitize_text_field( $atts['animation_transition'] );
 		}
 
-		if ( 1 === (int) $settings['items'] && ! empty( $atts['out_animation'] ) ) {
-			$settings['animateOut'] = \sanitize_text_field( $atts['out_animation'] );
+		// Items
+		$items = ( $settings_items = absint( $settings['items'] ) ) ? $settings_items : 4; // can't be zero
+
+		if ( 1 === $items ) {
+			if ( ! empty( $atts['out_animation'] ) ) {
+				$settings['animateOut'] = sanitize_text_field( $atts['out_animation'] );
+			}
 		}
 
-		// Smooth auto play.
+		if ( ! empty( $atts['mobile_portrait_items'] ) ) {
+			$settings['responsive']['0']['items'] = absint( $atts['mobile_portrait_items'] );
+		}
+
+		if ( ! empty( $atts['mobile_landscape_items'] ) ) {
+			$settings['responsive']['480']['items'] = absint( $atts['mobile_landscape_items'] );
+		} elseif ( 1 === $items ) {
+			$settings['responsive']['480']['items'] = 1;
+		}
+
+		if ( ! empty( $atts['tablet_items'] ) ) {
+			$settings['responsive']['768']['items'] = absint( $atts['tablet_items'] );
+		} elseif ( 1 === $items ) {
+			$settings['responsive']['768']['items'] = 1;
+		} elseif ( 2 === $items ) {
+			$settings['responsive']['768']['items'] = 2;
+		}
+
+		$settings['responsive']['960']['items'] = $items;
+
+		// Smooth auto play
 		if ( isset( $atts['autoplay_type'] ) && 'smooth' === $atts['autoplay_type'] ) {
 			if ( isset( $settings['smartSpeed'] ) ) {
 				$settings['autoplayTimeout'] = $settings['smartSpeed'];
@@ -471,11 +471,11 @@ class Core {
 			$settings['dots']               = false;
 		}
 		
-		$settings = \apply_filters( 'vcex_get_carousel_settings', $settings, $atts, $shortcode ); // @deprecated
-		$settings = \apply_filters( 'vcex_carousel_settings', $settings, $atts, $shortcode ); // @deprecated
-		$settings = \apply_filters( 'totalthemecore/vcex/carousel/owl/options', $settings, $atts, $shortcode );
+		$settings = apply_filters( 'vcex_get_carousel_settings', $settings, $atts, $shortcode ); // @deprecated
+		$settings = apply_filters( 'vcex_carousel_settings', $settings, $atts, $shortcode ); // @deprecated
+		$settings = (array) apply_filters( 'totalthemecore/vcex/carousel/owl/options', $settings, $atts, $shortcode );
 
-		return self::parse_settings( (array) $settings );
+		return self::parse_settings( $settings );
 	}
 
 	/**
@@ -499,9 +499,9 @@ class Core {
 	 * Parses booleans to ensure they are strings.
 	 */
 	protected static function parse_booleans( $settings = [] ) {
-		if ( \is_array( $settings ) ) {
+		if ( is_array( $settings ) ) {
 			foreach ( $settings as $key => $val ) {
-				if ( \is_bool( $val ) ) {
+				if ( is_bool( $val ) ) {
 					$settings[ $key ] = $val ? 'true' : 'false'; // settings must be strings and not actual booleans.
 				}
 			}
@@ -547,7 +547,7 @@ class Core {
 	protected static function remove_array_dups( $new_settings = [], $defaults = [] ) {
 		foreach ( $new_settings as $setting_k => $setting_v ) {
 			if ( isset( $defaults[$setting_k] )
-				&& ! \is_array( $setting_v ) // don't mess with the arrays because it breaks the responsiveness.
+				&& ! is_array( $setting_v ) // don't mess with the arrays because it breaks the responsiveness.
 				&& ( $defaults[$setting_k] === $setting_v )
 			) {
 				unset( $new_settings[$setting_k] );
@@ -566,7 +566,7 @@ class Core {
 		$defaults = self::get_default_settings();
 		$settings = self::remove_array_dups( $settings, $defaults );
 		if ( $settings ) {
-			return \esc_attr( \wp_json_encode( $settings ) );
+			return esc_attr( wp_json_encode( $settings ) );
 		}
 	}
 
@@ -574,8 +574,8 @@ class Core {
 	 * Returns prev icon html.
 	 */
 	protected static function get_prev_icon() {
-		return (string) \vcex_get_theme_icon_html(
-			\apply_filters( 'totalthemecore/vcex/carousel/owl/prev_icon_name', 'chevron-left' ),
+		return (string) vcex_get_theme_icon_html(
+			apply_filters( 'totalthemecore/vcex/carousel/owl/prev_icon_name', 'chevron-left' ),
 			'wpex-carousel__arrow-icon wpex-flex',
 			'',
 			true
@@ -586,8 +586,8 @@ class Core {
 	 * Returns next icon html.
 	 */
 	protected static function get_next_icon() {
-		return (string) \vcex_get_theme_icon_html(
-			\apply_filters( 'totalthemecore/vcex/carousel/owl/next_icon_name', 'chevron-right' ),
+		return (string) vcex_get_theme_icon_html(
+			apply_filters( 'totalthemecore/vcex/carousel/owl/next_icon_name', 'chevron-right' ),
 			'wpex-carousel__arrow-icon wpex-flex',
 			'',
 			true
@@ -599,8 +599,8 @@ class Core {
 	 */
 	public static function get_out_animation_choices(): array {
 		return [
-			''        => \esc_html__( 'Slide', 'total-theme-core' ),
-			'fadeOut' => \esc_html__( 'Fade Out', 'total-theme-core' ),
+			''        => esc_html__( 'Slide', 'total-theme-core' ),
+			'fadeOut' => esc_html__( 'Fade Out', 'total-theme-core' ),
 		];
 	}
 
@@ -608,8 +608,6 @@ class Core {
 	 * Check if we should be replacing the owl classnames.
 	 */
 	public static function use_owl_classnames(): bool {
-		// @todo should be add a check to see if 'owl-carousel' is registered so it's automatic to prevent conflicts?
-		// could cause issues with customers updating from pre 6.0
-		return (bool) \apply_filters( 'totalthemecore/vcex/carousel/owl/use_owl_classnames', vcex_has_classic_styles() );
+		return (bool) apply_filters( 'totalthemecore/vcex/carousel/owl/use_owl_classnames', vcex_has_classic_styles() );
 	}
 }

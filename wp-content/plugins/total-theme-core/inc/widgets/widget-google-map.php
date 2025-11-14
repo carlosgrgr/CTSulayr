@@ -1,16 +1,15 @@
 <?php
+
 namespace TotalThemeCore\Widgets;
+
+use TotalThemeCore\WidgetBuilder;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Google Map Widget.
- *
- * @package Total Theme Core
- * @subpackage Widgets
- * @version 1.4.3
  */
-class Widget_Google_Map extends \TotalThemeCore\WidgetBuilder {
+class Widget_Google_Map extends WidgetBuilder {
 
 	/**
 	 * Widget args.
@@ -65,12 +64,6 @@ class Widget_Google_Map extends \TotalThemeCore\WidgetBuilder {
 
 	/**
 	 * Front-end display of widget.
-	 *
-	 * @see WP_Widget::widget()
-	 * @since 1.0
-	 *
-	 * @param array $args     Widget arguments.
-	 * @param array $instance Saved values from database.
 	 */
 	public function widget( $args, $instance ) {
 		extract( $this->parse_instance( $instance ) );

@@ -97,7 +97,20 @@ final class Shortcode_Cart_Link {
 					if ( \function_exists( 'totaltheme_get_icon' ) ) {
 						$html .= '<span class="wpex-cart-link__icon wpex-mr-10"' . $icon_style . '>';
 							// @todo update to get icon from Integration\WooCommerce\Cart::get_icon_name()
-							$icon = ! empty( $atts['icon'] ) ? $atts['icon'] : \get_theme_mod( 'woo_menu_icon_class', 'shopping-cart' );
+							$icon = ! empty( $atts['icon'] ) ? $atts['icon'] : '';
+							if ( \is_array( $icon ) ) {
+								$icon_val = $icon['value'] ?? '';
+								if ( isset( $icon['library'] ) && 'ticon' !== $icon['library'] && \is_callable( 'Elementor\Icons_Manager::render_icon' ) ) {
+									ob_start();
+										\Elementor\Icons_Manager::render_icon( $icon_val );
+									$icon = ob_get_clean();
+								} else {
+									$icon = $icon_val;
+								}
+							}
+							if ( ! $icon ) {
+								$icon = \get_theme_mod( 'woo_menu_icon_class', 'shopping-cart' );
+							}
 							$html .= \apply_filters( 'wpex_cart_link_shortcode_icon', \totaltheme_get_icon( $icon ), $atts );
 						$html .= '</span>';
 					}
@@ -143,10 +156,6 @@ final class Shortcode_Cart_Link {
 	 * Get inline style.
 	 */
 	public static function get_inline_style( $atts ) {
-		if ( ! empty( $atts['font_family'] ) && \function_exists( 'wpex_enqueue_font' ) ) {
-			\wpex_enqueue_font( $atts['font_family'] );
-		}
-
 		if ( \function_exists( 'vcex_inline_style' ) ) {
 			return \vcex_inline_style( [
 				'font_family' => $atts['font_family'] ?? null,

@@ -455,6 +455,13 @@ if ( ! class_exists( 'Vcex_Image_Banner_Shortcode' ) ) {
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
+					'type' => 'vcex_font_size',
+					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
+					'param_name' => 'heading_font_size',
+					'css' => [ 'selector' => '.vcex-ib-title', 'property' => 'font-size' ],
+					'group' => esc_html__( 'Heading', 'total-theme-core' ),
+				],
+				[
 					'type' => 'vcex_font_family_select',
 					'heading' => esc_html__( 'Font Family', 'total-theme-core' ),
 					'param_name' => 'heading_font_family',
@@ -462,10 +469,19 @@ if ( ! class_exists( 'Vcex_Image_Banner_Shortcode' ) ) {
 					'group' => esc_html__( 'Heading', 'total-theme-core' ),
 				],
 				[
-					'type' => 'vcex_font_size',
-					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
-					'param_name' => 'heading_font_size',
-					'css' => [ 'selector' => '.vcex-ib-title', 'property' => 'font-size' ],
+					'type' => 'vcex_select',
+					'choices' => 'font_weight',
+					'heading' => esc_html__( 'Font Weight', 'total-theme-core' ),
+					'param_name' => 'heading_font_weight',
+					'css' => [ 'selector' => '.vcex-ib-title', 'property' => 'font-weight' ],
+					'group' => esc_html__( 'Heading', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_select',
+					'choices' => 'font_style',
+					'heading' => esc_html__( 'Font Style', 'total-theme-core' ),
+					'param_name' => 'heading_font_style',
+					'css' => [ 'selector' => '.vcex-ib-title', 'property' => 'font-style' ],
 					'group' => esc_html__( 'Heading', 'total-theme-core' ),
 				],
 				[
@@ -482,22 +498,6 @@ if ( ! class_exists( 'Vcex_Image_Banner_Shortcode' ) ) {
 					'param_name' => 'heading_letter_spacing',
 					'choices' => 'letter_spacing',
 					'css' => [ 'selector' => '.vcex-ib-title', 'property' => 'letter-spacing' ],
-					'group' => esc_html__( 'Heading', 'total-theme-core' ),
-				],
-				[
-					'type' => 'vcex_select',
-					'choices' => 'font_weight',
-					'heading' => esc_html__( 'Font Weight', 'total-theme-core' ),
-					'param_name' => 'heading_font_weight',
-					'css' => [ 'selector' => '.vcex-ib-title', 'property' => 'font-weight' ],
-					'group' => esc_html__( 'Heading', 'total-theme-core' ),
-				],
-				[
-					'type' => 'vcex_ofswitch',
-					'std' => 'false',
-					'heading' => esc_html__( 'Italic', 'total-theme-core' ),
-					'param_name' => 'heading_italic',
-					'css' => [ 'selector' => '.vcex-ib-title', 'property' => 'italic' ],
 					'group' => esc_html__( 'Heading', 'total-theme-core' ),
 				],
 				[
@@ -536,6 +536,13 @@ if ( ! class_exists( 'Vcex_Image_Banner_Shortcode' ) ) {
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
+					'type' => 'vcex_font_size',
+					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
+					'param_name' => 'caption_font_size',
+					'css' => [ 'selector' => '.vcex-ib-caption', 'property' => 'font-size' ],
+					'group' => esc_html__( 'Caption', 'total-theme-core' ),
+				],
+				[
 					'type' => 'vcex_font_family_select',
 					'heading' => esc_html__( 'Font Family', 'total-theme-core' ),
 					'param_name' => 'caption_font_family',
@@ -543,10 +550,19 @@ if ( ! class_exists( 'Vcex_Image_Banner_Shortcode' ) ) {
 					'group' => esc_html__( 'Caption', 'total-theme-core' ),
 				],
 				[
-					'type' => 'vcex_font_size',
-					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
-					'param_name' => 'caption_font_size',
-					'css' => [ 'selector' => '.vcex-ib-caption', 'property' => 'font-size' ],
+					'type' => 'vcex_select',
+					'choices' => 'font_weight',
+					'heading' => esc_html__( 'Font Weight', 'total-theme-core' ),
+					'param_name' => 'caption_font_weight',
+					'css' => [ 'selector' => '.vcex-ib-caption', 'property' => 'font-weight' ],
+					'group' => esc_html__( 'Caption', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_select',
+					'choices' => 'font_style',
+					'heading' => esc_html__( 'Font Style', 'total-theme-core' ),
+					'param_name' => 'caption_font_style',
+					'css' => [ 'selector' => '.vcex-ib-caption', 'property' => 'font-style' ],
 					'group' => esc_html__( 'Caption', 'total-theme-core' ),
 				],
 				[
@@ -563,22 +579,6 @@ if ( ! class_exists( 'Vcex_Image_Banner_Shortcode' ) ) {
 					'param_name' => 'caption_letter_spacing',
 					'choices' => 'letter_spacing',
 					'css' => [ 'selector' => '.vcex-ib-caption', 'property' => 'letter-spacing' ],
-					'group' => esc_html__( 'Caption', 'total-theme-core' ),
-				],
-				[
-					'type' => 'vcex_select',
-					'choices' => 'font_weight',
-					'heading' => esc_html__( 'Font Weight', 'total-theme-core' ),
-					'param_name' => 'caption_font_weight',
-					'css' => [ 'selector' => '.vcex-ib-caption', 'property' => 'font-weight' ],
-					'group' => esc_html__( 'Caption', 'total-theme-core' ),
-				],
-				[
-					'type' => 'vcex_ofswitch',
-					'std' => 'false',
-					'heading' => esc_html__( 'Italic', 'total-theme-core' ),
-					'param_name' => 'caption_italic',
-					'css' => [ 'selector' => '.vcex-ib-caption', 'property' => 'italic' ],
 					'group' => esc_html__( 'Caption', 'total-theme-core' ),
 				],
 				[
@@ -677,6 +677,29 @@ if ( ! class_exists( 'Vcex_Image_Banner_Shortcode' ) ) {
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
+					'type' => 'vcex_select_buttons',
+					'std' => 'alt',
+					'heading' => esc_html__( 'Lightbox Title', 'total-theme-core' ),
+					'param_name' => 'onclick_lightbox_gallery_title',
+					'choices' => array(
+						'false' => esc_html__( 'None', 'total-theme-core' ),
+						'alt' => esc_html__( 'Alt', 'total-theme-core' ),
+						'title' => esc_html__( 'Title', 'total-theme-core' ),
+					),
+					'group' => esc_html__( 'Link', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'onclick', 'value' => 'lightbox_gallery' ],
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
+					'type' => 'vcex_ofswitch',
+					'std' => 'true',
+					'heading' => esc_html__( 'Lightbox Caption', 'total-theme-core' ),
+					'param_name' => 'onclick_lightbox_gallery_caption',
+					'group' => esc_html__( 'Link', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'onclick', 'value' => 'lightbox_gallery' ],
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
 					'type' => 'textfield',
 					'heading' => esc_html__( 'Title Attribute', 'total-theme-core' ),
 					'param_name' => 'onclick_title',
@@ -723,7 +746,7 @@ if ( ! class_exists( 'Vcex_Image_Banner_Shortcode' ) ) {
 					'heading' => esc_html__( 'Video Overlay Icon?', 'total-theme-core' ),
 					'param_name' => 'onclick_video_overlay_icon',
 					'group' => esc_html__( 'Link', 'total-theme-core' ),
-					'description' => esc_html__( 'More options available under Style > Image Overlay.', 'total-theme-core' ),
+					'notice' => esc_html__( 'More options available under Style > Image Overlay.', 'total-theme-core' ),
 					'dependency' => [ 'element' => 'onclick', 'value' => 'lightbox_video' ],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
@@ -804,17 +827,6 @@ if ( ! class_exists( 'Vcex_Image_Banner_Shortcode' ) ) {
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
-					'type' => 'vcex_font_family_select',
-					'heading' => esc_html__( 'Font Family', 'total-theme-core' ),
-					'param_name' => 'button_font_family',
-					'css' => [
-						'selector' => '.vcex-ib-button-inner',
-						'property' => 'font-family',
-					],
-					'group' => esc_html__( 'Button', 'total-theme-core' ),
-					'dependency' => [ 'element' => 'button', 'value' => 'true' ],
-				],
-				[
 					'type' => 'vcex_button_styles',
 					'heading' => esc_html__( 'Style', 'total-theme-core' ),
 					'param_name' => 'button_style',
@@ -831,14 +843,45 @@ if ( ! class_exists( 'Vcex_Image_Banner_Shortcode' ) ) {
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
+					'type' => 'vcex_font_size',
+					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
+					'param_name' => 'button_font_size',
+					'css' => [ 'selector' => '.vcex-ib-button-inner', 'property' => 'font-size' ],
+					'group' => esc_html__( 'Button', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'button', 'value' => 'true' ],
+				],
+				[
+					'type' => 'vcex_font_family_select',
+					'heading' => esc_html__( 'Font Family', 'total-theme-core' ),
+					'param_name' => 'button_font_family',
+					'css' => [ 'selector' => '.vcex-ib-button-inner', 'property' => 'font-family' ],
+					'group' => esc_html__( 'Button', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'button', 'value' => 'true' ],
+				],
+				[
 					'type' => 'vcex_select',
 					'choices' => 'font_weight',
 					'heading' => esc_html__( 'Font Weight', 'total-theme-core' ),
 					'param_name' => 'button_font_weight',
-					'css' => [
-						'selector' => '.vcex-ib-button-inner',
-						'property' => 'font-weight',
-					],
+					'css' => [ 'selector' => '.vcex-ib-button-inner', 'property' => 'font-weight' ],
+					'group' => esc_html__( 'Button', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'button', 'value' => 'true' ],
+				],
+				[
+					'type' => 'vcex_select',
+					'choices' => 'font_style',
+					'heading' => esc_html__( 'Font Style', 'total-theme-core' ),
+					'param_name' => 'button_font_style',
+					'css' => [ 'selector' => '.vcex-ib-button-inner', 'property' => 'font-style' ],
+					'group' => esc_html__( 'Button', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'button', 'value' => 'true' ],
+				],
+				[
+					'type' => 'vcex_preset_textfield',
+					'heading' => esc_html__( 'Line Height', 'total-theme-core' ),
+					'param_name' => 'button_line_height',
+					'choices' => 'line_height',
+					'css' => [ 'selector' => '.vcex-ib-button-inner', 'property' => 'line-height' ],
 					'group' => esc_html__( 'Button', 'total-theme-core' ),
 					'dependency' => [ 'element' => 'button', 'value' => 'true' ],
 				],
@@ -848,23 +891,6 @@ if ( ! class_exists( 'Vcex_Image_Banner_Shortcode' ) ) {
 					'param_name' => 'button_letter_spacing',
 					'choices' => 'letter_spacing',
 					'css' => [ 'selector' => '.vcex-ib-button-inner', 'property' => 'letter-spacing' ],
-					'group' => esc_html__( 'Button', 'total-theme-core' ),
-					'dependency' => [ 'element' => 'button', 'value' => 'true' ],
-				],
-				[
-					'type' => 'vcex_font_size',
-					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
-					'param_name' => 'button_font_size',
-					'css' => [ 'selector' => '.vcex-ib-button-inner', 'property' => 'font-size' ],
-					'group' => esc_html__( 'Button', 'total-theme-core' ),
-					'dependency' => [ 'element' => 'button', 'value' => 'true' ],
-				],
-				[
-					'type' => 'vcex_ofswitch',
-					'std' => 'false',
-					'heading' => esc_html__( 'Italic', 'total-theme-core' ),
-					'param_name' => 'button_italic',
-					'css' => [ 'selector' => '.vcex-ib-button-inner', 'property' => 'italic' ],
 					'group' => esc_html__( 'Button', 'total-theme-core' ),
 					'dependency' => [ 'element' => 'button', 'value' => 'true' ],
 				],
@@ -912,7 +938,7 @@ if ( ! class_exists( 'Vcex_Image_Banner_Shortcode' ) ) {
 					'group' => esc_html__( 'Button', 'total-theme-core' ),
 					'css' => [
 						'selector' => '.vcex-ib-button-inner',
-						'property' => 'width', // max-width won't work.
+						'property' => 'width', // max-width won't work
 					],
 					'dependency' => [ 'element' => 'button', 'value' => 'true' ],
 					'editors' => [ 'wpbakery', 'elementor' ],
@@ -1000,9 +1026,12 @@ if ( ! class_exists( 'Vcex_Image_Banner_Shortcode' ) ) {
 					'dependency' => [ 'element' => 'image_zoom', 'value' => 'true' ],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
-				// Hidden items.
+				// Deprecated items
 				[ 'type' => 'hidden', 'param_name' => 'link' ],
 				[ 'type' => 'hidden', 'param_name' => 'link_local_scroll' ],
+				[ 'type' => 'hidden', 'param_name' => 'heading_italic' ],
+				[ 'type' => 'hidden', 'param_name' => 'caption_italic' ],
+				[ 'type' => 'hidden', 'param_name' => 'button_italic' ],
 			];
 		}
 
@@ -1051,6 +1080,15 @@ if ( ! class_exists( 'Vcex_Image_Banner_Shortcode' ) ) {
 					}
 				}
 				unset( $atts['link'] );
+			}
+			$italics = [ 'heading', 'caption', 'button' ];
+			foreach ( $italics as $italic ) {
+				if ( ! empty( $atts[ "{$italic}_italic" ] ) ) {
+					if ( 'true' === $atts[ "{$italic}_italic" ] && empty( $atts[ "{$italic}_font_style" ] ) ) {
+						$atts[ "{$italic}_font_style" ] = 'italic';
+					}
+					unset( $atts[ "{$italic}_italic" ] );
+				}
 			}
 			return $atts;
 		}

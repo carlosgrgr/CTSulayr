@@ -132,12 +132,14 @@ if ( ! class_exists( 'VCEX_Post_Terms_Shortcode' ) ) {
 					'type' => 'textfield',
 					'heading' => esc_html__( 'Animation Duration', 'total-theme-core' ),
 					'param_name' => 'animation_duration',
+					'css' => true,
 					'description' => esc_html__( 'Enter your custom time in seconds (decimals allowed).', 'total-theme-core' ),
 				],
 				[
 					'type' => 'textfield',
 					'heading' => esc_html__( 'Animation Delay', 'total-theme-core' ),
 					'param_name' => 'animation_delay',
+					'css' => true,
 					'description' => esc_html__( 'Enter your custom time in seconds (decimals allowed).', 'total-theme-core' ),
 				],
 				// Link
@@ -176,14 +178,6 @@ if ( ! class_exists( 'VCEX_Post_Terms_Shortcode' ) ) {
 				],
 				[
 					'type' => 'textfield',
-					'heading' => esc_html__( 'Before Text', 'total-theme-core' ),
-					'param_name' => 'before_text',
-					'dependency' => [ 'element' => 'style', 'value' => 'inline' ],
-					'group' => esc_html__( 'Style', 'total-theme-core' ),
-					'editors' => [ 'wpbakery', 'elementor' ],
-				],
-				[
-					'type' => 'textfield',
 					'heading' => esc_html__( 'Custom Spacer', 'total-theme-core' ),
 					'param_name' => 'spacer',
 					'dependency' => [ 'element' => 'style', 'value' => 'inline' ],
@@ -195,6 +189,7 @@ if ( ! class_exists( 'VCEX_Post_Terms_Shortcode' ) ) {
 					'type' => 'textfield',
 					'heading' => esc_html__( 'Width', 'total-theme-core' ),
 					'param_name' => 'max_width',
+					'css' => [ 'property' => 'max-width' ],
 					'description' => self::param_description( 'width' ),
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
@@ -224,11 +219,12 @@ if ( ! class_exists( 'VCEX_Post_Terms_Shortcode' ) ) {
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
-				// Button Styling.
+				// Button Styling
 				[
 					'type' => 'vcex_subheading',
-					'text' => esc_html__( 'Button/Link Styles', 'total-theme-core' ),
+					'text' => esc_html__( 'Buttons', 'total-theme-core' ),
 					'param_name' => 'vcex_subheading__button-styles',
+					'dependency' => [ 'element' => 'style', 'value' => 'buttons' ],
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
@@ -242,7 +238,7 @@ if ( ! class_exists( 'VCEX_Post_Terms_Shortcode' ) ) {
 				],
 				[
 					'type' => 'vcex_button_styles',
-					'heading' => esc_html__( 'Button Style', 'total-theme-core' ),
+					'heading' => esc_html__( 'Style', 'total-theme-core' ),
 					'param_name' => 'button_style',
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'dependency' => [ 'element' => 'style', 'value' => 'buttons' ],
@@ -278,9 +274,6 @@ if ( ! class_exists( 'VCEX_Post_Terms_Shortcode' ) ) {
 					'param_name' => 'button_background',
 					'dependency' => [ 'element' => 'style', 'value' => 'buttons' ],
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
-					'extra_choices' => [
-						esc_html__( 'Term Color', 'total-theme-core' ) => 'term_color',
-					],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
@@ -289,9 +282,6 @@ if ( ! class_exists( 'VCEX_Post_Terms_Shortcode' ) ) {
 					'param_name' => 'button_hover_background',
 					'dependency' => [ 'element' => 'style', 'value' => 'buttons' ],
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
-					'extra_choices' => [
-						esc_html__( 'Term Color', 'total-theme-core' ) => 'term_color',
-					],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
@@ -299,9 +289,6 @@ if ( ! class_exists( 'VCEX_Post_Terms_Shortcode' ) ) {
 					'heading' => esc_html__( 'Color', 'total-theme-core' ),
 					'param_name' => 'button_color',
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
-					'extra_choices' => [
-						esc_html__( 'Term Color', 'total-theme-core' ) => 'term_color',
-					],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
@@ -309,15 +296,13 @@ if ( ! class_exists( 'VCEX_Post_Terms_Shortcode' ) ) {
 					'heading' => esc_html__( 'Color: Hover', 'total-theme-core' ),
 					'param_name' => 'button_hover_color',
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
-					'extra_choices' => [
-						esc_html__( 'Term Color', 'total-theme-core' ) => 'term_color',
-					],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
 					'type' => 'vcex_preset_textfield',
 					'heading' => esc_html__( 'Border Radius', 'total-theme-core' ),
 					'param_name' => 'button_border_radius',
+					'css' => [ 'selector' => '.vcex-post-terms__item--btn', 'property' => 'border-radius' ],
 					'dependency' => [ 'element' => 'style', 'value' => 'buttons' ],
 					'choices' => 'border_radius',
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
@@ -328,30 +313,61 @@ if ( ! class_exists( 'VCEX_Post_Terms_Shortcode' ) ) {
 					'heading' => esc_html__( 'Padding', 'total-theme-core' ),
 					'param_name' => 'button_padding',
 					'description' => self::param_description( 'padding' ),
+					'css' => [ 'selector' => '.vcex-post-terms__item--btn', 'property' => 'padding' ],
 					'dependency' => [ 'element' => 'style', 'value' => 'buttons' ],
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
 					'type' => 'vcex_trbl',
-					'heading' => esc_html__( 'Margin', 'total-theme-core' ),
+					'heading' => esc_html__( 'Margin (Deprecated, use Spacing instead)', 'total-theme-core' ),
 					'param_name' => 'button_margin',
 					'description' => self::param_description( 'margin' ),
+					'css' => [ 'selector' => '.vcex-post-terms__item--btn', 'property' => 'margin' ],
 					'dependency' => [ 'element' => 'style', 'value' => 'buttons' ],
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				// Before
+				[
+					'type' => 'textfield',
+					'heading' => esc_html__( 'Before Text', 'total-theme-core' ),
+					'param_name' => 'before_text',
+					'dependency' => [ 'element' => 'style', 'value' => 'inline' ],
+					'group' => esc_html__( 'Before', 'total-theme-core' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
+					'type' => 'vcex_select',
+					'choices' => 'font_weight',
+					'heading' => esc_html__( 'Font Weight', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'before_text', 'not_empty' => true ],
+					'css' => [ 'selector' => '.vcex-post-terms__label', 'property' => 'font-weight' ],
+					'param_name' => 'before_text_font_weight',
+					'group' => esc_html__( 'Before', 'total-theme-core' ),
+				],
+				[
+					'type' => 'vcex_colorpicker',
+					'heading' => esc_html__( 'Color', 'total-theme-core' ),
+					'param_name' => 'before_text_color',
+					'css' => [ 'selector' => '.vcex-post-terms__label', 'property' => 'color' ],
+					'dependency' => [ 'element' => 'before_text', 'not_empty' => true ],
+					'editors' => [ 'wpbakery', 'elementor' ],
+					'group' => esc_html__( 'Before', 'total-theme-core' ),
 				],
 				// Typography
 				[
 					'type' => 'vcex_font_family_select',
 					'heading' => esc_html__( 'Font Family', 'total-theme-core' ),
 					'param_name' => 'button_font_family',
+					'css' => [ 'selector' => ':is(.vcex-post-terms__label,.vcex-post-terms__item)', 'property' => 'font-family' ],
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 				],
 				[
 					'type' => 'textfield',
 					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
 					'param_name' => 'button_font_size',
+					'css' => [ 'selector' => ':is(.vcex-post-terms__label,.vcex-post-terms__item)', 'property' => 'font-size' ],
 					'description' => self::param_description( 'font_size' ),
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 				],
@@ -360,6 +376,7 @@ if ( ! class_exists( 'VCEX_Post_Terms_Shortcode' ) ) {
 					'heading' => esc_html__( 'Letter Spacing', 'total-theme-core' ),
 					'param_name' => 'button_letter_spacing',
 					'choices' => 'letter_spacing',
+					'css' => [ 'selector' => ':is(.vcex-post-terms__label,.vcex-post-terms__item)', 'property' => 'letter-spacing' ],
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 				],
 				[
@@ -367,6 +384,7 @@ if ( ! class_exists( 'VCEX_Post_Terms_Shortcode' ) ) {
 					'heading' => esc_html__( 'Text Transform', 'total-theme-core' ),
 					'param_name' => 'button_text_transform',
 					'choices' => 'text_transform',
+					'css' => [ 'selector' => ':is(.vcex-post-terms__label,.vcex-post-terms__item)', 'property' => 'text-transform' ],
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 				],
 				[
@@ -374,6 +392,7 @@ if ( ! class_exists( 'VCEX_Post_Terms_Shortcode' ) ) {
 					'choices' => 'font_weight',
 					'heading' => esc_html__( 'Font Weight', 'total-theme-core' ),
 					'param_name' => 'button_font_weight',
+					'css' => [ 'selector' => ':is(.vcex-post-terms__label,.vcex-post-terms__item)', 'property' => 'font-weight' ],
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 				],
 				[
@@ -410,9 +429,65 @@ if ( ! class_exists( 'VCEX_Post_Terms_Shortcode' ) ) {
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 					'editors' => [ 'elementor' ],
 				],
-				// Deprecated params.
+				// Deprecated params
 				[ 'type' => 'hidden', 'param_name' => 'target' ],
 			];
+		}
+
+		/**
+		 * Advanced CSS.
+		 */
+		protected static function css_pre_render( $css, $atts = [] ): void {
+
+			// Must set colors here since term_color must be applied to each item using the utility classes
+			$settings = [
+				'button_color'            => [ '.vcex-post-terms__item', 'color' ],
+				'button_hover_color'      => [ '.vcex-post-terms__item:hover', 'color' ],
+				'button_background'       => [ '.vcex-post-terms__item--btn', 'background' ],
+				'button_hover_background' => [ '.vcex-post-terms__item--btn:hover', 'background' ],
+			];
+			foreach ( $settings as $k => $v ) {
+				if ( ! empty( $atts[ $k ] ) ) {
+					if ( 'term_color' !== $atts[ $k ] ) {
+						$args = [
+							'selector' => $v[0],
+							'property' => $v[1],
+							'val'      => $atts[ $k ],
+						];
+						if ( 'button_hover_color' === $k || 'button_hover_background' === $k ) {
+							$non_hover = str_replace( '_hover', '', $k );
+							if ( isset( $atts[ $non_hover ] ) && 'term_color' === $atts[ $non_hover ] ) {
+								$args['important'] = true; // must override the has-term-{id}-hover class
+							}
+						}
+						$css->add_extra_css( $args );
+					}
+				}
+			}
+
+			// Link underlines - requires specific checks
+			$has_underline       = ! empty( $atts['link_underline'] );
+			$has_hover_underline = ! empty( $atts['link_underline_hover'] );
+
+			if ( $has_underline || $has_hover_underline ) {
+				$style = ! empty( $atts['style'] ) ? $atts['style'] : 'buttons';
+				if ( 'buttons' !== $style || ( 'buttons' === $style && isset( $atts['button_style'] ) && 'plain-text' === $atts['button_style'] ) ) {
+					if ( $has_underline ) {
+						$css->add_extra_css( [
+							'selector' => '{{WRAPPER}}',
+							'property' => '--wpex-link-decoration-line',
+							'val'      => vcex_validate_boolean( $atts['link_underline'] ) ? 'underline' : 'none',
+						] );
+					}
+					if ( $has_hover_underline ) {
+						$css->add_extra_css( [
+							'selector' => '{{WRAPPER}}',
+							'property' => '--wpex-hover-link-decoration-line',
+							'val'      => vcex_validate_boolean( $atts['link_underline_hover'] ) ? 'underline' : 'none',
+						] );
+					}
+				}
+			}
 		}
 
 		/**
@@ -429,6 +504,10 @@ if ( ! class_exists( 'VCEX_Post_Terms_Shortcode' ) ) {
 			if ( empty( $atts['archive_link_target'] ) && ! empty( $atts['target'] ) ) {
 				$atts['archive_link_target'] = $atts['target'];
 				unset( $atts['target'] );
+			}
+			// @since 2.4 - updated to use flex container with justify instead of float this provides backwards RTL compat
+			if ( ! empty( $atts['button_align'] ) && is_rtl() && in_array( $atts['button_align'], [ 'left', 'right' ], true ) ) {
+				$atts['button_align'] = ( 'right' === $atts['button_align'] ) ? 'left' : 'right';
 			}
 			return $atts;
 		}

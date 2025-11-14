@@ -5,46 +5,49 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 6.0
+ * @version 6.4
  */
 
 defined( 'ABSPATH' ) || exit;
 
-// Extract shortcode attributes.
+// Extract shortcode attributes
 extract( $atts );
 
-// Declare and sanitize main vars.
+// Declare and sanitize main vars
 $output = '';
 $avatar_size = ! empty( $avatar_size ) ? absint( $avatar_size ) : '150';
 $show_name = vcex_validate_att_boolean( 'name', $atts, true );
 $show_social_links = vcex_validate_att_boolean( 'social_links', $atts, true );
 $show_description = vcex_validate_att_boolean( 'description', $atts, true );
 
-// Get user roles to query.
+// Define query args
+$query_args = [
+	'order' => in_array( strtoupper( $order ), [ 'ASC', 'DESC' ], true) ? $order : 'ASC',
+	'orderby' => in_array( strtoupper( $orderby ), [ 'display_name', 'nicename', 'login', 'registered', 'ID', 'email' ], true) ? $orderby : 'display_name',
+];
+
+// Get user roles to query
 if ( ! empty( $role__in ) ) {
 	if ( is_string( $role__in ) ) {
 		$role__in = preg_split( '/\,[\s]*/', $role__in );
 	}
-} else {
-	$role__in = [];
+	if ( is_array( $role__in ) ) {
+		$query_args['role__in'] = array_map( 'sanitize_key', $role__in );
+	}
 }
 
-// Query arguments.
-$args = apply_filters( 'vcex_users_grid_query_args', [
-	'order'    => $order,
-	'orderby'  => $orderby,
-	'role__in' => $role__in,
-] );
+// Query arguments
+$query_args = apply_filters( 'vcex_users_grid_query_args', $query_args );
 
-// Get users.
-$users = get_users( $args );
+// Get users
+$users = get_users( $query_args );
 
 // No users, lets bail completely!
 if ( ! $users ) {
 	return;
 }
 
-// Get onclick action (with fallback for old link_to_author_page param).
+// Get onclick action (with fallback for old link_to_author_page param)
 if ( isset( $link_to_author_page ) ) {
 	if ( 'true' == $link_to_author_page ) {
 		$onclick = 'author_page';
@@ -53,7 +56,7 @@ if ( isset( $link_to_author_page ) ) {
 	}
 }
 
-// Display header if enabled.
+// Display header if enabled
 if ( $header ) {
 	$output .= vcex_get_module_header( [
 		'style'   => $header_style,
@@ -62,7 +65,7 @@ if ( $header ) {
 	] );
 }
 
-// Wrap classes.
+// Wrap classes
 $wrap_classes = [
 	'vcex-module',
 	'vcex-users-grid',
@@ -94,26 +97,26 @@ if ( $el_class = vcex_get_extra_class( $classes ) ) {
 
 $wrap_classes = vcex_parse_shortcode_classes( $wrap_classes, 'vcex_users_grid', $atts );
 
-// Begin output.
+// Begin output
 $output .= '<div class="' . esc_attr( $wrap_classes ) . '"' . vcex_get_unique_id( $unique_id ) . '>';
 
-	// Define loop vars.
+	// Define loop vars
 	$first_run = true;
 	$counter = 0;
 
-	// Loop through users.
+	// Loop through users
 	foreach ( $users as $user ) :
 
 		$counter++;
 
-		$author_link = ''; // Reset after each user.
+		$author_link = ''; // Reset after each user
 
-		// Get author description (check early so we can check later if the description should display or not).
+		// Get author description (check early so we can check later if the description should display or not)
 		if ( 'true' == $description ) {
 			$get_description = get_the_author_meta( 'description', $user->ID );
 		}
 
-		// Get entry classes.
+		// Get entry classes
 		if ( $first_run ) {
 
 			$entry_classes = [
@@ -147,17 +150,17 @@ $output .= '<div class="' . esc_attr( $wrap_classes ) . '"' . vcex_get_unique_id
 
 		$entry_classes['counter'] = 'col-' . sanitize_html_class( $counter ) . '';
 
-		// Befin entry output.
+		// Befin entry output
 		$output .= '<div class="' . esc_attr( implode( ' ', $entry_classes ) ) . '">';
 
 			if ( $entry_css ) {
 				$output .= '<div class="entry-css-wrap wpex-clr ' . esc_attr( vcex_vc_shortcode_custom_css_class( $entry_css ) ) .'">';
 			}
 
-			// Avatar.
+			// Avatar
 			if ( 'true' == $avatar ) {
 
-				//$atts['media_type'] = 'thumbnail'; // users grid doesn't need to check for hover styles or overlays.
+				//$atts['media_type'] = 'thumbnail'; // users grid doesn't need to check for hover styles or overlays
 
 				if ( $first_run ) {
 
@@ -187,7 +190,7 @@ $output .= '<div class="' . esc_attr( $wrap_classes ) . '"' . vcex_get_unique_id
 						}
 					}
 
-					// Avatar image classes.
+					// Avatar image classes
 					$avatar_classes = [
 						'wpex-align-middle',
 					];
@@ -200,7 +203,7 @@ $output .= '<div class="' . esc_attr( $wrap_classes ) . '"' . vcex_get_unique_id
 						'class' => implode( ' ', $avatar_classes ),
 					] );
 
-					// Meta based avatar.
+					// Meta based avatar
 					if ( ! empty( $avatar_meta_field ) ) {
 						if ( $avatar = get_user_meta( $user->ID, $avatar_meta_field, true ) ) {
 							if ( is_numeric( $avatar ) ) {
@@ -219,7 +222,7 @@ $output .= '<div class="' . esc_attr( $wrap_classes ) . '"' . vcex_get_unique_id
 						}
 					}
 
-					// Standard avatar.
+					// Standard avatar
 					else {
 						$output .= get_avatar( $user->ID, $avatar_size, '', $user->display_name, $avatar_args );
 					}
@@ -238,7 +241,7 @@ $output .= '<div class="' . esc_attr( $wrap_classes ) . '"' . vcex_get_unique_id
 
 				$details_output = '';
 
-				// Display name.
+				// Display name
 				if ( $show_name ) {
 					if ( $first_run ) {
 						$name_tag_escaped = $name_heading_tag ? tag_escape( $name_heading_tag ) : 'div';
@@ -266,7 +269,7 @@ $output .= '<div class="' . esc_attr( $wrap_classes ) . '"' . vcex_get_unique_id
 					$details_output .= '</' . $name_tag_escaped . '>';
 				}
 
-				// Description.
+				// Description
 				if ( $show_description ) {
 					if ( $first_run ) {
 						$description_css = vcex_inline_style( [
@@ -283,7 +286,7 @@ $output .= '<div class="' . esc_attr( $wrap_classes ) . '"' . vcex_get_unique_id
 					}
 				}
 
-				// Display social.
+				// Display social
 				if ( $show_social_links ) {
 					if ( $first_run ) {
 						$social_links_inline_css = vcex_inline_style( [
@@ -319,16 +322,16 @@ $output .= '<div class="' . esc_attr( $wrap_classes ) . '"' . vcex_get_unique_id
 				$output .= '</div>';
 			}
 
-		$output .= '</div>'; // end entry.
+		$output .= '</div>'; // end entry
 
-		// Clear counter.
+		// Clear counter
 		if ( $counter === (int) $columns ) {
 			$counter = 0;
 		}
 
 		$first_run = false;
 
-	// End loop.
+	// End loop
 	endforeach;
 
 $output .= '</div>';

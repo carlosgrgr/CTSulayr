@@ -74,6 +74,14 @@ if ( ! class_exists( 'Vcex_Image_Gallery_Slider' ) ) {
 					'group' => esc_html__( 'Gallery', 'total-theme-core' ),
 				],
 				[
+					'type' => 'vcex_ofswitch',
+					'std' => 'false',
+					'heading' => esc_html__( 'Include Featured Image', 'total-theme-core' ),
+					'param_name' => 'include_featured',
+					'group' => esc_html__( 'Gallery', 'total-theme-core' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				[
 					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Bottom Margin', 'total-theme-core' ),
 					'param_name' => 'bottom_margin',

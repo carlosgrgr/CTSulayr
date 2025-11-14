@@ -5,20 +5,20 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 2.0
+ * @version 2.4
  */
 
 defined( 'ABSPATH' ) || exit;
 
 $output = '';
-$entry_count = ! empty( $atts['entry_count'] ) ? $atts['entry_count'] : 0;
+$entry_count = ! empty( $atts['entry_count'] ) ? absint( $atts['entry_count'] ) : 0;
 
 // Extract shortcode attributes.
 extract( $atts );
 
 // Add paged attribute for load more button (used for WP_Query).
 if ( ! empty( $atts['paged'] ) ) {
-	$atts['paged'] = $atts['paged'];
+	$atts['paged'] = floatval( $atts['paged'] ?? 1 );
 }
 
 // Build query.
@@ -62,7 +62,7 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 	$filter_taxonomy = ( $filter_taxonomy && taxonomy_exists( $filter_taxonomy ) ) ? $filter_taxonomy : '';
 	$equal_heights_grid = ( 'true' == $equal_heights_grid && $columns > '1' ) ? true : false;
 	$title_tag_escaped = $title_tag ? tag_escape( $title_tag ) : apply_filters( 'vcex_grid_default_title_tag', 'h2', $atts );
-	$has_loadmore = vcex_validate_att_boolean( 'pagination_loadmore', $atts, false );
+	$has_loadmore = vcex_validate_att_boolean( 'pagination_loadmore', $atts );
 	$has_more_arrow = vcex_validate_att_boolean( 'readmore_rarr', $atts );
 
 	// Disable css animation when filter is enabled.
@@ -185,7 +185,7 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 			if ( $has_loadmore ) {
 				$filter_post_types = $post_types;
 			} else {
-				$filter_post_types = array();
+				$filter_post_types = [];
 				$post_ids = wp_list_pluck( $vcex_query->posts, 'ID' );
 				foreach ( $post_ids as $post_id ) {
 					$type = get_post_type( $post_id );
@@ -306,7 +306,7 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 									if ( $filter_active_category == "type-{$type}" ) {
 										$selected = ' selected';
 									}
-									$output .= '<option value=".type-' . esc_attr( $type ) . '"' . $selected . '>' . get_post_type_object( $type )->labels->name . '</option>';
+									$output .= '<option value=".type-' . esc_attr( $type ) . '"' . $selected . '>' . esc_html( get_post_type_object( $type )->labels->name ) . '</option>';
 								}
 							}
 
@@ -875,25 +875,19 @@ if ( $vcex_query && $vcex_query->have_posts() ) :
 		/* [ Pagination ]
 		/*--------------------------------*/
 
-		// Load more button.
-		if ( $has_loadmore ) {
-
-			if ( ! empty( $vcex_query->max_num_pages ) ) {
-				vcex_loadmore_scripts();
-				$atts['entry_count'] = $entry_count; // Update counter
-				$output .= vcex_get_loadmore_button( 'vcex_post_type_grid', $atts, $vcex_query );
-			}
-
+		// Load more button
+		if ( $has_loadmore && ! empty( $vcex_query->max_num_pages ) ) {
+			vcex_loadmore_scripts();
+			$atts['entry_count'] = $entry_count; // Update counter
+			$output .= vcex_get_loadmore_button( 'vcex_post_type_grid', $raw_atts, $vcex_query );
 		}
 
-		// Standard pagination.
+		// Standard pagination
 		elseif ( vcex_validate_boolean( $pagination )
 			|| vcex_validate_boolean( $auto_query )
 			|| ( vcex_validate_boolean( $custom_query ) && ! empty( $vcex_query->query['pagination'] ) )
 		) {
-
 			$output .= vcex_pagination( $vcex_query, false );
-
 		}
 
 	$output .= '</div>'; // End module classes.

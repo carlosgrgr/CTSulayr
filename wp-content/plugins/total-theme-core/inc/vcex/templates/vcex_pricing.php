@@ -5,7 +5,7 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 2.0
+ * @version 2.4.2
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -15,11 +15,12 @@ extract( $atts );
 $style = ! empty( $atts['style'] ) ? sanitize_text_field( $atts['style'] ) : 'default';
 $css_animation = ! empty( $atts['css_animation'] ) ? sanitize_text_field( $atts['css_animation'] ) : '';
 $is_featured = vcex_validate_att_boolean( 'featured', $atts );
+$text_align = ! empty( $atts['text_align'] ) ? sanitize_text_field( $text_align ) : '';
 
-// Define output var.
+// Define output var
 $output = '';
 
-// Define pricing item classes.
+// Define pricing item classes
 $class = [
 	'vcex-module',
 	'vcex-pricing',
@@ -32,11 +33,16 @@ $class = [
 switch ( $style ) {
 	case 'default':
 		$class[] = 'wpex-surface-1';
+		if ( ! $text_align ) {
+			$text_align = 'center';
+		}
 		break;
 	case 'alt-1':
 		$class[] = 'wpex-surface-1';
 		$class[] = 'wpex-p-40';
-		$class[] = 'wpex-text-center';
+		if ( ! $text_align ) {
+			$text_align = 'center';
+		}
 		$class[] = 'wpex-border-solid';
 		if ( $is_featured ) {
 			$class[] = 'wpex-border-2';
@@ -62,7 +68,9 @@ switch ( $style ) {
 		break;
 	case 'alt-3':
 		$class[] = 'wpex-p-25';
-		$class[] = 'wpex-text-center';
+		if ( ! $text_align ) {
+			$text_align = 'center';
+		}
 		if ( $is_featured ) {
 			$class[] = 'wpex-bg-accent';
 		} else {
@@ -73,6 +81,10 @@ switch ( $style ) {
 		}
 		$class[] = 'wpex-last-mb-0';
 		break;
+}
+
+if ( $text_align ) {
+	$class[] = vcex_parse_text_align_class( $text_align );
 }
 
 if ( $is_featured ) {
@@ -172,7 +184,6 @@ $output .= '<div' . vcex_parse_html_attributes( $wrap_attrs ) . '>';
 				$plan_class[] = 'wpex-border-solid';
 				$plan_class[] = 'wpex-py-15';
 				$plan_class[] = 'wpex-px-20';
-				$plan_class[] = 'wpex-text-center';
 				$plan_class[] = 'wpex-uppercase';
 				$plan_class[] = 'wpex-bold';
 				break;
@@ -228,7 +239,6 @@ $output .= '<div' . vcex_parse_html_attributes( $wrap_attrs ) . '>';
 				$cost_class[] = 'wpex-border-x';
 				$cost_class[] = 'wpex-border-solid';
 				$cost_class[] = 'wpex-border-surface-4';
-				$cost_class[] = 'wpex-text-center';
 				break;
 		}
 
@@ -303,36 +313,60 @@ $output .= '<div' . vcex_parse_html_attributes( $wrap_attrs ) . '>';
 	/*-----------------------------------------------------*/
 	if ( $content ) {
 
-		$content_class = [
-			'vcex-pricing-content',
-			'wpex-flex-grow',
-			'wpex-last-mb-0',
-			'wpex-clr',
-		];
+		$content_safe = vcex_the_content( $content );
 
-		switch ( $style ) {
-			case 'alt-1':
-				$content_class[] = 'wpex-mb-25';
-				break;
-			case 'alt-2':
-				$content_class[] = 'wpex-my-20';
-				break;
-			case 'alt-3':
-				$content_class[] = 'wpex-my-20';
-				break;
-			case 'default':
-				$content_class[] = 'wpex-text-center';
-				$content_class[] = 'wpex-p-20';
-				$content_class[] = 'wpex-border';
-				$content_class[] = 'wpex-border-solid';
-				$content_class[] = 'wpex-border-surface-4';
-				break;
+		if ( $content_safe ) {
+
+			$content_class = [ 'vcex-pricing-content' ];
+
+			if ( ! empty( $atts['features_icon'] ) && $features_icon_html = vcex_render_icon( $atts['features_icon'] ) ) {
+				$content_class[] = 'vcex-pricing-content-w-icons';
+				$li_class = 'wpex-flex wpex-gap-10';
+				if ( $text_align && 'left' !== $text_align ) {
+					if ( 'right' === $text_align ) {
+						$li_class .= ' wpex-flex-row-reverse';
+					} else {
+						$align_items_class = vcex_parse_justify_content_class( $text_align );
+						if ( $align_items_class ) {
+							$li_class .= " {$align_items_class}";
+						}
+					}
+				}
+				$content_safe = str_replace(
+					'<li>',
+					'<li class="' . esc_attr( $li_class ) . '"><span class="vcex-pricing-icon-wrap">' . $features_icon_html . '</span>',
+					$content_safe
+				);
+			}
+
+			$content_class[] = 'wpex-flex-grow';
+			$content_class[] = 'wpex-last-mb-0';
+
+			switch ( $style ) {
+				case 'alt-1':
+					$content_class[] = 'wpex-mb-25';
+					break;
+				case 'alt-2':
+					$content_class[] = 'wpex-my-20';
+					break;
+				case 'alt-3':
+					$content_class[] = 'wpex-my-20';
+					break;
+				case 'default':
+					$content_class[] = 'wpex-p-20';
+					$content_class[] = 'wpex-border';
+					$content_class[] = 'wpex-border-solid';
+					$content_class[] = 'wpex-border-surface-4';
+					break;
+			}
+
+			$content_class[] = 'wpex-clr';
+
+			$content_class = apply_filters( 'vcex_pricing_content_class', $content_class, $atts );
+
+			$output .= '<div class="' . esc_attr( implode( ' ', $content_class ) ) . '">' . $content_safe . '</div>';
+
 		}
-
-		$content_class = apply_filters( 'vcex_pricing_content_class', $content_class, $atts );
-
-		// Display features
-		$output .= '<div class="' . esc_attr( implode( ' ', $content_class ) ) . '">' . vcex_the_content( $content ) . '</div>';
 	}
 
 	/*-----------------------------------------------------*/
@@ -351,15 +385,12 @@ $output .= '<div' . vcex_parse_html_attributes( $wrap_attrs ) . '>';
 		];
 
 		switch ( $style ) {
-			case 'alt-1':
-				break;
 			case 'default':
 				$button_wrap_class[] = 'wpex-p-20';
 				$button_wrap_class[] = 'wpex-border';
 				$button_wrap_class[] = 'wpex-border-t-0';
 				$button_wrap_class[] = 'wpex-border-solid';
 				$button_wrap_class[] = 'wpex-border-surface-4';
-				$button_wrap_class[] = 'wpex-text-center';
 				break;
 		}
 

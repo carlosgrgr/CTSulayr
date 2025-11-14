@@ -5,7 +5,7 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 2.0.2
+ * @version 2.4
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -14,12 +14,12 @@ if ( function_exists( 'wpex_social_profile_options_list' ) ) {
 	$social_profiles = (array) wpex_social_profile_options_list();
 }
 
-// Social profile array can't be empty.
+// Social profile array can't be empty
 if ( empty( $social_profiles ) ) {
 	return;
 }
 
-// Define main vars.
+// Define main vars
 $html       = '';
 $expand     = vcex_validate_att_boolean( 'expand', $atts );
 $show_label = vcex_validate_att_boolean( 'show_label', $atts );
@@ -85,17 +85,17 @@ switch ( $source ) {
 		break;
 }
 
-// Loop is required.
+// Loop is required
 if ( empty( $loop ) || ! is_array( $loop ) ) {
 	return;
 }
 
-// Wrap attributes.
+// Wrap attributes
 $wrap_attrs = [
 	'id' => ! empty( $atts['unique_id'] ) ? $atts['unique_id'] : null,
 ];
 
-// Wrap classes.
+// Wrap classes
 $wrap_classes = [
 	'vcex-social-links',
 ];
@@ -184,7 +184,7 @@ if ( ! empty( $atts['width'] ) ) {
 
 $a_style = vcex_inline_style( $a_style_args, false );
 
-// Reset social button widths/paddings.
+// Reset social button widths/paddings
 if ( $expand || $show_label ) {
 
 	if ( $expand ) {
@@ -216,32 +216,34 @@ if ( ! empty( $atts['css'] ) ) {
 	$link_class[] = vcex_vc_shortcode_custom_css_class( $atts['css'] );
 }
 
-// Add attributes to array.
+// Add attributes to array
 $wrap_attrs['class'] = vcex_parse_shortcode_classes( $wrap_classes, 'vcex_social_links', $atts );
 
-// Begin output.
+// Begin output
 $html .= '<div' . vcex_parse_html_attributes( $wrap_attrs ) . '>';
 
-	// Loop through social profiles.
-	foreach ( $loop as $key => $val ) {
-		if ( ! array_key_exists( $key, $social_profiles) || 'googleplus' === $key || 'google-plus' === $key ) {
+	// Loop through social profiles
+	foreach ( $loop as $site => $link ) {
+		if ( ! array_key_exists( $site, $social_profiles) || 'googleplus' === $site || 'google-plus' === $site ) {
 			continue;
 		}
 
-		// Sanitize classname.
-		$profile_class = $key;
+		// Sanitize classname
+		$profile_class = $site;
 
-		// Link output.
-		if ( $val ) {
+		// Link output
+		if ( $link ) {
 
-			$label = $social_profiles[ $key ]['label'] ?? ucfirst( sanitize_text_field( $key ) );
+			$label = $social_profiles[ $site ]['label'] ?? ucfirst( sanitize_text_field( $site ) );
 
-			if ( str_contains( $val, '@' ) && ! str_starts_with( $val, 'mailto:' ) && is_email( $val ) ) {
-				$val = "mailto:{$val}";
+			if ( str_contains( $link, '@' ) && ! str_starts_with( $link, 'mailto:' ) && is_email( $link ) ) {
+				$link = "mailto:{$link}";
 			}
 
+			$link = ( $link && str_contains( strtolower( $link ), 'wpexplorer' ) ) ? '#' : $link;
+
 			$a_attrs = [
-				'href'   => vcex_parse_text( $val ),
+				'href'   => vcex_parse_text( $link ),
 				'class'  => implode( ' ', $link_class ) . " wpex-{$profile_class}",
 				'target' => $atts['link_target'] ?? null,
 			];
@@ -254,11 +256,11 @@ $html .= '<div' . vcex_parse_html_attributes( $wrap_attrs ) . '>';
 
 				$icon_class = 'vcex-social-links__icon';
 
-				// Provide backwards compatibility for icon class.
-				if ( ! empty( $social_profiles[ $key ]['icon_class'] ) ) {
-					$html .= vcex_get_theme_icon_html( $social_profiles[ $key ]['icon_class'], $icon_class );
+				// Provide backwards compatibility for icon class
+				if ( ! empty( $social_profiles[ $site ]['icon_class'] ) ) {
+					$html .= vcex_get_theme_icon_html( $social_profiles[ $site ]['icon_class'], $icon_class );
 				} else {
-					$html .= vcex_get_theme_icon_html( $social_profiles[ $key ]['icon'] ?? $key, $icon_class );
+					$html .= vcex_get_theme_icon_html( $social_profiles[ $site ]['icon'] ?? $site, $icon_class );
 				}
 
 				if ( $show_label ) {

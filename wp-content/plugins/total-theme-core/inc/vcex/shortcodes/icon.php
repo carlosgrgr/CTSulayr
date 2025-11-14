@@ -387,6 +387,29 @@ if ( ! class_exists( 'Vcex_Icon_Shortcode' ) ) {
 					'editors' => [ 'wpbakery', 'elementor' ],
 				),
 				array(
+					'type' => 'vcex_select_buttons',
+					'std' => 'alt',
+					'heading' => esc_html__( 'Lightbox Title', 'total-theme-core' ),
+					'param_name' => 'onclick_lightbox_gallery_title',
+					'choices' => array(
+						'false' => esc_html__( 'None', 'total-theme-core' ),
+						'alt' => esc_html__( 'Alt', 'total-theme-core' ),
+						'title' => esc_html__( 'Title', 'total-theme-core' ),
+					),
+					'group' => esc_html__( 'Link', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'onclick', 'value' => 'lightbox_gallery' ],
+					'editors' => [ 'wpbakery', 'elementor' ],
+				),
+				array(
+					'type' => 'vcex_ofswitch',
+					'std' => 'true',
+					'heading' => esc_html__( 'Lightbox Caption', 'total-theme-core' ),
+					'param_name' => 'onclick_lightbox_gallery_caption',
+					'group' => esc_html__( 'Link', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'onclick', 'value' => 'lightbox_gallery' ],
+					'editors' => [ 'wpbakery', 'elementor' ],
+				),
+				array(
 					'type' => 'textfield',
 					'heading' => esc_html__( 'Aria Label', 'total-theme-core' ),
 					'param_name' => 'aria_label',
@@ -499,9 +522,6 @@ if ( ! class_exists( 'Vcex_Icon_Shortcode' ) ) {
 
 		/**
 		 * WooCommerce params.
-		 *
-		 * @note Only register these when WooCommerce is enabled because the dependent cart_toggle setting
-		 * 		 is only available when WooCommerce is active.
 		 */
 		private static function get_woo_params(): array {
 			if ( ! class_exists( 'WooCommerce', false ) ) {

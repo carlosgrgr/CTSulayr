@@ -4,18 +4,22 @@
  *
  * @package Total WordPress Theme
  * @subpackage Total Theme Core
- * @version 2.0
+ * @version 2.4
  */
 
 defined( 'ABSPATH' ) || exit;
 
 $html             = '';
-$unique_class     = vcex_element_unique_classname( 'vcex-flex-container' );
-$flex_direction   = $atts['flex_direction'] ?: 'row';
-$stack_breakpoint = $atts['row_stack_bp'] ?? '';
 $breakpoints      = [ 'xl', 'lg', 'md', 'sm' ];
+$flex_direction   = ! empty( $atts['flex_direction'] ) ? sanitize_text_field( $atts['flex_direction'] ) : 'row';
+$stack_breakpoint = ! empty( $atts['row_stack_bp'] ) ? sanitize_text_field( $atts['row_stack_bp'] ) : '';
 $will_stack       = ( $stack_breakpoint && in_array( $stack_breakpoint, $breakpoints ) );
+$unique_class     = vcex_element_unique_classname( 'vcex-flex-container' );
 
+// Get sanitized and parsed inner elements
+$inner_html_safe = do_shortcode( wp_kses_post( $content ) );
+
+// Define wrap classes
 $wrap_class = [
 	'vcex-flex-container',
 	'vcex-module',
@@ -47,7 +51,7 @@ if ( 'column' === $flex_direction ) {
 	} else {
 		$wrap_class[] = 'wpex-flex-col';
 	}
-	$wrap_class[] = 'wpex-' . sanitize_html_class( $stack_breakpoint ) . '-flex-row';
+	$wrap_class[] = "wpex-{$stack_breakpoint}-flex-row";
 }
 
 if ( ! empty( $atts['align_items'] ) ) {
@@ -60,44 +64,30 @@ if ( ! empty( $atts['justify_content'] ) ) {
 	$wrap_class[] = vcex_parse_justify_content_class( $atts['justify_content'], $justify_content_bk );
 }
 
-if ( ! empty( $atts['shadow'] ) ) {
-	$wrap_class[] = vcex_parse_shadow_class( $atts['shadow'] );
-}
-
-if ( ! empty( $atts['visibility'] ) ) {
-	$wrap_class[] = vcex_parse_visibility_class( $atts['visibility'] );
-}
-
-if ( ! empty( $atts['bottom_margin'] ) ) {
-	$wrap_class[] = vcex_parse_margin_class( $atts['bottom_margin'], 'bottom' );
-}
-
-if ( ! empty( $atts['el_class'] ) ) {
-	$wrap_class[] = vcex_get_extra_class( $atts['el_class'] );
-}
-
-if ( ! empty( $atts['css'] ) ) {
-	$wrap_class[] = vcex_vc_shortcode_custom_css_class( $atts['css'] );
+if ( $extra_classes = vcex_get_shortcode_extra_classes( $atts, 'vcex_grid_container' ) ) {
+	$wrap_class = array_merge( $wrap_class, $extra_classes );
 }
 
 $style = '';
 
 $parent_style = vcex_inline_style( [
-	'gap'       => $atts['gap'] ?? '',
-	'max_width' => $atts['width'] ?? '',
+	'gap'          => $atts['gap'] ?? '',
+	'max_width'    => $atts['width'] ?? '',
+	'background'   => $atts['background_color'] ?? '',
+	'border_color' => $atts['border_color'] ?? '',
 ], false );
 
-// Min-Height: Needs to be added here because of WPBakery bugs we need an important attribute.
+// Min-Height: Needs to be added here because of WPBakery bugs we need an important attribute
 if ( ! empty( $atts['min_height'] ) ) {
 	$min_height_safe = is_numeric( $atts['min_height'] ) ? "{$atts['min_height']}.px" : esc_attr( $atts['min_height']);
 	$parent_style .= "min-height:{$min_height_safe}!important;";
 }
 
 if ( $parent_style ) {
-	$style .= '.' . $unique_class . '{' . $parent_style . '}';
+	$style .= ".{$unique_class}{{$parent_style}}";
 }
 
-// Define breakpoints.
+// Define breakpoints
 switch ( $stack_breakpoint ) {
 	case 'xl':
 		$stack_bp = '1280px';
@@ -113,7 +103,7 @@ switch ( $stack_breakpoint ) {
 		break;
 }
 
-// Add flex basis CSS.
+// Add flex basis CSS
 if ( 'row' === $flex_direction && ! empty( $atts['flex_basis'] ) ) {
 	$flex_basis = $atts['flex_basis'];
 	if ( $will_stack ) {
@@ -130,7 +120,7 @@ if ( 'row' === $flex_direction && ! empty( $atts['flex_basis'] ) ) {
 				if ( is_numeric( $flex_basis_item ) && 0 !== $flex_basis_item ) {
 					$flex_basis_item = $flex_basis_item . 'px';
 				}
-				$flex_basis_item_shrink_grow = 'flex-grow:0;flex-shrink:1;'; // must allow shrink to prevent issues on smaller devices when flex_wrap is enabled.
+				$flex_basis_item_shrink_grow = 'flex-grow:0;flex-shrink:1;'; // must allow shrink to prevent issues on smaller devices when flex_wrap is enabled
 			}
 			$style .= '.' . $unique_class . ' > *:nth-child(' . $count . ') {flex-basis:' . esc_attr( $flex_basis_item ) . ';' . $flex_basis_item_shrink_grow . '}';
 		}
@@ -151,35 +141,40 @@ if ( 'row' === $flex_direction && ! empty( $atts['flex_basis'] ) ) {
 
 // Scacked CSS
 if ( $will_stack ) {
-
 	$stack_bp = absint( $stack_bp ) - 1 . 'px'; // remove 1px from breakpoint
-
 	$stack_css = '';
-
 	if ( ! empty( $atts['row_stack_gap'] ) ) {
 		if ( is_numeric( $atts['row_stack_gap'] ) ) {
 			$atts['row_stack_gap'] = $atts['row_stack_gap'] . 'px';
 		}
 		$stack_css .= '.' . $unique_class . '{gap:' . esc_attr( $atts['row_stack_gap'] ) . ';}';
 	}
-
 	if ( $stack_css ) {
 		$style .= '@media only screen and (max-width: ' . esc_attr( $stack_bp ) . ') {' . trim( $stack_css ) . '}';
 	}
 
 }
 
+// Get and combine inner styles to prevent issues with :nth-child() selectors
+if ( $inner_html_safe && ! vcex_vc_is_inline() && str_contains( $inner_html_safe, '<style' ) ) {
+	preg_match_all('#<style\b[^>]*>(.*?)</style>#is', $inner_html_safe, $style_matches );
+	if ( ! empty( $style_matches ) && ! empty( $style_matches[0] ) ) {
+		$inner_html_safe = preg_replace('#<style\b[^>]*>(.*?)</style>#is', '', $inner_html_safe);
+		$style .= implode( '', array_map( 'trim', $style_matches[1] ) );
+	}
+}
+
 if ( $style ) {
 	$wrap_class[] = $unique_class;
-	$html .= '<style>' . $style . '</style>';
+	$html .= "<style>{$style}</style>";
 }
 
 $wrap_class = vcex_parse_shortcode_classes( $wrap_class, 'vcex_flex_container', $atts );
 
 $html .= '<div class="' . esc_attr( $wrap_class ) . '"' . vcex_get_unique_id( $atts['unique_id'] ) . '>';
-
-	$html .= do_shortcode( wp_kses_post( $content ) );
-
+	if ( $inner_html_safe ) {
+		$html .= $inner_html_safe;
+	}
 $html .= '</div>';
 
 echo $html; // @codingStandardsIgnoreLine

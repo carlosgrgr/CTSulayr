@@ -28,7 +28,7 @@ class WooCommerce_Template extends Widget_Base {
 	}
 
 	public function get_categories() {
-		return [ Elementor::WOO_CATEGORY_ID ];
+		return [ Elementor::DYNAMIC_CATEGORY_ID ];
 	}
 
 	public function get_keywords() {
@@ -48,7 +48,9 @@ class WooCommerce_Template extends Widget_Base {
 	}
 
 	protected function register_controls() {
-		new Register_Controls( $this, Shortcode::get_params() );
+		if ( $params = Shortcode::get_params() ) {
+			new Register_Controls( $this, $params );
+		}
 	}
 
 	protected function render() {

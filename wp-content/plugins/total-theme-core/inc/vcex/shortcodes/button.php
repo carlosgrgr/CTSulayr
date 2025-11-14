@@ -134,6 +134,9 @@ if ( ! class_exists( 'VCEX_Button_Shortcode' ) ) {
 					'std' => 'custom_link',
 					'heading' => esc_html__( 'Link Type', 'total-theme-core' ),
 					'param_name' => 'onclick',
+					'extra_choices' => [
+						'toggle_playback' => esc_html__( 'Toggle Video/Audio Playback', 'total-theme-core' ),
+					],
 					'group' => esc_html__( 'Link', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				),
@@ -151,10 +154,20 @@ if ( ! class_exists( 'VCEX_Button_Shortcode' ) ) {
 							'lightbox_image',
 							'lightbox_video',
 							'toggle_element',
+							'toggle_playback',
 						),
 					),
 					'group' => esc_html__( 'Link', 'total-theme-core' ),
 					'description' => self::param_description( 'link' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
+				),
+				array(
+					'type' => 'textfield',
+					'heading' => esc_html__( 'Toggled Text', 'total-theme-core' ),
+					'param_name' => 'toggled_text',
+					'description' => esc_html__( 'Enter the text that will appear when the playback toggle button has been clicked. This swaps with the default text to indicate the opposite action (for example, Pause / Play).', 'total-theme-core' ),
+					'dependency' => array( 'element' => 'onclick', 'value' => 'toggle_playback' ),
+					'group' => esc_html__( 'Link', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				),
 				array(
@@ -210,11 +223,34 @@ if ( ! class_exists( 'VCEX_Button_Shortcode' ) ) {
 					'editors' => [ 'wpbakery', 'elementor' ],
 				),
 				array(
+					'type' => 'vcex_select_buttons',
+					'std' => 'alt',
+					'heading' => esc_html__( 'Lightbox Title', 'total-theme-core' ),
+					'param_name' => 'onclick_lightbox_gallery_title',
+					'choices' => array(
+						'false' => esc_html__( 'None', 'total-theme-core' ),
+						'alt' => esc_html__( 'Alt', 'total-theme-core' ),
+						'title' => esc_html__( 'Title', 'total-theme-core' ),
+					),
+					'group' => esc_html__( 'Link', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'onclick', 'value' => 'lightbox_gallery' ],
+					'editors' => [ 'wpbakery', 'elementor' ],
+				),
+				array(
+					'type' => 'vcex_ofswitch',
+					'std' => 'true',
+					'heading' => esc_html__( 'Lightbox Caption', 'total-theme-core' ),
+					'param_name' => 'onclick_lightbox_gallery_caption',
+					'group' => esc_html__( 'Link', 'total-theme-core' ),
+					'dependency' => [ 'element' => 'onclick', 'value' => 'lightbox_gallery' ],
+					'editors' => [ 'wpbakery', 'elementor' ],
+				),
+				array(
 					'type' => 'textfield',
 					'heading' => esc_html__( 'Title Attribute', 'total-theme-core' ),
 					'param_name' => 'onclick_title',
 					'group' => esc_html__( 'Link', 'total-theme-core' ),
-					'dependency' => array( 'element' => 'onclick', 'value_not_equal_to' => 'toggle_element' ),
+					'dependency' => array( 'element' => 'onclick', 'value_not_equal_to' => [ 'toggle_element', 'toggle_playback' ] ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				),
 				array(
@@ -321,6 +357,7 @@ if ( ! class_exists( 'VCEX_Button_Shortcode' ) ) {
 						'' => esc_html__( 'Default', 'total-theme-core' ),
 						'active' => esc_html__( 'Active', 'total-theme-core' ),
 					),
+					'dependency' => array( 'element' => 'onclick', 'value_not_equal_to' => 'toggle_playback' ),
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				),
@@ -339,13 +376,13 @@ if ( ! class_exists( 'VCEX_Button_Shortcode' ) ) {
 					'heading' => esc_html__( 'Layout', 'total-theme-core' ),
 					'param_name' => 'layout',
 					'choices' => [
-						'inline'   => \esc_html__( 'Inline', 'total-theme-core' ),
-						'block'    => \esc_html__( 'Block', 'total-theme-core' ),
-						'expanded' => \esc_html__( 'Expanded', 'total-theme-core' ),
+						'inline'   => esc_html__( 'Inline', 'total-theme-core' ),
+						'block'    => esc_html__( 'Block', 'total-theme-core' ),
+						'expanded' => esc_html__( 'Expanded', 'total-theme-core' ),
 					],
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'std' => 'inline',
-					'description' => esc_html__( 'Note: If you add any custom settings in the container design tab the button can no longer render inline since the added elements are added as a wrapper.', 'total-theme-core' ),
+					'notice' => esc_html__( 'Note: Adding anything to the CSS Box field in the CSS tab will prevent the button from rendering inline.', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				),
 				array(
@@ -353,7 +390,7 @@ if ( ! class_exists( 'VCEX_Button_Shortcode' ) ) {
 					'heading' => esc_html__( 'Float', 'total-theme-core' ),
 					'param_name' => 'align',
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
-					'description' => esc_html__( 'Note: Any alignment besides "Default" will add a wrapper around the button to position it so it will no longer be inline.', 'total-theme-core' ),
+					'notice' => esc_html__( 'Note: Choosing a float other than "Inherit" will wrap the button in a container for positioning, which prevents it from rendering inline.', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				),
 				array(
@@ -408,8 +445,21 @@ if ( ! class_exists( 'VCEX_Button_Shortcode' ) ) {
 					'css' => [ 
 						'selector' => '{{WRAPPER}}:hover',
 						'property' => 'background',
-						'important' => true, // overrides preset colors.
+						'important' => true, // overrides preset colors
 					],
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
+				),
+				array(
+					'type' => 'vcex_colorpicker',
+					'heading' => esc_html__( 'Background: Active', 'total-theme-core' ),
+					'param_name' => 'custom_active_background',
+					'css' => [ 
+						'selector' => '{{WRAPPER}}:is(.active,[aria-expanded=true],[aria-pressed=true])',
+						'property' => 'background',
+						'important' => true, // overrides preset colors
+					],
+					'description' => esc_html__( 'Color applied when the button is active (via .active class, aria-expanded or aria-pressed).', 'total-theme-core' ),
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				),
@@ -419,7 +469,7 @@ if ( ! class_exists( 'VCEX_Button_Shortcode' ) ) {
 					'param_name' => 'custom_color',
 					'css' => [
 						'property' => 'color',
-						'important' => true, // overrides preset colors.
+						'important' => true, // overrides preset colors
 					],
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
@@ -431,8 +481,21 @@ if ( ! class_exists( 'VCEX_Button_Shortcode' ) ) {
 					'css' => [ 
 						'selector' => '{{WRAPPER}}:hover',
 						'property' => 'color',
-						'important' => true, // overrides preset colors.
+						'important' => true, // overrides preset colors
 					],
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
+				),
+				array(
+					'type' => 'vcex_colorpicker',
+					'heading' => esc_html__( 'Color: Active', 'total-theme-core' ),
+					'param_name' => 'custom_active_color',
+					'css' => [ 
+						'selector' => '{{WRAPPER}}:is(.active,[aria-expanded=true],[aria-pressed=true])',
+						'property' => 'color',
+						'important' => true, // overrides preset colors
+					],
+					'description' => esc_html__( 'Color applied when the button is active (via .active class, aria-expanded or aria-pressed).', 'total-theme-core' ),
 					'group' => esc_html__( 'Style', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				),
@@ -469,13 +532,6 @@ if ( ! class_exists( 'VCEX_Button_Shortcode' ) ) {
 				),
 				// Typography
 				array(
-					'type' => 'vcex_font_family_select',
-					'heading' => esc_html__( 'Font Family', 'total-theme-core' ),
-					'param_name' => 'font_family',
-					'css' => true,
-					'group' => esc_html__( 'Typography', 'total-theme-core' ),
-				),
-				array(
 					'type' => 'vcex_font_size',
 					'heading' => esc_html__( 'Font Size', 'total-theme-core' ),
 					'param_name' => 'font_size',
@@ -483,9 +539,9 @@ if ( ! class_exists( 'VCEX_Button_Shortcode' ) ) {
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 				),
 				array(
-					'type' => 'vcex_preset_textfield',
-					'heading' => esc_html__( 'Letter Spacing', 'total-theme-core' ),
-					'param_name' => 'letter_spacing',
+					'type' => 'vcex_font_family_select',
+					'heading' => esc_html__( 'Font Family', 'total-theme-core' ),
+					'param_name' => 'font_family',
 					'css' => true,
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 				),
@@ -498,9 +554,30 @@ if ( ! class_exists( 'VCEX_Button_Shortcode' ) ) {
 				),
 				array(
 					'type' => 'vcex_select',
+					'heading' => esc_html__( 'Font Style', 'total-theme-core' ),
+					'param_name' => 'font_style',
+					'css' => true,
+					'group' => esc_html__( 'Typography', 'total-theme-core' ),
+				),
+				array(
+					'type' => 'vcex_select',
 					'heading' => esc_html__( 'Text Transform', 'total-theme-core' ),
 					'param_name' => 'text_transform',
-					'css' => true, // it's always been added inline so best to keep.
+					'css' => true,
+					'group' => esc_html__( 'Typography', 'total-theme-core' ),
+				),
+				array(
+					'type' => 'vcex_preset_textfield',
+					'heading' => esc_html__( 'Line Height', 'total-theme-core' ),
+					'param_name' => 'line_height',
+					'css' => true,
+					'group' => esc_html__( 'Typography', 'total-theme-core' ),
+				),
+				array(
+					'type' => 'vcex_preset_textfield',
+					'heading' => esc_html__( 'Letter Spacing', 'total-theme-core' ),
+					'param_name' => 'letter_spacing',
+					'css' => true,
 					'group' => esc_html__( 'Typography', 'total-theme-core' ),
 				),
 				array(

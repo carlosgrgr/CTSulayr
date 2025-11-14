@@ -31,6 +31,11 @@ if ( $in_same_term && taxonomy_exists( 'post_series' ) && get_the_terms( get_the
 	}
 }
 
+// If in_same_term is disabled and $same_term_tax is not defined it must fallback to 'category' due to weird checks in WP core
+if ( ! $in_same_term && ! $same_term_tax ) {
+	$same_term_tax = 'category';
+}
+
 // Define wrap class
 $wrap_class = [
 	'vcex-post-next-prev',

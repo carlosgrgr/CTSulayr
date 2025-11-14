@@ -15,10 +15,10 @@ final class Shortcode_Header_Cart_Icon {
 	 * Register the shortcode and add filters.
 	 */
 	public function __construct() {
-		\add_shortcode( 'header_cart_icon', [ self::class, 'output' ] );
+		add_shortcode( 'header_cart_icon', [ self::class, 'output' ] );
 
 		if ( self::maybe_add_cart_fragments() ) {
-			\add_filter( 'woocommerce_add_to_cart_fragments', [ self::class, 'cart_fragments' ] );
+			add_filter( 'woocommerce_add_to_cart_fragments', [ self::class, 'cart_fragments' ] );
 		}
 	}
 
@@ -26,7 +26,7 @@ final class Shortcode_Header_Cart_Icon {
 	 * Shortcode output.
 	 */
 	public static function output( $atts = [] ) {
-		if ( ! \class_exists( '\WooCommerce' ) ) {
+		if ( ! class_exists( 'WooCommerce' ) ) {
 			return;
 		}
 
@@ -36,24 +36,28 @@ final class Shortcode_Header_Cart_Icon {
 			return;
 		}
 
-		$atts = \shortcode_atts( [
-			'class'        => '',
-			'visibility'   => '',
-			'label'        => '',
-			'label_margin' => '',
-			'aria_label'   => '',
-			'font_size'    => '',
+		$atts = shortcode_atts( [
+			'class'                 => '',
+			'label_class'           => '',
+			'button_class'          => '',
+			'icon_class'            => '',
+			'visibility'            => '',
+			'label'                 => '',
+			'label_margin'          => '',
+			'label_hide_breakpoint' => '',
+			'aria_label'            => '',
+			'font_size'             => '',
 		], $atts, 'header_cart_icon' );
 
 		$class = '';
 
-		if ( ! empty( $atts['class'] ) && \is_string( $atts['class'] ) ) {
-			$class .= ' || ' . \str_replace( '.', '', \trim( $atts['class'] ) );
+		if ( ! empty( $atts['class'] ) && is_string( $atts['class'] ) ) {
+			$class .= ' || ' . str_replace( '.', '', trim( $atts['class'] ) );
 		}
 
 		if ( ! empty( $atts['visibility'] )
-			&& \function_exists( '\totaltheme_get_visibility_class' )
-			&& $visibility_class = \totaltheme_get_visibility_class( $atts['visibility'] )
+			&& function_exists( 'totaltheme_get_visibility_class' )
+			&& $visibility_class = totaltheme_get_visibility_class( $atts['visibility'] )
 		) {
 			$class .= " {$visibility_class}";
 		}
@@ -87,18 +91,30 @@ final class Shortcode_Header_Cart_Icon {
 		$aria_controls = $aria_map[ $action ] ?? '';
 
 		if ( ! empty( $atts['aria_label'] ) ) {
-			$aria_label = \sanitize_text_field( $atts['aria_label'] );
-		} elseif ( \function_exists( '\wpex_get_aria_label' ) ) {
-			$aria_label = \wpex_get_aria_label( 'cart_open' );
+			$aria_label = sanitize_text_field( $atts['aria_label'] );
+		} elseif ( function_exists( 'wpex_get_aria_label' ) ) {
+			$aria_label = wpex_get_aria_label( 'cart_open' );
 		}
 
-		$button .= '<button type="button" class="wpex-header-cart-icon__button wpex-unstyled-button wpex-hover-link-color wpex-flex wpex-items-center" aria-expanded="false" aria-controls="' . \esc_attr( $aria_controls ) . '" aria-label="' . \esc_attr( $aria_label ) . '"';
+		$class = 'wpex-header-cart-icon__button wpex-unstyled-button wpex-hover-link-color wpex-flex wpex-items-center';
+		
+		if ( ! empty( $atts['button_class'] ) ) {
+			$custom_class_safe = sanitize_text_field( $atts['button_class'] );
+			if ( $custom_class_safe ) {
+				$class .= " {$custom_class_safe}";
+				if ( str_contains( $custom_class_safe, 'wpex-hover-text-' ) ) {
+					$class = str_replace( 'wpex-hover-link-color', '', $class );
+				}
+			}
+		}
+
+		$button .= '<button type="button" class="' . esc_attr( $class ) . '" aria-expanded="false" aria-controls="' . esc_attr( $aria_controls ) . '" aria-label="' . esc_attr( $aria_label ) . '"';
 			if ( 'off-canvas' === $action ) {
 				$button .= ' data-wpex-toggle="off-canvas" data-role="button"';
 			}
 		$button .= '>';
 			$button .= self::get_label( $atts );
-			$button .= self::get_icon();
+			$button .= self::get_icon( $atts );
 			$button .= self::get_extras();
 		$button .= '</button>';
 
@@ -113,23 +129,23 @@ final class Shortcode_Header_Cart_Icon {
 		$url  = '#';
 
 		if ( 'custom-link' === self::action() ) {
-			if ( $custom_link = \get_theme_mod( 'woo_menu_icon_custom_link' ) ) {
-				if ( \str_starts_with( $custom_link, '/' ) ) {
-					$custom_link = \home_url( $custom_link );
+			if ( $custom_link = get_theme_mod( 'woo_menu_icon_custom_link' ) ) {
+				if ( str_starts_with( $custom_link, '/' ) ) {
+					$custom_link = home_url( $custom_link );
 				}
-				$url = \esc_url( $custom_link );
+				$url = esc_url( $custom_link );
 			}
-		} elseif ( \function_exists( '\wc_get_cart_url' ) && $cart_url = \wc_get_cart_url() ) {
+		} elseif ( function_exists( 'wc_get_cart_url' ) && $cart_url = wc_get_cart_url() ) {
 			$url = $cart_url;
 		}
 
-		$link .= '<a href="' . \esc_url( $url ) . '" class="wpex-header-cart-icon__link wpex-text-current wpex-no-underline wpex-hover-link-color wpex-flex wpex-items-center">';
+		$link .= '<a href="' . esc_url( $url ) . '" class="wpex-header-cart-icon__link wpex-text-current wpex-no-underline wpex-hover-link-color wpex-flex wpex-items-center">';
 			if ( $label = self::get_label( $atts ) ) {
 				$link .= $label;
 			} else {
-				$link .= '<span class="screen-reader-text">' . \esc_html__( 'go to cart', 'total-theme-core' ) . '</span>';
+				$link .= '<span class="screen-reader-text">' . esc_html__( 'go to cart', 'total-theme-core' ) . '</span>';
 			}
-			$link .= self::get_icon();
+			$link .= self::get_icon( $atts );
 			$link .= self::get_extras();
 		$link .= '</a>';
 
@@ -143,25 +159,42 @@ final class Shortcode_Header_Cart_Icon {
 		if ( empty( $atts['label'] ) ) {
 			return;
 		}
+		$class = 'wpex-header-cart-icon__label wpex-mr-5';
+		if ( ! empty( $atts['label_hide_breakpoint'] ) && in_array( $atts['label_hide_breakpoint'], [ 'sm', 'md', 'lg', 'xl' ], true ) ) {
+			$class .= " wpex-hidden wpex-{$atts['label_hide_breakpoint']}-inline";
+		}
+		if ( ! empty( $atts['label_class'] ) ) {
+			$label_class_safe = sanitize_text_field( $atts['label_class'] );
+			if ( $label_class_safe ) {
+				$class .= " {$label_class_safe}";
+			}
+		}
 		$style = '';
 		if ( ! empty( $atts['label_margin'] ) ) {
 			$margin_side = is_rtl() ? 'left' : 'right';
-			$style = ' style="margin-' . $margin_side .':' . \esc_attr( $atts['label_margin'] ) . ';"';
+			$style = ' style="margin-' . $margin_side .':' . esc_attr( $atts['label_margin'] ) . ';"';
 		}
-		return '<span class="wpex-header-cart-icon__label wpex-mr-5"' . $style . '>' . \esc_html( $atts['label'] ) . '</span>';
+		return '<span class="' . esc_attr( $class ) . '"' . $style . '>' . esc_html( $atts['label'] ) . '</span>';
 	}
 
 	/**
 	 * Get icon.
 	 */
-	private static function get_icon(): string {
+	private static function get_icon( $atts = [] ): string {
 		$icon = '';
-		if ( \function_exists( '\totaltheme_get_icon' ) ) {
-			$cart_icon = ( $get_icon = get_theme_mod( 'woo_menu_icon_class' ) ) ? \sanitize_text_field( (string) $get_icon ): 'shopping-cart';
-			$icon .= \totaltheme_get_icon( $cart_icon, 'wpex-flex' );
+		if ( function_exists( 'totaltheme_get_icon' ) ) {
+			$cart_icon = ( $get_icon = get_theme_mod( 'woo_menu_icon_class' ) ) ? sanitize_text_field( (string) $get_icon ): 'shopping-cart';
+			$icon .= totaltheme_get_icon( $cart_icon, 'wpex-flex' );
 		}
-		$icon = (string) \apply_filters( 'wpex_header_search_icon_shortcode_icon_html', $icon );
-		return '<span class="wpex-header-cart-icon__icon wpex-inline-flex wpex-items-center">' . $icon . '</span>';
+		$icon = (string) apply_filters( 'wpex_header_search_icon_shortcode_icon_html', $icon );
+		$icon_class = 'wpex-header-cart-icon__icon wpex-inline-flex wpex-items-center';
+		if ( ! empty( $atts['icon_class'] ) ) {
+			$icon_class_safe = sanitize_text_field( $atts['icon_class'] );
+			if ( $icon_class_safe ) {
+				$icon_class .= " {$icon_class_safe}";
+			}
+		}
+		return '<span class="' . esc_attr( $icon_class ) . '">' . $icon . '</span>';
 	}
 
 	/**
@@ -234,10 +267,10 @@ final class Shortcode_Header_Cart_Icon {
 			return;
 		}
 		$class = 'wpex-header-cart-icon__count';
-		if ( \get_theme_mod( 'wpex_woo_menu_icon_bubble', true ) ) {
+		if ( get_theme_mod( 'wpex_woo_menu_icon_bubble', true ) ) {
 			$class .= ' wpex-header-cart-icon__count--bubble wpex-bg-accent wpex-rounded-full wpex-flex wpex-items-center wpex-justify-center';
 		}
-		$html = '<span class="' . \esc_attr( $class ) . '" aria-hidden="true">';
+		$html = '<span class="' . esc_attr( $class ) . '" aria-hidden="true">';
 			$html .= '<span class="wpex-header-cart-icon__count-number">' . WC()->cart->cart_contents_count ?: '0';
 		$html .= '</span></span>';
 		return $html;
@@ -247,19 +280,19 @@ final class Shortcode_Header_Cart_Icon {
 	 * Return current cart price.
 	 */
 	private static function get_cart_price() {
-		if ( ! \function_exists( '\WC' ) || empty( \WC()->cart->get_cart_total() ) || 0 === \WC()->cart->cart_contents_count ) {
+		if ( ! function_exists( 'WC' ) || empty( WC()->cart->get_cart_total() ) || 0 === WC()->cart->cart_contents_count ) {
 			return;
 		}
 		$price = WC()->cart->get_cart_total();
-		return '<span class="wpex-header-cart-icon__price">' . \wp_kses_post( $price ) .'</span>';
+		return '<span class="wpex-header-cart-icon__price">' . wp_kses_post( $price ) .'</span>';
 	}
 
 	/**
 	 * Get display type.
 	 */
 	private static function display(): string {
-		if ( \function_exists( '\totaltheme_call_static' ) ) {
-			return (string) \totaltheme_call_static( 'Integration\WooCommerce\Cart', 'header_display' );
+		if ( function_exists( 'totaltheme_call_static' ) ) {
+			return (string) totaltheme_call_static( 'Integration\WooCommerce\Cart', 'header_display' );
 		} else {
 			return 'icon_count';
 		}
@@ -269,8 +302,8 @@ final class Shortcode_Header_Cart_Icon {
 	 * Get action type.
 	 */
 	private static function action(): string {
-		if ( \function_exists( '\totaltheme_call_static' ) ) {
-			return (string) \totaltheme_call_static( 'Integration\WooCommerce\Cart', 'style' );
+		if ( function_exists( 'totaltheme_call_static' ) ) {
+			return (string) totaltheme_call_static( 'Integration\WooCommerce\Cart', 'style' );
 		} else {
 			return 'drop_down';
 		}

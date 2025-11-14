@@ -40,6 +40,11 @@ if ( ! class_exists( 'VCEX_Staff_Grid_Shortcode' ) ) {
 		 */
 		public static function get_params_list(): array {
 			return array(
+				array(
+					'type' => 'vcex_notice',
+					'param_name' => 'main_notice',
+					'text' => esc_html__( 'We recommend you use the newer and more powerful "Post Cards" element instead.', 'total-theme-core' ),
+				),
 				// General
 				array(
 					'type' => 'textfield',

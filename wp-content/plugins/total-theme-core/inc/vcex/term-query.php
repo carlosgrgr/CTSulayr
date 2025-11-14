@@ -2,7 +2,7 @@
 
 namespace TotalThemeCore\Vcex;
 
-\defined( 'ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 class Term_Query {
 
@@ -16,7 +16,7 @@ class Term_Query {
 	 */
 	public function __construct( array $shortcode_atts = [], string $shortcode_tag = '' ) {
 		$this->args = $this->get_args( $shortcode_atts, $shortcode_tag );
-		$this->args = (array) \apply_filters( 'totalthemecore/vcex/term_query/args', $this->args, $shortcode_atts, $shortcode_tag );
+		$this->args = (array) apply_filters( 'totalthemecore/vcex/term_query/args', $this->args, $shortcode_atts, $shortcode_tag );
 	}
 
 	/**
@@ -26,15 +26,15 @@ class Term_Query {
 		$query_type = $atts['query_type' ] ?? '';
 
 		// Get current Taxonomy
-		if ( ( 'tax_children' === $query_type || 'tax_parent' === $query_type ) && \is_tax() ) {
-			$taxonomy = \get_query_var( 'taxonomy' );
+		if ( ( 'tax_children' === $query_type || 'tax_parent' === $query_type ) && is_tax() ) {
+			$taxonomy = get_query_var( 'taxonomy' );
 		} else {
 			$taxonomy = $atts['taxonomy'] ?? [];
 		}
 
 		// Convert taxonomy to array if there is more than 1 selected
-		if ( \is_string( $taxonomy ) && \str_contains( $taxonomy, ',' ) ) {
-			$taxonomy = \explode( ',', $taxonomy );
+		if ( is_string( $taxonomy ) && str_contains( $taxonomy, ',' ) ) {
+			$taxonomy = explode( ',', $taxonomy );
 		}
 
 		// Get primary term
@@ -59,7 +59,7 @@ class Term_Query {
 		// Add args
 		$args = [
 			'taxonomy'   => $taxonomy,
-			'hide_empty' => \vcex_validate_att_boolean( 'hide_empty', $atts, true ),
+			'hide_empty' => vcex_validate_att_boolean( 'hide_empty', $atts, true ),
 		];
 
 		if ( ! empty( $atts['order'] ) ) {
@@ -74,12 +74,12 @@ class Term_Query {
 		 * @note can't use vcex_validate_att_boolean because we need to fix
 		 * inconsistency with this setting being abled on one element but not the other
 		 */
-		if ( isset( $atts['parent_terms'] ) && \vcex_validate_boolean( $atts['parent_terms'] ) ) {
+		if ( isset( $atts['parent_terms'] ) && vcex_validate_boolean( $atts['parent_terms'] ) ) {
 			$args['parent'] = 0;
 		}
 
-		if ( ! empty( $atts['child_of'] ) && \is_string( $taxonomy ) ) {
-			if ( \is_numeric( $atts['child_of'] ) ) {
+		if ( ! empty( $atts['child_of'] ) && is_string( $taxonomy ) ) {
+			if ( is_numeric( $atts['child_of'] ) ) {
 				$args['child_of'] = $atts['child_of'];
 				unset( $args['parent'] );
 			} else {
@@ -95,7 +95,7 @@ class Term_Query {
 		switch ( $query_type ) {
 			case 'post_terms':
 				if ( ! vcex_get_template_edit_mode() ) {
-					$args['object_ids'] = \vcex_get_the_ID();
+					$args['object_ids'] = vcex_get_the_ID();
 				}
 				break;
 			case 'primary_term':
@@ -104,14 +104,14 @@ class Term_Query {
 				} 
 				break;
 			case 'tax_children':
-				if ( \is_tax() ) {
-					$args['child_of'] = \get_queried_object_id();
+				if ( is_tax() ) {
+					$args['child_of'] = get_queried_object_id();
 					unset( $args['parent'] );
 				}
 				break;
 			case 'tax_parent':
-				if ( \is_tax() ) {
-					$args['parent'] = \get_queried_object_id();
+				if ( is_tax() ) {
+					$args['parent'] = get_queried_object_id();
 				}
 				break;
 		}
@@ -119,27 +119,42 @@ class Term_Query {
 		// Include exclude terms
 		if ( 'wpex_term_cards' === $shortcode_tag && 'primary_term' !== $query_type ) {
 			if ( ! empty( $atts['include_terms'] ) ) {
-				$include_terms = preg_split( '/\,[\s]*/', $atts['include_terms'] );
-				if ( is_array( $include_terms ) ) {
+				$include_terms = $this->parse_include_exclude( $atts['include_terms'] );
+				if ( $include_terms ) {
 					$args['include'] = $include_terms;
 				}
 			}
 			if ( ! empty( $atts['exclude_terms'] ) ) {
-				$exclude_terms = preg_split( '/\,[\s]*/', $atts['exclude_terms'] );
-				if ( is_array( $exclude_terms ) ) {
+				$exclude_terms = $this->parse_include_exclude( $atts['exclude_terms'] );
+				if ( $exclude_terms ) {
 					$args['exclude'] = $exclude_terms;
 				}
 			}
 		}
 		
-		return (array) \apply_filters( 'vcex_terms_grid_query_args', $args, $atts ); // @deprecated
+		return (array) \apply_filters( 'vcex_terms_grid_query_args', $args, $atts );
+	}
+
+	/**
+	 * Parses the include/exclude terms.
+	 */
+	private function parse_include_exclude( $terms ): array {
+		$terms = wp_parse_list( $terms );
+		$term_ids = [];
+		foreach ( $terms as $term_taxonomy_id ) {
+			$term_obj = get_term_by( 'term_taxonomy_id', $term_taxonomy_id );
+			if ( ! is_wp_error( $term_obj ) && isset( $term_obj->term_id ) ) {
+				$term_ids[] = $term_obj->term_id;
+			}
+		}
+		return $term_ids;
 	}
 
 	/**
 	 * Return Terms.
 	 */
 	public function get_terms() {
-		return $this->args ? \get_terms( $this->args ) : false;
+		return $this->args ? get_terms( $this->args ) : false;
 	}
 
 }

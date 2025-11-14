@@ -1,12 +1,15 @@
 <?php
+
 namespace TotalThemeCore\Widgets;
+
+use TotalThemeCore\WidgetBuilder;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Comments with Avatars widget.
  */
-class Widget_Recent_Comments_Avatar extends \TotalThemeCore\WidgetBuilder {
+class Widget_Recent_Comments_Avatar extends WidgetBuilder {
 
 	/**
 	 * Widget args.
@@ -15,8 +18,6 @@ class Widget_Recent_Comments_Avatar extends \TotalThemeCore\WidgetBuilder {
 
 	/**
 	 * Register widget with WordPress.
-	 *
-	 * @since 1.0
 	 */
 	public function __construct() {
 		$this->args = array(
@@ -74,12 +75,6 @@ class Widget_Recent_Comments_Avatar extends \TotalThemeCore\WidgetBuilder {
 
 	/**
 	 * Front-end display of widget.
-	 *
-	 * @see WP_Widget::widget()
-	 * @since 1.0
-	 *
-	 * @param array $args     Widget arguments.
-	 * @param array $instance Saved values from database.
 	 */
 	public function widget( $args, $instance ) {
 		extract( $this->parse_instance( $instance ) );

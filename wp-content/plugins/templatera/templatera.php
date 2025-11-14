@@ -3,7 +3,7 @@
  * Plugin Name: Templatera
  * Plugin URI: https://wpbakery.com/addons/templatera?utm_campaign=VCplugin&utm_source=templatera&utm_medium=plugin-uri
  * Description: Template Manager for WPBakery Page Builder on Steroids
- * Version: 2.3.0
+ * Version: 2.4.0
  * Author: WPBakery
  * Author URI: https://wpbakery.com/?utm_campaign=VCplugin&utm_source=templatera&utm_medium=plugin-author
  * License: http://codecanyon.net/licenses
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	die( '-1' );
 }
 define( 'WPB_VC_REQUIRED_VERSION', '6.8' );
-define( 'WPB_TEMPLATERA_VERSION', '2.3.0' );
+define( 'WPB_TEMPLATERA_VERSION', '2.4.0' );
 
 if ( ! function_exists( 'templatera_notice' ) ) {
     function templatera_notice()

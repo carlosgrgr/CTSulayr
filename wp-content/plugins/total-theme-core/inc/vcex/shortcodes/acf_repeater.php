@@ -267,7 +267,7 @@ if ( ! class_exists( 'VCEX_ACF_Repeater_Shortcode' ) ) {
 					'type' => 'vcex_subheading',
 					'param_name' => 'vcex_subheading__carousel',
 					'dependency' => [ 'element' => 'display_type', 'value' => 'carousel' ],
-					'text' => \esc_html__( 'Carousel Settings', 'total-theme-core' ),
+					'text' => esc_html__( 'Carousel Settings', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				[
@@ -336,14 +336,14 @@ if ( ! class_exists( 'VCEX_ACF_Repeater_Shortcode' ) ) {
 				],
 				[
 					'type' => 'vcex_select',
-					'heading' => \esc_html__( 'Autoplay Type', 'total-theme-core' ),
+					'heading' => esc_html__( 'Autoplay Type', 'total-theme-core' ),
 					'param_name' => 'autoplay_type',
 					'std' => 'default',
 					'choices' => [
-						'default' => \esc_html__( 'Default', 'total-theme-core' ),
-						'smooth' => \esc_html__( 'Smooth', 'total-theme-core' ),
+						'default' => esc_html__( 'Default', 'total-theme-core' ),
+						'smooth' => esc_html__( 'Smooth', 'total-theme-core' ),
 					],
-					'description' => \esc_html__( 'The "Smooth" autoplay type will remove the carousel arrows and dot navigation. Items will scroll automatically and can\'t be paused, ideal for displaying logos.', 'total-theme-core' ),
+					'description' => esc_html__( 'The "Smooth" autoplay type will remove the carousel arrows and dot navigation. Items will scroll automatically and can\'t be paused, ideal for displaying logos.', 'total-theme-core' ),
 					'dependency' => [ 'element' => 'auto_play', 'value' => 'true' ],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
@@ -359,7 +359,7 @@ if ( ! class_exists( 'VCEX_ACF_Repeater_Shortcode' ) ) {
 				],
 				[
 					'type' => 'vcex_ofswitch',
-					'heading' => \esc_html__( 'Pause on Hover', 'total-theme-core' ),
+					'heading' => esc_html__( 'Pause on Hover', 'total-theme-core' ),
 					'param_name' => 'hover_pause',
 					'std' => 'true',
 					'dependency' => [ 'element' => 'autoplay_type', 'value' => 'default' ],
@@ -376,7 +376,7 @@ if ( ! class_exists( 'VCEX_ACF_Repeater_Shortcode' ) ) {
 				[
 					'type' => 'vcex_ofswitch',
 					'heading' => esc_html__( 'Center Item', 'total-theme-core' ),
-					'description' => \esc_html__( 'Enable to center the middle slide when displaying slides divisible by 2.', 'total-theme-core' ),
+					'description' => esc_html__( 'Enable to center the middle slide when displaying slides divisible by 2.', 'total-theme-core' ),
 					'param_name' => 'center',
 					'std' => 'false',
 					'dependency' => [ 'element' => 'display_type', 'value' => 'carousel' ],
@@ -394,7 +394,7 @@ if ( ! class_exists( 'VCEX_ACF_Repeater_Shortcode' ) ) {
 				],
 				[
 					'type' => 'vcex_select',
-					'choices' => \totalthemecore_call_static( 'Vcex\Carousel\Core', 'get_out_animation_choices' ),
+					'choices' => totalthemecore_call_static( 'Vcex\Carousel\Core', 'get_out_animation_choices' ),
 					'heading' => esc_html__( 'Animation', 'total-theme-core' ),
 					'param_name' => 'out_animation',
 					'dependency' => [ 'element' => 'items', 'value' => '1' ],
@@ -406,7 +406,7 @@ if ( ! class_exists( 'VCEX_ACF_Repeater_Shortcode' ) ) {
 					'placeholder' => '250',
 					'heading' => esc_html__( 'Animation Speed', 'total-theme-core' ),
 					'param_name' => 'animation_speed',
-					'description' => \esc_html__( 'Time it takes to transition between slides. In milliseconds.', 'total-theme-core' ),
+					'description' => esc_html__( 'Time it takes to transition between slides. In milliseconds.', 'total-theme-core' ),
 					'dependency' => [ 'element' => 'display_type', 'value' => 'carousel' ],
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
@@ -577,6 +577,15 @@ if ( ! class_exists( 'VCEX_ACF_Repeater_Shortcode' ) ) {
 					'heading' => esc_html__( 'Extra class name', 'total-theme-core' ),
 					'param_name' => 'el_class',
 					'description' => self::param_description( 'el_class' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
+				// Entry
+				[
+					'type' => 'textfield',
+					'heading' => esc_html__( 'Extra class name', 'total-theme-core' ),
+					'param_name' => 'item_el_class',
+					'description' => self::param_description( 'el_class' ),
+					'group' => esc_html__( 'Entry', 'total-theme-core' ),
 					'editors' => [ 'wpbakery', 'elementor' ],
 				],
 				/* - seems like extra bloat...

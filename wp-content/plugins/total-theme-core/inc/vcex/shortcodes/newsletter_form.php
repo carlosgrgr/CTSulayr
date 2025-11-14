@@ -40,6 +40,14 @@ if ( ! class_exists( 'VCEX_Newsletter_Shortcode' ) ) {
 		 */
 		public static function get_params_list(): array {
 			return array(
+				// Notice
+				[
+					'type' => 'vcex_notice',
+					'param_name' => 'general_notice',
+					'text' => esc_html__( 'This element was created many years ago, before newsletter services offered modern form builders and embed codes. For better flexibility and security, we recommend using your email service provider\'s form builder and embedding the code. If you need any help with styling to better match your site, feel free to reach out!', 'total-theme-core' ),
+					'group' => esc_html__( 'Style', 'total-theme-core' ),
+					'editors' => [ 'wpbakery', 'elementor' ],
+				],
 				// General
 				array(
 					'type'        => 'textfield',

@@ -318,7 +318,7 @@ if ( ! class_exists( 'WPEX_Color_Palette' ) ) {
 
 			$fields[] = [
 				'name' => esc_html__( 'Description', 'total-theme-core' ),
-				'desc' => esc_html__( 'A useful description for your own referrance.', 'total-theme-core' ),
+				'desc' => esc_html__( 'A helpful description for your own reference.', 'total-theme-core' ),
 				'id'   => 'description',
 				'type' => 'textarea',
 			];
