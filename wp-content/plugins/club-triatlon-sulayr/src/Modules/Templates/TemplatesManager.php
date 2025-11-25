@@ -29,9 +29,9 @@ class TemplatesManager {
      */
     public function load_custom_template($template) {
 
-        foreach ( CustomTemplates::ALL_TEMPLATES as $template ) {
-            if ( is_page_template( $template['path'] ) ) {
-                $plugin_template = plugin_dir_path( SULAYR_FILE ) . 'templates/' . $template['path'];
+        foreach ( CustomTemplates::ALL_TEMPLATES as $current_template ) {
+            if ( is_page_template( $current_template['path'] ) ) {
+                $plugin_template = plugin_dir_path( SULAYR_FILE ) . 'templates/' . $current_template['path'];
                 if (file_exists($plugin_template)) {
                     return $plugin_template;
                 }

@@ -22,9 +22,14 @@ if ( isset($_POST['sulayr_delete_user']) && check_admin_referer('sulayr_delete_u
     do_action( 'sulayr_before_athlete_unsubscription', $current_user );
 
     $user_id   = $current_user->ID;
-    wp_delete_user( $user_id );
     
-    $message = '<div class="sulayr-baja-completa">Tu cuenta ha sido eliminada. </div>';
+    if ( in_array( 'athlete', $current_user->roles ) ) {
+        wp_delete_user( $user_id );
+        $message = '<div class="sulayr-baja-completa">Tu cuenta ha sido eliminada. </div>';
+    } else {
+        $message = '<div class="sulayr-baja-completa">No tienes permisos para dar de baja tu cuenta. Por favor, contacta con el administrador.</div>';
+    }
+    
 }
 
 get_header();

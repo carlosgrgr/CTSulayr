@@ -39,6 +39,5 @@ use ClubTriatlonSulayr\Infrastructure\CustomTemplates;
                 <?php _e( 'Cerrar sesión', SULAYR_TEXTDOMAIN ); ?>
             </a>
         </li>
-    </div>
     </ul>
 </nav>

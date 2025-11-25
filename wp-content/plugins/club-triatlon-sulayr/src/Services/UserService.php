@@ -61,12 +61,12 @@ class UserService {
             'last_name'  => get_user_meta($user->ID, 'last_name', true),
 
             // Campos ACF
-            'phone'       => get_field('phone', 'user_' . $user->ID),
-            'birth_date'  => get_field('birth_date', 'user_' . $user->ID),
-            'dni'         => get_field('dni', 'user_' . $user->ID),
-            'tarifa'      => get_field('tarifa', 'user_' . $user->ID),
-            'suplemento'  => (bool) get_field('suplemento', 'user_' . $user->ID),
-            'foto'        => get_field('foto', 'user_' . $user->ID), // ID de imagen
+            'phone'       => get_field(CustomFields::USER_PROFILE_PHONE, 'user_' . $user->ID),
+            'birth_date'  => get_field(CustomFields::USER_PROFILE_BIRTH, 'user_' . $user->ID),
+            'dni'         => get_field(CustomFields::USER_PROFILE_DNI, 'user_' . $user->ID),
+            'tarifa'      => get_field(CustomFields::USER_PROFILE_MEMBERSHIP_PLAN, 'user_' . $user->ID),
+            'suplemento'  => (bool) get_field(CustomFields::USER_PROFILE_SWIMMING, 'user_' . $user->ID),
+            'foto'        => get_field(CustomFields::USER_PROFILE_PHOTO, 'user_' . $user->ID), // ID de imagen
         ];
     }
 

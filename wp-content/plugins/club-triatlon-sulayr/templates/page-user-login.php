@@ -9,7 +9,7 @@ use ClubTriatlonSulayr\Infrastructure\CustomTemplates;
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 if ( is_user_logged_in() ) {
-    wp_redirect( site_url( CustomTemplates::TEMPLATE_LOGIN['url'] ) );
+    wp_redirect( site_url( CustomTemplates::TEMPLATE_MY_PROFILE['url'] ) );
     exit;
 }
 

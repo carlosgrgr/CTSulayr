@@ -28,7 +28,6 @@ class UserFields extends Fields
             'fields' => [
                 [
                     'key' => 'field_' . md5( CustomFields::USER_PROFILE_PHOTO ),
-                    'key' => 'sulayr_user_photo',
                     'label' => __( 'Foto de perfil', SULAYR_TEXTDOMAIN ),
                     'name' => CustomFields::USER_PROFILE_PHOTO,
                     'type' => 'file',
