@@ -1,0 +1,98 @@
+/**
+ * Club Triatlon Sulayr - Admin Styles
+ * Estilos para el panel de administración del plugin
+ */
+
+/* Página de opciones - Contenedor principal */
+.sulayr-settings-main .card {
+    max-width: 600px;
+    margin-top: 20px;
+}
+
+/* Botones de acción */
+.sulayr-settings-buttons {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+/* Iconos en botones */
+.sulayr-settings-buttons .dashicons,
+.sulayr-settings-list .dashicons {
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+/* Listado de deportistas */
+.sulayr-athletes-list-card {
+    margin-top: 20px;
+}
+
+.sulayr-athletes-title {
+    margin-bottom: 30px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.sulayr-athletes-group-title {
+    margin-top: 20px;
+    margin-bottom: 5px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.sulayr-athletes-group-title:not(:first-child) {
+    margin-top: 0;
+}
+
+.sulayr-athletes-group-title-other {
+    margin-bottom: 10px;
+}
+
+.sulayr-athletes-list {
+    margin-left: 20px;
+    line-height: 1.8;
+}
+
+.sulayr-athletes-list-item {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.sulayr-athletes-total {
+    margin-top: 30px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* Listado de nadadores */
+.sulayr-swimmers-card {
+    margin-top: 20px;
+}
+
+.sulayr-swimmers-count {
+    margin-bottom: 20px;
+}
+
+/* Tablas de listados */
+.sulayr-list-table th {
+    width: auto;
+}
+
+.sulayr-list-table th:nth-child(1) {
+    width: 4%;
+}
+
+.sulayr-list-table th:nth-child(2),
+.sulayr-list-table th:nth-child(3) {
+    width: 20%;
+}
+
+.sulayr-list-table th:nth-child(4),
+.sulayr-list-table th:nth-child(5),
+.sulayr-list-table th:nth-child(6),
+.sulayr-list-table th:nth-child(7) {
+    width: 12%;
+}
+

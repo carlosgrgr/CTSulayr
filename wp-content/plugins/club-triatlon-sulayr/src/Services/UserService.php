@@ -2,6 +2,8 @@
 namespace ClubTriatlonSulayr\Services;
 
 use ClubTriatlonSulayr\Infrastructure\CustomTemplates;
+use ClubTriatlonSulayr\Infrastructure\CustomFields;
+use ClubTriatlonSulayr\Services\HelperService;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -152,5 +154,128 @@ class UserService {
             }
         }
         return $show;
+    }
+
+    /**
+     * Obtener datos formateados de un atleta
+     *
+     * @param int $user_id ID del usuario
+     * @return array Datos formateados del atleta
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public function get_athlete_formatted_data( int $user_id ): array {
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return [];
+        }
+
+        // Obtener campos usando helpers
+        $plan = HelperService::get_user_field( CustomFields::USER_PROFILE_MEMBERSHIP_PLAN, $user_id );
+        $training_type = HelperService::get_user_field( CustomFields::USER_PROFILE_TRAINING_TYPE, $user_id );
+        $phone = HelperService::get_user_field( CustomFields::USER_PROFILE_PHONE, $user_id );
+        $dni = HelperService::get_user_field( CustomFields::USER_PROFILE_DNI, $user_id );
+        $swimming = HelperService::get_user_field( CustomFields::USER_PROFILE_SWIMMING, $user_id );
+        $birth_date = HelperService::get_user_field( CustomFields::USER_PROFILE_BIRTH, $user_id );
+
+        return [
+            'ID' => $user_id,
+            'name' => HelperService::get_user_full_name( $user_id ),
+            'email' => $user->user_email,
+            'phone' => $phone ?: '',
+            'dni' => $dni ?: '',
+            'birth_date' => $birth_date ?: '',
+            'birth_date_formatted' => HelperService::format_birth_date( $birth_date ?: '' ),
+            'plan' => HelperService::format_membership_plan( $plan ),
+            'plan_value' => $plan ?: '',
+            'training_type' => HelperService::format_training_type( $training_type ),
+            'training_type_value' => $training_type ?: '',
+            'swimming' => HelperService::format_swimming_supplement_to_bool( $swimming ),
+            'swimming_label' => HelperService::format_swimming_supplement_to_label( $swimming ),
+            'photo_url' => HelperService::get_user_photo_url( $user_id ),
+        ];
+    }
+
+    /**
+     * Obtener todos los deportistas ordenados por tarifa
+     *
+     * @return array Lista de deportistas con sus datos
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public function get_athletes_by_plan(): array {
+        $athletes = get_users( [
+            'role' => 'athlete',
+            'orderby' => 'display_name',
+            'order' => 'ASC',
+        ] );
+
+        if ( empty( $athletes ) ) {
+            return [];
+        }
+
+        $result = [];
+        foreach ( $athletes as $athlete ) {
+            $result[] = $this->get_athlete_formatted_data( $athlete->ID );
+        }
+
+        // Ordenar por tarifa (Básica primero, luego Entrenamiento, luego otros)
+        usort( $result, function( $a, $b ) {
+            $order = [ __( 'Básica', SULAYR_TEXTDOMAIN ), __( 'Entrenamiento', SULAYR_TEXTDOMAIN ) ];
+            $pos_a = array_search( $a['plan'], $order );
+            $pos_b = array_search( $b['plan'], $order );
+            $pos_a = $pos_a === false ? 999 : $pos_a;
+            $pos_b = $pos_b === false ? 999 : $pos_b;
+            
+            if ( $pos_a === $pos_b ) {
+                // Si tienen la misma tarifa, ordenar por nombre
+                return strcmp( $a['name'], $b['name'] );
+            }
+            
+            return $pos_a <=> $pos_b;
+        } );
+
+        return $result;
+    }
+
+    /**
+     * Obtener todos los nadadores (deportistas con suplemento de natación activo)
+     *
+     * @return array Lista de nadadores con sus datos
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public function get_swimmers(): array {
+        $athletes = get_users( [
+            'role' => 'athlete',
+            'orderby' => 'display_name',
+            'order' => 'ASC',
+        ] );
+
+        if ( empty( $athletes ) ) {
+            return [];
+        }
+
+        $result = [];
+        foreach ( $athletes as $athlete ) {
+            $athlete_data = $this->get_athlete_formatted_data( $athlete->ID );
+            
+            // Solo incluir si tiene suplemento activo
+            if ( ! $athlete_data['swimming'] ) {
+                continue;
+            }
+
+            $result[] = [
+                'ID' => $athlete_data['ID'],
+                'name' => $athlete_data['name'],
+                'email' => $athlete_data['email'],
+                'phone' => $athlete_data['phone'],
+                'dni' => $athlete_data['dni'],
+                'plan' => $athlete_data['plan'],
+                'training_type' => $athlete_data['training_type'],
+            ];
+        }
+
+        return $result;
     }
 }

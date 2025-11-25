@@ -2,12 +2,13 @@
 namespace ClubTriatlonSulayr\App;
 
 use ClubTriatlonSulayr\Services\UserService;
-use ClubTriatlonSulayr\Services\HelpersService;
+use ClubTriatlonSulayr\Services\HelperService;
 use ClubTriatlonSulayr\Modules\Roles\AthleteRole;
 use ClubTriatlonSulayr\Infrastructure\CustomFields;
 use ClubTriatlonSulayr\Modules\Templates\TemplatesManager;
 use ClubTriatlonSulayr\Modules\Fields\UserFields\UserFields;
 use ClubTriatlonSulayr\Modules\Users\Unsubscription;
+use ClubTriatlonSulayr\Modules\SettingsPages\SulayrSettingsPage;
 
 /**
  * App
@@ -66,12 +67,13 @@ class App {
      * @package	club-triatlon-sulayr
      */
     public function load_classes(): void {
-        $helpers = new HelpersService();
+        $helpers = new HelperService();
         $user_fields = new UserFields();
         $userService = new UserService();
         $userTemplate = new TemplatesManager();
         $athlete_role = new AthleteRole();
         $user_unsubscription = new Unsubscription( $userService );
+        $sulayr_settings = new SulayrSettingsPage( $userService );
     }
 
     /**

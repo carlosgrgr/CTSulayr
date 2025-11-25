@@ -72,6 +72,29 @@ class UserFields extends Fields
                     'return_format' => 'value',
                 ],
                 [
+                    'key' => 'field_' . md5( CustomFields::USER_PROFILE_TRAINING_TYPE ),
+                    'label' => __( 'Tipo de entrenamiento', SULAYR_TEXTDOMAIN ),
+                    'name' => CustomFields::USER_PROFILE_TRAINING_TYPE,
+                    'type' => 'select',
+                    'choices' => [
+                        'sprint'  => __( 'Sprint', SULAYR_TEXTDOMAIN ),
+                        'olimpic' => __( 'Olímpico', SULAYR_TEXTDOMAIN ),
+                    ],
+                    'allow_null' => 1,
+                    'ui' => 1,
+                    'return_format' => 'value',
+                    'required' => 0,
+                    'conditional_logic' => [
+                        [
+                            [
+                                'field' => 'field_' . md5( CustomFields::USER_PROFILE_MEMBERSHIP_PLAN ),
+                                'operator' => '==',
+                                'value' => 'premium',
+                            ],
+                        ],
+                    ],
+                ],
+                [
                     'key' => 'field_' . md5( CustomFields::USER_PROFILE_SWIMMING ),
                     'label' => __( 'Suplemento natación', SULAYR_TEXTDOMAIN ),
                     'name' => CustomFields::USER_PROFILE_SWIMMING,

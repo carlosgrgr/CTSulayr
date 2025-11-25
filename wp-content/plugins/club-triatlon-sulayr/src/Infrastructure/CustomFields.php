@@ -13,5 +13,6 @@ class CustomFields
     const USER_PROFILE_BIRTH = 'sulayr_user_birth_date';
     const USER_PROFILE_DNI = 'sulayr_user_dni';
     const USER_PROFILE_MEMBERSHIP_PLAN = 'sulayr_user_membership_plan';
+    const USER_PROFILE_TRAINING_TYPE = 'sulayr_user_training_type';
     const USER_PROFILE_SWIMMING = 'sulayr_user_swimming';
 }
