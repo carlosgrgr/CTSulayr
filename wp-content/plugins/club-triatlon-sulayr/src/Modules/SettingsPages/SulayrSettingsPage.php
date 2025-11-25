@@ -2,6 +2,7 @@
 namespace ClubTriatlonSulayr\Modules\SettingsPages;
 
 use ClubTriatlonSulayr\Services\UserService;
+use ClubTriatlonSulayr\Services\CsvImporterService;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -16,6 +17,7 @@ class SulayrSettingsPage {
     const PAGE_SLUG = 'sulayr-settings';
     
     private UserService $user_service;
+    private CsvImporterService $csv_importer;
 
     /**
      * __construct()
@@ -26,6 +28,7 @@ class SulayrSettingsPage {
      */
     public function __construct( UserService $user_service ) {
         $this->user_service = $user_service;
+        $this->csv_importer = new CsvImporterService( $user_service );
         $this->init();
     }
 
@@ -39,6 +42,8 @@ class SulayrSettingsPage {
     private function init(): void {
         add_action( 'admin_menu', [ $this, 'add_settings_page' ] );
         add_action( 'admin_init', [ $this, 'handle_list_requests' ] );
+        // Procesar importación antes que otras acciones para evitar conflictos
+        add_action( 'admin_init', [ $this, 'handle_csv_import' ], 5 );
     }
 
     /**
@@ -119,6 +124,7 @@ class SulayrSettingsPage {
         $this->load_template( 'admin/main-view', [
             'list_by_plan_url' => $this->get_list_url( 'by_plan' ),
             'list_swimmers_url' => $this->get_list_url( 'swimmers' ),
+            'import_url' => $this->get_list_url( 'import' ),
         ] );
     }
 
@@ -138,6 +144,9 @@ class SulayrSettingsPage {
                 break;
             case 'swimmers':
                 $this->render_swimmers_list();
+                break;
+            case 'import':
+                $this->render_import_view();
                 break;
             default:
                 $this->render_error_message( __( 'Acción no válida.', SULAYR_TEXTDOMAIN ) );
@@ -372,6 +381,105 @@ class SulayrSettingsPage {
             'sulayr_list_action',
             '_wpnonce'
         );
+    }
+
+    /**
+     * Maneja la importación de CSV
+     *
+     * @return void
+     * @access public
+     */
+    public function handle_csv_import(): void {
+        if ( ! isset( $_POST['sulayr_import_csv'] ) ) {
+            return;
+        }
+
+        // Forzar el uso del sistema de archivos directo ANTES de cualquier otra operación
+        // Esto evita que WordPress intente usar FTP
+        if ( ! defined( 'FS_METHOD' ) ) {
+            define( 'FS_METHOD', 'direct' );
+        }
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( __( 'No tienes permisos para realizar esta acción.', SULAYR_TEXTDOMAIN ) );
+        }
+
+        // Verificar nonce
+        if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'sulayr_import_csv' ) ) {
+            wp_die( __( 'Acción no autorizada.', SULAYR_TEXTDOMAIN ) );
+        }
+
+        // Verificar que se haya subido un archivo
+        if ( ! isset( $_FILES['csv_file'] ) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK ) {
+            add_settings_error(
+                'sulayr_import',
+                'upload_error',
+                __( 'Error al subir el archivo. Por favor, intenta de nuevo.', SULAYR_TEXTDOMAIN )
+            );
+            return;
+        }
+
+        $file = $_FILES['csv_file'];
+        
+        // Validar tipo de archivo sin usar wp_check_filetype (evita activar sistema de archivos)
+        $file_name = $file['name'];
+        $file_ext = strtolower( pathinfo( $file_name, PATHINFO_EXTENSION ) );
+        
+        if ( $file_ext !== 'csv' ) {
+            add_settings_error(
+                'sulayr_import',
+                'invalid_file',
+                __( 'El archivo debe ser un CSV (.csv).', SULAYR_TEXTDOMAIN )
+            );
+            return;
+        }
+
+        // Usar el archivo temporal directamente sin moverlo
+        // Esto evita problemas con FTP y permisos de archivos
+        $temp_file = $file['tmp_name'];
+        
+        if ( ! file_exists( $temp_file ) || ! is_readable( $temp_file ) ) {
+            add_settings_error(
+                'sulayr_import',
+                'file_error',
+                __( 'Error al acceder al archivo temporal.', SULAYR_TEXTDOMAIN )
+            );
+            return;
+        }
+
+        // Importar el CSV usando el archivo temporal directamente
+        $result = $this->csv_importer->import_from_csv( $temp_file );
+
+        // Guardar resultados en transients para mostrarlos en la página
+        set_transient( 'sulayr_import_result', $result, 60 );
+
+        // Redirigir para evitar reenvío del formulario
+        wp_safe_redirect( add_query_arg( [
+            'page' => self::MENU_SLUG,
+            'action' => 'import',
+            'imported' => '1',
+        ], admin_url( 'options-general.php' ) ) );
+        exit;
+    }
+
+    /**
+     * Renderiza la vista de importación
+     *
+     * @return void
+     * @access private
+     */
+    private function render_import_view(): void {
+        $import_result = null;
+        if ( isset( $_GET['imported'] ) && $_GET['imported'] === '1' ) {
+            $import_result = get_transient( 'sulayr_import_result' );
+            if ( $import_result ) {
+                delete_transient( 'sulayr_import_result' );
+            }
+        }
+
+        $this->load_template( 'admin/import-view', [
+            'import_result' => $import_result,
+        ] );
     }
 
     /**
