@@ -21,9 +21,11 @@ class UserService {
         if ( ! is_admin() ) {
             add_filter('acf/prepare_field/name=sulayr_user_membership_plan', [$this, 'maybe_lock_field']);
             add_filter('acf/prepare_field/name=sulayr_user_swimming', [$this, 'maybe_lock_field']);
+            add_filter('acf/prepare_field/name=sulayr_user_training_type', [$this, 'maybe_lock_field']);
             // Proteger valores de campos bloqueados al guardar
             add_filter('acf/update_value/name=sulayr_user_membership_plan', [$this, 'preserve_locked_field_value'], 10, 3);
             add_filter('acf/update_value/name=sulayr_user_swimming', [$this, 'preserve_locked_field_value'], 10, 3);
+            add_filter('acf/update_value/name=sulayr_user_training_type', [$this, 'preserve_locked_field_value'], 10, 3);
         }
 
     }
@@ -238,8 +240,8 @@ class UserService {
         $interval = $today->diff($last_day);
         $days_left = (int) $interval->format('%a');
 
-        // Si faltan 5 días o menos
-        if ($days_left <= 5) {
+        // Si faltan menos de 5 días (4 días o menos)
+        if ($days_left < 5) {
             // Usar readonly en lugar de disabled para que el valor se envíe en el formulario
             $field['readonly'] = 1; // Hace el campo solo lectura
             // NO usar disabled porque los campos disabled no se envían en el formulario
@@ -275,8 +277,8 @@ class UserService {
         $interval = $today->diff($last_day);
         $days_left = (int) $interval->format('%a');
 
-        // Si NO estamos en período de bloqueo, permitir el cambio
-        if ( $days_left > 5 ) {
+        // Si NO estamos en período de bloqueo (5 días o más), permitir el cambio
+        if ( $days_left >= 5 ) {
             return $value;
         }
 
