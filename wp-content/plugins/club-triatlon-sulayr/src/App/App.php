@@ -9,6 +9,7 @@ use ClubTriatlonSulayr\Modules\Templates\TemplatesManager;
 use ClubTriatlonSulayr\Modules\Fields\UserFields\UserFields;
 use ClubTriatlonSulayr\Modules\Users\Unsubscription;
 use ClubTriatlonSulayr\Modules\SettingsPages\SulayrSettingsPage;
+use ClubTriatlonSulayr\Modules\Users\UserAdminList;
 
 /**
  * App
@@ -74,6 +75,7 @@ class App {
         $athlete_role = new AthleteRole();
         $user_unsubscription = new Unsubscription( $userService );
         $sulayr_settings = new SulayrSettingsPage( $userService );
+        $user_admin_list = new UserAdminList( $helpers );
     }
 
     /**

@@ -144,7 +144,7 @@ class HelperService {
      */
     public function format_training_type_instance( $training_type_value ): string {
         if ( empty( $training_type_value ) ) {
-            return '';
+            return '-';
         }
 
         // Normalizar el valor

@@ -4,7 +4,7 @@ namespace ClubTriatlonSulayr\Modules\Users;
 use ClubTriatlonSulayr\Services\UserService;
 
 /**
- * Endpoint
+ * Unsubscription
  */
 class Unsubscription
 {
