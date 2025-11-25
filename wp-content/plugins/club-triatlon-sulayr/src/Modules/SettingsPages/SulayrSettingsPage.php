@@ -69,7 +69,9 @@ class SulayrSettingsPage {
      * @package	club-triatlon-sulayr
      */
     public function handle_list_requests(): void {
-        if ( ! isset( $_GET['page'] ) || $_GET['page'] !== self::MENU_SLUG ) {
+        $page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
+
+        if ( $page !== self::MENU_SLUG ) {
             return;
         }
 
@@ -98,63 +100,68 @@ class SulayrSettingsPage {
             wp_die( __( 'No tienes permisos para acceder a esta página.', SULAYR_TEXTDOMAIN ) );
         }
 
-        $action = isset( $_GET['action'] ) ? sanitize_text_field( $_GET['action'] ) : '';
+        $action = isset( $_GET['action'] ) ? sanitize_text_field( wp_unslash( $_GET['action'] ) ) : '';
 
-        ?>
-        <div class="wrap">
-            <h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-            
-            <?php if ( empty( $action ) ) : ?>
-                <!-- Vista principal con botones -->
-                <div class="sulayr-settings-main">
-                    <div class="card">
-                        <div class="card-body">
-                            <h2 class="card-title"><?php _e( 'Listados de deportistas', SULAYR_TEXTDOMAIN ); ?></h2>
-                            <p class="card-text"><?php _e( 'Selecciona el tipo de listado que deseas ver:', SULAYR_TEXTDOMAIN ); ?></p>
-                            
-                            <div class="sulayr-settings-buttons">
-                                <a href="<?php echo esc_url( $this->get_list_url( 'by_plan' ) ); ?>" 
-                                   class="button button-primary button-large">
-                                    <span class="dashicons dashicons-groups"></span>
-                                    <?php _e( 'Listar deportistas por tarifa', SULAYR_TEXTDOMAIN ); ?>
-                                </a>
-                                
-                                <a href="<?php echo esc_url( $this->get_list_url( 'swimmers' ) ); ?>" 
-                                   class="button button-primary button-large">
-                                    <span class="dashicons dashicons-swimming"></span>
-                                    <?php _e( 'Listar nadadores', SULAYR_TEXTDOMAIN ); ?>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            <?php else : ?>
-                <!-- Vista de listado -->
-                <div class="sulayr-settings-list">
-                    <p>
-                        <a href="<?php echo esc_url( admin_url( 'options-general.php?page=' . self::MENU_SLUG ) ); ?>" 
-                           class="button">
-                            <span class="dashicons dashicons-arrow-left-alt"></span>
-                            <?php _e( 'Volver', SULAYR_TEXTDOMAIN ); ?>
-                        </a>
-                    </p>
-                    
-                    <?php
-                    switch ( $action ) {
-                        case 'by_plan':
-                            $this->render_athletes_by_plan();
-                            break;
-                        case 'swimmers':
-                            $this->render_swimmers_list();
-                            break;
-                        default:
-                            echo '<div class="notice notice-error"><p>' . esc_html__( 'Acción no válida.', SULAYR_TEXTDOMAIN ) . '</p></div>';
-                    }
-                    ?>
-                </div>
-            <?php endif; ?>
-        </div>
-        <?php
+        if ( empty( $action ) ) {
+            $this->render_main_view();
+        } else {
+            $this->render_list_view( $action );
+        }
+    }
+
+    /**
+     * Renderiza la vista principal con botones de selección
+     *
+     * @return void
+     * @access private
+     */
+    private function render_main_view(): void {
+        $this->load_template( 'admin/main-view', [
+            'list_by_plan_url' => $this->get_list_url( 'by_plan' ),
+            'list_swimmers_url' => $this->get_list_url( 'swimmers' ),
+        ] );
+    }
+
+    /**
+     * Renderiza la vista de listado según la acción
+     *
+     * @param string $action Acción a realizar
+     * @return void
+     * @access private
+     */
+    private function render_list_view( string $action ): void {
+        ob_start();
+        
+        switch ( $action ) {
+            case 'by_plan':
+                $this->render_athletes_by_plan();
+                break;
+            case 'swimmers':
+                $this->render_swimmers_list();
+                break;
+            default:
+                $this->render_error_message( __( 'Acción no válida.', SULAYR_TEXTDOMAIN ) );
+        }
+        
+        $content = ob_get_clean();
+        
+        $this->load_template( 'admin/list-view', [
+            'back_url' => admin_url( 'options-general.php?page=' . self::MENU_SLUG ),
+            'content' => $content,
+        ] );
+    }
+
+    /**
+     * Renderiza un mensaje de error
+     *
+     * @param string $message Mensaje de error
+     * @return void
+     * @access private
+     */
+    private function render_error_message( string $message ): void {
+        $this->load_template( 'admin/error-message', [
+            'message' => $message,
+        ] );
     }
 
     /**
@@ -168,7 +175,117 @@ class SulayrSettingsPage {
     private function render_athletes_by_plan(): void {
         $athletes = $this->user_service->get_athletes_by_plan();
         
-        // Obtener el mes actual en español
+        if ( empty( $athletes ) ) {
+            $this->render_empty_athletes_message();
+            return;
+        }
+
+        $grouped = $this->group_athletes_by_plan( $athletes );
+        $current_month = $this->get_current_month_name();
+        $total_count = count( $athletes );
+        
+        $this->load_template( 'admin/athletes-by-plan', [
+            'grouped' => $grouped,
+            'current_month' => $current_month,
+            'total_count' => $total_count,
+        ] );
+    }
+
+    /**
+     * Agrupa los atletas por plan y tipo de entrenamiento
+     *
+     * @param array $athletes Lista de atletas
+     * @return array Atletas agrupados por categoría
+     * @access private
+     */
+    private function group_athletes_by_plan( array $athletes ): array {
+        $grouped = [
+            'basic' => [],
+            'training_sprint' => [],
+            'training_olimpic' => [],
+            'other' => [],
+        ];
+        
+        foreach ( $athletes as $athlete ) {
+            $plan_value = $athlete['plan_value'] ?? '';
+            $training_type = $athlete['training_type_value'] ?? '';
+            
+            $group_key = $this->determine_athlete_group( $plan_value, $training_type );
+            $grouped[ $group_key ][] = $athlete;
+        }
+        
+        // Ordenar alfabéticamente cada grupo por nombre
+        foreach ( $grouped as $key => $group ) {
+            usort( $group, function( $a, $b ) {
+                return strcmp( $a['name'], $b['name'] );
+            } );
+            $grouped[ $key ] = $group;
+        }
+        
+        return $grouped;
+    }
+
+    /**
+     * Determina el grupo al que pertenece un atleta según su plan y tipo de entrenamiento
+     *
+     * @param string $plan_value Valor del plan
+     * @param string $training_type Tipo de entrenamiento
+     * @return string Clave del grupo
+     * @access private
+     */
+    private function determine_athlete_group( string $plan_value, string $training_type ): string {
+        $plan_lower = strtolower( $plan_value );
+        $training_lower = strtolower( $training_type );
+        
+        // Si es premium/entrenamiento, agrupar por tipo
+        if ( $plan_value === 'premium' || stripos( $plan_value, 'premium' ) !== false || stripos( $plan_value, 'entrenamiento' ) !== false ) {
+            if ( $training_type === 'sprint' || stripos( $training_type, 'sprint' ) !== false ) {
+                return 'training_sprint';
+            }
+            if ( $training_type === 'olimpic' || stripos( $training_type, 'olimpic' ) !== false || stripos( $training_type, 'olímpico' ) !== false ) {
+                return 'training_olimpic';
+            }
+            // Si tiene plan premium pero no tipo, poner en otros
+            return 'other';
+        }
+        
+        if ( $plan_value === 'basic' || stripos( $plan_value, 'basic' ) !== false || stripos( $plan_value, 'básica' ) !== false ) {
+            return 'basic';
+        }
+        
+        return 'other';
+    }
+
+    /**
+     * Renderiza un grupo de atletas
+     *
+     * @param string $group_key Clave del grupo
+     * @param array  $athletes  Lista de atletas del grupo
+     * @param string $title     Título del grupo
+     * @param bool   $bold      Si el título debe estar en negrita
+     * @return void
+     * @access private
+     */
+    private function render_athletes_group( string $group_key, array $athletes, string $title, bool $bold = false ): void {
+        if ( empty( $athletes ) ) {
+            return;
+        }
+
+        $this->load_template( 'admin/athletes-group', [
+            'group_key' => $group_key,
+            'athletes' => $athletes,
+            'title' => $title,
+            'bold' => $bold,
+        ] );
+    }
+
+    /**
+     * Obtiene el nombre del mes actual en español
+     *
+     * @return string Nombre del mes en mayúsculas
+     * @access private
+     */
+    private function get_current_month_name(): string {
         $months = [
             1 => __( 'ENERO', SULAYR_TEXTDOMAIN ),
             2 => __( 'FEBRERO', SULAYR_TEXTDOMAIN ),
@@ -183,107 +300,19 @@ class SulayrSettingsPage {
             11 => __( 'NOVIEMBRE', SULAYR_TEXTDOMAIN ),
             12 => __( 'DICIEMBRE', SULAYR_TEXTDOMAIN ),
         ];
-        $current_month = $months[ (int) date( 'n' ) ];
         
-        ?>
-        <div class="card sulayr-athletes-list-card">
-            <div class="card-body">
-                <?php if ( empty( $athletes ) ) : ?>
-                    <p><?php _e( 'No se encontraron deportistas.', SULAYR_TEXTDOMAIN ); ?></p>
-                <?php else : ?>
-                    <?php
-                    // Agrupar por tarifa y tipo de entrenamiento
-                    $grouped = [
-                        'basic' => [],
-                        'training_sprint' => [],
-                        'training_olimpic' => [],
-                        'other' => [],
-                    ];
-                    
-                    foreach ( $athletes as $athlete ) {
-                        $plan_value = $athlete['plan_value'] ?? '';
-                        $training_type = $athlete['training_type_value'] ?? '';
-                        
-                        // Si es premium/entrenamiento, agrupar por tipo
-                        if ( $plan_value === 'premium' || stripos( $plan_value, 'premium' ) !== false ) {
-                            if ( $training_type === 'sprint' || stripos( $training_type, 'sprint' ) !== false ) {
-                                $grouped['training_sprint'][] = $athlete;
-                            } elseif ( $training_type === 'olimpic' || stripos( $training_type, 'olimpic' ) !== false || stripos( $training_type, 'olímpico' ) !== false ) {
-                                $grouped['training_olimpic'][] = $athlete;
-                            } else {
-                                // Si tiene plan premium pero no tipo, poner en otros
-                                $grouped['other'][] = $athlete;
-                            }
-                        } elseif ( $plan_value === 'basic' || stripos( $plan_value, 'basic' ) !== false ) {
-                            $grouped['basic'][] = $athlete;
-                        } else {
-                            $grouped['other'][] = $athlete;
-                        }
-                    }
-                    
-                    // Ordenar alfabéticamente cada grupo por nombre
-                    foreach ( $grouped as $key => $group ) {
-                        usort( $group, function( $a, $b ) {
-                            return strcmp( $a['name'], $b['name'] );
-                        } );
-                        $grouped[ $key ] = $group;
-                    }
-                    ?>
-                    
-                    <h2 class="sulayr-athletes-title">
-                        *<?php echo esc_html( sprintf( __( 'DEPORTISTAS %s', SULAYR_TEXTDOMAIN ), $current_month ) ); ?>* (<?php echo count( $athletes ); ?>)
-                    </h2>
-                    
-                    <?php if ( ! empty( $grouped['basic'] ) ) : ?>
-                        <h4 class="sulayr-athletes-group-title">
-                            *<?php echo esc_html( __( 'Básica', SULAYR_TEXTDOMAIN ) ); ?>* <?php echo '(' . count( $grouped['basic'] ) . ')'; ?>
-                        </h4>
-                        <div class="sulayr-athletes-list">
-                            <?php foreach ( $grouped['basic'] as $index => $athlete ) : ?>
-                                <span class="sulayr-athletes-list-item"><?php echo $index + 1 . '. ' . esc_html( $athlete['name'] ) . ' ' . esc_html( $athlete['email'] ); ?></span>
-                            <?php endforeach; ?>
-                        </div>
-                        </br>
-                    <?php endif; ?>
-                    
-                    <?php if ( ! empty( $grouped['training_sprint'] ) ) : ?>
-                        <h4 class="sulayr-athletes-group-title">
-                            *<?php echo esc_html( __( 'Entrenamientos sprint', SULAYR_TEXTDOMAIN ) ); ?>* <?php echo '(' . count( $grouped['training_sprint'] ) . ')'; ?>
-                        </h4>
-                        <div class="sulayr-athletes-list">
-                            <?php foreach ( $grouped['training_sprint'] as $index => $athlete ) : ?>
-                                <span class="sulayr-athletes-list-item"><?php echo $index + 1 . '. ' . esc_html( $athlete['name'] ) . ' ' . esc_html( $athlete['email'] ); ?></span>
-                            <?php endforeach; ?>
-                        </div>
-                        </br>
-                    <?php endif; ?>
-                    
-                    <?php if ( ! empty( $grouped['training_olimpic'] ) ) : ?>
-                        <h4 class="sulayr-athletes-group-title">
-                            *<?php echo esc_html( __( 'Entrenamientos olímpico', SULAYR_TEXTDOMAIN ) ); ?>* <?php echo '(' . count( $grouped['training_olimpic'] ) . ')'; ?>
-                        </h4>
-                        <div class="sulayr-athletes-list">
-                            <?php foreach ( $grouped['training_olimpic'] as $index => $athlete ) : ?>
-                                <span class="sulayr-athletes-list-item"><?php echo $index + 1 . '. ' . esc_html( $athlete['name'] ) . ' ' . esc_html( $athlete['email'] ); ?></span>
-                            <?php endforeach; ?>
-                        </div>
-                        </br>
-                    <?php endif; ?>
-                    
-                    <?php if ( ! empty( $grouped['other'] ) ) : ?>
-                        <h4 class="sulayr-athletes-group-title sulayr-athletes-group-title-other">
-                            <?php echo esc_html( __( 'Otros', SULAYR_TEXTDOMAIN ) ); ?> <?php echo '(' . count( $grouped['other'] ) . ')'; ?>
-                        </h4>
-                        <div class="sulayr-athletes-list">
-                            <?php foreach ( $grouped['other'] as $index => $athlete ) : ?>
-                                <span class="sulayr-athletes-list-item"><?php echo $index + 1 . '. ' . esc_html( $athlete['name'] ) . ' ' . esc_html( $athlete['email'] ); ?></span>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php
+        $current_month_num = (int) date( 'n' );
+        return $months[ $current_month_num ] ?? '';
+    }
+
+    /**
+     * Renderiza mensaje cuando no hay atletas
+     *
+     * @return void
+     * @access private
+     */
+    private function render_empty_athletes_message(): void {
+        $this->load_template( 'admin/empty-athletes' );
     }
 
     /**
@@ -297,53 +326,35 @@ class SulayrSettingsPage {
     private function render_swimmers_list(): void {
         $swimmers = $this->user_service->get_swimmers();
         
-        ?>
-        <div class="card sulayr-swimmers-card">
-            <div class="card-header">
-                <h2><?php _e( 'Listado de nadadores', SULAYR_TEXTDOMAIN ); ?></h2>
-                <p><?php _e( 'Deportistas con suplemento de natación activo', SULAYR_TEXTDOMAIN ); ?></p>
-            </div>
-            <div class="card-body">
-                <?php if ( empty( $swimmers ) ) : ?>
-                    <p><?php _e( 'No se encontraron nadadores con suplemento activo.', SULAYR_TEXTDOMAIN ); ?></p>
-                <?php else : ?>
-                    <p class="sulayr-swimmers-count">
-                        <strong><?php _e( 'Total de nadadores:', SULAYR_TEXTDOMAIN ); ?></strong> 
-                        <?php echo count( $swimmers ); ?>
-                    </p>
-                    
-                    <table class="wp-list-table widefat fixed striped sulayr-list-table">
-                        <thead>
-                            <tr>
-                                <th><?php _e( 'ID', SULAYR_TEXTDOMAIN ); ?></th>
-                                <th><?php _e( 'Nombre', SULAYR_TEXTDOMAIN ); ?></th>
-                                <th><?php _e( 'Email', SULAYR_TEXTDOMAIN ); ?></th>
-                                <th><?php _e( 'Teléfono', SULAYR_TEXTDOMAIN ); ?></th>
-                                <th><?php _e( 'DNI', SULAYR_TEXTDOMAIN ); ?></th>
-                                <th><?php _e( 'Tarifa', SULAYR_TEXTDOMAIN ); ?></th>
-                                <th><?php _e( 'Tipo de entrenamiento', SULAYR_TEXTDOMAIN ); ?></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ( $swimmers as $swimmer ) : ?>
-                                <tr>
-                                    <td><?php echo esc_html( $swimmer['ID'] ); ?></td>
-                                    <td>
-                                        <strong><?php echo esc_html( $swimmer['name'] ); ?></strong>
-                                    </td>
-                                    <td><?php echo esc_html( $swimmer['email'] ); ?></td>
-                                    <td><?php echo esc_html( $swimmer['phone'] ?: '-' ); ?></td>
-                                    <td><?php echo esc_html( $swimmer['dni'] ?: '-' ); ?></td>
-                                    <td><?php echo esc_html( $swimmer['plan'] ?: '-' ); ?></td>
-                                    <td><?php echo esc_html( $swimmer['training_type'] ?: '-' ); ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php
+        $this->load_template( 'admin/swimmers-list', [
+            'swimmers' => $swimmers,
+        ] );
+    }
+
+    /**
+     * Renderiza la tabla de nadadores
+     *
+     * @param array $swimmers Lista de nadadores
+     * @return void
+     * @access private
+     */
+    private function render_swimmers_table( array $swimmers ): void {
+        $this->load_template( 'admin/swimmers-table', [
+            'swimmers' => $swimmers,
+        ] );
+    }
+
+    /**
+     * Renderiza una fila de la tabla de nadadores
+     *
+     * @param array $swimmer Datos del nadador
+     * @return void
+     * @access private
+     */
+    private function render_swimmer_row( array $swimmer ): void {
+        $this->load_template( 'admin/swimmer-row', [
+            'swimmer' => $swimmer,
+        ] );
     }
 
     /**
@@ -361,6 +372,18 @@ class SulayrSettingsPage {
             'sulayr_list_action',
             '_wpnonce'
         );
+    }
+
+    /**
+     * Carga una plantilla desde la carpeta templates
+     *
+     * @param string $template_name Nombre de la plantilla (sin extensión .php)
+     * @param array  $vars          Variables a pasar a la plantilla
+     * @return void
+     * @access private
+     */
+    private function load_template( string $template_name, array $vars = [] ): void {
+        \ClubTriatlonSulayr\Services\TemplateService::load( $template_name, $vars );
     }
 }
 

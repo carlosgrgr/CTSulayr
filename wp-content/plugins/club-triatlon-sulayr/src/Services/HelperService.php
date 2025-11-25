@@ -10,8 +10,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * HelperService
  * Funciones helper reutilizables para formatear y obtener datos
+ * 
+ * Esta clase puede usarse como instancia (para inyección de dependencias y testing)
+ * o mediante métodos estáticos (para compatibilidad y facilidad de uso).
+ * Los métodos estáticos delegan internamente a una instancia singleton.
  */
 class HelperService {
+    /**
+     * Instancia singleton para métodos estáticos
+     *
+     * @var HelperService|null
+     * @access private
+     */
+    private static ?HelperService $instance = null;
+
     /**
      * __construct()
      *
@@ -34,6 +46,20 @@ class HelperService {
     }
 
     /**
+     * Obtiene la instancia singleton
+     *
+     * @return HelperService Instancia única de HelperService
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public static function get_instance(): HelperService {
+        if ( null === self::$instance ) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
+    /**
      * Obtener un campo ACF con fallback a get_user_meta
      *
      * @param string $field_name Nombre del campo ACF
@@ -42,7 +68,7 @@ class HelperService {
      * @access public
      * @package club-triatlon-sulayr
      */
-    public static function get_user_field( string $field_name, int $user_id ) {
+    public function get_user_field_instance( string $field_name, int $user_id ) {
         $value = get_field( $field_name, 'user_' . $user_id );
         
         // Si get_field() devuelve false/null/vacío, intentar con get_user_meta
@@ -54,6 +80,19 @@ class HelperService {
     }
 
     /**
+     * Método estático que delega a la instancia singleton
+     *
+     * @param string $field_name Nombre del campo ACF
+     * @param int    $user_id    ID del usuario
+     * @return mixed Valor del campo o false/null si no existe
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public static function get_user_field( string $field_name, int $user_id ) {
+        return self::get_instance()->get_user_field_instance( $field_name, $user_id );
+    }
+
+    /**
      * Formatear el valor de tarifa a etiqueta legible
      *
      * @param mixed $plan_value Valor de la tarifa (puede ser string, número, etc.)
@@ -61,7 +100,7 @@ class HelperService {
      * @access public
      * @package club-triatlon-sulayr
      */
-    public static function format_membership_plan( $plan_value ): string {
+    public function format_membership_plan_instance( $plan_value ): string {
         if ( empty( $plan_value ) && $plan_value !== '0' && $plan_value !== 0 ) {
             return __( 'Sin tarifa', SULAYR_TEXTDOMAIN );
         }
@@ -84,6 +123,18 @@ class HelperService {
     }
 
     /**
+     * Método estático que delega a la instancia singleton
+     *
+     * @param mixed $plan_value Valor de la tarifa
+     * @return string Etiqueta formateada
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public static function format_membership_plan( $plan_value ): string {
+        return self::get_instance()->format_membership_plan_instance( $plan_value );
+    }
+
+    /**
      * Formatear el valor de tipo de entrenamiento a etiqueta legible
      *
      * @param mixed $training_type_value Valor del tipo de entrenamiento
@@ -91,7 +142,7 @@ class HelperService {
      * @access public
      * @package club-triatlon-sulayr
      */
-    public static function format_training_type( $training_type_value ): string {
+    public function format_training_type_instance( $training_type_value ): string {
         if ( empty( $training_type_value ) ) {
             return '';
         }
@@ -114,6 +165,18 @@ class HelperService {
     }
 
     /**
+     * Método estático que delega a la instancia singleton
+     *
+     * @param mixed $training_type_value Valor del tipo de entrenamiento
+     * @return string Etiqueta formateada
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public static function format_training_type( $training_type_value ): string {
+        return self::get_instance()->format_training_type_instance( $training_type_value );
+    }
+
+    /**
      * Formatear el valor de suplemento natación a booleano
      *
      * @param mixed $swimming_value Valor del suplemento
@@ -121,7 +184,7 @@ class HelperService {
      * @access public
      * @package club-triatlon-sulayr
      */
-    public static function format_swimming_supplement_to_bool( $swimming_value ): bool {
+    public function format_swimming_supplement_to_bool_instance( $swimming_value ): bool {
         if ( $swimming_value === false || $swimming_value === null ) {
             return false;
         }
@@ -142,6 +205,18 @@ class HelperService {
     }
 
     /**
+     * Método estático que delega a la instancia singleton
+     *
+     * @param mixed $swimming_value Valor del suplemento
+     * @return bool true si tiene suplemento activo, false en caso contrario
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public static function format_swimming_supplement_to_bool( $swimming_value ): bool {
+        return self::get_instance()->format_swimming_supplement_to_bool_instance( $swimming_value );
+    }
+
+    /**
      * Formatear el valor de suplemento natación a etiqueta legible
      *
      * @param mixed $swimming_value Valor del suplemento
@@ -149,12 +224,24 @@ class HelperService {
      * @access public
      * @package club-triatlon-sulayr
      */
-    public static function format_swimming_supplement_to_label( $swimming_value ): string {
-        if ( self::format_swimming_supplement_to_bool( $swimming_value ) ) {
+    public function format_swimming_supplement_to_label_instance( $swimming_value ): string {
+        if ( $this->format_swimming_supplement_to_bool_instance( $swimming_value ) ) {
             return __( 'Sí', SULAYR_TEXTDOMAIN );
         }
         
         return __( 'No', SULAYR_TEXTDOMAIN );
+    }
+
+    /**
+     * Método estático que delega a la instancia singleton
+     *
+     * @param mixed $swimming_value Valor del suplemento
+     * @return string Etiqueta formateada ('Sí' o 'No')
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public static function format_swimming_supplement_to_label( $swimming_value ): string {
+        return self::get_instance()->format_swimming_supplement_to_label_instance( $swimming_value );
     }
 
     /**
@@ -166,7 +253,7 @@ class HelperService {
      * @access public
      * @package club-triatlon-sulayr
      */
-    public static function format_birth_date( string $birth_date, string $format = 'd/m/Y' ): string {
+    public function format_birth_date_instance( string $birth_date, string $format = 'd/m/Y' ): string {
         if ( empty( $birth_date ) ) {
             return '';
         }
@@ -181,6 +268,19 @@ class HelperService {
     }
 
     /**
+     * Método estático que delega a la instancia singleton
+     *
+     * @param string $birth_date Fecha en formato Y-m-d
+     * @param string $format     Formato de salida (por defecto d/m/Y)
+     * @return string Fecha formateada o string vacío si no es válida
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public static function format_birth_date( string $birth_date, string $format = 'd/m/Y' ): string {
+        return self::get_instance()->format_birth_date_instance( $birth_date, $format );
+    }
+
+    /**
      * Obtener nombre completo del usuario
      *
      * @param int $user_id ID del usuario
@@ -188,7 +288,7 @@ class HelperService {
      * @access public
      * @package club-triatlon-sulayr
      */
-    public static function get_user_full_name( int $user_id ): string {
+    public function get_user_full_name_instance( int $user_id ): string {
         $user = get_userdata( $user_id );
         if ( ! $user ) {
             return '';
@@ -210,6 +310,18 @@ class HelperService {
     }
 
     /**
+     * Método estático que delega a la instancia singleton
+     *
+     * @param int $user_id ID del usuario
+     * @return string Nombre completo o display_name o user_login como fallback
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public static function get_user_full_name( int $user_id ): string {
+        return self::get_instance()->get_user_full_name_instance( $user_id );
+    }
+
+    /**
      * Obtener URL de la foto de perfil del usuario
      *
      * @param int    $user_id      ID del usuario
@@ -219,12 +331,12 @@ class HelperService {
      * @access public
      * @package club-triatlon-sulayr
      */
-    public static function get_user_photo_url( int $user_id, string $default_url = '', string $size = 'medium' ): string {
+    public function get_user_photo_url_instance( int $user_id, string $default_url = '', string $size = 'medium' ): string {
         if ( empty( $default_url ) ) {
             $default_url = SULAYR_PUBLIC_ASSETS . '/images/default-user.png';
         }
 
-        $photo_id = self::get_user_field( CustomFields::USER_PROFILE_PHOTO, $user_id );
+        $photo_id = $this->get_user_field_instance( CustomFields::USER_PROFILE_PHOTO, $user_id );
         
         if ( ! $photo_id ) {
             return $default_url;
@@ -238,5 +350,19 @@ class HelperService {
         
         // Si es una URL directa
         return $photo_id;
+    }
+
+    /**
+     * Método estático que delega a la instancia singleton
+     *
+     * @param int    $user_id      ID del usuario
+     * @param string $default_url  URL por defecto si no hay foto
+     * @param string $size         Tamaño de la imagen (thumbnail, medium, large, full)
+     * @return string URL de la imagen
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public static function get_user_photo_url( int $user_id, string $default_url = '', string $size = 'medium' ): string {
+        return self::get_instance()->get_user_photo_url_instance( $user_id, $default_url, $size );
     }
 }

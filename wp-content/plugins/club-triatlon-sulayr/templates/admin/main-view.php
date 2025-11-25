@@ -1,0 +1,39 @@
+<?php
+/**
+ * Template: Vista principal de configuración
+ *
+ * @var string $list_by_plan_url URL para listar por tarifa
+ * @var string $list_swimmers_url URL para listar nadadores
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+?>
+<div class="wrap">
+    <h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+    
+    <div class="sulayr-settings-main">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title"><?php esc_html_e( 'Listados de deportistas', SULAYR_TEXTDOMAIN ); ?></h2>
+                <p class="card-text"><?php esc_html_e( 'Selecciona el tipo de listado que deseas ver:', SULAYR_TEXTDOMAIN ); ?></p>
+                
+                <div class="sulayr-settings-buttons">
+                    <a href="<?php echo esc_url( $list_by_plan_url ); ?>" 
+                       class="button button-primary button-large">
+                        <span class="dashicons dashicons-groups"></span>
+                        <?php esc_html_e( 'Listar deportistas por tarifa', SULAYR_TEXTDOMAIN ); ?>
+                    </a>
+                    
+                    <a href="<?php echo esc_url( $list_swimmers_url ); ?>" 
+                       class="button button-primary button-large">
+                        <span class="dashicons dashicons-swimming"></span>
+                        <?php esc_html_e( 'Listar nadadores', SULAYR_TEXTDOMAIN ); ?>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -30,6 +30,25 @@ define( 'SULAYR_PUBLIC_ASSETS', SULAYR_URL . '/public' );
 define( 'SULAYR_ADMIN_ASSETS', SULAYR_URL . '/admin' );
 define( 'SULAYR_TEMPLATE_DIR', SULAYR_DIR . 'templates' );
 
-define( 'SULAYR_NAME', 'Plugin Boilerplate' );
+define( 'SULAYR_NAME', 'Plugin Club Triatlon Sulayr' );
 define( 'SULAYR_VERSION', '0.3.0' );
 define( 'SULAYR_TEXTDOMAIN', 'club-triatlon-sulayr' );
+
+/**
+ * Función helper global para cargar plantillas (wrapper de TemplateService)
+ * 
+ * Esta función permite usar las plantillas desde cualquier lugar,
+ * incluyendo dentro de las propias plantillas.
+ * 
+ * Se define en el archivo principal del plugin para asegurar que esté
+ * disponible inmediatamente cuando se necesite.
+ *
+ * @param string $template_name Nombre de la plantilla (sin extensión .php)
+ * @param array  $vars          Variables a pasar a la plantilla
+ * @return void
+ */
+if ( ! function_exists( 'sulayr_load_template' ) ) {
+    function sulayr_load_template( string $template_name, array $vars = [] ): void {
+        \ClubTriatlonSulayr\Services\TemplateService::load( $template_name, $vars );
+    }
+}
