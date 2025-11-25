@@ -8,17 +8,19 @@
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
+
+$total_count = count( $swimmers );
 ?>
-<div class="card sulayr-swimmers-card">
-    <div class="card-header">
-        <h2><?php esc_html_e( 'Listado de nadadores', SULAYR_TEXTDOMAIN ); ?></h2>
-        <p><?php esc_html_e( 'Deportistas con suplemento de natación activo', SULAYR_TEXTDOMAIN ); ?></p>
-    </div>
+<div class="card sulayr-athletes-list-card">
     <div class="card-body">
+        <h2 class="sulayr-athletes-title">
+            *<?php esc_html_e( 'NADADORES', SULAYR_TEXTDOMAIN ); ?>* (<?php echo esc_html( $total_count ); ?>)
+        </h2>
+        
         <?php if ( empty( $swimmers ) ) : ?>
-            <p><?php esc_html_e( 'No se encontraron nadadores con suplemento activo.', SULAYR_TEXTDOMAIN ); ?></p>
+            <?php sulayr_load_template( 'admin/empty-athletes' ); ?>
         <?php else : ?>
-            <?php sulayr_load_template( 'admin/swimmers-table', [ 'swimmers' => $swimmers ] ); ?>
+            <?php sulayr_load_template( 'admin/swimmers-group', [ 'swimmers' => $swimmers ] ); ?>
         <?php endif; ?>
     </div>
 </div>
