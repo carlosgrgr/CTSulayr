@@ -21,66 +21,118 @@ get_header();
 $current_user_id = get_current_user_id();
 $current_user = wp_get_current_user();
 
+// Obtener datos del usuario
 $user_name = $current_user->display_name ?: $current_user->user_login;
-$user_profile_photo = get_user_meta( $current_user_id, CustomFields::USER_PROFILE_PHOTO, true );
-$user_profile_phone = get_user_meta( $current_user_id, CustomFields::USER_PROFILE_PHONE, true );
-$user_profile_dni = get_user_meta( $current_user_id, CustomFields::USER_PROFILE_DNI, true );
-$user_profile_birth = get_user_meta( $current_user_id, CustomFields::USER_PROFILE_BIRTH, true );
-$user_profile_plan = get_user_meta( $current_user_id, CustomFields::USER_PROFILE_MEMBERSHIP_PLAN, true );
-$user_profile_swimming = get_user_meta( $current_user_id, CustomFields::USER_PROFILE_SWIMMING, true );
+$user_first_name = get_user_meta( $current_user_id, 'first_name', true );
+$user_last_name = get_user_meta( $current_user_id, 'last_name', true );
+$user_full_name = trim( $user_first_name . ' ' . $user_last_name ) ?: $user_name;
+$user_email = $current_user->user_email;
 
+// Obtener campos ACF usando get_field() para asegurar compatibilidad
+// Si get_field() no funciona, intentamos con get_user_meta() como fallback
+$user_profile_photo = get_field( CustomFields::USER_PROFILE_PHOTO, 'user_' . $current_user_id );
+if ( ! $user_profile_photo ) {
+    $user_profile_photo = get_user_meta( $current_user_id, CustomFields::USER_PROFILE_PHOTO, true );
+}
+
+$user_profile_phone = get_field( CustomFields::USER_PROFILE_PHONE, 'user_' . $current_user_id );
+if ( $user_profile_phone === false || $user_profile_phone === null ) {
+    $user_profile_phone = get_user_meta( $current_user_id, CustomFields::USER_PROFILE_PHONE, true );
+}
+
+$user_profile_dni = get_field( CustomFields::USER_PROFILE_DNI, 'user_' . $current_user_id );
+if ( $user_profile_dni === false || $user_profile_dni === null ) {
+    $user_profile_dni = get_user_meta( $current_user_id, CustomFields::USER_PROFILE_DNI, true );
+}
+
+$user_profile_birth = get_field( CustomFields::USER_PROFILE_BIRTH, 'user_' . $current_user_id );
+if ( $user_profile_birth === false || $user_profile_birth === null ) {
+    $user_profile_birth = get_user_meta( $current_user_id, CustomFields::USER_PROFILE_BIRTH, true );
+}
+
+$user_profile_plan = get_field( CustomFields::USER_PROFILE_MEMBERSHIP_PLAN, 'user_' . $current_user_id );
+if ( $user_profile_plan === false || $user_profile_plan === null || $user_profile_plan === '' ) {
+    $user_profile_plan = get_user_meta( $current_user_id, CustomFields::USER_PROFILE_MEMBERSHIP_PLAN, true );
+}
+
+$user_profile_swimming = get_field( CustomFields::USER_PROFILE_SWIMMING, 'user_' . $current_user_id );
+if ( $user_profile_swimming === false || $user_profile_swimming === null || $user_profile_swimming === '' ) {
+    $user_profile_swimming = get_user_meta( $current_user_id, CustomFields::USER_PROFILE_SWIMMING, true );
+}
+
+// Debug temporal - descomentar para ver los valores obtenidos
+echo '<!-- DEBUG: Plan = ' . var_export( $user_profile_plan, true ) . ' -->';
+echo '<!-- DEBUG: Swimming = ' . var_export( $user_profile_swimming, true ) . ' -->';
+
+// Procesar foto de perfil
 if ( $user_profile_photo ) {
-    $user_profile_photo_url = wp_get_attachment_url( $user_profile_photo );
+    if ( is_numeric( $user_profile_photo ) ) {
+        $user_profile_photo_url = wp_get_attachment_image_url( $user_profile_photo, 'medium' );
+    } else {
+        $user_profile_photo_url = $user_profile_photo;
+    }
 } else {
     $user_profile_photo_url = SULAYR_PUBLIC_ASSETS . '/images/default-user.png';
 }
-/*
+
+// Formatear fecha de nacimiento
+$user_profile_birth_formatted = '';
+if ( $user_profile_birth ) {
+    $birth_date = \DateTime::createFromFormat( 'Y-m-d', $user_profile_birth );
+    if ( $birth_date ) {
+        $user_profile_birth_formatted = $birth_date->format( 'd/m/Y' );
+    } else {
+        $user_profile_birth_formatted = $user_profile_birth;
+    }
+}
+
+// Formatear tarifa
+$user_profile_plan_label = '-';
+if ( ! empty( $user_profile_plan ) || $user_profile_plan === '0' || $user_profile_plan === 0 ) {
+    // Normalizar el valor (puede venir como string o número)
+    $plan_value = is_string( $user_profile_plan ) ? strtolower( trim( $user_profile_plan ) ) : (string) $user_profile_plan;
+    
+    // Comparaciones más flexibles
+    if ( $plan_value === 'basic' || $plan_value === 'básica' || stripos( $plan_value, 'basic' ) !== false ) {
+        $user_profile_plan_label = __( 'Básica', SULAYR_TEXTDOMAIN );
+    } elseif ( $plan_value === 'premium' || $plan_value === 'entrenamiento' || stripos( $plan_value, 'premium' ) !== false || stripos( $plan_value, 'entrenamiento' ) !== false ) {
+        $user_profile_plan_label = __( 'Entrenamiento', SULAYR_TEXTDOMAIN );
+    } else {
+        // Si no coincide, mostrar el valor original (solo si no está vacío)
+        $user_profile_plan_label = ! empty( $user_profile_plan ) ? esc_html( $user_profile_plan ) : '-';
+    }
+}
+
+// Formatear suplemento natación
+$user_profile_swimming_label = '-';
+// Aceptar cualquier valor, incluyendo '0' que es válido
+if ( $user_profile_swimming !== false && $user_profile_swimming !== null ) {
+    // Normalizar el valor (puede venir como '1', '0', true, false, 1, 0)
+    $swimming_value = is_string( $user_profile_swimming ) ? trim( $user_profile_swimming ) : $user_profile_swimming;
+    
+    // Convertir a string para comparaciones más flexibles
+    $swimming_str = (string) $swimming_value;
+    
+    if ( $swimming_value === '1' || $swimming_value === 1 || $swimming_value === true || 
+         $swimming_str === '1' || strtolower( $swimming_str ) === 'yes' || strtolower( $swimming_str ) === 'sí' || 
+         strtolower( $swimming_str ) === 'si' || $swimming_value === 'true' ) {
+        $user_profile_swimming_label = __( 'Sí', SULAYR_TEXTDOMAIN );
+    } elseif ( $swimming_value === '0' || $swimming_value === 0 || $swimming_value === false || 
+               $swimming_str === '0' || strtolower( $swimming_str ) === 'no' || $swimming_value === 'false' || 
+               $swimming_value === '' ) {
+        $user_profile_swimming_label = __( 'No', SULAYR_TEXTDOMAIN );
+    } else {
+        // Si no coincide, mostrar el valor original o "No" por defecto
+        $user_profile_swimming_label = ! empty( $swimming_value ) ? esc_html( $swimming_value ) : __( 'No', SULAYR_TEXTDOMAIN );
+    }
+}
 ?>
-
-<main class="user-profile-page">
-    
-    <?php include SULAYR_TEMPLATE_DIR . '/parts/content-user-menu.php'; ?>
-    
-    <h1><?php echo $user_name; ?></h1>
-    <div class="user-profile-photo">
-        <img src="<?php echo esc_url( $user_profile_photo_url ); ?>" alt="<?php echo esc_attr( $user_name ) ?? __( 'Foto de perfil', SULAYR_TEXTDOMAIN ); ?>">
-    </div>
-
-    <?php
-        acf_form( [
-            'id'              => 'acf-user-profile-form',
-            'post_id'         => 'user_' . $current_user_id,
-            'field_groups'    => [ 'group_' . md5( CustomFields::USER_PROFILE_FIELDS_GROUP ) ],
-            'uploader'        => 'basic',
-            'form_attributes' => [ 'enctype' => 'multipart/form-data' ],
-            'submit_value'    => __( 'Guardar', SULAYR_TEXTDOMAIN ),
-        ] );
-    ?>
-    <div class="logout-button-wrapper">
-        <a class="button logout-button" href="<?php echo esc_url( wp_logout_url( site_url( CustomTemplates::TEMPLATE_LOGIN['url'] ) ) ); ?>">
-            <?php _e( 'Cerrar sesión', SULAYR_TEXTDOMAIN ); ?>
-        </a>
-    </div>
-    </p>
-</main>
-<?php */ ?>
-
-
 
 <div class="container">
     <div class="main-body">
         
         <?php include SULAYR_TEMPLATE_DIR . '/parts/content-user-menu.php'; ?>
         
-        <!-- Breadcrumb -->
-        <!-- <nav aria-label="breadcrumb" class="main-breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="index.html">Home</a></li>
-                <li class="breadcrumb-item"><a href="javascript:void(0)">User</a></li>
-                <li class="breadcrumb-item active" aria-current="page">User Profile</li>
-            </ol>
-        </nav> -->
-        <!-- /Breadcrumb -->
 
         <div class="row gutters-sm">
             <div class="col-md-4 mb-3">
@@ -97,40 +149,17 @@ if ( $user_profile_photo ) {
                         </div>
                     </div>
                 </div>
-                <!-- <div class="card mt-3">
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
-                            <h6 class="mb-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-globe mr-2 icon-inline"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>Website</h6>
-                            <span class="text-secondary">https://bootdey.com</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
-                            <h6 class="mb-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github mr-2 icon-inline"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>Github</h6>
-                            <span class="text-secondary">bootdey</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
-                            <h6 class="mb-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-twitter mr-2 icon-inline text-info"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>Twitter</h6>
-                            <span class="text-secondary">@bootdey</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
-                            <h6 class="mb-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-instagram mr-2 icon-inline text-danger"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>Instagram</h6>
-                            <span class="text-secondary">bootdey</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
-                            <h6 class="mb-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-facebook mr-2 icon-inline text-primary"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>Facebook</h6>
-                            <span class="text-secondary">bootdey</span>
-                        </li>
-                    </ul>
-                </div> -->
             </div>
             <div class="col-md-8">
                 <div class="card mb-3">
                     <div class="card-body">
+                        <h5 class="card-title mb-4"><?php _e( 'Información personal', SULAYR_TEXTDOMAIN ); ?></h5>
                         <div class="row">
                             <div class="col-sm-3">
                                 <h6 class="mb-0"><?php _e( 'Nombre completo', SULAYR_TEXTDOMAIN ); ?></h6>
                             </div>
                             <div class="col-sm-9 text-secondary">
-                                Kenneth Valdez
+                                <?php echo esc_html( $user_full_name ); ?>
                             </div>
                         </div>
                         <hr>
@@ -139,7 +168,7 @@ if ( $user_profile_photo ) {
                                 <h6 class="mb-0"><?php _e( 'Email', SULAYR_TEXTDOMAIN ); ?></h6>
                             </div>
                             <div class="col-sm-9 text-secondary">
-                                fip@jukmuh.al
+                                <?php echo esc_html( $user_email ); ?>
                             </div>
                         </div>
                         <hr>
@@ -148,7 +177,7 @@ if ( $user_profile_photo ) {
                                 <h6 class="mb-0"><?php _e( 'Teléfono', SULAYR_TEXTDOMAIN ); ?></h6>
                             </div>
                             <div class="col-sm-9 text-secondary">
-                                <?php echo $user_profile_phone; ?>
+                                <?php echo esc_html( $user_profile_phone ?: '-' ); ?>
                             </div>
                         </div>
                         <hr>
@@ -157,7 +186,7 @@ if ( $user_profile_photo ) {
                                 <h6 class="mb-0"><?php _e( 'DNI', SULAYR_TEXTDOMAIN ); ?></h6>
                             </div>
                             <div class="col-sm-9 text-secondary">
-                            <?php echo $user_profile_dni; ?>
+                                <?php echo esc_html( $user_profile_dni ?: '-' ); ?>
                             </div>
                         </div>
                         <hr>
@@ -166,72 +195,48 @@ if ( $user_profile_photo ) {
                                 <h6 class="mb-0"><?php _e( 'Fecha de nacimiento', SULAYR_TEXTDOMAIN ); ?></h6>
                             </div>
                             <div class="col-sm-9 text-secondary">
-                            <?php echo $user_profile_birth; ?>
+                                <?php echo esc_html( $user_profile_birth_formatted ?: '-' ); ?>
                             </div>
                         </div>
                         <hr>
                         <div class="row">
-                            <div class="col-sm-12">
-                                <a class="btn btn-info " target="__blank" href="https://www.bootdey.com/snippets/view/profile-edit-data-and-skills">Edit</a>
+                            <div class="col-sm-3">
+                                <h6 class="mb-0"><?php _e( 'Tarifa', SULAYR_TEXTDOMAIN ); ?></h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                <?php echo esc_html( $user_profile_plan_label ); ?>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0"><?php _e( 'Suplemento natación', SULAYR_TEXTDOMAIN ); ?></h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                <?php echo esc_html( $user_profile_swimming_label ); ?>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="row gutters-sm">
-                    <div class="col-sm-6 mb-3">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h6 class="d-flex align-items-center mb-3"><i class="material-icons text-info mr-2">assignment</i>Project Status</h6>
-                                <small>Web Design</small>
-                                <div class="progress mb-3" style="height: 5px">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 80%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <small>Website Markup</small>
-                                <div class="progress mb-3" style="height: 5px">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 72%" aria-valuenow="72" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <small>One Page</small>
-                                <div class="progress mb-3" style="height: 5px">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 89%" aria-valuenow="89" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <small>Mobile Template</small>
-                                <div class="progress mb-3" style="height: 5px">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 55%" aria-valuenow="55" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <small>Backend API</small>
-                                <div class="progress mb-3" style="height: 5px">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 66%" aria-valuenow="66" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-6 mb-3">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h6 class="d-flex align-items-center mb-3"><i class="material-icons text-info mr-2">assignment</i>Project Status</h6>
-                                <small>Web Design</small>
-                                <div class="progress mb-3" style="height: 5px">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 80%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <small>Website Markup</small>
-                                <div class="progress mb-3" style="height: 5px">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 72%" aria-valuenow="72" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <small>One Page</small>
-                                <div class="progress mb-3" style="height: 5px">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 89%" aria-valuenow="89" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <small>Mobile Template</small>
-                                <div class="progress mb-3" style="height: 5px">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 55%" aria-valuenow="55" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <small>Backend API</small>
-                                <div class="progress mb-3" style="height: 5px">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 66%" aria-valuenow="66" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                        </div>
+                <!-- Formulario de edición con ACF -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4"><?php _e( 'Editar información', SULAYR_TEXTDOMAIN ); ?></h5>
+                        <?php
+                        if ( isset( $_GET['updated'] ) && $_GET['updated'] === 'true' ) {
+                            echo '<div class="alert alert-success mb-3">' . esc_html__( 'Perfil actualizado correctamente.', SULAYR_TEXTDOMAIN ) . '</div>';
+                        }
+                        acf_form( [
+                            'id'              => 'acf-user-profile-form',
+                            'post_id'         => 'user_' . $current_user_id,
+                            'field_groups'    => [ 'group_' . md5( CustomFields::USER_PROFILE_FIELDS_GROUP ) ],
+                            'uploader'        => 'basic',
+                            'form_attributes' => [ 'enctype' => 'multipart/form-data' ],
+                            'submit_value'    => __( 'Guardar cambios', SULAYR_TEXTDOMAIN ),
+                            'return'          => add_query_arg( 'updated', 'true', get_permalink() ),
+                        ] );
+                        ?>
                     </div>
                 </div>
             </div>

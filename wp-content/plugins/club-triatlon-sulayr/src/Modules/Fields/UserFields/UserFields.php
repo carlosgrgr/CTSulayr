@@ -67,6 +67,7 @@ class UserFields extends Fields
                         'basic'   => __( 'Básica', SULAYR_TEXTDOMAIN ),
                         'premium' => __( 'Entrenamiento', SULAYR_TEXTDOMAIN ),
                     ],
+                    'allow_null' => 1,
                     'ui' => 1,
                     'return_format' => 'value',
                 ],
