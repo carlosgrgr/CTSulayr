@@ -39,6 +39,7 @@ $user_profile_plan_label = $user_data['plan'] ?: '-';
 $user_profile_plan_value = $user_data['plan_value'] ?: '';
 $user_profile_training_type = $user_data['training_type'] ?: '';
 $user_profile_swimming_label = $user_data['swimming_label'] ?: '-';
+$user_profile_join_date_formatted = $user_data['join_date_formatted'] ?: '-';
 
 $show_training_type = $user_profile_plan_value === 'premium';
 
@@ -154,6 +155,15 @@ if ( isset( $_GET['tab'] ) && $_GET['tab'] === 'edit' ) {
                                     </div>
                                     <div class="col-sm-9 text-secondary">
                                         <?php echo esc_html( $user_profile_birth_formatted ?: '-' ); ?>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <h6 class="mb-0"><?php _e( 'Fecha de alta en el club', SULAYR_TEXTDOMAIN ); ?></h6>
+                                    </div>
+                                    <div class="col-sm-9 text-secondary">
+                                        <?php echo esc_html( $user_profile_join_date_formatted ?: '-' ); ?>
                                     </div>
                                 </div>
                                 <hr>

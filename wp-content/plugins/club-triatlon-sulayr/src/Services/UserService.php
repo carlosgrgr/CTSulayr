@@ -19,13 +19,15 @@ class UserService {
         add_filter( 'show_admin_bar', [$this, 'hide_wpadminbar_to_athletes'] );
         add_filter('acf/prepare_field/name=sulayr_user_photo', [$this, 'render_user_photo_preview']);
         if ( ! is_admin() ) {
-            add_filter('acf/prepare_field/name=sulayr_user_membership_plan', [$this, 'maybe_lock_field']);
-            add_filter('acf/prepare_field/name=sulayr_user_swimming', [$this, 'maybe_lock_field']);
-            add_filter('acf/prepare_field/name=sulayr_user_training_type', [$this, 'maybe_lock_field']);
+            add_filter('acf/prepare_field/name=' . CustomFields::USER_PROFILE_MEMBERSHIP_PLAN, [$this, 'maybe_lock_field']);
+            add_filter('acf/prepare_field/name=' . CustomFields::USER_PROFILE_SWIMMING, [$this, 'maybe_lock_field']);
+            add_filter('acf/prepare_field/name=' . CustomFields::USER_PROFILE_TRAINING_TYPE, [$this, 'maybe_lock_field']);
+            add_filter('acf/load_field/name=' . CustomFields::USER_PROFILE_JOIN_DATE, [$this, 'lock_field']);
+            
             // Proteger valores de campos bloqueados al guardar
-            add_filter('acf/update_value/name=sulayr_user_membership_plan', [$this, 'preserve_locked_field_value'], 10, 3);
-            add_filter('acf/update_value/name=sulayr_user_swimming', [$this, 'preserve_locked_field_value'], 10, 3);
-            add_filter('acf/update_value/name=sulayr_user_training_type', [$this, 'preserve_locked_field_value'], 10, 3);
+            add_filter('acf/update_value/name=' . CustomFields::USER_PROFILE_MEMBERSHIP_PLAN, [$this, 'preserve_locked_field_value'], 10, 3);
+            add_filter('acf/update_value/name=' . CustomFields::USER_PROFILE_SWIMMING, [$this, 'preserve_locked_field_value'], 10, 3);
+            add_filter('acf/update_value/name=' . CustomFields::USER_PROFILE_TRAINING_TYPE, [$this, 'preserve_locked_field_value'], 10, 3);
         }
         add_action( 'login_footer', [$this, 'reset_page_login_link'] );
         add_action( 'admin_init', [$this, 'redirect_athlete_to_profile'] );
@@ -255,6 +257,30 @@ class UserService {
     }
 
     /**
+     * Bloquear campo a final de mes
+     *
+     * @param array $field Campo ACF
+     * @return array Campo ACF modificado
+     */
+    public function lock_field($field) {
+        if ( ! is_user_logged_in() ) {
+            return $field;
+        }
+
+        $user = wp_get_current_user();
+        if ( ! $user instanceof \WP_User ) {
+            return $field;
+        }
+
+        if ( in_array( 'athlete', (array) $user->roles, true ) ) {
+            $field['disabled'] = true;
+            $field['readonly'] = 1;
+        }
+
+        return $field;
+    }
+
+    /**
      * Preservar valores de campos bloqueados cuando se intenta guardar
      * 
      * Este método protege los valores de campos bloqueados (tarifa y suplemento)
@@ -345,7 +371,7 @@ class UserService {
         $dni = HelperService::get_user_field( CustomFields::USER_PROFILE_DNI, $user_id );
         $swimming = HelperService::get_user_field( CustomFields::USER_PROFILE_SWIMMING, $user_id );
         $birth_date = HelperService::get_user_field( CustomFields::USER_PROFILE_BIRTH, $user_id );
-
+        $join_date = HelperService::get_user_field( CustomFields::USER_PROFILE_JOIN_DATE, $user_id );
         return [
             'ID' => $user_id,
             'name' => HelperService::get_user_full_name( $user_id ),
@@ -354,6 +380,8 @@ class UserService {
             'dni' => $dni ?: '',
             'birth_date' => $birth_date ?: '',
             'birth_date_formatted' => HelperService::format_birth_date( $birth_date ?: '' ),
+            'join_date' => $join_date ?: '',
+            'join_date_formatted' => HelperService::format_join_date( $join_date ?: '' ),
             'plan' => HelperService::format_membership_plan( $plan ),
             'plan_value' => $plan ?: '',
             'training_type' => HelperService::format_training_type( $training_type ),
