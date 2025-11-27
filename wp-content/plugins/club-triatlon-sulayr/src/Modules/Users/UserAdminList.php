@@ -35,6 +35,28 @@ class UserAdminList
     public function init(): void {
         add_filter( 'manage_users_columns', [ $this, 'add_columns_to_user_list' ] );
         add_filter( 'manage_users_custom_column', [ $this, 'add_data_to_column_user_list' ], 10, 3 );
+        add_filter( 'user_search_columns', [ $this, 'add_search_columns_to_user_list' ], 10, 1 );
+    }
+
+    /**
+     * add_search_columns_to_user_list()
+     *
+     * @param   array  $search_columns
+     * @return 	array  $search_columns  
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public function add_search_columns_to_user_list( array $search_columns ): array
+    {
+        if ( ! in_array( 'display_name', $search_columns, true ) ) {
+            $search_columns[] = 'display_name';
+        }
+        
+        if ( ! in_array( 'user_login', $search_columns, true ) ) {
+            $search_columns[] = 'user_login';
+        }
+    
+        return $search_columns;
     }
 
     /**

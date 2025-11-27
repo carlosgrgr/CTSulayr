@@ -27,6 +27,9 @@ class UserService {
             add_filter('acf/update_value/name=sulayr_user_swimming', [$this, 'preserve_locked_field_value'], 10, 3);
             add_filter('acf/update_value/name=sulayr_user_training_type', [$this, 'preserve_locked_field_value'], 10, 3);
         }
+        add_action( 'login_footer', [$this, 'reset_page_login_link'] );
+        add_action( 'admin_init', [$this, 'redirect_athlete_to_profile'] );
+        add_filter( 'login_display_language_dropdown', '__return_false' );
 
     }
 
@@ -516,6 +519,35 @@ class UserService {
     }
 
     /**
+     * Validar fecha de alta en el club
+     *
+     * @param mixed $join_date Fecha a validar (formato Y-m-d)
+     * @return string|false Fecha validada o false si no es válida
+     * @access private
+     */
+    private function validate_join_date($join_date) {
+        if ( empty( $join_date ) ) {
+            return '';
+        }
+        if ( ! is_string( $join_date ) ) {
+            return false;
+        }
+
+        $date = \DateTime::createFromFormat('Y-m-d', $join_date);
+        if ( ! $date || $date->format('Y-m-d') !== $join_date ) {
+            return false;
+        }
+
+        // Validar que la fecha no sea futura
+        $today = new \DateTime();
+        if ( $date > $today ) {
+            return false;
+        }
+
+        return $join_date;
+    }
+
+    /**
      * Validar y sanitizar DNI
      *
      * @param mixed $dni DNI a validar
@@ -628,4 +660,57 @@ class UserService {
 
         return false;
     }
+
+    /**
+     * Resetear el enlace de la página de login
+     *
+     * @return void
+     */
+    public function reset_page_login_link(): void
+    {
+         // Solo en la pantalla de reset completado
+        if ( isset( $_GET['action'] ) && $_GET['action'] === 'resetpass' ) :
+            $path = CustomTemplates::TEMPLATE_LOGIN['url'];
+            $url = home_url( $path ); ?>
+
+            <script>
+                (function() {
+                    var link = document.querySelector('.message.reset-pass a');
+                    if (link) {
+                        link.setAttribute('href', '<?php echo esc_js( $url ); ?>');
+                    }
+                })();
+            </script>
+    <?php endif;
+    }
+
+    /**
+     * Redirigir a la página de perfil de los deportistas
+     *
+     * @return void
+     */
+    public function redirect_athlete_to_profile(): void
+    {
+        if ( ! is_user_logged_in() ) {
+            return;
+        }
+    
+        $user = wp_get_current_user();
+    
+        if ( ! in_array( 'athlete', (array) $user->roles, true ) ) {
+            return;
+        }
+    
+        // Permitir solo admin-ajax.php por si acaso
+        if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+            return;
+        }
+    
+        // Cualquier intento de entrar en /wp-admin/ → /mi-perfil/
+        if ( is_admin() ) {
+            wp_redirect( home_url( CustomTemplates::TEMPLATE_MY_PROFILE['url'] ) );
+            exit;
+        }
+    }
+
 }

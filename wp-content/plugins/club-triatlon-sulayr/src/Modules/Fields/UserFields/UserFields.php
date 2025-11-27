@@ -53,6 +53,14 @@ class UserFields extends Fields
                     'return_format' => 'Y-m-d',
                 ],
                 [
+                    'key' => 'field_' . md5( CustomFields::USER_PROFILE_JOIN_DATE ),
+                    'label' => __( 'Fecha de alta en el club', SULAYR_TEXTDOMAIN ),
+                    'name' => CustomFields::USER_PROFILE_JOIN_DATE,
+                    'type' => 'date_picker',
+                    'display_format' => 'd/m/Y',
+                    'return_format' => 'Y-m-d',
+                ],
+                [
                     'key' => 'field_' . md5( CustomFields::USER_PROFILE_DNI ),
                     'label' => __( 'DNI', SULAYR_TEXTDOMAIN ),
                     'name' => CustomFields::USER_PROFILE_DNI,

@@ -281,6 +281,41 @@ class HelperService {
     }
 
     /**
+     * Formatear fecha de alta en el club
+     *
+     * @param string $join_date Fecha en formato Y-m-d
+     * @param string $format     Formato de salida (por defecto d/m/Y)
+     * @return string Fecha formateada o string vacío si no es válida
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public function format_join_date_instance( string $join_date, string $format = 'd/m/Y' ): string {
+        if ( empty( $join_date ) ) {
+            return '';
+        }
+
+        $date = \DateTime::createFromFormat( 'Y-m-d', $join_date );
+        if ( $date ) {
+            return $date->format( $format );
+        }
+
+        return $join_date;
+    }
+
+    /**
+     * Método estático que delega a la instancia singleton
+     *
+     * @param string $join_date Fecha en formato Y-m-d
+     * @param string $format     Formato de salida (por defecto d/m/Y)
+     * @return string Fecha formateada o string vacío si no es válida
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public static function format_join_date( string $join_date, string $format = 'd/m/Y' ): string {
+        return self::get_instance()->format_join_date_instance( $join_date, $format );
+    }
+
+    /**
      * Obtener nombre completo del usuario
      *
      * @param int $user_id ID del usuario
