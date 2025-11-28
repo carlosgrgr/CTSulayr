@@ -59,5 +59,33 @@ class TemplateService {
     public static function exists( string $template_name ): bool {
         return file_exists( self::get_path( $template_name ) );
     }
+
+    /**
+     * Renderiza una plantilla y retorna el contenido como string
+     * Útil para emails y otros casos donde necesitas capturar el output
+     *
+     * @param string $template_name Nombre de la plantilla (sin extensión .php)
+     * @param array  $vars          Variables a pasar a la plantilla
+     * @return string Contenido renderizado de la plantilla
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public static function render( string $template_name, array $vars = [] ): string {
+        // Extraer variables para que estén disponibles en la plantilla
+        extract( $vars ); // phpcs:ignore WordPress.PHP.DontExtract.extract_extract
+
+        // Construir ruta de la plantilla
+        $template_path = SULAYR_TEMPLATE_DIR . '/' . $template_name . '.php';
+
+        // Verificar que la plantilla existe
+        if ( ! file_exists( $template_path ) ) {
+            return sprintf( __( 'Error: No se encontró la plantilla %s', SULAYR_TEXTDOMAIN ), esc_html( $template_name ) );
+        }
+
+        // Capturar el output
+        ob_start();
+        include $template_path;
+        return ob_get_clean();
+    }
 }
 

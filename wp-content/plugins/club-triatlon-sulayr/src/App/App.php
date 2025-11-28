@@ -12,6 +12,7 @@ use ClubTriatlonSulayr\Modules\SettingsPages\SulayrSettingsPage;
 use ClubTriatlonSulayr\Modules\Users\UserAdminList;
 use ClubTriatlonSulayr\Modules\Emails\EmailConfig;
 use ClubTriatlonSulayr\Modules\Users\AthleteAdminProfile;
+use ClubTriatlonSulayr\Modules\Users\AthleteUpdate;
 
 /**
  * App
@@ -80,6 +81,7 @@ class App {
         $user_admin_list = new UserAdminList( $helpers );
         $email_config = new EmailConfig();
         $athlete_admin_profile = new AthleteAdminProfile();
+        $athlete_update = new AthleteUpdate( $helpers );
     }
 
     /**

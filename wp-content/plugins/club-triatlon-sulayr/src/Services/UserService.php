@@ -11,6 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class UserService {
 
+    const DAYS_LEFT_TO_LOCK_FIELDS = 1;
+    
     public function __construct() {
         // Hooks de usuario
         add_action('user_register', [$this, 'assign_athlete_role'], 10, 1);
@@ -246,7 +248,7 @@ class UserService {
         $days_left = (int) $interval->format('%a');
 
         // Si faltan menos de 5 días (4 días o menos)
-        if ($days_left < 5) {
+        if ($days_left < self::DAYS_LEFT_TO_LOCK_FIELDS) {
             // Usar readonly en lugar de disabled para que el valor se envíe en el formulario
             $field['readonly'] = 1; // Hace el campo solo lectura
             // NO usar disabled porque los campos disabled no se envían en el formulario
@@ -307,7 +309,7 @@ class UserService {
         $days_left = (int) $interval->format('%a');
 
         // Si NO estamos en período de bloqueo (5 días o más), permitir el cambio
-        if ( $days_left >= 5 ) {
+        if ( $days_left >= self::DAYS_LEFT_TO_LOCK_FIELDS ) {
             return $value;
         }
 
