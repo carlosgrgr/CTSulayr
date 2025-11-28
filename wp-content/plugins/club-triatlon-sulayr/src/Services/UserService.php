@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class UserService {
 
-    const DAYS_LEFT_TO_LOCK_FIELDS = 1;
+    const DAYS_LEFT_TO_LOCK_FIELDS = 5;
     
     public function __construct() {
         // Hooks de usuario
