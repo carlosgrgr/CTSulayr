@@ -36,6 +36,9 @@ class UserAdminList
         add_filter( 'manage_users_columns', [ $this, 'add_columns_to_user_list' ] );
         add_filter( 'manage_users_custom_column', [ $this, 'add_data_to_column_user_list' ], 10, 3 );
         add_filter( 'user_search_columns', [ $this, 'add_search_columns_to_user_list' ], 10, 1 );
+        add_filter( 'manage_users_sortable_columns', [ $this, 'make_column_sortable' ] );
+        add_action( 'pre_get_users', [ $this, 'handle_sorting' ] );
+        add_action( 'admin_head-users.php', [ $this, 'add_column_css' ] );
     }
 
     /**
@@ -69,6 +72,7 @@ class UserAdminList
      */
     public static function add_columns_to_user_list( $columns ): array
     {
+        $columns['user_id'] = 'ID';
         $columns[CustomFields::USER_PROFILE_MEMBERSHIP_PLAN] = __( 'Tarifa', SULAYR_TEXTDOMAIN );
         $columns[CustomFields::USER_PROFILE_TRAINING_TYPE]   = __( 'Tipo entrenamiento', SULAYR_TEXTDOMAIN );
         $columns[CustomFields::USER_PROFILE_SWIMMING]        = __( 'Natación', SULAYR_TEXTDOMAIN );
@@ -87,7 +91,9 @@ class UserAdminList
      */
     public static function add_data_to_column_user_list( $value, $column_name, $user_id ): string
     {
-        
+        if ( $column_name === 'user_id' ) {
+            return esc_html( (string) $user_id );
+        }
         if ( $column_name === CustomFields::USER_PROFILE_MEMBERSHIP_PLAN ) {
             $plan = HelperService::get_user_field( CustomFields::USER_PROFILE_MEMBERSHIP_PLAN, $user_id );
             return HelperService::format_membership_plan( $plan );
@@ -103,5 +109,40 @@ class UserAdminList
         return $value;
     }
 
+    /**
+     * Make ID column sortable
+     */
+    public function make_column_sortable( $columns ) {
+        $columns['user_id'] = 'ID';
+        return $columns;
+    }
+
+    /**
+     * Fix query to order by User ID
+     */
+    public function handle_sorting( $query ) {
+        if ( ! is_admin() || ! $query->is_main_query() ) {
+            return;
+        }
+
+        if ( $query->get( 'orderby' ) === 'ID' ) {
+            $query->set( 'orderby', 'ID' );
+        }
+    }
+
+    /**
+     * CSS inline for ID column width
+     */
+    public function add_column_css() {
+        ?>
+        <style>
+            .wp-list-table .column-user_id {
+                width: 5%;
+                text-align: center;
+                font-weight: 600;
+            }
+        </style>
+        <?php
+    }
 
 }
