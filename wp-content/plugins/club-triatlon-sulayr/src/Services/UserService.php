@@ -374,6 +374,13 @@ class UserService {
         $swimming = HelperService::get_user_field( CustomFields::USER_PROFILE_SWIMMING, $user_id );
         $birth_date = HelperService::get_user_field( CustomFields::USER_PROFILE_BIRTH, $user_id );
         $join_date = HelperService::get_user_field( CustomFields::USER_PROFILE_JOIN_DATE, $user_id );
+        $athlete_status = HelperService::get_user_field( CustomFields::USER_PROFILE_ATHLETE_STATUS, $user_id );
+        
+        // Si el campo no existe o está vacío, usar 'active' como valor por defecto
+        if ( empty( $athlete_status ) && $athlete_status !== '0' && $athlete_status !== 0 ) {
+            $athlete_status = 'active';
+        }
+        
         return [
             'ID' => $user_id,
             'name' => HelperService::get_user_full_name( $user_id ),
@@ -390,6 +397,8 @@ class UserService {
             'training_type_value' => $training_type ?: '',
             'swimming' => HelperService::format_swimming_supplement_to_bool( $swimming ),
             'swimming_label' => HelperService::format_swimming_supplement_to_label( $swimming ),
+            'athlete_status' => HelperService::format_athlete_status( $athlete_status ),
+            'athlete_status_value' => $athlete_status,
             'photo_url' => HelperService::get_user_photo_url( $user_id ),
         ];
     }
@@ -414,7 +423,14 @@ class UserService {
 
         $result = [];
         foreach ( $athletes as $athlete ) {
-            $result[] = $this->get_athlete_formatted_data( $athlete->ID );
+            $athlete_data = $this->get_athlete_formatted_data( $athlete->ID );
+            
+            // Solo incluir si el estado es "Activo"
+            if ( $athlete_data['athlete_status_value'] !== 'active' ) {
+                continue;
+            }
+            
+            $result[] = $athlete_data;
         }
 
         // Ordenar por tarifa (Básica primero, luego Entrenamiento, luego otros)
@@ -457,6 +473,11 @@ class UserService {
         $result = [];
         foreach ( $athletes as $athlete ) {
             $athlete_data = $this->get_athlete_formatted_data( $athlete->ID );
+            
+            // Solo incluir si el estado es "Activo"
+            if ( $athlete_data['athlete_status_value'] !== 'active' ) {
+                continue;
+            }
             
             // Solo incluir si tiene suplemento activo
             if ( ! $athlete_data['swimming'] ) {
