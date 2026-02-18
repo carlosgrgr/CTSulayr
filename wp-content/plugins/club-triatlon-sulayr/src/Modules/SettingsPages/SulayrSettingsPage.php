@@ -124,6 +124,7 @@ class SulayrSettingsPage {
         $this->load_template( 'admin/main-view', [
             'list_by_plan_url' => $this->get_list_url( 'by_plan' ),
             'list_swimmers_url' => $this->get_list_url( 'swimmers' ),
+            'list_by_status_url' => $this->get_list_url( 'by_status' ),
             'import_url' => $this->get_list_url( 'import' ),
         ] );
     }
@@ -144,6 +145,9 @@ class SulayrSettingsPage {
                 break;
             case 'swimmers':
                 $this->render_swimmers_list();
+                break;
+            case 'by_status':
+                $this->render_athletes_by_status();
                 break;
             case 'import':
                 $this->render_import_view();
@@ -322,6 +326,34 @@ class SulayrSettingsPage {
      */
     private function render_empty_athletes_message(): void {
         $this->load_template( 'admin/empty-athletes' );
+    }
+
+    /**
+     * render_athletes_by_status()
+     * Renderiza el listado de deportistas agrupados por estado
+     *
+     * @return 	void
+     * @access 	private
+     * @package	club-triatlon-sulayr
+     */
+    private function render_athletes_by_status(): void {
+        $grouped = $this->user_service->get_athletes_by_status();
+        
+        // Calcular total de deportistas
+        $total_count = 0;
+        foreach ( $grouped as $group ) {
+            $total_count += count( $group );
+        }
+        
+        if ( $total_count === 0 ) {
+            $this->render_empty_athletes_message();
+            return;
+        }
+        
+        $this->load_template( 'admin/athletes-by-status', [
+            'grouped' => $grouped,
+            'total_count' => $total_count,
+        ] );
     }
 
     /**

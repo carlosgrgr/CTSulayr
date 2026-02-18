@@ -32,6 +32,12 @@ if ( ! defined( 'ABSPATH' ) ) {
                         <?php esc_html_e( 'Listar nadadores', SULAYR_TEXTDOMAIN ); ?>
                     </a>
                     
+                    <a href="<?php echo esc_url( $list_by_status_url ); ?>" 
+                       class="button button-primary button-large">
+                        <span class="dashicons dashicons-admin-users"></span>
+                        <?php esc_html_e( 'Listar deportistas por estado', SULAYR_TEXTDOMAIN ); ?>
+                    </a>
+                    
                     <a href="<?php echo esc_url( $import_url ); ?>" 
                        class="button button-secondary button-large">
                         <span class="dashicons dashicons-upload"></span>

@@ -499,6 +499,55 @@ class UserService {
     }
 
     /**
+     * Obtener todos los deportistas agrupados por estado
+     *
+     * @return array Lista de deportistas agrupados por estado
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public function get_athletes_by_status(): array {
+        $athletes = get_users( [
+            'role' => 'athlete',
+            'orderby' => 'display_name',
+            'order' => 'ASC',
+        ] );
+
+        if ( empty( $athletes ) ) {
+            return [];
+        }
+
+        $grouped = [
+            'active' => [],
+            'standby' => [],
+            'baja' => [],
+            'moroso' => [],
+        ];
+
+        foreach ( $athletes as $athlete ) {
+            $athlete_data = $this->get_athlete_formatted_data( $athlete->ID );
+            $status_value = $athlete_data['athlete_status_value'];
+            
+            // Agrupar por estado
+            if ( isset( $grouped[ $status_value ] ) ) {
+                $grouped[ $status_value ][] = $athlete_data;
+            } else {
+                // Si el estado no es reconocido, ponerlo en 'active' por defecto
+                $grouped['active'][] = $athlete_data;
+            }
+        }
+
+        // Ordenar alfabéticamente cada grupo por nombre
+        foreach ( $grouped as $key => $group ) {
+            usort( $group, function( $a, $b ) {
+                return strcmp( $a['name'], $b['name'] );
+            } );
+            $grouped[ $key ] = $group;
+        }
+
+        return $grouped;
+    }
+
+    /**
      * Validar que un ID de usuario sea válido
      *
      * @param int $user_id ID del usuario
