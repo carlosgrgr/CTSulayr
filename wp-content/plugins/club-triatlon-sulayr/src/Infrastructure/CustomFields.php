@@ -16,4 +16,5 @@ class CustomFields
     const USER_PROFILE_MEMBERSHIP_PLAN = 'sulayr_user_membership_plan';
     const USER_PROFILE_TRAINING_TYPE = 'sulayr_user_training_type';
     const USER_PROFILE_SWIMMING = 'sulayr_user_swimming';
+    const USER_PROFILE_ATHLETE_STATUS = 'sulayr_user_athlete_status';
 }

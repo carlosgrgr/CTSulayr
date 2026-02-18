@@ -245,6 +245,55 @@ class HelperService {
     }
 
     /**
+     * Formatear el valor de estado del deportista a etiqueta legible
+     *
+     * @param mixed $status_value Valor del estado (puede ser string, número, etc.)
+     * @return string Etiqueta formateada
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public function format_athlete_status_instance( $status_value ): string {
+        if ( empty( $status_value ) && $status_value !== '0' && $status_value !== 0 ) {
+            return __( 'Sin estado', SULAYR_TEXTDOMAIN );
+        }
+
+        // Normalizar el valor
+        $status_normalized = is_string( $status_value ) ? strtolower( trim( $status_value ) ) : (string) $status_value;
+        
+        // Comparaciones flexibles
+        if ( $status_normalized === 'active' || $status_normalized === 'activo' || stripos( $status_normalized, 'active' ) !== false || stripos( $status_normalized, 'activo' ) !== false ) {
+            return __( 'Activo', SULAYR_TEXTDOMAIN );
+        }
+        
+        if ( $status_normalized === 'standby' || $status_normalized === 'stand by' || stripos( $status_normalized, 'standby' ) !== false || stripos( $status_normalized, 'stand by' ) !== false ) {
+            return __( 'Stand By', SULAYR_TEXTDOMAIN );
+        }
+        
+        if ( $status_normalized === 'baja' || stripos( $status_normalized, 'baja' ) !== false ) {
+            return __( 'Baja', SULAYR_TEXTDOMAIN );
+        }
+        
+        if ( $status_normalized === 'moroso' || stripos( $status_normalized, 'moroso' ) !== false ) {
+            return __( 'Moroso', SULAYR_TEXTDOMAIN );
+        }
+        
+        // Si no coincide, devolver el valor original escapado
+        return esc_html( $status_value );
+    }
+
+    /**
+     * Método estático que delega a la instancia singleton
+     *
+     * @param mixed $status_value Valor del estado
+     * @return string Etiqueta formateada
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public static function format_athlete_status( $status_value ): string {
+        return self::get_instance()->format_athlete_status_instance( $status_value );
+    }
+
+    /**
      * Formatear fecha de nacimiento
      *
      * @param string $birth_date Fecha en formato Y-m-d

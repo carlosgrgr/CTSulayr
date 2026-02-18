@@ -116,6 +116,22 @@ class UserFields extends Fields
                     'ui' => 1,
                     'return_format' => 'value',
                 ],
+                [
+                    'key' => 'field_' . md5( CustomFields::USER_PROFILE_ATHLETE_STATUS ),
+                    'label' => __( 'Estado del deportista', SULAYR_TEXTDOMAIN ),
+                    'name' => CustomFields::USER_PROFILE_ATHLETE_STATUS,
+                    'type' => 'select',
+                    'choices' => [
+                        'active' => __( 'Activo', SULAYR_TEXTDOMAIN ),
+                        'standby' => __( 'Stand By', SULAYR_TEXTDOMAIN ),
+                        'baja' => __( 'Baja', SULAYR_TEXTDOMAIN ),
+                        'moroso' => __( 'Moroso', SULAYR_TEXTDOMAIN ),
+                    ],
+                    'default_value' => 'active',
+                    'allow_null' => 0,
+                    'ui' => 1,
+                    'return_format' => 'value',
+                ],
             ],
             'location' => [
                 [
