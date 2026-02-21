@@ -21,6 +21,7 @@ class WooCommerceIntegration {
     private const ENDPOINT_PERFIL_DEPORTISTA = 'perfil-deportista';
 
     public function __construct() {
+        add_filter( 'woocommerce_account_menu_items', [ $this, 'remove_downloads_menu_item' ], 5 );
         add_filter( 'woocommerce_get_query_vars', [ $this, 'add_account_query_vars' ] );
         add_filter( 'woocommerce_account_menu_items', [ $this, 'add_athlete_menu_items' ], 10, 2 );
         add_filter( 'woocommerce_login_redirect', [ $this, 'redirect_athlete_to_my_account' ], 10, 2 );
@@ -45,6 +46,14 @@ class WooCommerceIntegration {
         }
         delete_option( 'sulayr_wc_flush_rewrite_rules' );
         flush_rewrite_rules();
+    }
+
+    /**
+     * Quita "Descargas" del menú de Mi cuenta (no hay productos descargables).
+     */
+    public function remove_downloads_menu_item( array $items ): array {
+        unset( $items['downloads'] );
+        return $items;
     }
 
     /**
