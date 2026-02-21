@@ -22,6 +22,10 @@ use ClubTriatlonSulayr\App\App;
 
 $sulayr = new App();
 
+register_activation_hook( __FILE__, function () {
+    update_option( 'sulayr_wc_flush_rewrite_rules', '1' );
+} );
+
 define( 'SULAYR_LANG_DIR', plugin_dir_path( __FILE__ ) . '/languages' );
 define( 'SULAYR_FILE', __FILE__ );
 define( 'SULAYR_DIR', plugin_dir_path( __FILE__ ) );

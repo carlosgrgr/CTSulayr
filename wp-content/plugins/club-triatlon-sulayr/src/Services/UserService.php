@@ -71,7 +71,10 @@ class UserService {
             return $redirect_to;
         }
 
-        if (isset($user->roles) && in_array('athlete', $user->roles, true)) {
+        if ( isset( $user->roles ) && in_array( 'athlete', $user->roles, true ) ) {
+            if ( class_exists( 'WooCommerce' ) && function_exists( 'wc_get_page_permalink' ) ) {
+                return wc_get_page_permalink( 'myaccount' );
+            }
             return home_url( CustomTemplates::TEMPLATE_MY_PROFILE['url'] );
         }
         return $redirect_to;
@@ -806,7 +809,7 @@ class UserService {
             return;
         }
     
-        // Cualquier intento de entrar en /wp-admin/ → /mi-perfil/
+        // Cualquier intento de entrar en /wp-admin/ → perfil de deportista
         if ( is_admin() ) {
             wp_redirect( home_url( CustomTemplates::TEMPLATE_MY_PROFILE['url'] ) );
             exit;

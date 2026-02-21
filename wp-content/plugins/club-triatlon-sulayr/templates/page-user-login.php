@@ -9,7 +9,12 @@ use ClubTriatlonSulayr\Infrastructure\CustomTemplates;
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 if ( is_user_logged_in() ) {
-    wp_redirect( site_url( CustomTemplates::TEMPLATE_MY_PROFILE['url'] ) );
+    $user = wp_get_current_user();
+    if ( in_array( 'athlete', (array) $user->roles, true ) && class_exists( 'WooCommerce' ) && function_exists( 'wc_get_page_permalink' ) ) {
+        wp_redirect( wc_get_page_permalink( 'myaccount' ) );
+    } else {
+        wp_redirect( site_url( CustomTemplates::TEMPLATE_MY_PROFILE['url'] ) );
+    }
     exit;
 }
 
@@ -30,7 +35,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sulayr_user_login']))
     if ( is_wp_error( $signon ) ) {
         $login_error = $signon->get_error_message();
     } else {
-        wp_redirect( site_url( CustomTemplates::TEMPLATE_MY_PROFILE['url'] ) );
+        if ( in_array( 'athlete', (array) $signon->roles, true ) && class_exists( 'WooCommerce' ) && function_exists( 'wc_get_page_permalink' ) ) {
+            wp_redirect( wc_get_page_permalink( 'myaccount' ) );
+        } else {
+            wp_redirect( site_url( CustomTemplates::TEMPLATE_MY_PROFILE['url'] ) );
+        }
         exit;
     }
 }

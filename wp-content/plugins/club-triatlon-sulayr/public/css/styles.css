@@ -289,3 +289,44 @@ a.logout-button:hover {
     }
 }
 /* END Login page */
+
+/* WooCommerce Mi cuenta: Bootstrap .col-1/.col-2 (8.33%/16.66%) pisa el layout de direcciones y login */
+.woocommerce .woocommerce-Address.col-1,
+.woocommerce .woocommerce-Address.col-2 {
+    width: 100%;
+    max-width: none;
+    float: none;
+}
+.woocommerce-Addresses.col2-set .woocommerce-Address.col-1,
+.woocommerce-Addresses.col2-set .woocommerce-Address.col-2 {
+    float: left;
+    width: 48%;
+    max-width: none;
+}
+.woocommerce-Addresses.col2-set .woocommerce-Address.col-2 {
+    float: right;
+}
+.woocommerce-Addresses.col2-set.addresses {
+    overflow: hidden;
+}
+.woocommerce .col2-set .u-column1.col-1,
+.woocommerce .col2-set .u-column2.col-2 {
+    float: left;
+    width: 48%;
+    max-width: none;
+}
+.woocommerce .col2-set .u-column2.col-2 {
+    float: right;
+}
+.woocommerce .col2-set {
+    overflow: hidden;
+}
+@media (max-width: 768px) {
+    .woocommerce-Addresses.col2-set .woocommerce-Address.col-1,
+    .woocommerce-Addresses.col2-set .woocommerce-Address.col-2,
+    .woocommerce .col2-set .u-column1.col-1,
+    .woocommerce .col2-set .u-column2.col-2 {
+        float: none;
+        width: 100%;
+    }
+}
