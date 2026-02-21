@@ -38,36 +38,75 @@
             }
         }
 
-        // Actualizar el hash cuando se cambia de pestaña
-        // Solo seleccionar botones dentro del contenedor específico
+        // Inicializar explícitamente cada pestaña para que el primer clic funcione
         var tabButtons = profileTabsContainer.querySelectorAll('button[data-bs-toggle="tab"]');
         if (tabButtons.length === 0) {
             return; // No hay botones de pestañas, salir
         }
 
+        var panelsContainer = document.querySelector('.sulayr-profile-panels');
+        if (!panelsContainer) {
+            return;
+        }
+
+        /**
+         * Deja solo el panel indicado como activo (evita que dos paneles queden visibles en el primer clic).
+         * @param {string} targetSelector - Selector del panel a mostrar (ej. '#edit').
+         */
+        function setActivePanelOnly(targetSelector) {
+            panelsContainer.querySelectorAll('.tab-pane').forEach(function(pane) {
+                pane.classList.remove('active', 'show');
+            });
+            var activePane = document.querySelector(targetSelector);
+            if (activePane) {
+                activePane.classList.add('active', 'show');
+            }
+        }
+
+        /**
+         * Restaura la posición de scroll para evitar el salto al cambiar de pestaña.
+         */
+        var savedScroll = { x: 0, y: 0 };
         tabButtons.forEach(function(button) {
-            // Verificar que el botón tiene el atributo data-bs-target
+            button.addEventListener('click', function() {
+                savedScroll.x = window.scrollX;
+                savedScroll.y = window.scrollY;
+            }, true);
+        });
+
+        tabButtons.forEach(function(button) {
+            try {
+                new bootstrap.Tab(button);
+            } catch (e) {
+                console.warn('Club Triatlon Sulayr: Error al inicializar pestaña', e);
+            }
+        });
+
+        // Tras cambiar de pestaña: un solo panel activo y restaurar scroll
+        tabButtons.forEach(function(button) {
             var targetId = button.getAttribute('data-bs-target');
             if (!targetId) {
-                return; // Saltar este botón si no tiene target
+                return;
             }
 
             button.addEventListener('shown.bs.tab', function (event) {
-                // Verificar que el evento tiene un target válido
                 if (!event.target || !event.target.getAttribute) {
                     return;
                 }
 
                 var currentTargetId = event.target.getAttribute('data-bs-target');
-                
-                // Solo actualizar el hash si el target es #edit o #info
+                setActivePanelOnly(currentTargetId);
+
+                // Evitar el scroll que produce Bootstrap al activar el panel
+                requestAnimationFrame(function() {
+                    window.scrollTo(savedScroll.x, savedScroll.y);
+                });
+
+                // Actualizar hash sin provocar scroll
                 if (currentTargetId === '#edit') {
-                    window.location.hash = 'edit';
+                    history.replaceState(null, '', window.location.pathname + window.location.search + '#edit');
                 } else if (currentTargetId === '#info') {
-                    // Limpiar el hash solo si estamos en la pestaña de información
-                    if (window.location.hash === '#edit') {
-                        window.location.hash = '';
-                    }
+                    history.replaceState(null, '', window.location.pathname + window.location.search);
                 }
             });
         });

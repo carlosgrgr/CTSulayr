@@ -75,6 +75,317 @@ nav ul.nav li.nav-item a.nav-link.active {
     overflow: hidden;
 }
 
+/* ----- Perfil de deportista (Mi cuenta / página standalone) ----- */
+.sulayr-athlete-profile-content {
+    --sulayr-profile-sidebar-width: 260px;
+    --sulayr-profile-radius: 10px;
+    --sulayr-profile-border: 1px solid #e8ecef;
+    --sulayr-profile-label: #5a6c7d;
+    --sulayr-profile-value: #2c3e50;
+    --sulayr-profile-accent: #2980b9;
+    --sulayr-profile-bg: #f8f9fa;
+}
+
+.sulayr-profile-layout {
+    display: grid;
+    grid-template-columns: var(--sulayr-profile-sidebar-width) 1fr;
+    gap: 1.75rem;
+    align-items: start;
+}
+
+@media (max-width: 768px) {
+    .sulayr-profile-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.sulayr-profile-sidebar {
+    position: sticky;
+    top: 1.5rem;
+}
+
+.sulayr-profile-card {
+    background: #fff;
+    border: var(--sulayr-profile-border);
+    border-radius: var(--sulayr-profile-radius);
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.sulayr-profile-avatar-wrap {
+    margin-bottom: 1rem;
+}
+
+.sulayr-profile-avatar,
+.sulayr-profile-card .img-profile-circle {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    margin: 0 auto;
+    border: 3px solid #e8ecef;
+}
+
+.sulayr-profile-name {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--sulayr-profile-value);
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.sulayr-profile-main {
+    min-width: 0;
+}
+
+.sulayr-profile-tabs {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 1.25rem;
+    padding: 0.25rem;
+    background: var(--sulayr-profile-bg);
+    border-radius: var(--sulayr-profile-radius);
+    border: var(--sulayr-profile-border);
+}
+
+.sulayr-profile-tab {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--sulayr-profile-label);
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.sulayr-profile-tab:hover {
+    color: var(--sulayr-profile-accent);
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.sulayr-profile-tab.active {
+    color: #fff;
+    background: var(--sulayr-profile-accent);
+}
+
+.sulayr-profile-tab-icon {
+    font-size: 1.1em;
+}
+
+@media (max-width: 480px) {
+    .sulayr-profile-tabs {
+        flex-direction: column;
+    }
+}
+
+.sulayr-profile-panels {
+    background: #fff;
+    border: var(--sulayr-profile-border);
+    border-radius: var(--sulayr-profile-radius);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Solo el panel activo ocupa espacio; el oculto no (evita hueco por opacity) */
+.sulayr-profile-panels .tab-pane {
+    display: none;
+}
+.sulayr-profile-panels .tab-pane.active,
+.sulayr-profile-panels .tab-pane.active.show {
+    display: block;
+}
+
+.sulayr-profile-panel {
+    padding: 1.5rem 1.75rem;
+}
+
+.sulayr-info-block {
+    padding-bottom: 1.5rem;
+}
+
+.sulayr-info-block:last-child {
+    padding-bottom: 0;
+}
+
+.sulayr-info-block + .sulayr-info-block {
+    padding-top: 1.5rem;
+    border-top: var(--sulayr-profile-border);
+}
+
+.sulayr-info-block-title {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--sulayr-profile-accent);
+}
+
+.sulayr-info-list {
+    margin: 0;
+    display: grid;
+    gap: 0;
+}
+
+.sulayr-info-row {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 1rem;
+    align-items: baseline;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f2f4;
+}
+
+.sulayr-info-row:last-child {
+    border-bottom: none;
+}
+
+.sulayr-info-row dt {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--sulayr-profile-label);
+}
+
+.sulayr-info-row dd {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--sulayr-profile-value);
+}
+
+.sulayr-info-row dd a {
+    color: var(--sulayr-profile-accent);
+    text-decoration: none;
+}
+
+.sulayr-info-row dd a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+    .sulayr-info-row {
+        grid-template-columns: 1fr;
+        gap: 0.2rem;
+        padding: 0.6rem 0;
+    }
+}
+
+.sulayr-edit-block {
+    max-width: 36rem;
+}
+
+.sulayr-alert {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    margin-bottom: 1.25rem;
+}
+
+.sulayr-alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.sulayr-profile-form .acf-fields > .acf-field {
+    padding: 0.75rem 0;
+    position: relative;
+    z-index: 1;
+}
+
+/* Desplegable abierto por encima del siguiente campo (p. ej. Tu tarifa sobre Suplemento natación) */
+.sulayr-profile-form .acf-fields > .acf-field:focus-within {
+    z-index: 10;
+}
+
+/* Select2 (ACF UI): dropdown por encima del siguiente campo cuando se abre */
+.sulayr-edit-block .select2-container--open {
+    z-index: 1000;
+}
+
+/* Select2 dropdown (ACF lo inyecta en body): por encima del grid de WooCommerce/Astra (woocommerce-grid) */
+.woocommerce-account .select2-dropdown,
+.woocommerce .select2-dropdown,
+body .select2-dropdown {
+    z-index: 99999 !important;
+}
+
+.sulayr-profile-form .acf-label label {
+    font-weight: 600;
+    color: var(--sulayr-profile-label);
+    margin-bottom: 0.35rem;
+}
+
+.sulayr-profile-form input[type="text"],
+.sulayr-profile-form input[type="email"],
+.sulayr-profile-form input[type="tel"],
+.sulayr-profile-form input[type="file"],
+.sulayr-profile-form select,
+.sulayr-profile-form textarea {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.55rem 0.75rem;
+    border: var(--sulayr-profile-border);
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.sulayr-profile-form input:focus,
+.sulayr-profile-form select:focus,
+.sulayr-profile-form textarea:focus {
+    border-color: var(--sulayr-profile-accent);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.15);
+}
+
+.sulayr-profile-form .acf-form-submit {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: var(--sulayr-profile-border);
+}
+
+.sulayr-profile-form button[type="submit"],
+.sulayr-profile-form input[type="submit"] {
+    background: var(--sulayr-profile-accent);
+    color: #fff;
+    border: none;
+    padding: 0.65rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.sulayr-profile-form button[type="submit"]:hover,
+.sulayr-profile-form input[type="submit"]:hover {
+    background: #1a6ba3;
+}
+
+.sulayr-profile-form [data-name="sulayr_user_athlete_status"] {
+    display: none;
+}
+
+.sulayr-edit-block form.acf-form {
+    max-width: 36rem;
+}
+
+.sulayr-edit-block .acf-fields > .acf-field {
+    padding: 0.75rem 0;
+}
+
 .user-profile-page .user-profile-photo {
     text-align: center;
     margin-bottom: 1.5rem;
