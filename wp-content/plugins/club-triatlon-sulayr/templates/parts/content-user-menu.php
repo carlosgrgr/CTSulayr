@@ -5,8 +5,9 @@ use ClubTriatlonSulayr\Infrastructure\CustomTemplates;
  * Template part user profile menu
  */
 
- $my_profile = CustomTemplates::TEMPLATE_MY_PROFILE;
- $unsusbscribe = CustomTemplates::TEMPLATE_UNSUBSCRIBE;
+$my_profile   = CustomTemplates::TEMPLATE_MY_PROFILE;
+$unsusbscribe = CustomTemplates::TEMPLATE_UNSUBSCRIBE;
+$is_myaccount = function_exists( 'is_account_page' ) && is_account_page();
 ?>
 
 <nav class="user-profile-panel mb-4">
@@ -18,14 +19,15 @@ use ClubTriatlonSulayr\Infrastructure\CustomTemplates;
                <?php echo $my_profile['name']; ?>
             </a>
         </li>
-        <!-- Panel de Pagos
+        <?php if ( class_exists( 'WooCommerce' ) && function_exists( 'wc_get_page_permalink' ) ) : ?>
         <li class="nav-item">
-            <a href="<?php echo esc_url( site_url( '/mis-pagos' ) ); ?>" class="nav-link d-flex align-items-center px-4 py-3">
-               <i class="bi bi-credit-card me-2"></i>
-               <?php _e('Mis pagos', 'club-triatlon-sulayr'); ?>
+            <a href="<?php echo esc_url( wc_get_page_permalink( 'myaccount' ) ); ?>"
+               class="nav-link d-flex align-items-center px-4 py-3 <?php echo $is_myaccount ? 'active' : ''; ?>">
+               <i class="bi bi-bag me-2"></i>
+               <?php _e( 'Mis pedidos', SULAYR_TEXTDOMAIN ); ?>
             </a>
         </li>
-        -->
+        <?php endif; ?>
         <li class="nav-item">
             <a href="<?php echo esc_url( site_url( $unsusbscribe['url'] ) ); ?>"
                class="nav-link d-flex align-items-center px-4 py-3 <?php echo is_page( 'darse-de-baja' ) ? 'active' : ''; ?>">
