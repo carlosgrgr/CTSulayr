@@ -52,6 +52,30 @@ class WalletBalancePage {
             ];
         }
 
+        $orderby = isset( $_GET['orderby'] ) ? sanitize_text_field( wp_unslash( $_GET['orderby'] ) ) : 'name';
+        $order   = isset( $_GET['order'] ) ? strtolower( sanitize_text_field( wp_unslash( $_GET['order'] ) ) ) : 'asc';
+        if ( ! in_array( $orderby, [ 'name', 'balance' ], true ) ) {
+            $orderby = 'name';
+        }
+        if ( $order !== 'desc' ) {
+            $order = 'asc';
+        }
+
+        usort( $rows, function ( $a, $b ) use ( $orderby, $order ) {
+            if ( $orderby === 'balance' ) {
+                $cmp = $a['balance'] <=> $b['balance'];
+            } else {
+                $cmp = strcasecmp( $a['name'], $b['name'] );
+            }
+            return $order === 'asc' ? $cmp : -$cmp;
+        } );
+
+        $base_url = admin_url( 'edit.php?post_type=' . WalletPostType::POST_TYPE_NAME . '&page=' . self::PAGE_SLUG );
+        $link_name_asc  = add_query_arg( [ 'orderby' => 'name',  'order' => 'asc' ],  $base_url );
+        $link_name_desc = add_query_arg( [ 'orderby' => 'name',  'order' => 'desc' ], $base_url );
+        $link_bal_asc   = add_query_arg( [ 'orderby' => 'balance', 'order' => 'asc' ],  $base_url );
+        $link_bal_desc  = add_query_arg( [ 'orderby' => 'balance', 'order' => 'desc' ], $base_url );
+
         ?>
         <div class="wrap">
             <h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
@@ -60,8 +84,18 @@ class WalletBalancePage {
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
-                        <th scope="col" class="column-name"><?php esc_html_e( 'Deportista', SULAYR_TEXTDOMAIN ); ?></th>
-                        <th scope="col" class="column-balance" style="width:140px;text-align:right;"><?php esc_html_e( 'Saldo', SULAYR_TEXTDOMAIN ); ?></th>
+                        <th scope="col" class="column-name sortable <?php echo $orderby === 'name' ? 'sorted ' . esc_attr( $order ) : ''; ?>">
+                            <a href="<?php echo esc_url( $orderby === 'name' && $order === 'asc' ? $link_name_desc : $link_name_asc ); ?>">
+                                <span><?php esc_html_e( 'Deportista', SULAYR_TEXTDOMAIN ); ?></span>
+                                <span class="sorting-indicator"></span>
+                            </a>
+                        </th>
+                        <th scope="col" class="column-balance sortable <?php echo $orderby === 'balance' ? 'sorted ' . esc_attr( $order ) : ''; ?>" style="width:140px;text-align:right;">
+                            <a href="<?php echo esc_url( $orderby === 'balance' && $order === 'asc' ? $link_bal_desc : $link_bal_asc ); ?>">
+                                <span><?php esc_html_e( 'Saldo', SULAYR_TEXTDOMAIN ); ?></span>
+                                <span class="sorting-indicator"></span>
+                            </a>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
