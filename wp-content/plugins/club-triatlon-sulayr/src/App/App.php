@@ -7,12 +7,16 @@ use ClubTriatlonSulayr\Modules\Roles\AthleteRole;
 use ClubTriatlonSulayr\Infrastructure\CustomFields;
 use ClubTriatlonSulayr\Modules\Templates\TemplatesManager;
 use ClubTriatlonSulayr\Modules\Fields\UserFields\UserFields;
+use ClubTriatlonSulayr\Modules\Fields\WalletFields\WalletFields;
 use ClubTriatlonSulayr\Modules\SettingsPages\SulayrSettingsPage;
 use ClubTriatlonSulayr\Modules\Users\UserAdminList;
 use ClubTriatlonSulayr\Modules\Emails\EmailConfig;
 use ClubTriatlonSulayr\Modules\Users\AthleteAdminProfile;
 use ClubTriatlonSulayr\Modules\Users\AthleteUpdate;
 use ClubTriatlonSulayr\Modules\WooCommerce\WooCommerceIntegration;
+use ClubTriatlonSulayr\Modules\PostTypes\WalletPostType;
+use ClubTriatlonSulayr\Modules\Wallet\WalletAdminList;
+use ClubTriatlonSulayr\Modules\Wallet\WalletBalancePage;
 
 /**
  * App
@@ -73,11 +77,17 @@ class App {
     public function load_classes(): void {
         $helpers = new HelperService();
         $user_fields = new UserFields();
+        new WalletPostType( [] );
+        $wallet_fields = new WalletFields();
         $userService = new UserService();
         $userTemplate = new TemplatesManager();
         $athlete_role = new AthleteRole();
         $sulayr_settings = new SulayrSettingsPage( $userService );
         $user_admin_list = new UserAdminList( $helpers );
+        if ( is_admin() ) {
+            new WalletAdminList();
+            new WalletBalancePage();
+        }
         $email_config = new EmailConfig();
         $athlete_admin_profile = new AthleteAdminProfile();
         $athlete_update = new AthleteUpdate( $helpers );

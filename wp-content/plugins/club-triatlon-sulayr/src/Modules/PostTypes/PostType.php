@@ -62,10 +62,10 @@ abstract class PostType {
      * get_labels()
      *
      * @return 	array
-     * @access 	private
+     * @access 	protected
      * @package	club-triatlon-sulayr
      */
-    private function get_labels(): array {
+    protected function get_labels(): array {
         return [
             'name' => sprintf( __( '%s', SULAYR_TEXTDOMAIN ), $this->plural ),
             'singular_name' => sprintf( __( '%s', SULAYR_TEXTDOMAIN ), $this->singular ),

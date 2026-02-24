@@ -8,6 +8,8 @@
 namespace ClubTriatlonSulayr\Modules\WooCommerce;
 
 use ClubTriatlonSulayr\Services\UserService;
+use ClubTriatlonSulayr\Infrastructure\CustomFields;
+use ClubTriatlonSulayr\Modules\PostTypes\WalletPostType;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -20,6 +22,9 @@ class WooCommerceIntegration {
     /** Endpoint de Mi cuenta para athletes (perfil ACF del deportista). */
     private const ENDPOINT_PERFIL_DEPORTISTA = 'perfil-deportista';
 
+    /** Endpoint Mi monedero para athletes. */
+    private const ENDPOINT_MONEDERO = 'mi-monedero';
+
     public function __construct() {
         add_filter( 'woocommerce_account_menu_items', [ $this, 'remove_downloads_menu_item' ], 5 );
         add_filter( 'woocommerce_get_query_vars', [ $this, 'add_account_query_vars' ] );
@@ -28,11 +33,13 @@ class WooCommerceIntegration {
         add_filter( 'body_class', [ $this, 'add_athlete_body_class' ] );
 
         add_action( 'woocommerce_account_' . self::ENDPOINT_PERFIL_DEPORTISTA . '_endpoint', [ $this, 'output_perfil_deportista_endpoint' ] );
+        add_action( 'woocommerce_account_' . self::ENDPOINT_MONEDERO . '_endpoint', [ $this, 'output_monedero_endpoint' ] );
 
         add_action( 'template_redirect', [ $this, 'acf_form_head_on_perfil_deportista' ], 5 );
         add_action( 'template_redirect', [ $this, 'redirect_old_athlete_pages_to_wc' ], 15 );
 
         add_filter( 'woocommerce_endpoint_' . self::ENDPOINT_PERFIL_DEPORTISTA . '_title', [ $this, 'endpoint_title_perfil_deportista' ], 10, 3 );
+        add_filter( 'woocommerce_endpoint_' . self::ENDPOINT_MONEDERO . '_title', [ $this, 'endpoint_title_monedero' ], 10, 3 );
 
         add_action( 'init', [ $this, 'maybe_flush_rewrite_rules' ], 999 );
     }
@@ -61,6 +68,7 @@ class WooCommerceIntegration {
      */
     public function add_account_query_vars( array $vars ): array {
         $vars[ self::ENDPOINT_PERFIL_DEPORTISTA ] = self::ENDPOINT_PERFIL_DEPORTISTA;
+        $vars[ self::ENDPOINT_MONEDERO ] = self::ENDPOINT_MONEDERO;
         return $vars;
     }
 
@@ -77,6 +85,7 @@ class WooCommerceIntegration {
             $new[ $key ] = $label;
             if ( 'dashboard' === $key ) {
                 $new[ self::ENDPOINT_PERFIL_DEPORTISTA ] = __( 'Perfil de deportista', SULAYR_TEXTDOMAIN );
+                $new[ self::ENDPOINT_MONEDERO ] = __( 'Mi monedero', SULAYR_TEXTDOMAIN );
             }
         }
 
@@ -174,6 +183,56 @@ class WooCommerceIntegration {
 
     public function endpoint_title_perfil_deportista( $title, $endpoint, $action ): string {
         return __( 'Perfil de deportista', SULAYR_TEXTDOMAIN );
+    }
+
+    public function endpoint_title_monedero( $title, $endpoint, $action ): string {
+        return __( 'Mi monedero', SULAYR_TEXTDOMAIN );
+    }
+
+    /**
+     * Contenido del endpoint Mi monedero: movimientos del deportista y saldo.
+     */
+    public function output_monedero_endpoint(): void {
+        if ( ! $this->is_athlete() ) {
+            return;
+        }
+
+        $user_id = get_current_user_id();
+        $movements = get_posts( [
+            'post_type'      => WalletPostType::POST_TYPE_NAME,
+            'posts_per_page' => -1,
+            'orderby'        => 'meta_value',
+            'meta_key'       => CustomFields::WALLET_DATE,
+            'order'          => 'DESC',
+            'meta_query'     => [
+                [
+                    'key'   => CustomFields::WALLET_ATHLETE,
+                    'value' => $user_id,
+                    'compare' => '=',
+                ],
+            ],
+        ] );
+
+        $rows = [];
+        foreach ( $movements as $post ) {
+            $amount = (float) get_field( CustomFields::WALLET_AMOUNT, $post->ID );
+            $rows[] = [
+                'date'    => get_field( CustomFields::WALLET_DATE, $post->ID ),
+                'concept' => get_field( CustomFields::WALLET_CONCEPT, $post->ID ),
+                'amount'  => $amount,
+            ];
+        }
+        $total_balance = array_sum( array_column( $rows, 'amount' ) );
+        $running = $total_balance;
+        foreach ( $rows as &$row ) {
+            $row['balance_after'] = $running;
+            $running -= $row['amount'];
+        }
+        unset( $row );
+        $wallet_part = SULAYR_TEMPLATE_DIR . '/parts/content-wallet-movements.php';
+        if ( file_exists( $wallet_part ) ) {
+            include $wallet_part;
+        }
     }
 
     public function add_athlete_body_class( array $classes ): array {

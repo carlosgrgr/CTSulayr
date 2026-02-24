@@ -386,6 +386,64 @@ body .select2-dropdown {
     padding: 0.75rem 0;
 }
 
+/* Mi monedero (endpoint atleta) */
+.sulayr-wallet-content {
+    max-width: 42rem;
+}
+.sulayr-wallet-balance-block {
+    background: var(--sulayr-profile-bg, #f8f9fa);
+    border: var(--sulayr-profile-border, 1px solid #e9ecef);
+    border-radius: var(--sulayr-profile-radius, 10px);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.sulayr-wallet-balance-label {
+    margin: 0 0 0.35rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--sulayr-profile-label, #495057);
+}
+.sulayr-wallet-balance-value {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+.sulayr-wallet-positive { color: #0d6e2e; }
+.sulayr-wallet-negative { color: #b02a37; }
+.sulayr-wallet-empty {
+    color: #6c757d;
+    margin: 1rem 0;
+}
+.sulayr-wallet-table-wrap {
+    overflow-x: auto;
+    border: var(--sulayr-profile-border, 1px solid #e9ecef);
+    border-radius: var(--sulayr-profile-radius, 10px);
+}
+.sulayr-wallet-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+.sulayr-wallet-table th,
+.sulayr-wallet-table td {
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+.sulayr-wallet-table th {
+    font-weight: 600;
+    color: var(--sulayr-profile-label, #495057);
+    background: rgba(0,0,0,0.03);
+}
+.sulayr-wallet-table tbody tr:last-child td {
+    border-bottom: none;
+}
+.sulayr-wallet-col-amount,
+.sulayr-wallet-col-balance {
+    text-align: right;
+    white-space: nowrap;
+}
+
 .user-profile-page .user-profile-photo {
     text-align: center;
     margin-bottom: 1.5rem;
