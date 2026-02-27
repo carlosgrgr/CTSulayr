@@ -25,4 +25,17 @@ class CustomFields
     const WALLET_CONCEPT = 'sulayr_wallet_concept';
     const WALLET_DATE = 'sulayr_wallet_date';
     const WALLET_CREATED_BY = 'sulayr_wallet_created_by';
+
+    /** Subscription changes (histórico de cambios de tarifas) CPT */
+    const SUBSCRIPTION_CHANGES_FIELDS_GROUP = 'subscription_changes_fields';
+    const SUB_CHANGE_USER = 'sulayr_change_user';
+    const SUB_CHANGE_MADE_BY = 'sulayr_change_made_by';
+    const SUB_CHANGE_PLAN_BEFORE = 'sulayr_change_plan_before';
+    const SUB_CHANGE_PLAN_AFTER = 'sulayr_change_plan_after';
+    const SUB_CHANGE_SWIMMING_BEFORE = 'sulayr_change_swimming_before';
+    const SUB_CHANGE_SWIMMING_AFTER = 'sulayr_change_swimming_after';
+    const SUB_CHANGE_DATE = 'sulayr_change_date';
+    const SUB_CHANGE_EFFECTIVE_DATE = 'sulayr_change_effective_date';
+    const SUB_CHANGE_REASON = 'sulayr_change_reason';
+    const SUB_CHANGE_STRIPE_SUBSCRIPTION_ID = 'sulayr_stripe_subscription_id';
 }

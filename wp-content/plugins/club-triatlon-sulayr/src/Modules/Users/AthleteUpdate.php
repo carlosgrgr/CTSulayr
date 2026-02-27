@@ -4,6 +4,9 @@ namespace ClubTriatlonSulayr\Modules\Users;
 use ClubTriatlonSulayr\Services\HelperService;
 use ClubTriatlonSulayr\Services\TemplateService;
 use ClubTriatlonSulayr\Infrastructure\CustomFields;
+use ClubTriatlonSulayr\Modules\Subscriptions\SubscriptionChangeValidator;
+use ClubTriatlonSulayr\Modules\Subscriptions\SubscriptionService;
+use ClubTriatlonSulayr\Modules\PostTypes\SubscriptionChangesPostType;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -19,6 +22,8 @@ class AthleteUpdate
     private HelperService $helper_service;
     private array $old_field_values = [];
     private array $processing_users = []; // Para evitar procesar el mismo usuario dos veces
+    private SubscriptionChangeValidator $change_validator;
+    private SubscriptionService $subscription_service;
 
     /**
      * __construct()
@@ -30,7 +35,9 @@ class AthleteUpdate
     public function __construct( HelperService $helper_service )
     {
         $this->init();
-        $this->helper_service = $helper_service;
+        $this->helper_service       = $helper_service;
+        $this->change_validator      = new SubscriptionChangeValidator();
+        $this->subscription_service  = new SubscriptionService();
     }
 
     /**
@@ -309,8 +316,34 @@ class AthleteUpdate
             ];
         }
 
-        // Si hay cambios, enviar emails
+        // Si hay cambio de tarifa o suplemento y el usuario tiene suscripción activa, validar margen de 5 días
+        $plan_or_swimming_changed = isset( $changes['plan'] ) || isset( $changes['swimming'] );
+        if ( $plan_or_swimming_changed && $this->subscription_service->hasActiveSubscription( $user_id ) ) {
+            if ( ! $this->change_validator->canChangeNow() ) {
+                // Revertir tarifa y suplemento a valores anteriores
+                if ( isset( $changes['plan'] ) ) {
+                    update_user_meta( $user_id, CustomFields::USER_PROFILE_MEMBERSHIP_PLAN, $old_values['plan'] );
+                }
+                if ( isset( $changes['swimming'] ) ) {
+                    update_user_meta( $user_id, CustomFields::USER_PROFILE_SWIMMING, $old_values['swimming'] );
+                }
+                set_transient( 'sulayr_subscription_change_blocked_' . $user_id, $this->change_validator->getNotAllowedMessage(), 60 );
+                unset( $this->old_field_values[ $user_id ] );
+                delete_transient( 'sulayr_old_values_' . $user_id );
+                return;
+            }
+        }
+
+        // Si hay cambios, registrar en histórico (CPT) si aplica plan/swimming y actualizar Stripe si tiene suscripción
         if ( ! empty( $changes ) ) {
+            if ( $plan_or_swimming_changed ) {
+                $this->record_subscription_change( $user_id, $old_values, $new_plan, $new_swimming );
+                if ( $this->subscription_service->hasActiveSubscription( $user_id ) ) {
+                    $new_plan_norm = ( $new_plan === 'premium' || $new_plan === 'entrenamiento' ) ? 'premium' : 'basic';
+                    $new_swim_bool = (bool) $new_swimming;
+                    $this->subscription_service->updateSubscriptionPlan( $user_id, $new_plan_norm, $new_swim_bool );
+                }
+            }
             // Configurar headers para HTML
             $headers = [
                 'Content-Type: text/html; charset=UTF-8',
@@ -394,6 +427,53 @@ class AthleteUpdate
      * @access  private
      * @package	club-triatlon-sulayr
      */
+    /**
+     * Record a plan/swimming change in the subscription changes CPT.
+     *
+     * @param int   $user_id
+     * @param array $old_values  [ 'plan', 'swimming' ]
+     * @param string $new_plan
+     * @param mixed  $new_swimming
+     */
+    private function record_subscription_change( int $user_id, array $old_values, string $new_plan, $new_swimming ): void {
+        $effective = $this->change_validator->getEffectiveDate();
+        $sub_id    = get_user_meta( $user_id, SubscriptionService::USER_META_SUBSCRIPTION_ID, true );
+        $post_id   = wp_insert_post( [
+            'post_type'   => SubscriptionChangesPostType::POST_TYPE_NAME,
+            'post_status' => 'publish',
+            'post_title'  => 'Cambio ' . $user_id,
+        ] );
+        if ( ! $post_id || is_wp_error( $post_id ) ) {
+            return;
+        }
+        update_post_meta( $post_id, CustomFields::SUB_CHANGE_USER, $user_id );
+        update_post_meta( $post_id, CustomFields::SUB_CHANGE_MADE_BY, get_current_user_id() );
+        update_post_meta( $post_id, CustomFields::SUB_CHANGE_PLAN_BEFORE, $old_values['plan'] ?? '' );
+        update_post_meta( $post_id, CustomFields::SUB_CHANGE_PLAN_AFTER, $new_plan );
+        update_post_meta( $post_id, CustomFields::SUB_CHANGE_SWIMMING_BEFORE, ! empty( $old_values['swimming'] ) ? 1 : 0 );
+        update_post_meta( $post_id, CustomFields::SUB_CHANGE_SWIMMING_AFTER, ! empty( $new_swimming ) ? 1 : 0 );
+        update_post_meta( $post_id, CustomFields::SUB_CHANGE_DATE, current_time( 'Y-m-d' ) );
+        update_post_meta( $post_id, CustomFields::SUB_CHANGE_EFFECTIVE_DATE, $effective );
+        if ( $sub_id ) {
+            update_post_meta( $post_id, CustomFields::SUB_CHANGE_STRIPE_SUBSCRIPTION_ID, $sub_id );
+        }
+        if ( function_exists( 'update_field' ) ) {
+            update_field( CustomFields::SUB_CHANGE_USER, $user_id, $post_id );
+            update_field( CustomFields::SUB_CHANGE_MADE_BY, get_current_user_id(), $post_id );
+            update_field( CustomFields::SUB_CHANGE_PLAN_BEFORE, $old_values['plan'] ?? '', $post_id );
+            update_field( CustomFields::SUB_CHANGE_PLAN_AFTER, $new_plan, $post_id );
+            update_field( CustomFields::SUB_CHANGE_SWIMMING_BEFORE, ! empty( $old_values['swimming'] ), $post_id );
+            update_field( CustomFields::SUB_CHANGE_SWIMMING_AFTER, ! empty( $new_swimming ), $post_id );
+            update_field( CustomFields::SUB_CHANGE_DATE, current_time( 'Y-m-d' ), $post_id );
+            update_field( CustomFields::SUB_CHANGE_EFFECTIVE_DATE, $effective, $post_id );
+            if ( $sub_id ) {
+                update_field( CustomFields::SUB_CHANGE_STRIPE_SUBSCRIPTION_ID, $sub_id, $post_id );
+            }
+        }
+        // Trigger title update
+        do_action( 'save_post_' . SubscriptionChangesPostType::POST_TYPE_NAME, $post_id, get_post( $post_id ), true );
+    }
+
     private function format_field_value( string $field_key, $value ): string
     {
         if ( empty( $value ) && $value !== '0' && $value !== 0 ) {

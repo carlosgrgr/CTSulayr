@@ -14,7 +14,11 @@ use ClubTriatlonSulayr\Modules\Emails\EmailConfig;
 use ClubTriatlonSulayr\Modules\Users\AthleteAdminProfile;
 use ClubTriatlonSulayr\Modules\Users\AthleteUpdate;
 use ClubTriatlonSulayr\Modules\WooCommerce\WooCommerceIntegration;
+use ClubTriatlonSulayr\Modules\Subscriptions\SubscriptionProducts;
+use ClubTriatlonSulayr\Modules\Subscriptions\StripeWebhookHandler;
 use ClubTriatlonSulayr\Modules\PostTypes\WalletPostType;
+use ClubTriatlonSulayr\Modules\PostTypes\SubscriptionChangesPostType;
+use ClubTriatlonSulayr\Modules\Fields\SubscriptionChangesFields\SubscriptionChangesFields;
 use ClubTriatlonSulayr\Modules\Wallet\WalletAdminList;
 use ClubTriatlonSulayr\Modules\Wallet\WalletBalancePage;
 
@@ -78,7 +82,9 @@ class App {
         $helpers = new HelperService();
         $user_fields = new UserFields();
         new WalletPostType( [] );
+        new SubscriptionChangesPostType( [] );
         $wallet_fields = new WalletFields();
+        new SubscriptionChangesFields();
         $userService = new UserService();
         $userTemplate = new TemplatesManager();
         $athlete_role = new AthleteRole();
@@ -92,8 +98,12 @@ class App {
         $athlete_admin_profile = new AthleteAdminProfile();
         $athlete_update = new AthleteUpdate( $helpers );
 
+        $stripe_webhook = new StripeWebhookHandler();
+        $stripe_webhook->init();
+
         if ( class_exists( 'WooCommerce' ) ) {
             new WooCommerceIntegration();
+            new SubscriptionProducts();
         }
     }
 

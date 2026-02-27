@@ -10,6 +10,7 @@ namespace ClubTriatlonSulayr\Modules\WooCommerce;
 use ClubTriatlonSulayr\Services\UserService;
 use ClubTriatlonSulayr\Infrastructure\CustomFields;
 use ClubTriatlonSulayr\Modules\PostTypes\WalletPostType;
+use ClubTriatlonSulayr\Modules\Subscriptions\SubscriptionService;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -25,6 +26,9 @@ class WooCommerceIntegration {
     /** Endpoint Mi monedero para athletes. */
     private const ENDPOINT_MONEDERO = 'mi-monedero';
 
+    /** Endpoint Mis pagos (suscripciones Stripe) para athletes. */
+    private const ENDPOINT_MIS_PAGOS = 'mis-pagos';
+
     public function __construct() {
         add_filter( 'woocommerce_account_menu_items', [ $this, 'remove_downloads_menu_item' ], 5 );
         add_filter( 'woocommerce_get_query_vars', [ $this, 'add_account_query_vars' ] );
@@ -34,12 +38,16 @@ class WooCommerceIntegration {
 
         add_action( 'woocommerce_account_' . self::ENDPOINT_PERFIL_DEPORTISTA . '_endpoint', [ $this, 'output_perfil_deportista_endpoint' ] );
         add_action( 'woocommerce_account_' . self::ENDPOINT_MONEDERO . '_endpoint', [ $this, 'output_monedero_endpoint' ] );
+        add_action( 'woocommerce_account_' . self::ENDPOINT_MIS_PAGOS . '_endpoint', [ $this, 'output_mis_pagos_endpoint' ] );
 
+        add_action( 'template_redirect', [ $this, 'handle_subscription_activation_request' ], 2 );
+        add_action( 'template_redirect', [ $this, 'handle_subscription_success_return' ], 3 );
         add_action( 'template_redirect', [ $this, 'acf_form_head_on_perfil_deportista' ], 5 );
         add_action( 'template_redirect', [ $this, 'redirect_old_athlete_pages_to_wc' ], 15 );
 
         add_filter( 'woocommerce_endpoint_' . self::ENDPOINT_PERFIL_DEPORTISTA . '_title', [ $this, 'endpoint_title_perfil_deportista' ], 10, 3 );
         add_filter( 'woocommerce_endpoint_' . self::ENDPOINT_MONEDERO . '_title', [ $this, 'endpoint_title_monedero' ], 10, 3 );
+        add_filter( 'woocommerce_endpoint_' . self::ENDPOINT_MIS_PAGOS . '_title', [ $this, 'endpoint_title_mis_pagos' ], 10, 3 );
 
         add_action( 'init', [ $this, 'maybe_flush_rewrite_rules' ], 999 );
     }
@@ -69,6 +77,7 @@ class WooCommerceIntegration {
     public function add_account_query_vars( array $vars ): array {
         $vars[ self::ENDPOINT_PERFIL_DEPORTISTA ] = self::ENDPOINT_PERFIL_DEPORTISTA;
         $vars[ self::ENDPOINT_MONEDERO ] = self::ENDPOINT_MONEDERO;
+        $vars[ self::ENDPOINT_MIS_PAGOS ] = self::ENDPOINT_MIS_PAGOS;
         return $vars;
     }
 
@@ -86,6 +95,7 @@ class WooCommerceIntegration {
             if ( 'dashboard' === $key ) {
                 $new[ self::ENDPOINT_PERFIL_DEPORTISTA ] = __( 'Perfil de deportista', SULAYR_TEXTDOMAIN );
                 $new[ self::ENDPOINT_MONEDERO ] = __( 'Mi monedero', SULAYR_TEXTDOMAIN );
+                $new[ self::ENDPOINT_MIS_PAGOS ] = __( 'Mis pagos', SULAYR_TEXTDOMAIN );
             }
         }
 
@@ -100,6 +110,59 @@ class WooCommerceIntegration {
             return wc_get_page_permalink( 'myaccount' );
         }
         return $redirect;
+    }
+
+    /**
+     * Handle POST request to activate subscription: create Stripe Checkout Session and redirect.
+     */
+    public function handle_subscription_activation_request(): void {
+        if ( ! $this->is_athlete() || ! isset( $_POST['sulayr_activar_suscripcion'] ) ) {
+            return;
+        }
+        if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'sulayr_activar_suscripcion' ) ) {
+            return;
+        }
+        global $wp;
+        if ( ! isset( $wp->query_vars[ self::ENDPOINT_PERFIL_DEPORTISTA ] ) ) {
+            return;
+        }
+        $subscription_service = new SubscriptionService();
+        if ( ! $subscription_service->is_available() ) {
+            return;
+        }
+        $user_id     = get_current_user_id();
+        $success_url = wc_get_endpoint_url( self::ENDPOINT_PERFIL_DEPORTISTA, '', wc_get_page_permalink( 'myaccount' ) );
+        $cancel_url  = $success_url;
+        $checkout_url = $subscription_service->createCheckoutSessionForUser( $user_id, $success_url, $cancel_url );
+        if ( $checkout_url ) {
+            wp_safe_redirect( $checkout_url );
+            exit;
+        }
+    }
+
+    /**
+     * When returning from Stripe Checkout with session_id, complete the subscription and redirect.
+     * Runs even when user is not logged in (e.g. payment via admin-generated link).
+     */
+    public function handle_subscription_success_return(): void {
+        if ( ! isset( $_GET['session_id'] ) ) {
+            return;
+        }
+        global $wp;
+        if ( ! isset( $wp->query_vars[ self::ENDPOINT_PERFIL_DEPORTISTA ] ) ) {
+            return;
+        }
+        $session_id = sanitize_text_field( wp_unslash( $_GET['session_id'] ) );
+        if ( strpos( $session_id, 'cs_' ) !== 0 ) {
+            return;
+        }
+        $subscription_service = new SubscriptionService();
+        $user_id = $subscription_service->completeCheckoutSession( $session_id );
+        if ( $user_id ) {
+            $redirect = wc_get_endpoint_url( self::ENDPOINT_PERFIL_DEPORTISTA, '', wc_get_page_permalink( 'myaccount' ) ) . '?activado=1';
+            wp_safe_redirect( $redirect );
+            exit;
+        }
     }
 
     /**
@@ -147,6 +210,15 @@ class WooCommerceIntegration {
         $user_profile_join_date_formatted = $user_data['join_date_formatted'] ?: '-';
         $show_training_type        = $user_profile_plan_value === 'premium';
 
+        $subscription_service     = new SubscriptionService();
+        $has_active_subscription   = $subscription_service->hasActiveSubscription( $current_user_id );
+        $can_activate_subscription = $subscription_service->is_available() && ! $has_active_subscription && ! empty( $user_profile_plan_value ) && ( $user_profile_plan_value === 'basic' || $user_profile_plan_value === 'premium' );
+        $subscription_blocked_msg = get_transient( 'sulayr_subscription_change_blocked_' . $current_user_id );
+        if ( $subscription_blocked_msg ) {
+            delete_transient( 'sulayr_subscription_change_blocked_' . $current_user_id );
+        }
+        $activado = isset( $_GET['activado'] ) && $_GET['activado'] === '1';
+
         $active_tab = 'info';
         if ( isset( $_GET['tab'] ) && $_GET['tab'] === 'edit' ) {
             $active_tab = 'edit';
@@ -162,6 +234,11 @@ class WooCommerceIntegration {
         $profile_part = SULAYR_TEMPLATE_DIR . '/parts/content-athlete-profile.php';
         if ( file_exists( $profile_part ) ) {
             include $profile_part;
+        }
+
+        $subscription_part = SULAYR_TEMPLATE_DIR . '/parts/content-subscription-activation.php';
+        if ( file_exists( $subscription_part ) ) {
+            include $subscription_part;
         }
     }
 
@@ -187,6 +264,62 @@ class WooCommerceIntegration {
 
     public function endpoint_title_monedero( $title, $endpoint, $action ): string {
         return __( 'Mi monedero', SULAYR_TEXTDOMAIN );
+    }
+
+    public function endpoint_title_mis_pagos( $title, $endpoint, $action ): string {
+        return __( 'Mis pagos', SULAYR_TEXTDOMAIN );
+    }
+
+    /**
+     * Contenido del endpoint Mis pagos: historial de facturas de suscripción Stripe.
+     */
+    public function output_mis_pagos_endpoint(): void {
+        if ( ! $this->is_athlete() ) {
+            return;
+        }
+        $user_id = get_current_user_id();
+        $subscription_service = new SubscriptionService();
+        $invoices = $subscription_service->getPaymentHistory( $user_id, 24 );
+        $rows = [];
+        foreach ( $invoices as $inv ) {
+            $amount_eur = $inv['amount_paid'] / 100;
+            $desc = $inv['description'] ?: $this->formatSubscriptionDescription( $amount_eur );
+            $rows[] = [
+                'date'   => date_i18n( get_option( 'date_format' ), $inv['created'] ),
+                'date_ts' => $inv['created'],
+                'concept' => $desc,
+                'amount'  => $amount_eur,
+                'status'  => $inv['status'],
+            ];
+        }
+        usort( $rows, function ( $a, $b ) {
+            return $b['date_ts'] - $a['date_ts'];
+        } );
+        $payment_part = SULAYR_TEMPLATE_DIR . '/parts/content-payment-history.php';
+        if ( file_exists( $payment_part ) ) {
+            include $payment_part;
+        } else {
+            echo '<p>' . esc_html__( 'No hay pagos de suscripción registrados.', SULAYR_TEXTDOMAIN ) . '</p>';
+        }
+    }
+
+    /**
+     * Build a human-readable description from amount (e.g. 47 -> "Tarifa básica + suplemento natación").
+     */
+    private function formatSubscriptionDescription( float $amount_eur ): string {
+        if ( $amount_eur >= 58 ) {
+            return __( 'Tarifa Entrenamientos + suplemento natación', SULAYR_TEXTDOMAIN );
+        }
+        if ( $amount_eur >= 47 ) {
+            return __( 'Tarifa básica + suplemento natación', SULAYR_TEXTDOMAIN );
+        }
+        if ( $amount_eur >= 33 ) {
+            return __( 'Tarifa Entrenamientos', SULAYR_TEXTDOMAIN );
+        }
+        if ( $amount_eur >= 22 ) {
+            return __( 'Tarifa básica', SULAYR_TEXTDOMAIN );
+        }
+        return __( 'Suscripción', SULAYR_TEXTDOMAIN );
     }
 
     /**
