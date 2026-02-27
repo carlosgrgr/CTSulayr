@@ -29,6 +29,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                 <th><?php esc_html_e( 'Nombre', SULAYR_TEXTDOMAIN ); ?></th>
                 <th><?php esc_html_e( 'Email', SULAYR_TEXTDOMAIN ); ?></th>
                 <th><?php esc_html_e( 'Tarifa', SULAYR_TEXTDOMAIN ); ?></th>
+                <th><?php esc_html_e( 'Directiva', SULAYR_TEXTDOMAIN ); ?></th>
                 <th><?php esc_html_e( 'Suscripción', SULAYR_TEXTDOMAIN ); ?></th>
                 <th><?php esc_html_e( 'Acciones', SULAYR_TEXTDOMAIN ); ?></th>
             </tr>
@@ -39,9 +40,10 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <td><?php echo esc_html( $a['name'] ); ?></td>
                     <td><?php echo esc_html( $a['email'] ); ?></td>
                     <td><?php echo esc_html( $a['plan'] ?: '—' ); ?></td>
+                    <td><?php echo ! empty( $a['is_directive'] ) ? esc_html__( 'Sí', SULAYR_TEXTDOMAIN ) : '—'; ?></td>
                     <td><?php echo $a['has_sub'] ? esc_html__( 'Activa', SULAYR_TEXTDOMAIN ) : esc_html__( 'Sin suscripción', SULAYR_TEXTDOMAIN ); ?></td>
                     <td>
-                        <?php if ( ! $a['has_sub'] && $subscription_service->is_available() && ( $a['plan'] === 'basic' || $a['plan'] === 'premium' ) ) : ?>
+                        <?php if ( ! $a['has_sub'] && $subscription_service->is_available() && ( ! empty( $a['is_directive'] ) || $a['plan'] === 'basic' || $a['plan'] === 'premium' ) ) : ?>
                             <form method="post" action="" style="display:inline;">
                                 <?php wp_nonce_field( 'sulayr_generar_enlace_' . $a['user_id'], '_wpnonce' ); ?>
                                 <input type="hidden" name="user_id" value="<?php echo esc_attr( $a['user_id'] ); ?>" />

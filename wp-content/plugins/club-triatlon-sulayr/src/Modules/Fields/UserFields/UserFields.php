@@ -117,6 +117,15 @@ class UserFields extends Fields
                     'return_format' => 'value',
                 ],
                 [
+                    'key' => 'field_' . md5( CustomFields::USER_PROFILE_IS_DIRECTIVE ),
+                    'label' => __( 'Miembro de la directiva', SULAYR_TEXTDOMAIN ),
+                    'name' => CustomFields::USER_PROFILE_IS_DIRECTIVE,
+                    'type' => 'true_false',
+                    'message' => __( 'Este deportista es miembro de la directiva (solo paga suscripción natación directiva 29,50 €)', SULAYR_TEXTDOMAIN ),
+                    'default_value' => 0,
+                    'ui' => 1,
+                ],
+                [
                     'key' => 'field_' . md5( CustomFields::USER_PROFILE_ATHLETE_STATUS ),
                     'label' => __( 'Estado del deportista', SULAYR_TEXTDOMAIN ),
                     'name' => CustomFields::USER_PROFILE_ATHLETE_STATUS,

@@ -212,7 +212,10 @@ class WooCommerceIntegration {
 
         $subscription_service     = new SubscriptionService();
         $has_active_subscription   = $subscription_service->hasActiveSubscription( $current_user_id );
-        $can_activate_subscription = $subscription_service->is_available() && ! $has_active_subscription && ! empty( $user_profile_plan_value ) && ( $user_profile_plan_value === 'basic' || $user_profile_plan_value === 'premium' );
+        $user_is_directive         = SubscriptionService::is_user_directive( $current_user_id );
+        $can_activate_subscription = $subscription_service->is_available() && ! $has_active_subscription && (
+            $user_is_directive || ( ! empty( $user_profile_plan_value ) && ( $user_profile_plan_value === 'basic' || $user_profile_plan_value === 'premium' ) )
+        );
         $subscription_blocked_msg = get_transient( 'sulayr_subscription_change_blocked_' . $current_user_id );
         if ( $subscription_blocked_msg ) {
             delete_transient( 'sulayr_subscription_change_blocked_' . $current_user_id );

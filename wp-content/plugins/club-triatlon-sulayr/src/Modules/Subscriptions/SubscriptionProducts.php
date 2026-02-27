@@ -17,6 +17,7 @@ class SubscriptionProducts {
     const MEMBERSHIP_BASIC    = 'basic';
     const MEMBERSHIP_PREMIUM  = 'premium';
     const MEMBERSHIP_SWIMMING = 'swimming';
+    const DIRECTIVE_SWIMMING = 'directive_swimming';
 
     /** Default products config: slug => [ name, price, meta_value ] */
     private static $defaults = [
@@ -34,6 +35,11 @@ class SubscriptionProducts {
             'name'  => 'Suplemento Natación',
             'price' => 25,
             'type'  => self::MEMBERSHIP_SWIMMING,
+        ],
+        'sulayr-directiva-natacion'  => [
+            'name'  => 'Natación para directiva',
+            'price' => 29.5,
+            'type'  => self::DIRECTIVE_SWIMMING,
         ],
     ];
 

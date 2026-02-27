@@ -316,9 +316,10 @@ class AthleteUpdate
             ];
         }
 
-        // Si hay cambio de tarifa o suplemento y el usuario tiene suscripción activa, validar margen de 5 días
+        // Si hay cambio de tarifa o suplemento y el usuario tiene suscripción activa, validar margen de 5 días (directiva no aplica: solo pagan 29,50 fijo)
         $plan_or_swimming_changed = isset( $changes['plan'] ) || isset( $changes['swimming'] );
-        if ( $plan_or_swimming_changed && $this->subscription_service->hasActiveSubscription( $user_id ) ) {
+        $user_is_directive = SubscriptionService::is_user_directive( $user_id );
+        if ( $plan_or_swimming_changed && ! $user_is_directive && $this->subscription_service->hasActiveSubscription( $user_id ) ) {
             if ( ! $this->change_validator->canChangeNow() ) {
                 // Revertir tarifa y suplemento a valores anteriores
                 if ( isset( $changes['plan'] ) ) {
@@ -338,7 +339,8 @@ class AthleteUpdate
         if ( ! empty( $changes ) ) {
             if ( $plan_or_swimming_changed ) {
                 $this->record_subscription_change( $user_id, $old_values, $new_plan, $new_swimming );
-                if ( $this->subscription_service->hasActiveSubscription( $user_id ) ) {
+                // Directiva solo paga 29,50 €; no actualizar precio en Stripe al cambiar tarifa/suplemento en perfil
+                if ( ! $user_is_directive && $this->subscription_service->hasActiveSubscription( $user_id ) ) {
                     $new_plan_norm = ( $new_plan === 'premium' || $new_plan === 'entrenamiento' ) ? 'premium' : 'basic';
                     $new_swim_bool = (bool) $new_swimming;
                     $this->subscription_service->updateSubscriptionPlan( $user_id, $new_plan_norm, $new_swim_bool );

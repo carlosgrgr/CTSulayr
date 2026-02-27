@@ -616,11 +616,12 @@ class SulayrSettingsPage {
                 continue;
             }
             $list[] = [
-                'user_id'   => $user_id,
-                'name'      => $a['name'] ?? '',
-                'email'     => $a['email'] ?? '',
-                'plan'      => $a['plan_value'] ?? '',
-                'has_sub'   => $subscription_service->hasActiveSubscription( $user_id ),
+                'user_id'      => $user_id,
+                'name'         => $a['name'] ?? '',
+                'email'        => $a['email'] ?? '',
+                'plan'         => $a['plan_value'] ?? '',
+                'is_directive' => ! empty( $a['is_directive'] ),
+                'has_sub'      => $subscription_service->hasActiveSubscription( $user_id ),
             ];
         }
         $generado = isset( $_GET['generado'] ) ? (int) $_GET['generado'] : 0;

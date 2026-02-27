@@ -20,6 +20,10 @@ class UserService {
         add_filter('acf/pre_save_post', [$this, 'save_user_data_security']);
         add_filter( 'show_admin_bar', [$this, 'hide_wpadminbar_to_athletes'] );
         add_filter('acf/prepare_field/name=sulayr_user_photo', [$this, 'render_user_photo_preview']);
+        // Campo "Miembro directiva": solo visible para admin o para el usuario que lo tiene activo; solo editable por admin.
+        add_filter('acf/prepare_field/name=' . CustomFields::USER_PROFILE_IS_DIRECTIVE, [$this, 'prepare_field_directive_visibility']);
+        add_filter('acf/update_value/name=' . CustomFields::USER_PROFILE_IS_DIRECTIVE, [$this, 'preserve_directive_field_value'], 10, 3);
+
         if ( ! is_admin() ) {
             add_filter('acf/prepare_field/name=' . CustomFields::USER_PROFILE_MEMBERSHIP_PLAN, [$this, 'maybe_lock_field']);
             add_filter('acf/prepare_field/name=' . CustomFields::USER_PROFILE_SWIMMING, [$this, 'maybe_lock_field']);
@@ -286,6 +290,57 @@ class UserService {
     }
 
     /**
+     * Visibilidad del campo "Miembro de la directiva": solo para administradores o para el usuario que lo tiene activo.
+     * Si no es admin, el campo se muestra en solo lectura.
+     *
+     * @param array $field Campo ACF.
+     * @return array
+     */
+    public function prepare_field_directive_visibility( $field ) {
+        if ( ! is_array( $field ) || empty( $field['name'] ) ) {
+            return $field;
+        }
+        $profile_user_id = is_admin() && isset( $_GET['user_id'] ) ? (int) $_GET['user_id'] : get_current_user_id();
+        if ( ! $profile_user_id ) {
+            $field['type'] = 'hidden';
+            return $field;
+        }
+        $is_directive = (bool) \ClubTriatlonSulayr\Services\HelperService::get_user_field( CustomFields::USER_PROFILE_IS_DIRECTIVE, $profile_user_id );
+        $can_edit = current_user_can( 'manage_options' );
+        $is_own_profile = (int) get_current_user_id() === (int) $profile_user_id;
+        $show = $can_edit || ( $is_own_profile && $is_directive );
+        if ( ! $show ) {
+            $field['type'] = 'hidden';
+            return $field;
+        }
+        if ( ! $can_edit ) {
+            $field['readonly'] = 1;
+            $field['disabled'] = true;
+        }
+        return $field;
+    }
+
+    /**
+     * Solo los administradores pueden cambiar el valor de "Miembro de la directiva".
+     *
+     * @param mixed  $value   Valor que se intenta guardar.
+     * @param string $post_id user_123.
+     * @param array  $field   Campo ACF.
+     * @return mixed
+     */
+    public function preserve_directive_field_value( $value, $post_id, $field ) {
+        if ( current_user_can( 'manage_options' ) ) {
+            return $value;
+        }
+        if ( ! is_string( $post_id ) || strpos( $post_id, 'user_' ) !== 0 ) {
+            return $value;
+        }
+        $user_id = (int) str_replace( 'user_', '', $post_id );
+        $current = \ClubTriatlonSulayr\Services\HelperService::get_user_field( CustomFields::USER_PROFILE_IS_DIRECTIVE, $user_id );
+        return $current ? '1' : '0';
+    }
+
+    /**
      * Preservar valores de campos bloqueados cuando se intenta guardar
      * 
      * Este método protege los valores de campos bloqueados (tarifa y suplemento)
@@ -378,12 +433,13 @@ class UserService {
         $birth_date = HelperService::get_user_field( CustomFields::USER_PROFILE_BIRTH, $user_id );
         $join_date = HelperService::get_user_field( CustomFields::USER_PROFILE_JOIN_DATE, $user_id );
         $athlete_status = HelperService::get_user_field( CustomFields::USER_PROFILE_ATHLETE_STATUS, $user_id );
-        
+        $is_directive = (bool) HelperService::get_user_field( CustomFields::USER_PROFILE_IS_DIRECTIVE, $user_id );
+
         // Si el campo no existe o está vacío, usar 'active' como valor por defecto
         if ( empty( $athlete_status ) && $athlete_status !== '0' && $athlete_status !== 0 ) {
             $athlete_status = 'active';
         }
-        
+
         return [
             'ID' => $user_id,
             'name' => HelperService::get_user_full_name( $user_id ),
@@ -396,6 +452,7 @@ class UserService {
             'join_date_formatted' => HelperService::format_join_date( $join_date ?: '' ),
             'plan' => HelperService::format_membership_plan( $plan ),
             'plan_value' => $plan ?: '',
+            'is_directive' => $is_directive,
             'training_type' => HelperService::format_training_type( $training_type ),
             'training_type_value' => $training_type ?: '',
             'swimming' => HelperService::format_swimming_supplement_to_bool( $swimming ),

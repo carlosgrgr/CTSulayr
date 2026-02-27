@@ -74,7 +74,8 @@ isProject: false
 
 ## Arquitectura General
 
-El sistema utilizará **Stripe Subscriptions API directamente** mediante el SDK de PHP de Stripe. No se requiere WooCommerce Subscriptions. Los productos en WooCommerce serán productos normales (no de suscripción) que servirán como referencia, pero toda la lógica de suscripciones se gestionará directamente con Stripe.
+El sistema utilizará **Stripe Subscriptions API directamente** mediante el SDK de PHP de Stripe. No se requiere WooCommerce Subscriptions. Los productos en WooCommerce serán productos normales (no de suscripción) que servirán como referencia, pero toda la lógica de suscripciones se gestionará directamente con Stripe.  
+
 
 ## Componentes Principales
 

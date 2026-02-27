@@ -76,6 +76,7 @@ class UserAdminList
         $columns[CustomFields::USER_PROFILE_MEMBERSHIP_PLAN] = __( 'Tarifa', SULAYR_TEXTDOMAIN );
         $columns[CustomFields::USER_PROFILE_TRAINING_TYPE]   = __( 'Tipo entrenamiento', SULAYR_TEXTDOMAIN );
         $columns[CustomFields::USER_PROFILE_SWIMMING]        = __( 'Natación', SULAYR_TEXTDOMAIN );
+        $columns[CustomFields::USER_PROFILE_IS_DIRECTIVE]    = __( 'Directiva', SULAYR_TEXTDOMAIN );
         return $columns;
     }
 
@@ -105,6 +106,10 @@ class UserAdminList
         if ( $column_name === CustomFields::USER_PROFILE_SWIMMING ) {
             $swimming = HelperService::get_user_field( CustomFields::USER_PROFILE_SWIMMING, $user_id );
             return HelperService::format_swimming_supplement_to_label( $swimming );
+        }
+        if ( $column_name === CustomFields::USER_PROFILE_IS_DIRECTIVE ) {
+            $is_directive = (bool) HelperService::get_user_field( CustomFields::USER_PROFILE_IS_DIRECTIVE, $user_id );
+            return $is_directive ? __( 'Sí', SULAYR_TEXTDOMAIN ) : '—';
         }
         return $value;
     }

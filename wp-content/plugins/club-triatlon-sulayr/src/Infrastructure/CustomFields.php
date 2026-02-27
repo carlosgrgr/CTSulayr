@@ -17,6 +17,8 @@ class CustomFields
     const USER_PROFILE_TRAINING_TYPE = 'sulayr_user_training_type';
     const USER_PROFILE_SWIMMING = 'sulayr_user_swimming';
     const USER_PROFILE_ATHLETE_STATUS = 'sulayr_user_athlete_status';
+    /** Miembro de la directiva: solo paga suscripción natación directiva (29,50 €). Solo editable por administrador. */
+    const USER_PROFILE_IS_DIRECTIVE = 'sulayr_user_is_directive';
 
     /** Monedero (wallet) CPT */
     const WALLET_FIELDS_GROUP = 'wallet_fields';

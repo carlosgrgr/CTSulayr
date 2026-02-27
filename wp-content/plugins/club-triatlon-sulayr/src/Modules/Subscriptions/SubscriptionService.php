@@ -69,6 +69,24 @@ class SubscriptionService {
     }
 
     /**
+     * Price ID for "Natación para directiva" (29,50 €/mes). Used when user is member of the board.
+     *
+     * @return string|null Stripe Price ID.
+     */
+    public function getPriceIdForDirectiveSwimming(): ?string {
+        $amount = $this->products->get_price_for_type( SubscriptionProducts::DIRECTIVE_SWIMMING );
+        $cents  = (int) round( $amount * 100 );
+        return $this->stripe->findOrCreatePrice( $cents, 'directive_swim' );
+    }
+
+    /**
+     * Whether the user is marked as member of the board (directiva). They only pay 29,50 € natación directiva.
+     */
+    public static function is_user_directive( int $user_id ): bool {
+        return (bool) get_user_meta( $user_id, CustomFields::USER_PROFILE_IS_DIRECTIVE, true );
+    }
+
+    /**
      * Get or create Stripe Customer for user; save customer_id in user_meta.
      *
      * @param int $user_id
@@ -97,7 +115,7 @@ class SubscriptionService {
 
     /**
      * Create a Checkout Session for the user's current plan and redirect URL.
-     * User must have plan (tarifa) set in profile.
+     * Directiva: solo suscripción natación directiva (29,50 €). Resto: plan (tarifa) + opción natación.
      *
      * @param int    $user_id
      * @param string $success_url
@@ -105,12 +123,16 @@ class SubscriptionService {
      * @return string|null Checkout session URL to redirect to, or null on failure.
      */
     public function createCheckoutSessionForUser( int $user_id, string $success_url, string $cancel_url ): ?string {
-        $plan = get_user_meta( $user_id, CustomFields::USER_PROFILE_MEMBERSHIP_PLAN, true );
-        $swim = (bool) get_user_meta( $user_id, CustomFields::USER_PROFILE_SWIMMING, true );
-        if ( empty( $plan ) || ( $plan !== 'basic' && $plan !== 'premium' ) ) {
-            return null;
+        if ( self::is_user_directive( $user_id ) ) {
+            $price_id = $this->getPriceIdForDirectiveSwimming();
+        } else {
+            $plan = get_user_meta( $user_id, CustomFields::USER_PROFILE_MEMBERSHIP_PLAN, true );
+            $swim = (bool) get_user_meta( $user_id, CustomFields::USER_PROFILE_SWIMMING, true );
+            if ( empty( $plan ) || ( $plan !== 'basic' && $plan !== 'premium' ) ) {
+                return null;
+            }
+            $price_id = $this->getPriceIdForPlan( $plan, $swim );
         }
-        $price_id = $this->getPriceIdForPlan( $plan, $swim );
         if ( ! $price_id ) {
             return null;
         }
@@ -174,8 +196,11 @@ class SubscriptionService {
             $amount = $subscription->items->data[0]->price->unit_amount / 100;
             $plan = 'basic';
             $swim = false;
-            // Derive plan/swimming from amount if needed (22, 33, 47, 58)
-            if ( $amount >= 58 ) {
+            // Natación directiva 29,50 €
+            if ( $amount >= 29 && $amount <= 30 ) {
+                $plan = 'directive_swimming';
+                $swim = false;
+            } elseif ( $amount >= 58 ) {
                 $plan = 'premium';
                 $swim = true;
             } elseif ( $amount >= 47 ) {
