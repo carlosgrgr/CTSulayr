@@ -14,6 +14,16 @@ if ( ! defined( 'ABSPATH' ) ) {
         </div>
     <?php endif; ?>
 
+    <?php if ( ! empty( $suscripcion_error ) ) : ?>
+        <div class="notice notice-error sulayr-subscription-notice">
+            <p><?php esc_html_e( 'No se pudo generar el enlace de pago.', SULAYR_TEXTDOMAIN ); ?></p>
+            <?php if ( ! empty( $stripe_error_msg ) ) : ?>
+                <p><strong><?php echo esc_html( $stripe_error_msg ); ?></strong></p>
+            <?php else : ?>
+                <p><?php esc_html_e( 'Comprueba que tengas tarifa asignada (o marca de directiva) y que el club tenga configurada la clave secreta de Stripe en Ajustes → Configuración Sulayr → Configuración Stripe.', SULAYR_TEXTDOMAIN ); ?></p>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
     <?php if ( ! empty( $subscription_blocked_msg ) ) : ?>
         <div class="notice notice-warning sulayr-subscription-notice">
             <p><?php echo esc_html( $subscription_blocked_msg ); ?></p>
@@ -32,7 +42,7 @@ if ( ! defined( 'ABSPATH' ) ) {
             <?php else : ?>
                 <p><?php esc_html_e( 'Activa tu suscripción para que la cuota se cobre automáticamente cada mes.', SULAYR_TEXTDOMAIN ); ?></p>
             <?php endif; ?>
-            <form method="post" action="">
+            <form method="post" action="<?php echo esc_url( isset( $subscription_form_action ) ? $subscription_form_action : '' ); ?>">
                 <?php wp_nonce_field( 'sulayr_activar_suscripcion', '_wpnonce' ); ?>
                 <button type="submit" name="sulayr_activar_suscripcion" value="1" class="button button-primary">
                     <?php esc_html_e( 'Activar suscripción', SULAYR_TEXTDOMAIN ); ?>

@@ -23,6 +23,7 @@ class StripeService {
     const OPTION_SECRET_KEY   = 'sulayr_stripe_secret_key';
     const CURRENCY            = 'eur';
     const SUBSCRIPTION_PRODUCT_NAME = 'Suscripción Club Triatlón Sulayr';
+    const TRANSIENT_LAST_ERROR = 'sulayr_stripe_last_error';
 
     /** @var string|null */
     private $secret_key;
@@ -39,6 +40,24 @@ class StripeService {
      */
     public function is_configured(): bool {
         return ! empty( $this->secret_key ) && strpos( $this->secret_key, 'sk_' ) === 0;
+    }
+
+    /**
+     * Store last API error for display to admin/user (e.g. on checkout failure).
+     */
+    private function set_last_error( string $message ): void {
+        set_transient( self::TRANSIENT_LAST_ERROR, $message, 120 );
+    }
+
+    /**
+     * Get and clear the last stored Stripe error (for display once).
+     */
+    public static function get_and_clear_last_error(): ?string {
+        $msg = get_transient( self::TRANSIENT_LAST_ERROR );
+        if ( $msg ) {
+            delete_transient( self::TRANSIENT_LAST_ERROR );
+        }
+        return $msg ?: null;
     }
 
     /**
@@ -70,6 +89,7 @@ class StripeService {
             }
             return Customer::create( $params );
         } catch ( ApiErrorException $e ) {
+            $this->set_last_error( $e->getMessage() );
             if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
                 error_log( 'Sulayr Stripe createCustomer: ' . $e->getMessage() );
             }
@@ -123,6 +143,7 @@ class StripeService {
             $this->product_id = $product->id;
             return $this->product_id;
         } catch ( ApiErrorException $e ) {
+            $this->set_last_error( $e->getMessage() );
             if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
                 error_log( 'Sulayr Stripe getOrCreateSubscriptionProduct: ' . $e->getMessage() );
             }
@@ -156,6 +177,7 @@ class StripeService {
             $price = Price::create( $params );
             return $price->id;
         } catch ( ApiErrorException $e ) {
+            $this->set_last_error( $e->getMessage() );
             if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
                 error_log( 'Sulayr Stripe createPrice: ' . $e->getMessage() );
             }
@@ -190,6 +212,7 @@ class StripeService {
             }
             return $this->createPrice( $amount_cents, $nickname );
         } catch ( ApiErrorException $e ) {
+            $this->set_last_error( $e->getMessage() );
             if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
                 error_log( 'Sulayr Stripe findOrCreatePrice: ' . $e->getMessage() );
             }
@@ -240,6 +263,7 @@ class StripeService {
             }
             return Session::create( $params );
         } catch ( ApiErrorException $e ) {
+            $this->set_last_error( $e->getMessage() );
             if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
                 error_log( 'Sulayr Stripe createCheckoutSession: ' . $e->getMessage() );
             }
@@ -332,7 +356,8 @@ class StripeService {
             if ( $at_period_end ) {
                 return Subscription::update( $subscription_id, [ 'cancel_at_period_end' => true ] );
             }
-            return Subscription::cancel( $subscription_id );
+            $sub = Subscription::retrieve( $subscription_id );
+            return $sub->cancel();
         } catch ( ApiErrorException $e ) {
             if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
                 error_log( 'Sulayr Stripe cancelSubscription: ' . $e->getMessage() );

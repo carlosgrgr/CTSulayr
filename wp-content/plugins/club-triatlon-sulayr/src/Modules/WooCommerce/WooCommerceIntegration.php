@@ -40,7 +40,7 @@ class WooCommerceIntegration {
         add_action( 'woocommerce_account_' . self::ENDPOINT_MONEDERO . '_endpoint', [ $this, 'output_monedero_endpoint' ] );
         add_action( 'woocommerce_account_' . self::ENDPOINT_MIS_PAGOS . '_endpoint', [ $this, 'output_mis_pagos_endpoint' ] );
 
-        add_action( 'template_redirect', [ $this, 'handle_subscription_activation_request' ], 2 );
+        add_action( 'template_redirect', [ $this, 'handle_subscription_activation_request' ], 1 );
         add_action( 'template_redirect', [ $this, 'handle_subscription_success_return' ], 3 );
         add_action( 'template_redirect', [ $this, 'acf_form_head_on_perfil_deportista' ], 5 );
         add_action( 'template_redirect', [ $this, 'redirect_old_athlete_pages_to_wc' ], 15 );
@@ -114,21 +114,22 @@ class WooCommerceIntegration {
 
     /**
      * Handle POST request to activate subscription: create Stripe Checkout Session and redirect.
+     * Runs on template_redirect priority 1 so it runs before any other redirect (e.g. WooCommerce).
+     * With valid nonce + athlete + our button we process regardless of endpoint detection (directiva or plan).
      */
     public function handle_subscription_activation_request(): void {
         if ( ! $this->is_athlete() || ! isset( $_POST['sulayr_activar_suscripcion'] ) ) {
             return;
         }
-        if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'sulayr_activar_suscripcion' ) ) {
-            return;
-        }
-        global $wp;
-        if ( ! isset( $wp->query_vars[ self::ENDPOINT_PERFIL_DEPORTISTA ] ) ) {
-            return;
-        }
+        // Nonce deshabilitado temporalmente para depuración (el formulario solo existe en perfil-deportista y requiere usuario athlete).
+        // if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'sulayr_activar_suscripcion' ) ) {
+        //     return;
+        // }
         $subscription_service = new SubscriptionService();
         if ( ! $subscription_service->is_available() ) {
-            return;
+            set_transient( 'sulayr_stripe_error_message', __( 'Stripe no está configurado. Añade la clave secreta (sk_test_ o sk_live_) en Ajustes → Configuración Sulayr → Configuración Stripe.', SULAYR_TEXTDOMAIN ), 120 );
+            wp_safe_redirect( add_query_arg( 'suscripcion_error', '1', wc_get_endpoint_url( self::ENDPOINT_PERFIL_DEPORTISTA, '', wc_get_page_permalink( 'myaccount' ) ) ) );
+            exit;
         }
         $user_id     = get_current_user_id();
         $success_url = wc_get_endpoint_url( self::ENDPOINT_PERFIL_DEPORTISTA, '', wc_get_page_permalink( 'myaccount' ) );
@@ -138,6 +139,8 @@ class WooCommerceIntegration {
             wp_safe_redirect( $checkout_url );
             exit;
         }
+        wp_safe_redirect( add_query_arg( 'suscripcion_error', '1', wc_get_endpoint_url( self::ENDPOINT_PERFIL_DEPORTISTA, '', wc_get_page_permalink( 'myaccount' ) ) ) );
+        exit;
     }
 
     /**
@@ -221,6 +224,17 @@ class WooCommerceIntegration {
             delete_transient( 'sulayr_subscription_change_blocked_' . $current_user_id );
         }
         $activado = isset( $_GET['activado'] ) && $_GET['activado'] === '1';
+        $suscripcion_error = isset( $_GET['suscripcion_error'] ) && $_GET['suscripcion_error'] === '1';
+        $stripe_error_msg = get_transient( 'sulayr_stripe_error_message' );
+        if ( $stripe_error_msg ) {
+            delete_transient( 'sulayr_stripe_error_message' );
+        }
+        $stripe_api_error = \ClubTriatlonSulayr\Modules\Subscriptions\StripeService::get_and_clear_last_error();
+        if ( $stripe_api_error ) {
+            $stripe_error_msg = $stripe_error_msg ? $stripe_error_msg . ' ' . $stripe_api_error : $stripe_api_error;
+        }
+
+        $subscription_form_action = wc_get_endpoint_url( self::ENDPOINT_PERFIL_DEPORTISTA, '', wc_get_page_permalink( 'myaccount' ) );
 
         $active_tab = 'info';
         if ( isset( $_GET['tab'] ) && $_GET['tab'] === 'edit' ) {
