@@ -67,6 +67,7 @@ todos:
       - subscription-service
       - webhook-handler
       - subscription-changes-cpt
+isProject: false
 ---
 
 # Sistema de Suscripciones para Club Triatlón Sulayr (Sin WooCommerce Subscriptions)
@@ -162,12 +163,10 @@ Crear endpoint REST API: `/wp-json/sulayr/v1/stripe-webhook`
 
 1. Validar margen de 5 días
 2. Si es válido:
-
-   - Calcular nuevo precio (tarifa + suplemento)
-   - Crear nuevo Price en Stripe si no existe
-   - Actualizar Subscription en Stripe usando `subscription.modify()` o `subscription.update()`
-   - El nuevo precio se aplicará en el próximo ciclo
-
+  - Calcular nuevo precio (tarifa + suplemento)
+  - Crear nuevo Price en Stripe si no existe
+  - Actualizar Subscription en Stripe usando `subscription.modify()` o `subscription.update()`
+  - El nuevo precio se aplicará en el próximo ciclo
 3. Actualizar user_meta
 4. Registrar cambio en CPT histórico
 
@@ -227,83 +226,57 @@ flowchart TD
     Q --> R[Registrar en historial pagos]
 ```
 
+
+
 ## Archivos a Crear/Modificar
 
 ### Nuevos Archivos
 
-1. **`src/Modules/Subscriptions/StripeService.php`**
-
-   - Servicio principal para interactuar con Stripe API
-   - Métodos: crear customer, crear price, crear subscription, actualizar subscription, cancelar subscription
-
-2. **`src/Modules/Subscriptions/SubscriptionService.php`**
-
-   - Servicio de alto nivel para gestionar suscripciones
-   - Métodos: crear suscripción, actualizar suscripción, cancelar, obtener suscripción activa
-   - Usa StripeService internamente
-
-3. **`src/Modules/Subscriptions/SubscriptionChangeValidator.php`**
-
-   - Validar cambios con margen de 5 días
-   - Calcular fecha efectiva del cambio
-
-4. **`src/Modules/Subscriptions/StripeWebhookHandler.php`**
-
-   - Manejar webhooks de Stripe
-   - Procesar eventos: checkout.session.completed, invoice.payment_succeeded, etc.
-
-5. **`src/Modules/Subscriptions/SubscriptionProducts.php`**
-
-   - Crear/actualizar productos de referencia en WooCommerce
-   - Sincronizar precios con Stripe Prices
-
-6. **`src/Modules/PostTypes/SubscriptionChangesPostType.php`**
-
-   - CPT para histórico de cambios
-
-7. **`src/Modules/Fields/SubscriptionChangesFields/SubscriptionChangesFields.php`**
-
-   - Campos ACF para el CPT de cambios
-
-8. **`src/Modules/WooCommerce/SubscriptionEndpoints.php`**
-
-   - Endpoint `mis-pagos` en My Account
-   - Botón de activación de suscripción en perfil
-   - Endpoint REST para webhooks de Stripe
-
-9. **`templates/parts/content-subscription-activation.php`**
-
-   - Template para botón y estado de suscripción
-
-10. **`templates/parts/content-payment-history.php`**
-
-    - Template para historial de pagos desde Stripe
+1. `**src/Modules/Subscriptions/StripeService.php**`
+  - Servicio principal para interactuar con Stripe API
+  - Métodos: crear customer, crear price, crear subscription, actualizar subscription, cancelar subscription
+2. `**src/Modules/Subscriptions/SubscriptionService.php**`
+  - Servicio de alto nivel para gestionar suscripciones
+  - Métodos: crear suscripción, actualizar suscripción, cancelar, obtener suscripción activa
+  - Usa StripeService internamente
+3. `**src/Modules/Subscriptions/SubscriptionChangeValidator.php**`
+  - Validar cambios con margen de 5 días
+  - Calcular fecha efectiva del cambio
+4. `**src/Modules/Subscriptions/StripeWebhookHandler.php**`
+  - Manejar webhooks de Stripe
+  - Procesar eventos: checkout.session.completed, invoice.payment_succeeded, etc.
+5. `**src/Modules/Subscriptions/SubscriptionProducts.php**`
+  - Crear/actualizar productos de referencia en WooCommerce
+  - Sincronizar precios con Stripe Prices
+6. `**src/Modules/PostTypes/SubscriptionChangesPostType.php**`
+  - CPT para histórico de cambios
+7. `**src/Modules/Fields/SubscriptionChangesFields/SubscriptionChangesFields.php**`
+  - Campos ACF para el CPT de cambios
+8. `**src/Modules/WooCommerce/SubscriptionEndpoints.php**`
+  - Endpoint `mis-pagos` en My Account
+  - Botón de activación de suscripción en perfil
+  - Endpoint REST para webhooks de Stripe
+9. `**templates/parts/content-subscription-activation.php**`
+  - Template para botón y estado de suscripción
+10. `**templates/parts/content-payment-history.php**`
+  - Template para historial de pagos desde Stripe
 
 ### Archivos a Modificar
 
-1. **`src/Modules/Users/AthleteUpdate.php`**
-
-   - Añadir registro en CPT de cambios cuando se actualiza tarifa/suplemento
-   - Integrar validación de 5 días antes de permitir cambios
-   - Actualizar suscripción en Stripe cuando cambie tarifa/suplemento
-
-2. **`src/Modules/WooCommerce/WooCommerceIntegration.php`**
-
-   - Añadir endpoint `mis-pagos`
-   - Añadir botón de activación en perfil deportista
-
-3. **`src/App/App.php`**
-
-   - Registrar nuevos servicios y módulos
-
-4. **`src/Infrastructure/CustomFields.php`**
-
-   - Añadir constantes para campos del CPT de cambios
-   - Añadir constantes para user_meta de suscripciones
-
-5. **`composer.json`**
-
-   - Añadir dependencia `stripe/stripe-php`
+1. `**src/Modules/Users/AthleteUpdate.php**`
+  - Añadir registro en CPT de cambios cuando se actualiza tarifa/suplemento
+  - Integrar validación de 5 días antes de permitir cambios
+  - Actualizar suscripción en Stripe cuando cambie tarifa/suplemento
+2. `**src/Modules/WooCommerce/WooCommerceIntegration.php**`
+  - Añadir endpoint `mis-pagos`
+  - Añadir botón de activación en perfil deportista
+3. `**src/App/App.php**`
+  - Registrar nuevos servicios y módulos
+4. `**src/Infrastructure/CustomFields.php**`
+  - Añadir constantes para campos del CPT de cambios
+  - Añadir constantes para user_meta de suscripciones
+5. `**composer.json**`
+  - Añadir dependencia `stripe/stripe-php`
 
 ## Consideraciones Técnicas
 
@@ -357,3 +330,4 @@ flowchart TD
 6. Implementar endpoints y UI en dashboard del usuario
 7. Implementar histórico de cambios
 8. Testing completo del flujo de suscripciones
+
