@@ -1,0 +1,351 @@
+.c-modalMail {
+  position: fixed;
+  right: 112px;
+  bottom: 20px;
+  padding: 24px;
+  width: 448px;
+  max-width: 448px;
+  background-color: var(--color-white);
+  color: var(--color-dark);
+  border-radius: 10px;
+  box-shadow: 0px 0px 30px rgba(0, 0, 0, 0.25);
+  z-index: 9999999;
+
+  .btn-close {
+    color: var(--color-dark);
+    opacity: 1;
+  }
+
+  .form-check-label {
+    position: initial;
+    padding-top: 0;
+    padding-left: 8px;
+    text-overflow: initial;
+    white-space: normal;
+    font-size: 16px !important;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 24px;
+    color: #0B0C0C;
+
+    a {
+      color: var(--color-link-bg-dark);
+
+      &:hover {
+        color: var(--color-link-bg-dark-hover);
+      }
+    }
+  }
+
+  .form-check .form-check-input {
+    margin-left: -2.5em;
+
+    &:hover { cursor: pointer; }
+
+    &:focus { box-shadow: none; }
+
+    &:checked[type=checkbox] {
+      background-image: url("../images/check-form.svg");
+      border: 1px solid var(--color-blue) !important;
+      background-color: var(--color-blue) !important;
+      background-size: 56%;
+    }
+  }
+
+  #CheckLegalCheckedModal {
+    width: 32px;
+    height: 32px;
+    background-color: transparent;
+    border: 1px solid #BEBEBE;
+    border-radius: 50%;
+  }
+}
+
+.c-modalMail .c-suscription {
+  margin: 16px 0;
+}
+
+.c-modalMail .c-formMail .title {
+  padding-right: 24px;
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 36px;
+  color: var(--color-dark);
+}
+
+.c-modalMail p.title {
+  font-size: 28px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 36px;
+  color: var(--color-dark) !important;
+}
+
+.c-modalMail p.mt-4.mb-0 {
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 24px;
+  color: var(--color-dark) !important;
+}
+
+.c-modalMail .c-formMail__content {
+  display: flex;
+}
+
+.c-modalMail .c-formMail__content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.c-modalMail .c-formMail__content button {
+  background: #99CDB6;
+  border: none;
+  box-shadow: none;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.c-modalMail .form-floating>input {
+  box-sizing: border-box;
+  margin-top: 10px;
+  padding: 16px 40px 16px 16px;
+  width: 100%;
+  height: 58px;
+  border-radius: 8px;
+  border-color: var(--color-gray-light);
+  font-style: normal;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 26px;
+  color: #0B0C0C;
+  text-align: left;
+  background-color: var(--color-gray-light);
+}
+
+.form-control:focus,
+select:focus {
+  color: var(--color-dark);
+  background-color: var(--color-white);
+  border-color: var(--color-gray-light);
+  outline: 0;
+  box-shadow: 0 0 0 0.1rem rgba(13, 110, 253, 0.25);
+}
+
+.c-modalMail .c-multiselect button {
+  border-color: var(--color-gray-light);
+  background-color: var(--color-gray-light);
+}
+
+.c-modalMail .ms-options-wrap.ms-active button {
+  outline: 0;
+  box-shadow: 0 0 0 0.1rem rgba(13, 110, 253, 0.25);
+}
+
+.c-formMail__valid_title {
+  padding-bottom: 8px;
+  font-size: 18px !important;
+  font-style: normal !important;
+  font-weight: 800 !important;
+  line-height: 26px !important;
+  letter-spacing: -0.5px;
+}
+
+.c-formMail .form-floating>label {
+  font-style: normal;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 26px;
+  color: #0b0c0c
+}
+
+.c-modalMail .c-formMail .c-formMail__close {
+  position: absolute;
+  top: 33px;
+  right: 24px;
+}
+
+#responseEmailContent,
+#responseEmailContentModal,
+#responseStateContent,
+#responseStateContentModal,
+#responseCheckLegalContent,
+#responseCheckLegalContentModal {
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+#responseEmailContent,
+#responseEmailContentModal,
+#responseStateContent,
+#responseStateContentModal,
+#responseCheckLegalContent,
+#responseCheckLegalContentModal {
+  display: none;
+}
+
+#responseEmailValid,
+#responseEmailValidModal {
+  padding: 16px;
+  border-radius: 8px;
+  background-color: var(--color-ok-bg);
+}
+
+#responseEmailValid,
+#responseEmailValidModal {
+  display: none;
+  background-color: var(--color-ok-bg);
+  color: var(--color-dark-green) !important;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+#responseEmailValid p,
+#responseEmailValidModal p {
+  color: var(--color-dark-green) !important;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px;
+  word-wrap: break-word;
+}
+
+#responseEmailContent img,
+#responseEmailContentModal img,
+#responseStateContent img,
+#responseStateContentModal img,
+#responseCheckLegalContent img ,
+#responseCheckLegalContentModal img {
+  margin-right: 8px;
+}
+
+#responseEmailContent span,
+#responseEmailContentModal span,
+#responseStateContent span,
+#responseStateContentModal span,
+#responseCheckLegalContent span,
+#responseCheckLegalContentModal span {
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  font-style: normal;
+  color: var(--color-red);
+}
+
+#responseEmailContent,
+#responseEmailContentModal,
+#responseStateContent,
+#responseStateContentModal,
+#responseCheckLegalContent,
+#responseCheckLegalContentModal {
+  margin-top: 8px;
+}
+
+#closeButtonModal {
+  float: right;
+}
+
+
+@media (max-width: 425px) {
+  .c-modalMail {
+    padding: 24px;
+    background-color: var(--color-white);
+    border-radius: 10px;
+    position: fixed;
+    right: 112px;
+    bottom: 16px;
+    box-shadow: 0px 0px 30px rgba(0, 0, 0, 0.25);
+    max-width: 100%;
+    width: calc(100% - 32px);
+    left: 16px;
+    right: 16px;
+  }
+  .c-modalMail .c-formMail__content .form-floating.mb-3 {
+    margin-bottom: 0 !important;
+    width: 100%;
+  }
+  .c-modalMail .c-formMail .c-formMail__content button {
+    background: #99cdb6;
+    border: none;
+    box-shadow: none;
+    border-radius: 10px;
+    font-weight: 500;
+    margin-left: 0;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    width: 100%;
+    display: block;
+    text-align: left;
+  }
+  .c-modalMail .c-formMail .c-formMail__content button img {
+    display: block;
+    float: right;
+    margin-top: 4px;
+  }
+  .c-modalMail .c-formMail .c-formMail__content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  p#responseEmailContentModal {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 425px) {
+  .c-modalMail {
+    padding: 24px;
+    background-color: var(--color-white);
+    border-radius: 10px;
+    position: fixed;
+    right: 112px;
+    bottom: 16px;
+    box-shadow: 0px 0px 30px rgba(0, 0, 0, .25);
+    max-width: 100%;
+    width: calc(100% - 32px);
+    left: 16px;
+    right: 16px
+  }
+
+  .c-modalMail .c-formMail__content .form-floating.mb-3 {
+    margin-bottom: 0 !important;
+    width: 100%
+  }
+
+  .c-modalMail .c-formMail .c-formMail__content button {
+    background: #99cdb6;
+    border: none;
+    box-shadow: none;
+    border-radius: 10px;
+    font-weight: 500;
+    margin-left: 0;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    width: 100%;
+    display: block;
+    text-align: left
+  }
+
+  .c-modalMail .c-formMail .c-formMail__content button img {
+    display: block;
+    float: right;
+    margin-top: 4px
+  }
+
+  .c-modalMail .c-formMail .c-formMail__content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-direction: column
+  }
+
+  p#responseEmailContentModal {
+    margin-bottom: 0
+  }
+}

@@ -1,0 +1,232 @@
+footer.background-dark-blue,
+footer.background-dark-blue p {
+  color: var(--color-white) !important;
+}
+
+
+.c-footer {
+
+  p {
+    margin: 0;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 24px;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+
+    li {
+      list-style: none;
+      padding: 8px 0;
+
+      &[data-search-term] {
+        padding: 0;
+      }
+    }
+  }
+
+  &__title {
+    padding-bottom: 24px;
+    font-size: 16px !important;
+    font-style: normal;
+    font-weight: 700 !important;
+    line-height: 24px !important;
+  }
+
+  &__text {
+    padding-bottom: 24px;
+
+    a {
+      color: var(--color-link-bg-dark);
+
+      &:hover {
+        color: var(--color-link-bg-dark-hover);
+      }
+    }
+  }
+
+  &__bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 72px;
+  }
+
+  &__apps {
+    display: flex;
+    justify-content: space-between;
+
+    a:first-of-type img {
+      margin-right: 16px;
+    }
+
+    img {
+      max-width: 45%;
+    }
+  }
+
+  &__apps {
+    &_form.mobile {
+      img {
+        max-width: 100%;
+      }
+    }
+  }
+
+  &__rrss {
+    a:not(:last-of-type) {
+      margin-right: 24px;
+    }
+  }
+
+  .menu > li > a {
+    display: block;
+    margin: 0 0 24px;
+    color: var(--color-white) !important;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 24px;
+    cursor: default;
+  }
+
+  .menu .sub-menu > li a {
+    padding: 8px 0;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 24px;
+    color: var(--color-link-bg-dark);
+
+    &:hover {
+      color: var(--color-link-bg-dark-hover);
+    }
+  }
+
+  .ms-options-wrap >.ms-options >ul label {
+    padding: 4px 4px 4px 24px;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 24px;
+  }
+
+  .ms-options-wrap >.ms-options >ul label.focused,
+  .ms-options-wrap >.ms-options >ul label:hover {
+    background-color: var(--color-link-bg-dark-hover);
+    border-color:  var(--color-link-bg-dark-hover);
+    color: var(--color-dark-blue);
+    cursor: pointer;
+  }
+
+  .ms-options-wrap >.ms-options >ul input[type="checkbox"] {
+    top: 10px;
+  }
+
+  .ms-options .ms-selectall.global {
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 24px;
+    color: var(--color-link) !important;
+    text-transform: none;
+
+    &:hover {
+      color: var(--color-link-hover) !important;
+      text-decoration: none;
+    }
+  }
+
+  .ms-search input {
+    margin: 2px;
+    width: calc(100% - 5px) !important;
+    border: 2px solid var(--color-link-bg-dark-hover) !important;
+    border-radius: 2px;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 24px;
+  }
+
+  #responseEmailContent,
+  #responseEmailContentModal,
+  #responseStateContent,
+  #responseStateContentModal,
+  #responseCheckLegalContent,
+  #responseCheckLegalContentModal {
+    margin: -8px 0 16px;
+  }
+
+  #emailField {
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 26px;
+    color: var(--color-dark);
+  }
+
+  #contact-email{
+    &:focus-visible {
+      outline: none;
+    }
+  }
+
+}
+
+
+@media (max-width: 768px) {
+  .c-footer {
+    padding: 32px 0;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1200px) {
+  .c-footer {
+    padding: 48px 0;
+  }
+}
+
+@media (min-width: 1200px) {
+  .c-footer {
+    padding: 72px 0;
+  }
+}
+
+
+
+@media (max-width: 992px) {
+  .c-footer .row.row-container-cards div[class*="col"] {
+      padding-right: 0;
+      padding-left: 0;
+  }
+}
+@media (min-width: 768px) and (max-width: 992px) {
+  .c-footer .row.row-container-cards div[class*="col"]:nth-child(odd) {
+      padding-right: 0.5rem !important;
+  }
+}
+
+@media (max-width: 1600px) {
+  .c-footer .row.row-container-cards div[class*="col"]:first-child {
+      padding-left: 0 !important;
+  }
+  .c-footer .row.row-container-cards div[class*="col"]:last-child {
+    padding-right: 0 !important;
+  }
+}
+
+@media (min-width: 992px) {
+  .c-footer .row.row-container-cards div[class*="col"]:last-child {
+    padding-right: 0 !important;
+  }
+}
+
+
+
+
+
+
+

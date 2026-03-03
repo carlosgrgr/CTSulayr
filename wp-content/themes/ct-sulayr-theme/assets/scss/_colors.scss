@@ -1,0 +1,43 @@
+:root {
+  // Primary colors
+  --color-white: #FFFFFF;
+  --color-dark: #0B0C0C;
+  --color-blue: #7089F4;
+  --color-blue-hover: #8DA1F6;
+  --color-light-blue: #D0D9FF;
+  --color-blue-light: #C6D0FB;
+  --color-extralight-blue: #EDF0FE;
+  --color-green: #99CDB6;
+  --color-purple: #E8CEFE;
+  --color-red: #FDC3C2;
+  --color-gray: #D8D8D8;
+  --color-gray-light: #F5F5F5;
+  --color-light-grey: #E5E5E5;
+
+  // Secondary colors
+  --color-dark-blue: #30428B;
+  --color-dark-green: #22332B;
+  --color-dark-purple: #3B0082;
+  --color-purple-light: #E4E9FF;
+  --color-dark-red: #7C150D;
+  --color-dark-red-light: #FDC3C2;
+  --color-green-dark: #4F8E6F;
+  --color-green-dark-100: #ACD6C4;
+  --color-green-dark-200: #76C19D;
+  --color-green-dark-300: #6CB78C;
+  --color-green-dark-400: #66AD8A;
+
+  // Status
+  --color-ok: var(--color-green);
+  --color-ok-bg: #D6EBE2;
+  --color-error: #FDCFCE;
+  --color-error-bg: #FFF3F3;
+  --color-error-txt: #C71E11;
+
+  // Links
+  --color-link: #5A6EC3;
+  --color-link-hover: var(--color-blue);
+  --color-link-bg-dark: #A9B8F8;
+  --color-link-bg-dark-hover: #E2E7FD;
+
+}

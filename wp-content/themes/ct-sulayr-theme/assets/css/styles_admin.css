@@ -1,0 +1,63 @@
+html :where(.wp-block) {
+    max-width: 1920px;
+}
+.hero-block .container-bg-color  {
+    width: 100%;
+    z-index: 1;
+}
+
+.container-image-front-page {
+    z-index: 2;
+    width: 100%;
+}
+
+.block-image-front-page {
+    position: relative;
+    z-index: 2;
+}
+
+.block-editor__container img {
+    z-index: 2;
+    position: relative;
+}
+.block-editor__container .acf-image-uploader img {
+    z-index: 1;
+}
+
+.media-content-scrollable-block .title-1 {
+    position: relative;
+    z-index: 2;
+}
+
+.media-content-scrollable-block {
+    overflow: hidden;
+}
+
+.media-content-scrollable-block .container-bg-color  {
+    z-index: 1;
+}
+
+.media-featured-content-block, .promotion-block {
+    position: relative;
+    z-index: 2;
+    overflow: hidden;
+}
+
+lottie-player {
+    position: relative;
+    z-index: 2;
+}
+
+section.promotion2 div.row{
+    overflow: hidden;
+}
+
+section.promotion2 div.container-bg-image div{
+    position: static;
+}
+
+section.featured-2cols h2.accordion-header button {
+    font-family: 'Manrope', Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+}

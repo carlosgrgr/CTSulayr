@@ -1,0 +1,21 @@
+{
+    "name": "ct-sulayr-theme/hero",
+    "title": "Hero",
+    "description": "Add the content at the fields",
+    "version": "1.0.0",
+    "textdomain": "ct_sulayr_theme",
+    "style": [ "ct_sulayr_theme" ],
+    "editorStyle": [ "ct_sulayr_theme_admin" ],
+    "editorScript": [ "ct_sulayr_theme" ],
+    "category": "theme",
+    "icon": "superhero-alt",
+    "keywords": ["hero", "image", "ct_sulayr_theme"],
+    "acf": {
+        "mode": "preview",
+        "renderTemplate": "templates/Blocks/Hero.php"
+    },
+    "supports": {
+        "anchor": true
+    },
+    "align": "full"
+}

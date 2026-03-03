@@ -1,0 +1,43 @@
+.c-breadcrumbs {
+
+  span,
+  p,
+  a {
+    margin: 0;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 24px;
+    color: var(--color-dark);
+  }
+
+  p {
+    display: inline-block;
+  }
+
+  a {
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .c-breadcrumbs {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1200px) {
+  .c-breadcrumbs {
+    padding-top: 48px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .c-breadcrumbs {
+    padding-top: 72px;
+  }
+}

@@ -1,0 +1,60 @@
+.c-primary-btn {
+  display: inline-block;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--color-blue);
+  background-color: var(--color-blue);
+  color: var(--color-white);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 24px;
+  text-decoration: none;
+  cursor: pointer;
+  text-align: center;
+
+  &:hover {
+    border-color: var(--color-blue-hover);
+    background-color: var(--color-blue-hover);
+    color: var(--color-white);
+  }
+
+  &--s {
+    padding: 8px 16px;
+  }
+}
+
+.c-secondary-btn {
+  display: inline-block;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--color-link);
+  background-color: var(--color-white);
+  color: var(--color-link);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 24px;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-link-hover);
+    background-color: var(--color-link-hover);
+    color: var(--color-white);
+  }
+}
+
+.navbar .c-primary-btn, .navbar .c-secondary-btn {
+  padding: 7px 16px;
+}
+
+.c-ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--color-blue);
+  &:hover,
+  &:focus {
+    color: var(--bs-link-color);
+  }
+}

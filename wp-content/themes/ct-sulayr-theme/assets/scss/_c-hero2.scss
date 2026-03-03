@@ -1,0 +1,347 @@
+.c-hero2 {
+  .c-hero2_content {
+    display: table;
+  }
+
+  .c-hero2_wrapper {
+    display: table-cell;
+    vertical-align: top;
+  }
+
+  .c-hero2_title {
+    margin: 0;
+    padding: 75px 0 0;
+    font-style: normal;
+    font-weight: 500;
+    color: var(--color-dark-blue);
+  }
+
+  p {
+    margin: 0;
+    font-style: normal;
+    font-weight: 400;
+    padding: 0 0 100px;
+  }
+
+  &__media {
+    img {
+      width: 100%;
+      padding-top: 15%;
+    }
+  }
+
+  &_btn.visible-xs {
+    margin-top: 24px;
+  }
+
+  .hero2_image {
+    width: 100%;
+  }
+
+  .hero2_img_mobile {
+    display: none;
+  }
+
+  .c-hero2-container {
+    background-image: linear-gradient(360deg, #30428b 35%, transparent 0);
+    padding-bottom: 60px;
+  }
+
+  .btns-hero2 {
+    display: flex;
+    gap: 20px;
+  }
+
+  .btn-yellow {
+    background-color: #ffc517;
+    border: 1px solid #ffc417;
+    color: black;
+    padding: 20px;
+    display: inline-block;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 24px;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+      border-color: #fada7b;
+      background-color: #fada7b;
+      color: black;
+    }
+  }
+
+  .btn-blue {
+    display: inline-block;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid var(--color-blue);
+    background-color: var(--color-blue);
+    color: var(--color-white);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 24px;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--color-blue-hover);
+      background-color: var(--color-blue-hover);
+      color: var(--color-white);
+    }
+  }
+
+  // MEDIA QUERIES
+  @media (max-width: 768px) {
+
+    .row > div {
+      padding: 0;
+    }
+
+    .c-hero2_title {
+      font-size: 30px;
+      line-height: 38px;
+    }
+
+    p {
+      padding: 0 0 16px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .row {
+      > div:first-of-type {
+        padding-left: 0;
+      }
+
+      > div:last-of-type {
+        padding-right: 0;
+      }
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1200px) {
+
+    .c-hero2_title {
+      font-size: 36px;
+      line-height: 44px;
+    }
+
+    p {
+      padding: 0 0 24px;
+    }
+  }
+
+  @media (max-width: 1200px) {
+    p {
+      font-size: 16px;
+      line-height: 24px;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    padding-top: 6vh;
+
+    .c-hero2_title {
+      font-size: 46px;
+      line-height: 70px;
+      font-weight: bolder;
+    }
+
+    p {
+      padding: 0 0 90px;
+      font-size: 25px;
+      line-height: 40px;
+      color: #283e8d;
+      width: 75%;
+    }
+  }
+
+  @media (max-width: 1750px) and (min-width: 1709px),
+  (max-width: 1708px) and (min-width: 1500px),
+  (max-width: 1499px) and (min-width: 1200px),
+  (max-width: 1199px) and (min-width: 1101px),
+  (max-width: 1100px) and (min-width: 971px),
+  (max-width: 970px) and (min-width: 943px),
+  (max-width: 942px) and (min-width: 905px),
+  (max-width: 904px) and (min-width: 800px) {
+    .c-hero2__media img {
+      width: 90% !important;
+    }
+
+    .c-hero2_title {
+      font-size: 40px;
+      font-weight: bold;
+      padding: 55px 0 0;
+    }
+
+    p {
+      padding: 0 0 100px;
+      font-size: 20px;
+      color: #283e8d;
+      width: 100% !important;
+      padding-top: 15px;
+    }
+  }
+
+  @media (max-width: 925px) and (min-width: 800px) {
+    .c-hero2_title {
+      font-size: 35px;
+    }
+
+    .u-title-2 {
+      padding-top: 50px;
+      font-weight: bold;
+    }
+
+    .c-hero2__media img {
+      width: 90% !important;
+      padding-top: 50%;
+    }
+  }
+
+  @media (max-width: 799px) and (min-width: 768px) {
+    .c-hero2__media img {
+      width: 90% !important;
+      padding-top: 30%;
+    }
+
+    .c-hero2_title {
+      font-size: 30px;
+      padding-top: 2%;
+      text-align: left;
+      font-weight: bold;
+    }
+
+    p {
+      padding: 0 0 15%;
+      font-size: 18px;
+      line-height: 35px;
+      font-weight: bold;
+      color: #283e8d;
+      width: 100% !important;
+      padding-top: 15px;
+    }
+
+    .btn-yellow,
+    .btn-blue {
+      font-size: 12px;
+      padding: 10px;
+    }
+  }
+
+  @media (max-width: 957px) and (min-width: 922px) {
+    .c-hero2__media img {
+      width: 90% !important;
+      padding-top: 40%;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .hero2_img_mobile {
+      display: block;
+      margin: 0 auto;
+      width: 80%;
+      padding-bottom: 5%;
+    }
+
+    .hero2_image {
+      display: none;
+    }
+
+    .c-hero2_title {
+      padding: 50px 0 0;
+      font-weight: bold;
+    }
+
+    .c-hero2-container {
+      background-image: linear-gradient(360deg, #30428b 40%, transparent 0);
+      padding-bottom: 60px;
+    }
+
+    p {
+      font-size: 20px;
+      line-height: 24px;
+      text-align: center;
+      color: var(--color-dark-blue);
+    }
+
+    .btn-blue,
+    .btn-yellow {
+      font-size: 13px;
+      padding: 15px 10px;
+    }
+
+    .btns-hero2 {
+      justify-content: center;
+    }
+
+  }
+}
+span.wpcf7-spinner {
+  display: none;
+}
+
+span.popup-close {
+  position: absolute;
+  top: 0;
+  right: 1rem;
+  cursor: pointer;
+  font-size: 2.5rem;
+}
+.cf7-fleet-title {
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 2;
+}
+
+.cf7-fleet-input,
+.cf7-fleet-select {
+  padding: 15px;
+  border: 0;
+  background-color: #eaecf6;
+  border-radius: 5px;
+}
+
+.cf7-fleet-input,
+.cf7-fleet-select,
+.cf7-fleet-submit {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cf7-fleet-submit {
+  padding: 15px;
+  background: #6889fc;
+  border: 0;
+  border-radius: 5px;
+  color: white;
+}
+
+ @media (max-width: 767px) {
+  .cf7-fleet-title {
+    font-size: 17px;
+    font-weight: bold;
+    line-height: 1.5;
+  }
+
+  .inputs-fleets p,
+  .cf7-fleet-submit {
+    font-size: 14px;
+    line-height: 0;
+  }
+
+  .cf7-fleet-submit {
+    padding: 25px;
+  }
+  #generic-popup > div{
+    padding: 25px !important;
+  }
+}
+.wpcf7-not-valid-tip {
+    padding-top: 1.5vh;
+}
+.wpcf7 form .wpcf7-response-output {
+    margin: 1em 0 1em;
+}

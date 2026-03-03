@@ -1,0 +1,54 @@
+.c-multiselect {
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 26px;
+  color: var(--color-dark);
+
+  a.ms-selectall.global {
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 26px;
+    color: var(--color-dark) !important;
+  }
+
+  .ms-options-wrap >.ms-options {
+    padding: 8px 16px;
+  }
+
+  .ms-options-wrap > button {
+    box-sizing: border-box;
+    padding: 16px 40px 16px 16px;
+    height: 58px;
+    border-radius: 8px;
+
+    span {
+      font-size: 18px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: 26px;
+      color: var(--color-dark);
+    }
+
+    &::after {
+      display: inline-block;
+      content: "\f282";
+      top: 20px;
+      right: 38px;
+      border: none;
+      font-family: bootstrap-icons !important;
+      font-style: normal;
+      font-weight: 400 !important;
+      font-variant: normal;
+      font-size: 24px;
+      color: var(--color-dark);
+      text-transform: none;
+      line-height: 1;
+      vertical-align: -0.125em;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+
+    }
+  }
+}
