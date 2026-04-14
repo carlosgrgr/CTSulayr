@@ -82,7 +82,7 @@ class HeroFields extends Fields
                             'required' => 1,
                             'conditional_logic' => 0,
                             'wrapper' => [
-                                'width' => '',
+                                'width' => '50',
                                 'class' => '',
                                 'id' => '',
                             ],
@@ -95,7 +95,7 @@ class HeroFields extends Fields
                             'max_height' => '',
                             'max_size' => '',
                             'mime_types' => '',
-                            'preview_size' => 'medium',
+                            'preview_size' => 'thumbnail',
                             'parent_repeater' => 'field_' . md5( CustomFields::HERO_SLIDER ),
                         ],
                         [
@@ -108,7 +108,7 @@ class HeroFields extends Fields
                             'required' => 1,
                             'conditional_logic' => 0,
                             'wrapper' => [
-                                'width' => '70',
+                                'width' => '50',
                                 'class' => '',
                                 'id' => '',
                             ],
@@ -130,7 +130,7 @@ class HeroFields extends Fields
                             'required' => 0,
                             'conditional_logic' => 0,
                             'wrapper' => [
-                                'width' => '',
+                                'width' => '70',
                                 'class' => '',
                                 'id' => '',
                             ],
@@ -152,7 +152,7 @@ class HeroFields extends Fields
                             'required' => 0,
                             'conditional_logic' => 0,
                             'wrapper' => [
-                                'width' => '',
+                                'width' => '30',
                                 'class' => '',
                                 'id' => '',
                             ],

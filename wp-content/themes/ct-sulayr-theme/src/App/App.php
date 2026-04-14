@@ -46,7 +46,6 @@ class App
                     'media' => 'all',
                 ],
             ],
-            'front' => [],
             'admin' => [
                 'ct_sulayr_theme_admin' => [
                     'path' => 'assets/css/styles_admin.css',
@@ -72,6 +71,16 @@ class App
                 'ct_sulayr_theme-bootstrap-bundle' => [
                     'path' => 'assets/js/bootstrap.bundle.min.js',
                     'deps' => [ 'ct_sulayr_theme' ],
+                    'in_footer' => true,
+                ],
+                'ct_sulayr_theme_ui_core' => [
+                    'path' => 'assets/js/core.min.js',
+                    'deps' => [ 'jquery' ],
+                    'in_footer' => true,
+                ],
+                'ct_sulayr_theme_ui_script' => [
+                    'path' => 'assets/js/script.js',
+                    'deps' => [ 'ct_sulayr_theme_ui_core' ],
                     'in_footer' => true,
                 ],
             ],

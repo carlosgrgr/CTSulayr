@@ -5,29 +5,13 @@
 @import "_c-button.scss";
 @import "_c-link.scss";
 @import "_c-multiselect.scss";
-@import "_c-formMail.scss";
 @import "_c-splide.scss";
 @import "_c-hero.scss";
-@import "_c-hero2.scss";
-@import "_c-promo-discount.scss";
-@import "_c-promotion.scss";
 @import "_c-text-media.scss";
-@import "_c-steps-v2.scss";
-@import "_c-cards-v1.scss";
-@import "_c-cards-v2.scss";
-@import "_c-cards-v3.scss";
-@import "_c-download-the-app.scss";
-@import "_c-faqs.scss";
-@import "_c-faqs-category.scss";
-@import "_c-suscription.scss";
-@import "_c-modalMail.scss";
 @import "_c-footer.scss";
 @import "_c-breadcrumbs.scss";
 @import "_c-noFound.scss";
-@import "_c-map.scss";
 @import "_utilities.scss";
-@import "_c-blog.scss";
-@import "_c-search.scss";
 @import "_c-testamonials.scss";
 
 .title-1 {
@@ -2917,5 +2901,5 @@ body.logged-in .container-info-map {
   z-index: 99999999 !important;
 }
 div#generic-popup {
-    align-items: center ! Important;
+    align-items: center !important;
 }
