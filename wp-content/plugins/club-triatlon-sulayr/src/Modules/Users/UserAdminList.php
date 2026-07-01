@@ -73,6 +73,7 @@ class UserAdminList
     public static function add_columns_to_user_list( $columns ): array
     {
         $columns['user_id'] = 'ID';
+        $columns[CustomFields::USER_PROFILE_ATHLETE_STATUS] = __( 'Estado del deportista', SULAYR_TEXTDOMAIN );
         $columns[CustomFields::USER_PROFILE_MEMBERSHIP_PLAN] = __( 'Tarifa', SULAYR_TEXTDOMAIN );
         $columns[CustomFields::USER_PROFILE_TRAINING_TYPE]   = __( 'Tipo entrenamiento', SULAYR_TEXTDOMAIN );
         $columns[CustomFields::USER_PROFILE_SWIMMING]        = __( 'Natación', SULAYR_TEXTDOMAIN );
@@ -94,6 +95,13 @@ class UserAdminList
     {
         if ( $column_name === 'user_id' ) {
             return esc_html( (string) $user_id );
+        }
+        if ( $column_name === CustomFields::USER_PROFILE_ATHLETE_STATUS ) {
+            $status = HelperService::get_user_field( CustomFields::USER_PROFILE_ATHLETE_STATUS, $user_id );
+            if ( empty( $status ) && $status !== '0' && $status !== 0 ) {
+                $status = 'active';
+            }
+            return HelperService::format_athlete_status( $status );
         }
         if ( $column_name === CustomFields::USER_PROFILE_MEMBERSHIP_PLAN ) {
             $plan = HelperService::get_user_field( CustomFields::USER_PROFILE_MEMBERSHIP_PLAN, $user_id );
