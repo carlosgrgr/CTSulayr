@@ -15,6 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 class SulayrSettingsPage {
     const MENU_SLUG = 'sulayr-settings';
     const PAGE_SLUG = 'sulayr-settings';
+    const MENU_ICON = 'dashicons-admin-settings';
+    const MENU_POSITION = 58;
     
     private UserService $user_service;
     private CsvImporterService $csv_importer;
@@ -90,30 +92,43 @@ class SulayrSettingsPage {
         if ( isset( $_POST['sulayr_stripe_webhook_secret'] ) ) {
             update_option( 'sulayr_stripe_webhook_secret', sanitize_text_field( wp_unslash( $_POST['sulayr_stripe_webhook_secret'] ) ) );
         }
-        wp_safe_redirect( add_query_arg( [
-            'page'    => self::MENU_SLUG,
+        wp_safe_redirect( $this->get_page_url( [
             'action'  => 'stripe',
             'updated' => '1',
-        ], admin_url( 'options-general.php' ) ) );
+        ] ) );
         exit;
     }
 
     /**
      * add_settings_page()
-     * Añade la página de opciones al menú de administración
+     * Añade la página de opciones como ítem de menú principal
      *
      * @return 	void
      * @access 	public
      * @package	club-triatlon-sulayr
      */
     public function add_settings_page(): void {
-        add_submenu_page(
-            'options-general.php',
-            __( 'Sulayr Settings', SULAYR_TEXTDOMAIN ),
-            __( 'Sulayr Settings', SULAYR_TEXTDOMAIN ),
+        add_menu_page(
+            __( 'Sulayr Info', SULAYR_TEXTDOMAIN ),
+            __( 'Sulayr Info', SULAYR_TEXTDOMAIN ),
             'manage_options',
             self::MENU_SLUG,
-            [ $this, 'render_settings_page' ]
+            [ $this, 'render_settings_page' ],
+            self::MENU_ICON,
+            self::MENU_POSITION
+        );
+    }
+
+    /**
+     * Genera la URL base de la página de administración del plugin.
+     *
+     * @param array $args Parámetros de query adicionales.
+     * @return string
+     */
+    private function get_page_url( array $args = [] ): string {
+        return add_query_arg(
+            array_merge( [ 'page' => self::MENU_SLUG ], $args ),
+            admin_url( 'admin.php' )
         );
     }
 
@@ -219,7 +234,7 @@ class SulayrSettingsPage {
         $content = ob_get_clean();
         
         $this->load_template( 'admin/list-view', [
-            'back_url' => admin_url( 'options-general.php?page=' . self::MENU_SLUG ),
+            'back_url' => $this->get_page_url(),
             'content' => $content,
         ] );
     }
@@ -469,7 +484,7 @@ class SulayrSettingsPage {
      */
     private function get_list_url( string $action ): string {
         return wp_nonce_url(
-            admin_url( 'options-general.php?page=' . self::MENU_SLUG . '&action=' . $action ),
+            $this->get_page_url( [ 'action' => $action ] ),
             'sulayr_list_action',
             '_wpnonce'
         );
@@ -546,11 +561,10 @@ class SulayrSettingsPage {
         set_transient( 'sulayr_import_result', $result, 60 );
 
         // Redirigir para evitar reenvío del formulario
-        wp_safe_redirect( add_query_arg( [
-            'page' => self::MENU_SLUG,
-            'action' => 'import',
+        wp_safe_redirect( $this->get_page_url( [
+            'action'   => 'import',
             'imported' => '1',
-        ], admin_url( 'options-general.php' ) ) );
+        ] ) );
         exit;
     }
 
@@ -587,7 +601,7 @@ class SulayrSettingsPage {
         }
         $subscription_service = new \ClubTriatlonSulayr\Modules\Subscriptions\SubscriptionService();
         if ( ! $subscription_service->is_available() || $subscription_service->hasActiveSubscription( $user_id ) ) {
-            wp_safe_redirect( add_query_arg( [ 'page' => self::MENU_SLUG, 'action' => 'suscripciones' ], admin_url( 'options-general.php' ) ) );
+            wp_safe_redirect( $this->get_page_url( [ 'action' => 'suscripciones' ] ) );
             exit;
         }
         $success_url = wc_get_endpoint_url( 'perfil-deportista', '', wc_get_page_permalink( 'myaccount' ) );
@@ -596,7 +610,10 @@ class SulayrSettingsPage {
         if ( $checkout_url ) {
             set_transient( 'sulayr_checkout_url_' . $user_id, $checkout_url, 300 );
         }
-        wp_safe_redirect( add_query_arg( [ 'page' => self::MENU_SLUG, 'action' => 'suscripciones', 'generado' => $user_id ], admin_url( 'options-general.php' ) ) );
+        wp_safe_redirect( $this->get_page_url( [
+            'action'   => 'suscripciones',
+            'generado' => $user_id,
+        ] ) );
         exit;
     }
 
