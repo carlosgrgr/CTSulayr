@@ -123,23 +123,37 @@ class UserAdminList
     }
 
     /**
-     * Make ID column sortable
+     * Columnas ordenables del listado de usuarios.
      */
     public function make_column_sortable( $columns ) {
         $columns['user_id'] = 'ID';
+        $columns[ CustomFields::USER_PROFILE_ATHLETE_STATUS ] = CustomFields::USER_PROFILE_ATHLETE_STATUS;
         return $columns;
     }
 
     /**
-     * Fix query to order by User ID
+     * Ajusta la consulta de usuarios según la columna de ordenación activa.
      */
     public function handle_sorting( $query ) {
-        if ( ! is_admin() || ! $query->is_main_query() ) {
+        if ( ! is_admin() ) {
             return;
         }
 
-        if ( $query->get( 'orderby' ) === 'ID' ) {
+        global $pagenow;
+        if ( 'users.php' !== $pagenow ) {
+            return;
+        }
+
+        $orderby = $query->get( 'orderby' );
+
+        if ( $orderby === 'ID' ) {
             $query->set( 'orderby', 'ID' );
+            return;
+        }
+
+        if ( $orderby === CustomFields::USER_PROFILE_ATHLETE_STATUS ) {
+            $query->set( 'meta_key', CustomFields::USER_PROFILE_ATHLETE_STATUS );
+            $query->set( 'orderby', 'meta_value' );
         }
     }
 
