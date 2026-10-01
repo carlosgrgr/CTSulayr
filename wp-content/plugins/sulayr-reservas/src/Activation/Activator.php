@@ -6,6 +6,7 @@ use SulayrReservas\Config\SiteConfig;
 use SulayrReservas\Context\BlogContext;
 use SulayrReservas\Context\BlogContextException;
 use SulayrReservas\Database\Schema;
+use SulayrReservas\Roles\RoleRegistrar;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -32,7 +33,13 @@ class Activator {
 		}
 
 		try {
-			( new Schema( $config, new BlogContext( $config ) ) )->install();
+			$context = new BlogContext( $config );
+			( new Schema( $config, $context ) )->install();
+			$context->onBookings(
+				static function () {
+					( new RoleRegistrar() )->sync();
+				}
+			);
 		} catch ( BlogContextException $exception ) {
 			return;
 		}

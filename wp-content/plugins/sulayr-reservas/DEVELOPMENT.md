@@ -1,0 +1,142 @@
+# Desarrollo del plugin de reservas
+
+Referencia técnica para implementar `sulayr-reservas`. Los requisitos funcionales están en [SPEC.md](../../../SPEC.md). Por qué el código existente obliga a ciertas adaptaciones está en [ANALISIS.md](../../../ANALISIS.md). El estado de las fases está en [FASES.md](../../../FASES.md).
+
+Si este documento contradice al SPEC, manda el SPEC. No se cambian requisitos ni decisiones ya aprobadas desde aquí.
+
+## Arquitectura
+
+Plugin de red en `wp-content/plugins/sulayr-reservas/`. PHP 7.4 o superior. Sin Composer y sin ACF.
+
+El archivo principal registra un autoload `SulayrReservas\` → `src/` y arranca `Plugin` en `plugins_loaded`.
+
+| Clase | Responsabilidad |
+|---|---|
+| `Config\SiteConfig` | Blog del club y blog de reservas, leídos de opciones de red |
+| `Context\BlogContext` | Ejecuta una operación en uno de esos dos sitios y restaura el contexto en un `finally` |
+| `Database\Schema` | Crea las tablas con `dbDelta` y guarda la versión del esquema en cada sitio |
+| `Activation\Activator` | Primera escritura de las opciones de red, del esquema y de los roles del sitio de reservas |
+| `Roles\Capabilities` | Nombres de capacidades del plugin |
+| `Roles\RoleRegistrar` | Crea y actualiza `nadador` y `gestor` solo en el sitio de reservas |
+| `Access\AdminAccess` | Impide el `wp-admin` a nadador y gestor solo en el sitio de reservas |
+| `Admin\NetworkSettingsPage` | Pantalla de red para los identificadores de sitio |
+
+`BlogContext` no cambia de sitio si la configuración es inválida. No hace falta volver a comprobar el identificador en cada clase si la operación ya entra por `onClub()` o `onBookings()`.
+
+## Sitios y tablas
+
+| Sitio | Blog | Dominio | Prefijo actual | Tablas del plugin |
+|---|---|---|---|---|
+| Club Triatlón Sulayr | 1 | `clubtriatlonsulayr.local.com` | `wp_` | `wp_sulayr_swim_sync_log` |
+| Reservas CN Nazarí | 2 | `cnnazari.clubtriatlonsulayr.local.com` | `wp_2_` | `wp_2_sulayr_swim_sessions`, `wp_2_sulayr_swim_bookings`, `wp_2_sulayr_swim_months`, `wp_2_sulayr_swim_swimmers` |
+
+El club conserva deportistas, ACF y el rol `athlete`. Reservas conserva sesiones, reservas, meses generados y la ficha local del nadador. El registro técnico de sincronización vive en el club.
+
+Los prefijos salen de `$wpdb->prefix` después de estar en el sitio correcto. No se escriben a mano.
+
+## Roles y capacidades
+
+El SPEC no nombra los slugs de capacidad. Esta tabla es la traducción técnica de las secciones 3.1, 3.2 y 3.3, no un permiso nuevo. Las comprobaciones de las fases posteriores deben usar estos slugs.
+
+El rol también recibe `read`, igual que `athlete` en el club. Sin esa capacidad de WordPress el usuario autenticado no puede usar el front con normalidad. No recibe `manage_options`, `edit_posts` ni otras capacidades generales.
+
+| Capacidad | Nadador | Gestor | Administrador del blog 2 |
+|---|---|---|---|
+| `sulayr_view_calendar` | sí | sí | sí |
+| `sulayr_book_self` | sí | sí | sí |
+| `sulayr_cancel_own` | sí | sí | sí |
+| `sulayr_view_own_bookings` | sí | sí | sí |
+| `sulayr_view_all_bookings` | no | sí | sí |
+| `sulayr_book_for_others` | no | sí | sí |
+| `sulayr_cancel_any` | no | sí | sí |
+| `sulayr_manage_swimmers` | no | sí | sí |
+| `sulayr_manage_sessions` | no | sí | sí |
+
+Correspondencia con el SPEC:
+
+- Consultar calendario, plazas y estado de la sesión: `sulayr_view_calendar`.
+- Reservar para sí mismo: `sulayr_book_self`.
+- Cancelar la propia reserva cuando el plazo lo permita: `sulayr_cancel_own`. El plazo de 60 minutos se comprueba en la fase de reservas, no aquí.
+- Ver reservas propias e historial propio: `sulayr_view_own_bookings`.
+- Ver reservas de todos, sesiones pasadas y asistentes: `sulayr_view_all_bookings`.
+- Reservar para otro usuario, incluida la reserva retroactiva del gestor: `sulayr_book_for_others`.
+- Cancelar cualquier reserva: `sulayr_cancel_any`.
+- Alta, consulta, activación, desactivación y eliminación de nadadores: `sulayr_manage_swimmers`.
+- Capacidad, habilitar o deshabilitar una sesión y generar el mes: `sulayr_manage_sessions`.
+
+Los roles se guardan en las opciones del blog 2. No se crean en el blog 1. Al administrador del blog 2 solo se le añaden o retiran capacidades con prefijo `sulayr_`. No se toca el resto de sus capacidades ni ningún rol del club.
+
+Si una capacidad `sulayr_` deja de estar en el mapa, se retira de `nadador`, `gestor` y `administrator` en el blog 2. No se borran otras capacidades que un administrador hubiera añadido a mano a esos roles.
+
+## Decisiones aprobadas
+
+- Rol del club: `athlete`. Rol del nadador en reservas: `nadador`.
+- Blogs 1 y 2, con los dominios de la tabla anterior.
+- Ficha del nadador en tabla local del sitio de reservas. No se escriben las metas globales del club.
+- Mes generado en `generated_month` (`YYYY-MM`).
+- Paneles públicos mediante shortcode del plugin. Aún no implementados.
+- Zona horaria de ambos sitios: `Europe/Madrid`, confirmada en esta fase.
+
+## Convenciones
+
+- PHP compatible con 7.4: sin tipos unión, sin `mixed`, sin promoción de constructor y sin enumeraciones.
+- Prefijo de capacidades, opciones, tablas y hooks internos: `sulayr_`.
+- Texto de administración en español.
+- Consultas dinámicas con `$wpdb->prepare()`.
+- Cualquier `switch_to_blog()` pasa por `BlogContext`.
+- No editar `club-triatlon-sulayr` ni otros plugins.
+- No crear commits salvo petición expresa.
+
+## Riesgos
+
+### Esquema de base de datos
+
+La versión actual es `1`, opción `sulayr_reservas_db_version` en cada sitio. Una modificación futura sube esa versión y pasa por `dbDelta` o por una migración explícita. Si el cambio puede alterar datos existentes, la migración tiene que conservarlos. Una actualización del esquema no borra datos. La versión no se marca como instalada si falta alguna tabla prevista.
+
+### Concurrencia de las reservas
+
+Pendiente de la fase de reservas. Varias peticiones simultáneas no pueden superar el aforo ni el máximo de 5 reservas por semana. Los índices únicos de sesión y de reserva no bastan: impiden duplicar una sesión o una reserva del mismo usuario, pero no el aforo ni el límite semanal. Esas operaciones tendrán que usar transacción y bloqueo de filas, y habrá que probarlas.
+
+### Multisite
+
+Cada operación corre en su sitio. El contexto se restaura aunque la operación falle. Las tablas de negocio permanecen en el blog 2 y el registro de sincronización en el blog 1. Crear roles o capacidades fuera de `onBookings()` o de una petición cuyo blog actual sea el 2 filtraría `nadador` y `gestor` al club.
+
+### Fechas y horas
+
+Ambos sitios usan `Europe/Madrid`. La lógica de mes, ventana de generación, inicio de sesión, cancelación y semana debe usar `wp_timezone()` o `DateTimeImmutable` con esa zona. No se usa la zona del servidor ni un desplazamiento fijo.
+
+### WooCommerce en el sitio de reservas
+
+Al borrar un usuario de prueba del blog 2, WooCommerce ejecutó ganchos de `remove_user_from_blog` y `deleted_user` contra tablas `wp_2_wc_*` que no existen. El usuario sí se eliminó. No es un cambio de esta fase. Cuando se retire a un nadador del sitio de reservas habrá que comprobar que esos avisos no interrumpen la operación. Este plugin no debe crear esas tablas.
+
+### Acceso a wp-admin
+
+El plugin del club redirige a cualquier `athlete` que entre en `wp-admin`, en el sitio donde ese código se ejecuta. El bloqueo de este plugin solo actúa en el blog 2 y solo si el usuario tiene exclusivamente `nadador`, `gestor` o ambos. Un administrador, un superadministrador u otro rol del sitio no se redirige. `admin-ajax.php` no se redirige, porque WordPress lo necesita; la autorización de cada acción seguirá comprobándose por capacidad.
+
+Hasta que exista el panel, la redirección lleva a la portada del sitio de reservas. No es una página de reservas.
+
+## Decisiones pendientes
+
+- Confirmar si el agrupamiento de capacidades de la tabla anterior se mantiene. Cubre el SPEC sin añadir permisos.
+- La URL de salida del `wp-admin` pasará a ser el panel cuando exista. Mientras tanto es la portada.
+- Retención del registro técnico: propuesta de 1000 filas o 180 días, aún no implementada.
+- Las sales de `wp-config.php` siguen siendo los placeholders de instalación. Afectan a las sesiones reales y no forman parte del plugin.
+
+## Verificaciones para fases posteriores
+
+- La generación del mes y las reservas deben rechazar peticiones simultáneas, no solo confiar en los índices únicos.
+- La sincronización debe leer el club en `profile_update` con prioridad 30 y escribir solo la tabla local de nadadores.
+- Al asignar `nadador` a una cuenta nueva hay que pasar el rol en la creación, para que `UserService::assign_athlete_role()` no lo sustituya si el usuario aún es `subscriber`.
+- Usar `add_role( 'nadador' )` y no `set_role()`, para no quitar `gestor` o `administrator`.
+- El bloqueo de `wp-admin` debe seguir limitado al blog 2 cuando aparezcan formularios públicos. Esos formularios no deben depender de `admin-post.php`.
+- Comprobar en el navegador, en escritorio y en móvil, el panel de nadador y el de gestor cuando existan.
+
+## Fase 3
+
+Implementada en `Roles\Capabilities`, `Roles\RoleRegistrar` y `Access\AdminAccess`.
+
+`RoleRegistrar` sincroniza los roles al activar el plugin, dentro de `onBookings()`, y en cada petición del blog 2 si la versión de roles (`sulayr_reservas_roles_version`, valor `1`) no coincide o falta un rol. Repetir la activación no crea roles duplicados ni toca el blog 1.
+
+`AdminAccess` redirige en `admin_init` y oculta la barra de administración. No actúa en el blog 1, ni con administradores, ni con superadministradores, ni si el usuario tiene otro rol además de `nadador` o `gestor`. No interrumpe AJAX ni cron.
+
+La redirección HTTP no se ha recorrido en un navegador. La decisión de bloquear o no se ha comprobado con usuarios de prueba creados y eliminados en el blog 2.
