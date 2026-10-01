@@ -1,5 +1,7 @@
 # SPEC.md — Sistema de reservas de sesiones de natación
 
+Este documento fija los requisitos funcionales y las decisiones ya aprobadas. La adaptación al código existente está en [ANALISIS.md](ANALISIS.md). El avance por fases está en [FASES.md](FASES.md).
+
 ## 1. Objetivo
 
 Desarrollar un plugin de WordPress que implemente un sistema de reservas de sesiones de natación para un club deportivo.
@@ -29,7 +31,7 @@ El sistema se ejecutará en una única instalación WordPress Multisite con dos 
 - El sitio de reservas contiene la interfaz y los datos propios del sistema de reservas.
 - El plugin debe ser consciente del sitio en el que se está ejecutando y no alterar el funcionamiento del sitio del club salvo por la integración de sincronización descrita en este documento.
 - Los usuarios comparten la tabla global `wp_users`, pero su pertenencia y roles son específicos de cada sitio.
-- Un mismo `user_id` puede tener el rol `deportista` en el club y `nadador` en reservas, con una única cuenta y contraseña.
+- Un mismo `user_id` puede tener el rol `athlete` en el club y `nadador` en reservas, con una única cuenta y contraseña. El slug `athlete` es el rol existente del club; su etiqueta visible es «Deportista».
 - Un usuario creado únicamente en reservas no tiene por qué pertenecer al sitio del club.
 
 La implementación podrá utilizar `switch_to_blog()` para ejecutar operaciones en el contexto del sitio de reservas desde el sitio del club. Todo cambio de contexto debe restaurarse mediante `restore_current_blog()` en un bloque `finally` o mecanismo equivalente.
@@ -133,7 +135,7 @@ No se requiere una sincronización inicial automática masiva. La primera incorp
 
 ### 5.2. Condiciones para estar sincronizado y activo
 
-El usuario debe tener el rol `deportista` en el sitio del club y cumplir simultáneamente estas condiciones:
+El usuario debe tener el rol `athlete` en el sitio del club y cumplir simultáneamente estas condiciones:
 
 - `sulayr_user_swimming = "1"`
 - `sulayr_user_athlete_status = "active"`
@@ -162,9 +164,17 @@ Al sincronizar, se actualizarán únicamente los datos personales que necesita e
 - Teléfono
 - DNI
 
-Los valores se obtendrán de los `user_meta` del perfil del deportista en el sitio del club. Los nombres exactos de los metadatos de estos campos deberán identificarse en el código existente antes de implementar la integración; no deben inventarse.
+Los valores se leen del perfil del deportista en el sitio del club:
 
-Si el valor de un campo del club está vacío, se sobrescribirá con un valor vacío en reservas. No se conservará el valor anterior.
+- Nombre: `first_name`.
+- Apellidos: `last_name`.
+- Email: `wp_users.user_email`.
+- Teléfono: `sulayr_user_phone`.
+- DNI: `sulayr_user_dni`.
+
+La copia se guarda en la tabla local de nadadores del sitio de reservas. La sincronización no escribe esas claves globales.
+
+Si el valor de un campo del club está vacío, se sobrescribirá con un valor vacío en la copia local de reservas. No se conservará el valor anterior.
 
 Los campos propios del sistema de reservas que no formen parte de los datos sincronizados no deben sobrescribirse.
 
@@ -175,7 +185,7 @@ Si el usuario deja de cumplir cualquiera de las condiciones de sincronización, 
 Esto incluye, entre otros casos:
 - Natación desactivada.
 - Estado del deportista distinto de `active` (por ejemplo, `baja`, `standby` o `moroso`).
-- El usuario deja de tener el rol `deportista`.
+- El usuario deja de tener el rol `athlete`.
 - El usuario deja de pertenecer al sitio del club o es eliminado de él.
 
 Al desactivarlo:
@@ -212,7 +222,7 @@ El botón:
 - Mostrará un resultado comprensible al administrador.
 - Registrará el resultado en el registro técnico.
 
-El botón debe estar protegido mediante las capacidades adecuadas y un nonce. La operación debe validar en el servidor que el usuario objetivo es un deportista y que quien la solicita es un administrador autorizado.
+El botón debe estar protegido mediante las capacidades adecuadas y un nonce. La operación debe validar en el servidor que el usuario objetivo tiene el rol `athlete` en el sitio del club y que quien la solicita es un administrador autorizado.
 
 ### 5.8. Sincronización al guardar el perfil
 
@@ -561,9 +571,11 @@ Debe ser seguro ante ejecuciones simultáneas. Puede implementarse mediante una 
 
 ### 13.4. Datos personales
 
-Los datos personales necesarios para gestionar al nadador se almacenarán en el contexto del sitio de reservas, sin duplicar la cuenta global de WordPress.
+Los datos personales necesarios para gestionar al nadador se almacenarán en una tabla propia del sitio de reservas, sin duplicar la cuenta global de WordPress y sin escribir las claves de usuario del club.
 
-Los datos conservados en el historial tras retirar o eliminar al usuario se limitarán a nombre, apellidos, teléfono y email. El DNI no se conservará en el historial.
+La ficha local incluye nombre, apellidos, email, teléfono, DNI, estado activo y si el nadador está vinculado al club.
+
+Los datos conservados en el historial tras retirar o eliminar al usuario se limitarán a nombre, apellidos, teléfono y email, como snapshot en la tabla de reservas. El DNI no se conservará en el historial.
 
 ## 14. Fechas, horas y zona horaria
 
@@ -711,13 +723,14 @@ Salvo que se acuerde expresamente durante el desarrollo, no forman parte de esta
 - Recuperación de reservas futuras eliminadas por una desactivación.
 - Registro histórico de cancelaciones.
 
-## 20. Decisiones pendientes de implementación
+## 20. Decisiones aprobadas
 
-Antes de programar, revisar el código existente del sitio del club para identificar:
-- El `blog_id` real del sitio del club y del sitio de reservas.
-- Los nombres exactos de los user_meta que contienen nombre, apellidos, teléfono, email y DNI.
-- Los hooks adecuados para detectar el guardado completo del perfil y los campos ACF.
-- La versión de PHP y WordPress soportada por el proyecto.
-- El mecanismo de integración visual elegido para los paneles públicos.
+- En el club, la condición de sincronización usa el rol `athlete`. Su etiqueta visible es «Deportista». En reservas, el rol del nadador es `nadador`.
+- El sitio del club es el blog `1`. El sitio de reservas es el blog `2` (`cnnazari.clubtriatlonsulayr.local.com`).
+- La ficha del nadador vive en una tabla del sitio de reservas. No se escriben las claves globales del perfil del club.
+- El mes generado se identifica con `generated_month`, en formato `YYYY-MM`.
+- Los paneles públicos se integran con un shortcode del plugin.
 
-Estas comprobaciones no deben cambiar las reglas funcionales definidas en este documento. Si el código existente revela una incompatibilidad o una ambigüedad real, documentarla antes de tomar una decisión que altere el comportamiento especificado.
+## 21. Pendiente de confirmar
+
+La zona horaria de ambos sitios debe ser la de WordPress, preferiblemente `Europe/Madrid`, y no un desplazamiento UTC fijo. No está fijada en el repositorio.
