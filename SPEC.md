@@ -418,15 +418,19 @@ El gestor puede reservar para sí mismo o para otro nadador.
 
 Para las reservas ordinarias de sesiones actuales o futuras se aplican las reglas de disponibilidad, capacidad, sesión habilitada y límite semanal.
 
-El gestor también puede añadir una reserva retroactiva para registrar que un usuario asistió a una sesión pasada aunque no hubiera reservado previamente. Esta operación:
+El gestor también puede añadir una reserva retroactiva para registrar que un usuario asistió a una sesión pasada aunque no hubiera reservado previamente. Una sesión es pasada en cuanto llega su hora de inicio, también si todavía no ha terminado. Hasta ese instante la reserva es ordinaria. A partir de ese instante solo puede registrarla el gestor o el administrador.
+
+Esta operación:
 - Solo puede realizarla el gestor o el administrador.
 - Debe permitir seleccionar al usuario y la sesión pasada.
 - Se registra como una reserva normal a efectos del historial.
 - Debe incluir un indicador de que fue añadida manualmente por un gestor.
 - Cuenta para el límite semanal del usuario correspondiente, tomando como referencia la semana de la sesión.
+- Respeta la capacidad de la sesión. Si no quedan plazas, no se crea.
+- Puede registrarse aunque la sesión esté deshabilitada.
 - No debe tratarse como una reserva ordinaria disponible para los nadadores.
 
-Si una reserva retroactiva provocaría que el usuario superase el límite semanal de 5, el sistema debe impedirla salvo que se defina expresamente una excepción administrativa. No se ha definido ninguna excepción en esta especificación.
+Si una reserva retroactiva provocaría que el usuario superase el límite semanal de 5, el sistema debe impedirla salvo que se defina expresamente una excepción administrativa. No se ha definido ninguna excepción en esta especificación. Tampoco hay excepción de aforo.
 
 ### 9.4. Reserva duplicada
 
@@ -737,6 +741,7 @@ Salvo que se acuerde expresamente durante el desarrollo, no forman parte de esta
 - El mes generado se identifica con `generated_month`, en formato `YYYY-MM`.
 - El mes siguiente solo se habilita cuando el mes en curso ya está generado. El día 26, si el mes en curso sigue pendiente, se completa ese mes y no el siguiente. A partir del día 27, el mes en curso ya no se crea y el botón ofrece el mes siguiente.
 - Los paneles públicos se integran con un shortcode del plugin.
+- Una sesión pasa a ser retroactiva en cuanto llega su hora de inicio, aunque no haya terminado. Solo el gestor o el administrador pueden registrarla. Hace falta plaza libre y no se supera el límite semanal. Puede registrarse aunque la sesión esté deshabilitada.
 
 ## 21. Pendiente de confirmar
 

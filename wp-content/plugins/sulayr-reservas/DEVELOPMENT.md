@@ -102,7 +102,7 @@ La versión actual es `1`, opción `sulayr_reservas_db_version` en cada sitio. U
 
 Implementada y probada en `BookingService`. Cada operación abre `START TRANSACTION` y cierra con `COMMIT` o `ROLLBACK`. El orden de bloqueo es siempre el mismo: primero la ficha del nadador (`FOR UPDATE`) y después la sesión (`FOR UPDATE`). La cancelación bloquea además la fila de la reserva. Así el límite semanal no depende solo del aforo de una sesión, y dos operaciones sobre sesiones distintas del mismo usuario quedan en serie.
 
-Después de bloquear se vuelven a contar las plazas y las reservas de la semana. La clave única `(session_id, user_id)` cubre el duplicado si el recuento no llegara a verlo. Un interbloqueo devuelve `failed` y no se reintenta solo. En las pruebas no apareció.
+Después de bloquear se vuelven a contar las plazas y las reservas de la semana. La clave única `(session_id, user_id)` cubre el duplicado si el recuento no llegara a verlo. Un interbloqueo devuelve `failed` y no se reintenta solo. En las pruebas no apareció. Un reintento limitado queda pendiente de decidir; no forma parte de esta fase.
 
 Queda sin probar la generación simultánea de un mismo mes. Está en «Pruebas pendientes».
 
@@ -127,7 +127,7 @@ Hasta que exista el panel, la redirección lleva a la portada del sitio de reser
 ## Decisiones pendientes
 
 - Confirmar si el agrupamiento de capacidades de la tabla anterior se mantiene. Cubre el SPEC sin añadir permisos.
-- Confirmar dos lecturas ya aplicadas en la fase 5. Una sesión está pasada en cuanto llega su hora de inicio, también si aún no ha terminado. La reserva retroactiva respeta el aforo: no hay excepción en el SPEC 7.2.
+- Valorar más adelante un reintento limitado si una reserva o una cancelación termina en interbloqueo. Ahora responde `failed` y no reintenta.
 - La URL de salida del `wp-admin` pasará a ser el panel cuando exista. Mientras tanto es la portada.
 - Retención del registro técnico: propuesta de 1000 filas o 180 días, aún no implementada.
 - Las sales de `wp-config.php` siguen siendo los placeholders de instalación. Afectan a las sesiones reales y no forman parte del plugin.
@@ -178,6 +178,6 @@ Implementada en `Bookings\BookingService` y `Bookings\BookingRepository`. No hay
 
 La ficha que se copia en la reserva sale de `sulayr_swim_swimmers`, no de `wp_usermeta`. El nadador de la reserva tiene que estar activo. Una reserva de gestor para una sesión ya empezada se guarda con `is_manual = 1` y `manager_id`. Una reserva futura, aunque la haga un gestor para otro, no lleva ese indicador. `created_by` es quien ejecuta la operación.
 
-La sesión se considera empezada cuando `now` alcanza la hora de inicio. Hasta ese momento se aplican habilitación, aforo y límite. A partir de ese momento solo puede reservar quien tiene `sulayr_book_for_others`, también si la sesión está deshabilitada. El aforo se aplica también a esa reserva retroactiva: el SPEC 7.2 no deja una excepción, a diferencia del límite semanal, que sí dice que no hay excepción administrativa. La cancelación del nadador exige 60 minutos o más; en el instante exacto se permite. El gestor, con `sulayr_cancel_any`, cancela sin ese plazo. La fila se borra.
+La sesión se considera empezada cuando `now` alcanza la hora de inicio. Hasta ese momento se aplican habilitación, aforo y límite. A partir de ese momento solo puede reservar quien tiene `sulayr_book_for_others`, también si la sesión está deshabilitada, y solo si queda plaza. Esa regla está aprobada en el SPEC, sección 9.3. La cancelación del nadador exige 60 minutos o más; en el instante exacto se permite. El gestor, con `sulayr_cancel_any`, cancela sin ese plazo. La fila se borra.
 
 Comprobado con fechas fijas y usuarios de prueba, borrados al terminar junto con sus sesiones y reservas. Cinco rondas con dos procesos PHP: la última plaza quedó en una sola reserva; la reserva duplicada, en una sola fila; dos sesiones simultáneas del mismo usuario no pasaron de 5 en la semana; reserva y cancelación a la vez dejaron 0 o 1 plazas ocupadas, nunca 2. El blog al terminar seguía siendo el 1 y el club no tiene tabla de reservas. No se escribió `first_name` ni el teléfono global del usuario.
