@@ -7,6 +7,7 @@ use SulayrReservas\Admin\NetworkSettingsPage;
 use SulayrReservas\Config\SiteConfig;
 use SulayrReservas\Context\BlogContext;
 use SulayrReservas\Database\Schema;
+use SulayrReservas\Front\Shortcode;
 use SulayrReservas\Roles\RoleRegistrar;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -35,6 +36,7 @@ class Plugin {
 		}
 
 		( new AdminAccess( $this->config ) )->register();
+		( new Shortcode( $this->config, $this->blog_context ) )->register();
 
 		if ( is_admin() ) {
 			( new NetworkSettingsPage( $this->config ) )->register();

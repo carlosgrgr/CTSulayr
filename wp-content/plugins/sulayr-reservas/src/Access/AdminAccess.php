@@ -40,7 +40,8 @@ class AdminAccess {
 			return;
 		}
 
-		wp_safe_redirect( home_url( '/' ) );
+		$url = ( new \SulayrReservas\Front\PanelPage( $this->config ) )->url();
+		wp_safe_redirect( '' !== $url ? $url : home_url( '/' ) );
 		exit;
 	}
 

@@ -1,0 +1,113 @@
+.sulayr-panel {
+	color: #172033;
+	font-size: 1rem;
+	line-height: 1.5;
+	max-width: 46rem;
+}
+
+.sulayr-panel h2,
+.sulayr-panel h3 {
+	font-size: 1.25rem;
+	line-height: 1.3;
+	margin: 1.25rem 0 0.5rem;
+}
+
+.sulayr-nav,
+.sulayr-sessions,
+.sulayr-people {
+	list-style: none;
+	margin: 0 0 1rem;
+	padding: 0;
+}
+
+.sulayr-nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 1rem;
+	margin-bottom: 1rem;
+}
+
+.sulayr-link,
+.sulayr-panel a {
+	color: #123a73;
+	text-decoration: underline;
+}
+
+.sulayr-panel a:focus,
+.sulayr-panel button:focus,
+.sulayr-panel input:focus,
+.sulayr-panel select:focus {
+	outline: 2px solid #123a73;
+	outline-offset: 2px;
+}
+
+.sulayr-session,
+.sulayr-people li {
+	border-top: 1px solid #d5dbe6;
+	margin: 0;
+	padding: 0.75rem 0;
+}
+
+.sulayr-notice {
+	background: #f4f7fb;
+	border: 1px solid #9aafc8;
+	margin: 0 0 1rem;
+	padding: 0.75rem 1rem;
+}
+
+.sulayr-form,
+.sulayr-inline {
+	margin: 0.5rem 0;
+}
+
+.sulayr-form label,
+.sulayr-profile {
+	display: block;
+	margin: 0.5rem 0;
+}
+
+.sulayr-profile dt {
+	font-weight: 700;
+	margin-top: 0.5rem;
+}
+
+.sulayr-profile dd {
+	margin: 0;
+}
+
+.sulayr-panel button,
+.sulayr-panel input,
+.sulayr-panel select {
+	font: inherit;
+}
+
+.sulayr-panel button {
+	background: #123a73;
+	border: 0;
+	color: #fff;
+	cursor: pointer;
+	margin: 0.25rem 0.25rem 0.25rem 0;
+	padding: 0.45rem 0.75rem;
+}
+
+.sulayr-panel input[type="text"],
+.sulayr-panel input[type="email"],
+.sulayr-panel input[type="number"],
+.sulayr-panel select {
+	border: 1px solid #6d7c93;
+	max-width: 100%;
+	padding: 0.4rem 0.5rem;
+}
+
+@media (max-width: 40rem) {
+	.sulayr-nav {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.sulayr-panel button,
+	.sulayr-form input,
+	.sulayr-form select {
+		width: 100%;
+	}
+}

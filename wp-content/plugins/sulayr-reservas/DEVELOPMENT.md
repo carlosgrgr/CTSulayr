@@ -27,6 +27,12 @@ El archivo principal registra un autoload `SulayrReservas\` → `src/` y arranca
 | `Bookings\BookingRepository` | Lectura y escritura de esas reservas, dentro de la transacción |
 | `Swimmers\SwimmerService` | Alta, activación, desactivación y baja de nadadores en el blog 2 |
 | `Swimmers\SwimmerRepository` | Ficha local y reservas asociadas de ese sitio |
+| `Sessions\SessionEditor` | Cambia la capacidad o el estado de una sesión ya creada |
+| `Front\Shortcode` | Registra `[sulayr_reservas]` y decide qué panel puede ver el usuario |
+| `Front\PanelPage` | Localiza o crea la página pública que contiene el shortcode |
+| `Front\PanelRenderer` | HTML de los paneles |
+| `Front\PanelActions` | Formularios del front: nonce, capacidad y llamada al servicio |
+| `Front\PanelQuery` | Lecturas del calendario, las reservas y las fichas |
 
 `BlogContext` no cambia de sitio si la configuración es inválida. No hace falta volver a comprobar el identificador en cada clase si la operación ya entra por `onClub()` o `onBookings()`.
 
@@ -81,7 +87,8 @@ Si una capacidad `sulayr_` deja de estar en el mapa, se retira de `nadador`, `ge
 - Blogs 1 y 2, con los dominios de la tabla anterior.
 - Ficha del nadador en tabla local del sitio de reservas. No se escriben las metas globales del club.
 - Mes generado en `generated_month` (`YYYY-MM`).
-- Paneles públicos mediante shortcode del plugin. Aún no implementados.
+- Paneles públicos mediante el shortcode `[sulayr_reservas]`, sin atributos. El SPEC no fija el nombre técnico; se conserva este nombre para que futuras modificaciones no introduzcan otro.
+- `PanelPage` reutiliza cualquier página publicada que ya contenga `[sulayr_reservas]`. Si no existe, solo la crea cuando accede un usuario con `publish_pages`. En otro entorno puede haber una página con un título o slug similar: lo determinante es que contenga el shortcode, no su nombre.
 - Zona horaria de ambos sitios: `Europe/Madrid`, confirmada en esta fase.
 
 ## Convenciones
@@ -130,7 +137,7 @@ Ambos sitios usan `Europe/Madrid`, leído de la base de datos. La lógica de mes
 
 El plugin del club redirige a cualquier `athlete` que entre en `wp-admin`, en el sitio donde ese código se ejecuta. El bloqueo de este plugin solo actúa en el blog 2 y solo si el usuario tiene exclusivamente `nadador`, `gestor` o ambos. Un administrador, un superadministrador u otro rol del sitio no se redirige. `admin-ajax.php` no se redirige, porque WordPress lo necesita; la autorización de cada acción seguirá comprobándose por capacidad.
 
-Hasta que exista el panel, la redirección lleva a la portada del sitio de reservas. No es una página de reservas. La decisión de a quién bloquear se probó con usuarios de prueba. La redirección HTTP no se ha abierto en un navegador.
+Si existe una página publicada con `[sulayr_reservas]`, la redirección lleva a su enlace permanente. Si no existe, sigue yendo a la portada. La decisión de a quién bloquear se ha vuelto a comprobar con usuarios de prueba. La respuesta HTTP de `wp-admin` con una cookie de sesión no se ha recorrido: un intento con `curl` no llegó a autenticar y acabó en `wp-login.php`.
 
 ### Sales de `wp-config.php`
 
@@ -143,15 +150,15 @@ No hay suite PHPUnit. Lo comprobado hasta la fase 6 se ha ejecutado con scripts 
 - Generación simultánea del mismo mes. La fase 4 probó un mes nuevo, la repetición, meses consecutivos, la ausencia de duplicados en una sola ejecución, el aislamiento en el blog 2, la conservación de sesiones deshabilitadas y reservas, el `ROLLBACK` y la zona horaria. No se lanzaron dos procesos a la vez sobre el mismo mes. La transacción y las claves únicas de `generated_month` y de `(session_date, start_time)` son la base, no la prueba. Hay que comprobar que no quedan sesiones duplicadas ni un mes a medias. No bloquea el avance de las fases siguientes.
 - Envío real del correo de alta. La fase 6 comprobó que una cuenta nueva pide `wp_send_new_user_notifications()` y que una cuenta reutilizada no lo pide. El envío se interceptó. No se ha visto el mensaje en un buzón.
 - PHP 7.4. Sigue siendo la versión objetivo. El código evita sintaxis de PHP 8. El entorno de las pruebas es PHP 8.4.17. No se ha ejecutado el plugin con PHP 7.4.
-- Redirección HTTP de `nadador` y `gestor` al entrar en `wp-admin` del blog 2. La regla se probó sin navegador.
-- Paneles de nadador y de gestor, en escritorio y en móvil, cuando existan. Aún no están implementados.
+- Redirección HTTP de `nadador` y `gestor` al entrar en `wp-admin` del blog 2. La regla se probó sin navegador. El destino, cuando la página del shortcode existe, es esa página.
+- Calendario y formularios con un usuario autenticado, vistos en el navegador de escritorio y de móvil. En el navegador solo se abrió la página sin sesión. El HTML autenticado se comprobó cargando WordPress, no en esa ventana.
 - La concurrencia de reservas de la fase 5 sí se probó. No vuelve a esta lista.
 
 ## Mejoras futuras
 
 - Dejar de ocultar el error de WooCommerce y resolverlo de otra forma. Antes, comprobar si hay más ganchos de plugins instalados con el mismo efecto. No crear `wp_2_wc_customer_lookup` solo para callar el aviso.
 - Reintento limitado si una reserva o una cancelación termina en interbloqueo. Hoy responde `failed`.
-- Cuando exista el panel, la salida del `wp-admin` debe ir allí. Mientras tanto es la portada.
+- La salida del `wp-admin` ya apunta a la página del shortcode cuando existe. Sigue pendiente ver esa redirección en una petición HTTP autenticada.
 - Retención del registro técnico de sincronización. Propuesta aún no implementada: 1000 filas o 180 días.
 - Confirmar si el agrupamiento de capacidades de la tabla anterior se mantiene. Traduce el SPEC y no añade permisos; no está cerrado como decisión de producto.
 
@@ -209,3 +216,27 @@ La creación del usuario de WordPress y la inserción de la ficha no comparten u
 Desactivar pone `active = 0` y borra las reservas cuya sesión aún no ha empezado. El historial pasado conserva `user_id` y el snapshot. Reactivar no las recupera. `BookingService` rechaza reservas de un nadador inactivo. La baja borra las futuras, pone `user_id` a NULL en las pasadas, elimina la ficha (y con ella el DNI) y retira al usuario del blog 2. No usa `wp_delete_user()`. Si además tiene otro rol en ese blog, o es superadministrador, solo se le quita `nadador` y sigue en el sitio.
 
 Comprobado con usuarios de prueba, borrados al terminar: alta, duplicado, correo inválido, nadador sin permiso, reutilización de una cuenta del club sin tocar su contraseña ni sus metas, desactivación, reserva rechazada, reactivación sin restaurar la plaza, fallo antes del `COMMIT`, baja de quien solo es nadador y baja de quien también es editor. El blog al terminar seguía siendo el 1. El aviso de WooCommerce no interrumpe la retirada; ocultarlo no es la solución, y queda en «Incidencias conocidas».
+
+## Fase 7
+
+El shortcode es `[sulayr_reservas]`. No admite atributos. `Plugin` lo registra en cualquier sitio. Fuera del blog 2 solo muestra que el panel no está disponible y no lee fichas ni reservas.
+
+`PanelPage` busca una página publicada que contenga el shortcode y guarda su ID en `sulayr_reservas_panel_page`. Si no hay ninguna y el usuario puede `publish_pages`, crea «Reservas de natación» con el slug `reservas-natacion`. En este entorno esa página es la 7. Un visitante anónimo no la crea.
+
+La presentación está en `Front\PanelRenderer` y los estilos en `assets/panel.css`. No hay librerías externas. Las vistas usan la query `sulayr_vista`, más `sesion`, `usuario` o `mes` cuando hace falta. No son atributos del shortcode.
+
+El nadador ve el mes en curso, sus reservas, su historial y su ficha local. Un `mes` en la URL no le abre otro mes. Una sesión de otro mes responde que no está disponible. No ve nombres, correos ni DNI de otros nadadores. Si su ficha no existe o está inactiva, no ve el calendario y un POST de reserva se rechaza.
+
+El gestor y el administrador del blog 2 ven el calendario, el detalle con asistentes, el alta, la ficha de cada nadador y los meses anteriores que ya tienen sesiones. El mes siguiente solo se abre si ya está generado. No se puede pedir un mes futuro arbitrario. Si la ventana de generación no ofrece mes, el calendario dice «Hoy no corresponde generar un mes.» y no muestra el botón. El botón llama a `offeredMonth()` y luego a `generate()`; ignora cualquier mes enviado en el formulario.
+
+`SessionEditor` existe porque el SPEC pide cambiar capacidad y habilitar o deshabilitar, y ningún servicio anterior escribía esos campos. Solo actualiza `capacity` o `enabled`, con la fila bloqueada y `sulayr_manage_sessions`. No borra reservas. Bajar el aforo por debajo de las reservas ya hechas las conserva. La reserva, la cancelación, el límite de cinco, los 60 minutos y la reserva retroactiva siguen en `BookingService`. El alta, la baja y la activación siguen en `SwimmerService`.
+
+Los formularios hacen POST a la propia página en `init`. No usan `admin-post.php`, porque nadador y gestor serían redirigidos antes de la acción. Cada POST lleva el nonce `sulayr_panel`. El actor es el usuario actual. La retirada pide una casilla de confirmación; es una protección de la interfaz, no una regla nueva del SPEC. El resultado se guarda un minuto en un transient y la respuesta redirige a la misma página. El texto sale de los servicios. Un fallo de generación no muestra el mensaje de la excepción.
+
+Comprobado con un script que carga WordPress, crea usuarios temporales y los borra al terminar. Resultado final: 0 fallos. Cubre anónimo, nadador, nadador inactivo, gestor, administrador, suscriptor, el shortcode en el blog 1, reserva, sesión completa, límite semanal, cancelación a tiempo y fuera de plazo, reserva ajena, nonce ausente o inválido, capacidad, sesión deshabilitada, generación sin aceptar un mes enviado, alta, desactivación, reactivación y retirada. El nombre se sanea en el servicio y se escapa al pintar; un valor con `&` y etiquetas se vio como texto. La hoja de estilo se encola en la página del shortcode.
+
+La petición HTTP anónima a `/reservas-natacion/` respondió 200, incluyó `panel.css` y el enlace de acceso, y no mostró plazas. En el navegador se vio esa misma página en escritorio y en un viewport de 390 px. El enlace abre `wp-login.php` del sitio de reservas y vuelve a la página del panel. No se inició sesión en el navegador, así que el calendario autenticado no se vio ahí.
+
+La prueba de generación dejó octubre de 2026 creado: 39 sesiones, ninguna reserva. Es el mes real, no un resto de prueba. Los usuarios y las sesiones ficticias de la prueba se borraron.
+
+Siguen abiertas la generación simultánea de un mes, el correo real de alta, la ejecución en PHP 7.4, el aviso de WooCommerce al retirar un usuario y la redirección HTTP autenticada de `wp-admin`. Esta fase no las cierra.
