@@ -81,11 +81,14 @@ class Shortcode {
 			return;
 		}
 
+		$path    = SULAYR_RESERVAS_DIR . 'assets/panel.css';
+		$version = is_readable( $path ) ? (string) filemtime( $path ) : SULAYR_RESERVAS_VERSION;
+
 		wp_enqueue_style(
 			'sulayr-reservas-panel',
 			plugins_url( 'assets/panel.css', SULAYR_RESERVAS_FILE ),
 			array(),
-			SULAYR_RESERVAS_VERSION
+			$version
 		);
 	}
 }

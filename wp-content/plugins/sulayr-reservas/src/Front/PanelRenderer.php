@@ -2,6 +2,7 @@
 
 namespace SulayrReservas\Front;
 
+use SulayrReservas\Bookings\BookingService;
 use SulayrReservas\Config\SiteConfig;
 use SulayrReservas\Context\BlogContext;
 use SulayrReservas\Roles\Capabilities;
@@ -40,19 +41,26 @@ class PanelRenderer {
 	 * @return string
 	 */
 	public function render( $manager ) {
-		$now  = new \DateTimeImmutable( 'now', wp_timezone() );
-		$view = $this->view( $manager );
+		$now     = new \DateTimeImmutable( 'now', wp_timezone() );
+		$view    = $this->view( $manager );
+		$user_id = get_current_user_id();
+		$profile = $this->query->swimmer( $user_id );
+		$own     = $this->query->bookingsFor( $user_id, $now );
 
 		ob_start();
 		echo '<div class="sulayr-panel">';
 		$this->notice();
-		$this->nav( $manager );
+		echo '<div class="sulayr-shell">';
+		$this->nav( $manager, $view );
+		echo '<div class="sulayr-main">';
 		if ( 'sesion' === $view ) {
 			$this->session( $manager, $now );
 		} elseif ( 'reservas' === $view ) {
-			$this->bookings( get_current_user_id(), $now, false );
+			echo '<div class="sulayr-card">';
+			$this->bookings( $user_id, $now, false, $own );
+			echo '</div>';
 		} elseif ( 'perfil' === $view ) {
-			$this->ownProfile();
+			$this->ownProfile( $profile );
 		} elseif ( 'nadadores' === $view && $manager ) {
 			$this->swimmers();
 		} elseif ( 'nadador' === $view && $manager ) {
@@ -65,6 +73,8 @@ class PanelRenderer {
 			$this->calendar( $manager, $now );
 		}
 		echo '</div>';
+		$this->aside( $manager, $now, $view, $profile, $own );
+		echo '</div></div>';
 
 		return (string) ob_get_clean();
 	}
@@ -98,20 +108,214 @@ class PanelRenderer {
 	}
 
 	/**
-	 * @param bool $manager Gestor o administrador.
+	 * @param bool   $manager Gestor o administrador.
+	 * @param string $view    Vista actual.
 	 * @return void
 	 */
-	private function nav( $manager ) {
-		echo '<nav class="sulayr-nav" aria-label="Reservas">';
-		$this->link( 'Calendario', array() );
-		$this->link( 'Mis reservas', array( 'sulayr_vista' => 'reservas' ) );
-		$this->link( 'Mi perfil', array( 'sulayr_vista' => 'perfil' ) );
-		if ( $manager ) {
-			$this->link( 'Nadadores', array( 'sulayr_vista' => 'nadadores' ) );
-			$this->link( 'Alta de nadador', array( 'sulayr_vista' => 'alta' ) );
-			$this->link( 'Meses anteriores', array( 'sulayr_vista' => 'historial' ) );
+	private function nav( $manager, $view ) {
+		$current = $view;
+		if ( 'sesion' === $view ) {
+			$current = 'calendario';
+		} elseif ( 'nadador' === $view ) {
+			$current = 'nadadores';
 		}
-		echo '</nav>';
+
+		echo '<nav class="sulayr-nav-card" aria-label="Reservas">';
+		echo '<p class="sulayr-brand">' . $this->icon( 'calendar' ) . '<span>Reservas de natación</span></p>';
+		echo '<div class="sulayr-nav">';
+		$this->navItem( 'Calendario', 'calendar', array(), 'calendario', $current );
+		$this->navItem( 'Mis reservas', 'list', array( 'sulayr_vista' => 'reservas' ), 'reservas', $current );
+		$this->navItem( 'Mi perfil', 'user', array( 'sulayr_vista' => 'perfil' ), 'perfil', $current );
+		if ( $manager ) {
+			$this->navItem( 'Nadadores', 'users', array( 'sulayr_vista' => 'nadadores' ), 'nadadores', $current );
+			$this->navItem( 'Alta de nadador', 'plus', array( 'sulayr_vista' => 'alta' ), 'alta', $current );
+			$this->navItem( 'Meses anteriores', 'clock', array( 'sulayr_vista' => 'historial' ), 'historial', $current );
+		}
+		echo '</div></nav>';
+	}
+
+	/**
+	 * @param string               $label   Texto.
+	 * @param string               $icon    Icono decorativo.
+	 * @param array<string, mixed> $args    Parámetros.
+	 * @param string               $key     Vista de este enlace.
+	 * @param string               $current Vista activa.
+	 * @return void
+	 */
+	private function navItem( $label, $icon, array $args, $key, $current ) {
+		$class = 'sulayr-nav-link';
+		if ( $key === $current ) {
+			$class .= ' is-current';
+		}
+
+		echo '<a class="' . esc_attr( $class ) . '" href="' . esc_url( $this->url( $args ) ) . '"';
+		if ( $key === $current ) {
+			echo ' aria-current="page"';
+		}
+		echo '>' . $this->icon( $icon ) . '<span>' . esc_html( $label ) . '</span></a>';
+	}
+
+	/**
+	 * @param bool               $manager Gestor o administrador.
+	 * @param \DateTimeImmutable $now     Ahora.
+	 * @param string             $view    Vista actual.
+	 * @param object|null        $profile Ficha del usuario actual.
+	 * @param array{active: object[], past: object[]} $own Reservas propias.
+	 * @return void
+	 */
+	private function aside( $manager, \DateTimeImmutable $now, $view, $profile, array $own ) {
+		echo '<aside class="sulayr-side" aria-label="Resumen">';
+		$this->userCard( $manager, $profile );
+		$this->nextCard( $manager, $now, $own['active'] );
+		if ( 'calendario' === $view ) {
+			$this->legendCard();
+		}
+		$this->summaryCard( $now, $own );
+		echo '</aside>';
+	}
+
+	/**
+	 * @param bool        $manager Gestor o administrador.
+	 * @param object|null $profile Ficha local.
+	 * @return void
+	 */
+	private function userCard( $manager, $profile ) {
+		$name = '';
+		if ( $profile ) {
+			$name = trim( (string) $profile->first_name . ' ' . (string) $profile->last_name );
+		}
+		if ( '' === $name ) {
+			$user = wp_get_current_user();
+			$name = $user->display_name ? (string) $user->display_name : '';
+		}
+
+		echo '<section class="sulayr-card sulayr-user-card">';
+		if ( '' !== $name && preg_match( '/^\p{L}/u', $name, $found ) ) {
+			echo '<p class="sulayr-avatar" aria-hidden="true">' . esc_html( $found[0] ) . '</p>';
+		}
+		echo '<div>';
+		echo '<h2>' . esc_html( '' !== $name ? 'Hola, ' . $name : 'Hola' ) . '</h2>';
+		echo '<p class="sulayr-role">' . esc_html( $this->roleLabel( $manager ) ) . '</p>';
+		echo '</div></section>';
+	}
+
+	/**
+	 * @param bool     $manager Gestor o administrador.
+	 * @param object[] $active  Reservas propias que aún no han empezado.
+	 * @return void
+	 */
+	private function nextCard( $manager, \DateTimeImmutable $now, array $active ) {
+		$next = null;
+		foreach ( $active as $row ) {
+			$stamp = $row->session_date . ' ' . $row->start_time;
+			if ( null === $next || $stamp < ( $next->session_date . ' ' . $next->start_time ) ) {
+				$next = $row;
+			}
+		}
+
+		echo '<section class="sulayr-card">';
+		echo '<h2 class="sulayr-card-title">' . $this->icon( 'clock' ) . '<span>Tu próxima sesión</span></h2>';
+		if ( ! $next ) {
+			echo '<p>No tienes una próxima sesión reservada.</p>';
+			echo '</section>';
+			return;
+		}
+
+		echo '<p class="sulayr-next-when">' . esc_html( $this->dayLabel( $next->session_date ) ) . '</p>';
+		echo '<p>' . esc_html( $this->hour( $next->start_time ) . '–' . $this->hour( $next->end_time ) ) . '</p>';
+		$same_month = substr( (string) $next->session_date, 0, 7 ) === $now->format( 'Y-m' );
+		if ( ( $manager || $same_month ) && isset( $next->session_id ) ) {
+			$this->link(
+				'Detalle',
+				array(
+					'sulayr_vista' => 'sesion',
+					'sesion'       => (int) $next->session_id,
+				)
+			);
+		}
+		echo '</section>';
+	}
+
+	/**
+	 * @return void
+	 */
+	private function legendCard() {
+		$items = array(
+			array( 'available', 'Disponible' ),
+			array( 'mine', 'Reservada por ti' ),
+			array( 'full', 'Completa' ),
+			array( 'disabled', 'Deshabilitada' ),
+			array( 'past', 'Ya ha comenzado' ),
+		);
+
+		echo '<section class="sulayr-card">';
+		echo '<h2 class="sulayr-card-title">Leyenda</h2>';
+		echo '<ul class="sulayr-legend">';
+		foreach ( $items as $item ) {
+			echo '<li><span class="sulayr-swatch sulayr-slot-' . esc_attr( $item[0] ) . '" aria-hidden="true"></span><span>' . esc_html( $item[1] ) . '</span></li>';
+		}
+		echo '</ul></section>';
+	}
+
+	/**
+	 * @param \DateTimeImmutable $now Ahora.
+	 * @param array{active: object[], past: object[]} $own Reservas propias.
+	 * @return void
+	 */
+	private function summaryCard( \DateTimeImmutable $now, array $own ) {
+		$limit = BookingService::WEEKLY_LIMIT;
+		$count = $this->weekCount( $own, $now );
+		$value = min( $count, $limit );
+
+		echo '<section class="sulayr-card">';
+		echo '<h2 class="sulayr-card-title">Tu resumen</h2>';
+		echo '<ul class="sulayr-summary">';
+		echo '<li><span>Reservas activas</span><strong>' . esc_html( (string) count( $own['active'] ) ) . '</strong></li>';
+		echo '<li><span>En el historial</span><strong>' . esc_html( (string) count( $own['past'] ) ) . '</strong></li>';
+		echo '<li><span>Límite semanal</span><strong>' . esc_html( $count . ' / ' . $limit ) . '</strong></li>';
+		echo '</ul>';
+		echo '<meter class="sulayr-meter" min="0" max="' . esc_attr( (string) $limit ) . '" value="' . esc_attr( (string) $value ) . '" aria-hidden="true"></meter>';
+		echo '<p class="sulayr-summary-note">Reservas de esta semana, de lunes a domingo.</p>';
+		echo '</section>';
+	}
+
+	/**
+	 * @param bool $manager Gestor o administrador.
+	 * @return string
+	 */
+	private function roleLabel( $manager ) {
+		if ( current_user_can( 'manage_options' ) ) {
+			return 'Administrador';
+		}
+		if ( $manager ) {
+			return 'Gestor';
+		}
+
+		return 'Nadador';
+	}
+
+	/**
+	 * Reservas propias cuya sesión cae en la semana en curso.
+	 *
+	 * La semana es la misma que usa el límite: de lunes a domingo, en la zona del sitio.
+	 *
+	 * @param array{active: object[], past: object[]} $own Reservas propias.
+	 * @param \DateTimeImmutable                      $now Ahora.
+	 * @return int
+	 */
+	private function weekCount( array $own, \DateTimeImmutable $now ) {
+		$monday = $now->modify( '-' . ( (int) $now->format( 'N' ) - 1 ) . ' days' );
+		$from   = $monday->format( 'Y-m-d' );
+		$to     = $monday->modify( '+6 days' )->format( 'Y-m-d' );
+		$count  = 0;
+		foreach ( array_merge( $own['active'], $own['past'] ) as $row ) {
+			$day = (string) $row->session_date;
+			if ( $day >= $from && $day <= $to ) {
+				++$count;
+			}
+		}
+
+		return $count;
 	}
 
 	/**
@@ -122,33 +326,129 @@ class PanelRenderer {
 	private function calendar( $manager, \DateTimeImmutable $now ) {
 		$month    = $this->visibleMonth( $manager, $now );
 		$sessions = $this->query->monthSessions( $month, get_current_user_id() );
-		echo '<h2>' . esc_html( $this->monthLabel( $month ) ) . '</h2>';
+		$by_date  = array();
+		foreach ( $sessions as $session ) {
+			$by_date[ (string) $session->session_date ][] = $session;
+		}
+
+		echo '<section class="sulayr-card sulayr-calendar">';
+		echo '<div class="sulayr-cal-toolbar">';
+		echo '<h2 class="sulayr-cal-title"><time datetime="' . esc_attr( $month ) . '">' . esc_html( ucfirst( $this->monthLabel( $month ) ) ) . '</time></h2>';
+		echo '<div class="sulayr-cal-tools">';
 		if ( $manager ) {
 			$this->generateForm( $now );
 			$next = $now->modify( 'first day of next month' )->format( 'Y-m' );
 			if ( $month === $now->format( 'Y-m' ) && $this->query->monthHasSessions( $next ) ) {
-				$this->link( 'Ver ' . $this->monthLabel( $next ), array( 'mes' => $next ) );
+				$this->link( 'Ver ' . $this->monthLabel( $next ), array( 'mes' => $next ), 'sulayr-link sulayr-cal-move' );
 			}
 			if ( $month !== $now->format( 'Y-m' ) ) {
-				$this->link( 'Volver al mes en curso', array() );
+				$this->link( 'Volver al mes en curso', array(), 'sulayr-link sulayr-cal-move' );
 			}
 		}
+		echo '</div></div>';
 		if ( array() === $sessions ) {
 			echo '<p>No hay sesiones en este mes.</p>';
+		}
+
+		$first = \DateTimeImmutable::createFromFormat( '!Y-m-d', $month . '-01', wp_timezone() );
+		if ( ! $first instanceof \DateTimeImmutable ) {
+			echo '</section>';
 			return;
 		}
 
-		echo '<ul class="sulayr-sessions">';
-		foreach ( $sessions as $session ) {
-			echo '<li class="sulayr-session">';
-			echo '<p><strong>' . esc_html( $this->dayLabel( $session->session_date ) ) . '</strong> ';
-			echo esc_html( $this->hour( $session->start_time ) . '–' . $this->hour( $session->end_time ) ) . '</p>';
-			$this->sessionFacts( $session, $now );
-			$this->link( 'Detalle', array( 'sulayr_vista' => 'sesion', 'sesion' => (int) $session->id ) );
-			$this->quickActions( $session, $manager, $now );
-			echo '</li>';
+		$last       = $first->modify( 'last day of this month' );
+		$grid_start = $first->modify( '-' . ( (int) $first->format( 'N' ) - 1 ) . ' days' );
+		$grid_end   = $last->modify( '+' . ( 7 - (int) $last->format( 'N' ) ) . ' days' );
+		$today      = $now->format( 'Y-m-d' );
+
+		echo '<div class="sulayr-cal-weekdays" aria-hidden="true">';
+		for ( $iso = 1; $iso <= 7; $iso++ ) {
+			echo '<span>' . esc_html( $this->weekdayName( $iso, true ) ) . '</span>';
 		}
-		echo '</ul>';
+		echo '</div>';
+		echo '<div class="sulayr-cal-grid">';
+		for ( $day = $grid_start; $day <= $grid_end; $day = $day->modify( '+1 day' ) ) {
+			$iso      = $day->format( 'Y-m-d' );
+			$outside  = $day->format( 'Y-m' ) !== $month;
+			$is_today = $iso === $today;
+			$slots    = isset( $by_date[ $iso ] ) ? $by_date[ $iso ] : array();
+			$classes  = 'sulayr-day';
+			if ( $outside ) {
+				$classes .= ' sulayr-day-outside';
+			}
+			if ( $is_today ) {
+				$classes .= ' sulayr-day-today';
+			}
+			if ( ! $outside && array() === $slots ) {
+				$classes .= ' sulayr-day-empty';
+			}
+
+			echo '<div class="' . esc_attr( $classes ) . '"';
+			if ( $is_today ) {
+				echo ' aria-current="date"';
+			}
+			echo '>';
+			echo '<p class="sulayr-day-heading"><span class="sulayr-day-name">' . esc_html( $this->weekdayName( (int) $day->format( 'N' ), true ) ) . '</span> ';
+			echo '<time datetime="' . esc_attr( $iso ) . '">' . esc_html( $day->format( 'j' ) ) . '</time>';
+			if ( $is_today ) {
+				echo ' <span class="sulayr-today-label">Hoy</span>';
+			}
+			echo '</p>';
+			if ( ! $outside && array() === $slots ) {
+				echo '<p class="sulayr-day-empty-note">Sin sesiones</p>';
+			}
+			if ( array() !== $slots ) {
+				echo '<ul class="sulayr-day-sessions">';
+				foreach ( $slots as $session ) {
+					$this->sessionSlot( $session, $manager, $now );
+				}
+				echo '</ul>';
+			}
+			echo '</div>';
+		}
+		echo '</div></section>';
+	}
+
+	/**
+	 * @param object             $session Sesión.
+	 * @param bool               $manager Gestor o administrador.
+	 * @param \DateTimeImmutable $now     Ahora.
+	 * @return void
+	 */
+	private function sessionSlot( $session, $manager, \DateTimeImmutable $now ) {
+		$state = $this->slotState( $session, $now );
+		echo '<li class="sulayr-slot sulayr-slot-' . esc_attr( $state ) . '">';
+		echo '<p class="sulayr-slot-time">' . esc_html( $this->hour( $session->start_time ) . '–' . $this->hour( $session->end_time ) ) . '</p>';
+		$this->sessionFacts( $session, $now );
+		$this->link( 'Detalle', array( 'sulayr_vista' => 'sesion', 'sesion' => (int) $session->id ) );
+		$this->quickActions( $session, $manager, $now );
+		echo '</li>';
+	}
+
+	/**
+	 * Apariencia de la sesión. El texto de estado se imprime aparte.
+	 *
+	 * @param object             $session Sesión.
+	 * @param \DateTimeImmutable $now     Ahora.
+	 * @return string
+	 */
+	private function slotState( $session, \DateTimeImmutable $now ) {
+		$start   = $this->sessionStart( $session );
+		$started = $start instanceof \DateTimeImmutable && $now >= $start;
+		if ( $started ) {
+			return 'past';
+		}
+		if ( (int) $session->own_booking_id > 0 ) {
+			return 'mine';
+		}
+		if ( 1 !== (int) $session->enabled ) {
+			return 'disabled';
+		}
+		if ( (int) $session->occupied >= (int) $session->capacity ) {
+			return 'full';
+		}
+
+		return 'available';
 	}
 
 	/**
@@ -160,10 +460,11 @@ class PanelRenderer {
 		$session_id = isset( $_GET['sesion'] ) ? absint( $_GET['sesion'] ) : 0;
 		$session    = $this->query->session( $session_id, get_current_user_id() );
 		if ( ! $session || ( ! $manager && substr( (string) $session->session_date, 0, 7 ) !== $now->format( 'Y-m' ) ) ) {
-			echo '<p>La sesión no está disponible.</p>';
+			echo '<div class="sulayr-card"><p>La sesión no está disponible.</p></div>';
 			return;
 		}
 
+		echo '<div class="sulayr-card">';
 		echo '<h2>' . esc_html( $this->dayLabel( $session->session_date ) . ' ' . $this->hour( $session->start_time ) ) . '</h2>';
 		$this->sessionFacts( $session, $now );
 		$this->quickActions( $session, $manager, $now );
@@ -178,13 +479,14 @@ class PanelRenderer {
 		}
 
 		if ( ! $manager ) {
+			echo '</div>';
 			return;
 		}
 
 		$attendees = $this->query->attendees( (int) $session->id );
 		echo '<h3>Reservas</h3>';
 		if ( array() === $attendees ) {
-			echo '<p>Nadie ha reservado esta sesión.</p>';
+			echo '<p>Nadie ha reservado esta sesión.</p></div>';
 			return;
 		}
 		echo '<ul class="sulayr-people">';
@@ -199,22 +501,25 @@ class PanelRenderer {
 			}
 			echo '</li>';
 		}
-		echo '</ul>';
+		echo '</ul></div>';
 	}
 
 	/**
 	 * @param int                $user_id  Usuario.
 	 * @param \DateTimeImmutable $now      Ahora.
 	 * @param bool               $foreign  True si el gestor mira a otro nadador.
+	 * @param array{active: object[], past: object[]}|null $lists Reservas ya leídas.
 	 * @return void
 	 */
-	private function bookings( $user_id, \DateTimeImmutable $now, $foreign ) {
+	private function bookings( $user_id, \DateTimeImmutable $now, $foreign, $lists = null ) {
 		if ( $foreign && ! current_user_can( Capabilities::VIEW_ALL_BOOKINGS ) ) {
 			echo '<p>No tienes permiso para ver estas reservas.</p>';
 			return;
 		}
 
-		$lists = $this->query->bookingsFor( $user_id, $now );
+		if ( ! is_array( $lists ) ) {
+			$lists = $this->query->bookingsFor( $user_id, $now );
+		}
 		echo '<h2>Reservas activas</h2>';
 		$this->bookingList( $lists['active'], true, $now );
 		echo '<h2>Historial</h2>';
@@ -233,13 +538,13 @@ class PanelRenderer {
 			return;
 		}
 
-		echo '<ul class="sulayr-sessions">';
+		echo '<ul class="sulayr-booking-list">';
 		foreach ( $rows as $row ) {
 			echo '<li><span>' . esc_html( $this->dayLabel( $row->session_date ) . ' ' . $this->hour( $row->start_time ) . '–' . $this->hour( $row->end_time ) ) . '</span> ';
 			if ( 1 === (int) $row->is_manual ) {
 				echo '<span>Añadida por un gestor</span> ';
 			}
-			$start    = \DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $row->session_date . ' ' . $row->start_time, wp_timezone() );
+			$start    = $this->sessionStart( $row );
 			$in_time  = $start instanceof \DateTimeImmutable && $now <= $start->modify( '-60 minutes' );
 			$can_stop = current_user_can( Capabilities::CANCEL_ANY ) || ( current_user_can( Capabilities::CANCEL_OWN ) && $in_time );
 			if ( $active && $can_stop ) {
@@ -255,25 +560,26 @@ class PanelRenderer {
 	 */
 	private function swimmers() {
 		if ( ! current_user_can( Capabilities::MANAGE_SWIMMERS ) ) {
-			echo '<p>No tienes permiso para ver los nadadores.</p>';
+			echo '<div class="sulayr-card"><p>No tienes permiso para ver los nadadores.</p></div>';
 			return;
 		}
 
+		echo '<div class="sulayr-card">';
 		echo '<h2>Nadadores</h2>';
 		$rows = $this->query->swimmers();
 		if ( array() === $rows ) {
-			echo '<p>No hay nadadores.</p>';
+			echo '<p>No hay nadadores.</p></div>';
 			return;
 		}
 
 		echo '<ul class="sulayr-people">';
 		foreach ( $rows as $row ) {
-			$state = 1 === (int) $row->active ? 'Activo' : 'Desactivado';
+			$state  = 1 === (int) $row->active ? 'Activo' : 'Desactivado';
 			$origin = 1 === (int) $row->linked_to_club ? 'Vinculado al club' : 'Alta manual';
 			echo '<li><a href="' . esc_url( $this->url( array( 'sulayr_vista' => 'nadador', 'usuario' => (int) $row->user_id ) ) ) . '">' . esc_html( $row->first_name . ' ' . $row->last_name ) . '</a> ';
 			echo '<span>' . esc_html( $state . '. ' . $origin ) . '</span></li>';
 		}
-		echo '</ul>';
+		echo '</ul></div>';
 	}
 
 	/**
@@ -284,10 +590,11 @@ class PanelRenderer {
 		$user_id = isset( $_GET['usuario'] ) ? absint( $_GET['usuario'] ) : 0;
 		$row     = $this->query->swimmer( $user_id );
 		if ( ! $row || ! current_user_can( Capabilities::MANAGE_SWIMMERS ) ) {
-			echo '<p>El nadador no está disponible.</p>';
+			echo '<div class="sulayr-card"><p>El nadador no está disponible.</p></div>';
 			return;
 		}
 
+		echo '<div class="sulayr-card">';
 		echo '<h2>' . esc_html( $row->first_name . ' ' . $row->last_name ) . '</h2>';
 		echo '<p>' . esc_html( 1 === (int) $row->active ? 'Activo' : 'Desactivado' ) . '. ';
 		echo esc_html( 1 === (int) $row->linked_to_club ? 'Vinculado al club.' : 'Alta manual.' ) . '</p>';
@@ -310,18 +617,23 @@ class PanelRenderer {
 		echo '<label><input type="checkbox" name="confirm_remove" value="1"> Confirmo la retirada de este nadador del sitio de reservas</label> ';
 		echo '<button type="submit">Retirar del sitio</button></form>';
 		$this->bookings( (int) $row->user_id, $now, true );
+		echo '</div>';
 	}
 
 	/**
+	 * @param object|null $row Ficha ya leída.
 	 * @return void
 	 */
-	private function ownProfile() {
-		$row = $this->query->swimmer( get_current_user_id() );
+	private function ownProfile( $row = null ) {
+		if ( null === $row ) {
+			$row = $this->query->swimmer( get_current_user_id() );
+		}
 		if ( ! $row ) {
-			echo '<p>No hay una ficha de nadador para esta cuenta.</p>';
+			echo '<div class="sulayr-card"><p>No hay una ficha de nadador para esta cuenta.</p></div>';
 			return;
 		}
 
+		echo '<div class="sulayr-card">';
 		echo '<h2>Mi perfil</h2>';
 		echo '<p>' . esc_html( 1 === (int) $row->active ? 'Activo' : 'Desactivado' ) . '.</p>';
 		echo '<dl class="sulayr-profile">';
@@ -330,7 +642,7 @@ class PanelRenderer {
 		$this->pair( 'Correo', (string) $row->email );
 		$this->pair( 'Teléfono', (string) $row->phone );
 		$this->pair( 'DNI', (string) $row->dni );
-		echo '</dl>';
+		echo '</dl></div>';
 	}
 
 	/**
@@ -338,7 +650,7 @@ class PanelRenderer {
 	 */
 	private function createForm() {
 		if ( ! current_user_can( Capabilities::MANAGE_SWIMMERS ) ) {
-			echo '<p>No tienes permiso para dar de alta nadadores.</p>';
+			echo '<div class="sulayr-card"><p>No tienes permiso para dar de alta nadadores.</p></div>';
 			return;
 		}
 
@@ -354,6 +666,7 @@ class PanelRenderer {
 			'dni'        => 'DNI',
 		);
 
+		echo '<div class="sulayr-card">';
 		echo '<h2>Alta de nadador</h2>';
 		echo '<form method="post" action="' . esc_url( $this->url( array( 'sulayr_vista' => 'alta' ) ) ) . '" class="sulayr-form">';
 		wp_nonce_field( PanelActions::NONCE, 'sulayr_nonce' );
@@ -364,7 +677,7 @@ class PanelRenderer {
 			$type  = 'email' === $name ? 'email' : 'text';
 			echo '<label>' . esc_html( $label ) . ' <input type="' . esc_attr( $type ) . '" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '" required></label>';
 		}
-		echo '<button type="submit">Crear nadador</button></form>';
+		echo '<button type="submit">Crear nadador</button></form></div>';
 	}
 
 	/**
@@ -372,17 +685,18 @@ class PanelRenderer {
 	 * @return void
 	 */
 	private function history( \DateTimeImmutable $now ) {
+		echo '<div class="sulayr-card">';
 		echo '<h2>Meses anteriores</h2>';
 		$months = $this->query->pastMonths( $now->format( 'Y-m' ) );
 		if ( array() === $months ) {
-			echo '<p>No hay meses anteriores con sesiones.</p>';
+			echo '<p>No hay meses anteriores con sesiones.</p></div>';
 			return;
 		}
-		echo '<ul>';
+		echo '<ul class="sulayr-months">';
 		foreach ( $months as $month ) {
 			echo '<li><a href="' . esc_url( $this->url( array( 'mes' => $month ) ) ) . '">' . esc_html( $this->monthLabel( $month ) ) . '</a></li>';
 		}
-		echo '</ul>';
+		echo '</ul></div>';
 	}
 
 	/**
@@ -394,7 +708,7 @@ class PanelRenderer {
 		$occupied = (int) $session->occupied;
 		$capacity = (int) $session->capacity;
 		$free     = max( 0, $capacity - $occupied );
-		$start    = \DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $session->session_date . ' ' . $session->start_time, wp_timezone() );
+		$start    = $this->sessionStart( $session );
 		$started  = $start instanceof \DateTimeImmutable && $now >= $start;
 		$labels   = array();
 		if ( 1 !== (int) $session->enabled ) {
@@ -413,8 +727,8 @@ class PanelRenderer {
 			$labels[] = 'Disponible';
 		}
 
-		echo '<p>' . esc_html( implode( '. ', $labels ) ) . '.</p>';
-		echo '<p>' . esc_html( $occupied . ' plazas ocupadas. ' . $free . ' plazas disponibles.' ) . '</p>';
+		echo '<p class="sulayr-slot-status">' . esc_html( implode( '. ', $labels ) ) . '.</p>';
+		echo '<p class="sulayr-slot-places">' . esc_html( $occupied . ' plazas ocupadas. ' . $free . ' plazas disponibles.' ) . '</p>';
 	}
 
 	/**
@@ -424,7 +738,7 @@ class PanelRenderer {
 	 * @return void
 	 */
 	private function quickActions( $session, $manager, \DateTimeImmutable $now ) {
-		$start   = \DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $session->session_date . ' ' . $session->start_time, wp_timezone() );
+		$start   = $this->sessionStart( $session );
 		$started = $start instanceof \DateTimeImmutable && $now >= $start;
 		$own     = (int) $session->own_booking_id;
 		if ( $own > 0 ) {
@@ -456,7 +770,7 @@ class PanelRenderer {
 
 		$month = ( new SessionGenerator( $this->blog_context ) )->offeredMonth( $now );
 		if ( ! is_string( $month ) || '' === $month ) {
-			echo '<p>Hoy no corresponde generar un mes.</p>';
+			echo '<p class="sulayr-cal-note">Hoy no corresponde generar un mes.</p>';
 			return;
 		}
 
@@ -523,8 +837,8 @@ class PanelRenderer {
 	}
 
 	/**
-	 * @param string              $action Campos de la operación.
-	 * @param string              $label  Texto del botón.
+	 * @param string                    $action Campos de la operación.
+	 * @param string                    $label  Texto del botón.
 	 * @param array<string, int|string> $fields Campos ocultos.
 	 * @param array<string, int|string> $return Argumentos de vuelta.
 	 * @return void
@@ -569,10 +883,11 @@ class PanelRenderer {
 	/**
 	 * @param string               $label Texto.
 	 * @param array<string, mixed> $args  Parámetros.
+	 * @param string               $class Clases del enlace.
 	 * @return void
 	 */
-	private function link( $label, array $args ) {
-		echo '<a class="sulayr-link" href="' . esc_url( $this->url( $args ) ) . '">' . esc_html( $label ) . '</a> ';
+	private function link( $label, array $args, $class = 'sulayr-link' ) {
+		echo '<a class="' . esc_attr( $class ) . '" href="' . esc_url( $this->url( $args ) ) . '">' . esc_html( $label ) . '</a> ';
 	}
 
 	/**
@@ -629,10 +944,19 @@ class PanelRenderer {
 			return $day;
 		}
 
-		$week = array( 1 => 'lunes', 2 => 'martes', 3 => 'miércoles', 4 => 'jueves', 5 => 'viernes', 6 => 'sábado', 7 => 'domingo' );
-		$name = isset( $week[ (int) $date->format( 'N' ) ] ) ? $week[ (int) $date->format( 'N' ) ] : '';
+		return ucfirst( $this->weekdayName( (int) $date->format( 'N' ) ) . ' ' . $date->format( 'j' ) . ' de ' . $this->monthName( (int) $date->format( 'n' ) ) );
+	}
 
-		return $name . ' ' . $date->format( 'j' ) . ' de ' . $this->monthName( (int) $date->format( 'n' ) );
+	/**
+	 * @param int  $iso_day Día ISO 1-7.
+	 * @param bool $capital True si la inicial va en mayúscula.
+	 * @return string
+	 */
+	private function weekdayName( $iso_day, $capital = false ) {
+		$week = array( 1 => 'lunes', 2 => 'martes', 3 => 'miércoles', 4 => 'jueves', 5 => 'viernes', 6 => 'sábado', 7 => 'domingo' );
+		$name = isset( $week[ (int) $iso_day ] ) ? $week[ (int) $iso_day ] : '';
+
+		return $capital ? ucfirst( $name ) : $name;
 	}
 
 	/**
@@ -651,5 +975,37 @@ class PanelRenderer {
 	 */
 	private function hour( $time ) {
 		return substr( (string) $time, 0, 5 );
+	}
+
+	/**
+	 * @param object $session Fila con fecha y hora de inicio.
+	 * @return \DateTimeImmutable|null
+	 */
+	private function sessionStart( $session ) {
+		$start = \DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $session->session_date . ' ' . $session->start_time, wp_timezone() );
+
+		return $start instanceof \DateTimeImmutable ? $start : null;
+	}
+
+	/**
+	 * Icono decorativo. El texto visible del control sigue fuera del SVG.
+	 *
+	 * @param string $name Nombre interno.
+	 * @return string
+	 */
+	private function icon( $name ) {
+		$paths = array(
+			'calendar' => '<rect x="3.5" y="5" width="17" height="15.5" rx="2"></rect><path d="M3.5 10h17M8 3.5v3M16 3.5v3"></path>',
+			'list'     => '<path d="M9 7h11M9 12h11M9 17h11"></path><path d="M4.5 7h.01M4.5 12h.01M4.5 17h.01"></path>',
+			'user'     => '<circle cx="12" cy="8" r="3.25"></circle><path d="M5.5 19.5c1.4-3 3.6-4.5 6.5-4.5s5.1 1.5 6.5 4.5"></path>',
+			'users'    => '<circle cx="9" cy="8.5" r="2.75"></circle><path d="M3.5 19c1.1-2.6 2.9-4 5.5-4s4.4 1.4 5.5 4"></path><circle cx="17" cy="9" r="2.1"></circle><path d="M16 15.2c1.8.3 3.2 1.3 4.2 3.3"></path>',
+			'plus'     => '<path d="M12 5v14M5 12h14"></path>',
+			'clock'    => '<circle cx="12" cy="12" r="8"></circle><path d="M12 8v4.5l3 2"></path>',
+		);
+		if ( ! isset( $paths[ $name ] ) ) {
+			return '';
+		}
+
+		return '<svg class="sulayr-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' . $paths[ $name ] . '</svg>';
 	}
 }

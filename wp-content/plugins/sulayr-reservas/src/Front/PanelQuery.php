@@ -146,7 +146,7 @@ class PanelQuery {
 
 				$found = $wpdb->get_results(
 					$wpdb->prepare(
-						'SELECT b.id, b.user_id, b.first_name, b.last_name, b.phone, b.email, b.is_manual, s.session_date, s.start_time, s.end_time FROM ' . $this->bookings() . ' b INNER JOIN ' . $this->sessions() . ' s ON s.id = b.session_id WHERE b.user_id = %d ORDER BY s.session_date DESC, s.start_time DESC',
+						'SELECT b.id, b.user_id, b.first_name, b.last_name, b.phone, b.email, b.is_manual, s.id AS session_id, s.session_date, s.start_time, s.end_time FROM ' . $this->bookings() . ' b INNER JOIN ' . $this->sessions() . ' s ON s.id = b.session_id WHERE b.user_id = %d ORDER BY s.session_date DESC, s.start_time DESC',
 						(int) $user_id
 					)
 				);

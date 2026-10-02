@@ -264,3 +264,31 @@ La matriz está en [ACEPTACION.md](../../../ACEPTACION.md). La fase queda cerrad
 Con sesión iniciada se verificaron la redirección de nadador y gestor fuera de `wp-admin`, la entrada del administrador, el calendario autenticado, la sesión deshabilitada, el historial y la retirada desde el panel. Después se comprobó que una reserva hecha para otra persona cuenta en el límite semanal de esa persona, y que una reserva retroactiva cuenta en la semana de la sesión.
 
 El correo real de alta sigue sin verse en un buzón. No forma parte del apartado 18 y queda anotado para más adelante. PHP 7.4, PHPUnit y el aviso de WooCommerce tampoco son casos de ese apartado. Siguen en «Pruebas pendientes» y en «Mejoras futuras».
+
+## Rediseño visual del panel
+
+La presentación del shortcode pasa de una lista de sesiones a un calendario mensual en tarjetas. No cambia la reserva, la cancelación, la generación, la sincronización, el esquema ni los permisos. Los formularios siguen haciendo POST a la misma página con el nonce `sulayr_panel` y los mismos nombres de campo.
+
+La cuadrícula va de lunes a domingo. Los días de otro mes solo completan la rejilla y no cargan sesiones. El día actual usa la zona `wp_timezone()` (`Europe/Madrid`) y se marca con borde, fondo y el texto «Hoy». No hay un día seleccionado distinto del día actual.
+
+El color de cada sesión es solo una ayuda. El texto de estado sigue saliendo de las mismas condiciones:
+
+| Apariencia | Cuándo se aplica, por este orden |
+|---|---|
+| Pasada | La hora de inicio ya ha llegado |
+| Reservada por ti | Hay reserva propia y la sesión no ha empezado |
+| Deshabilitada | `enabled` no es 1 |
+| Completa | Las plazas ocupadas llegan a la capacidad |
+| Disponible | El resto de sesiones habilitadas |
+
+No existe un estado de sesión cancelada: cancelar borra la reserva. La leyenda no lo inventa. Una sesión pasada no ofrece reservar. Una deshabilitada o completa tampoco ofrece la reserva ordinaria. Esas reglas siguen en `quickActions` y en `BookingService`.
+
+Las tarjetas laterales leen datos que ya estaban en el panel: la ficha del usuario actual, su próxima reserva que aún no ha empezado, el recuento de activas e historial y las reservas de la semana en curso. La semana es la de `BookingService`: de lunes a domingo, y el máximo es `BookingService::WEEKLY_LIMIT`. No muestran reservas de otro nadador. Si el gestor abre la ficha de otra persona, el lateral sigue siendo el suyo.
+
+`bookingsFor()` añade `s.id AS session_id` para enlazar «Detalle» de la próxima sesión. No cambia el filtro ni el orden.
+
+En el tema, el contenido de la página es `alignfull`. El panel ocupa ese ancho y anula el máximo de 645 px que Twenty Twenty-Five aplica a los hijos con `:where`, de especificidad menor. La cuadrícula de siete columnas tiene un máximo para que las celdas no se estiren en pantallas muy anchas. Por debajo de 1024 px el mes pasa a una lista de días, y los días de otros meses se ocultan. En 390 px no hay desplazamiento horizontal. La columna lateral queda al lado del calendario desde 1380 px; en pantallas más estrechas, las tarjetas pasan debajo. Desde 1680 px el menú queda en una columna a la izquierda.
+
+No hay JavaScript nuevo. La hoja se encola con `filemtime` para que el navegador recoja el CSS nuevo sin subir la versión del plugin.
+
+Comprobado con `do_shortcode` para nadador, gestor, administrador y anónimo, y en el navegador con el CSS del tema a 1440 px y a 390 px. El día 2 de octubre de 2026 salió como hoy. Las sesiones ya empezadas se vieron atenuadas, las reservadas por el nadador en azul y las libres en verde. El gestor conservó detalle, capacidad, habilitar o deshabilitar, reserva para otro y cancelación. Un nadador que pide la vista de nadadores o un mes futuro sigue en el mes en curso. No se envió ningún POST de reserva o cancelación, para no alterar las reservas existentes. No aparecieron avisos en `debug.log`. No hay PHPUnit. `SPEC.md`, `ACEPTACION.md` y `FASES.md` no se han modificado: esto no reabre ni cierra criterios de aceptación.

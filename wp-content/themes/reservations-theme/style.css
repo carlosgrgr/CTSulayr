@@ -1,0 +1,60 @@
+/*
+ Theme Name: Reservations Theme
+ Theme URI: https://clubtriatlonsulayr.com/
+ Description: Child theme basado en Astra para personalizaciones locales
+ Author: Club Triatlón Sulayr
+ Author URI: https://clubtriatlonsulayr.com/
+ Template: astra
+ Version: 1.0.2
+ Text Domain: reservations-theme
+*/
+
+.reservations-panel-page .entry-content > .sulayr-panel {
+	margin-bottom: 2rem;
+}
+
+.reservations-panel-page .reservations-brand {
+	align-items: center;
+	background: #fff;
+	border: 1px solid #e4ebf3;
+	border-radius: 16px;
+	box-shadow: 0 1px 2px rgba(23, 42, 79, 0.04), 0 8px 24px rgba(23, 42, 79, 0.05);
+	display: flex;
+	gap: 0.85rem;
+	margin: 0 0 1rem;
+	padding: 0.65rem 0.9rem;
+}
+
+.reservations-panel-page .reservations-brand .custom-logo-link {
+	display: flex;
+	flex: 0 0 auto;
+	line-height: 0;
+}
+
+.reservations-panel-page .reservations-brand img.custom-logo {
+	border-radius: 50%;
+	height: 2.75rem;
+	max-width: 2.75rem;
+	object-fit: cover;
+	width: 2.75rem;
+}
+
+.reservations-panel-page .reservations-brand-name {
+	color: #1a2740;
+	font-size: 1.2rem;
+	font-weight: 700;
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	text-decoration: none;
+}
+
+@media (max-width: 47.5rem) {
+	.reservations-panel-page .reservations-brand {
+		gap: 0.65rem;
+		padding: 0.55rem 0.75rem;
+	}
+
+	.reservations-panel-page .reservations-brand-name {
+		font-size: 1.05rem;
+	}
+}

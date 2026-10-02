@@ -1,57 +1,448 @@
 .sulayr-panel {
-	color: #172033;
+	color: #1a2740;
 	font-size: 1rem;
-	line-height: 1.5;
-	max-width: 46rem;
+	line-height: 1.45;
+}
+
+.sulayr-panel,
+.sulayr-panel * {
+	box-sizing: border-box;
+}
+
+div.sulayr-panel {
+	background: #eef3f8;
+	border-radius: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	margin-bottom: 1rem;
+	margin-left: 0 !important;
+	margin-right: 0 !important;
+	max-width: none;
+	padding: 1rem;
+	width: auto;
+}
+
+p.sulayr-panel {
+	background: #fff;
+	border: 1px solid #e4ebf3;
+	border-radius: 16px;
+	box-shadow: 0 1px 2px rgba(23, 42, 79, 0.04), 0 8px 24px rgba(23, 42, 79, 0.05);
+	padding: 1rem 1.15rem;
 }
 
 .sulayr-panel h2,
 .sulayr-panel h3 {
-	font-size: 1.25rem;
+	font-weight: 700;
+	letter-spacing: -0.01em;
 	line-height: 1.3;
-	margin: 1.25rem 0 0.5rem;
 }
 
-.sulayr-nav,
-.sulayr-sessions,
-.sulayr-people {
+.sulayr-panel h2 {
+	font-size: 1.35rem;
+	margin: 0 0 0.75rem;
+}
+
+.sulayr-panel h3 {
+	font-size: 1.05rem;
+	margin: 1.15rem 0 0.5rem;
+}
+
+.sulayr-panel p {
+	margin: 0 0 0.5rem;
+}
+
+.sulayr-panel ul {
 	list-style: none;
-	margin: 0 0 1rem;
+	margin: 0;
 	padding: 0;
+}
+
+.sulayr-shell {
+	display: grid;
+	gap: 1rem;
+	grid-template-areas:
+		"nav"
+		"main"
+		"side";
+}
+
+.sulayr-nav-card {
+	grid-area: nav;
+}
+
+.sulayr-main {
+	grid-area: main;
+	min-width: 0;
+}
+
+.sulayr-side {
+	align-content: start;
+	display: grid;
+	gap: 1rem;
+	grid-area: side;
+}
+
+.sulayr-card,
+.sulayr-nav-card {
+	background: #fff;
+	border: 1px solid #e4ebf3;
+	border-radius: 16px;
+	box-shadow: 0 1px 2px rgba(23, 42, 79, 0.04), 0 8px 24px rgba(23, 42, 79, 0.05);
+	padding: 1rem;
+}
+
+.sulayr-brand {
+	align-items: center;
+	display: flex;
+	font-weight: 700;
+	gap: 0.5rem;
+	margin: 0 0 0.75rem;
 }
 
 .sulayr-nav {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.5rem 1rem;
-	margin-bottom: 1rem;
+	gap: 0.35rem;
 }
 
-.sulayr-link,
+.sulayr-icon {
+	display: block;
+	flex: 0 0 auto;
+	height: 1.25rem;
+	width: 1.25rem;
+}
+
 .sulayr-panel a {
-	color: #123a73;
+	color: #1d4e9e;
 	text-decoration: underline;
+	text-underline-offset: 0.15em;
 }
 
-.sulayr-panel a:focus,
-.sulayr-panel button:focus,
-.sulayr-panel input:focus,
-.sulayr-panel select:focus {
-	outline: 2px solid #123a73;
+.sulayr-panel a.sulayr-nav-link {
+	align-items: center;
+	border-radius: 10px;
+	color: #1a2740;
+	display: inline-flex;
+	font-weight: 600;
+	gap: 0.45rem;
+	min-height: 44px;
+	padding: 0.4rem 0.75rem;
+	text-decoration: none;
+}
+
+.sulayr-panel a.sulayr-nav-link:hover {
+	background: #f3f6fb;
+}
+
+.sulayr-panel a.sulayr-nav-link.is-current {
+	background: #2f6fe0;
+	color: #fff;
+}
+
+.sulayr-panel :focus-visible {
+	outline: 2px solid #0b1f44;
 	outline-offset: 2px;
 }
 
-.sulayr-session,
-.sulayr-people li {
-	border-top: 1px solid #d5dbe6;
+.sulayr-user-card {
+	align-items: center;
+	display: flex;
+	gap: 0.85rem;
+}
+
+.sulayr-user-card h2 {
+	font-size: 1.15rem;
+	margin: 0 0 0.15rem;
+}
+
+.sulayr-avatar {
+	align-items: center;
+	background: #e7f0ff;
+	border-radius: 50%;
+	color: #1d4e9e;
+	display: flex;
+	flex: 0 0 auto;
+	font-weight: 700;
+	height: 3rem;
+	justify-content: center;
 	margin: 0;
+	width: 3rem;
+}
+
+.sulayr-role,
+.sulayr-summary-note,
+.sulayr-day-empty-note,
+.sulayr-cal-note {
+	color: #4d5c70;
+}
+
+.sulayr-role,
+.sulayr-summary-note {
+	margin: 0;
+}
+
+.sulayr-card-title {
+	align-items: center;
+	display: flex;
+	font-size: 1rem;
+	gap: 0.4rem;
+	margin-bottom: 0.65rem;
+}
+
+.sulayr-next-when {
+	font-size: 1.05rem;
+	font-weight: 700;
+	margin-bottom: 0.15rem;
+}
+
+.sulayr-legend li,
+.sulayr-summary li {
+	align-items: center;
+	display: flex;
+	gap: 0.55rem;
+}
+
+.sulayr-legend li {
+	padding: 0.28rem 0;
+}
+
+.sulayr-summary li {
+	border-top: 1px solid #e7edf4;
+	justify-content: space-between;
+	padding: 0.5rem 0;
+}
+
+.sulayr-summary li:first-child {
+	border-top: 0;
+}
+
+.sulayr-swatch {
+	border: 1px solid transparent;
+	border-radius: 4px;
+	flex: 0 0 auto;
+	height: 0.9rem;
+	width: 0.9rem;
+}
+
+.sulayr-meter {
+	appearance: none;
+	background: #e6edf5;
+	border: 0;
+	border-radius: 999px;
+	display: block;
+	height: 0.45rem;
+	margin: 0.15rem 0 0.45rem;
+	width: 100%;
+}
+
+.sulayr-meter::-webkit-meter-bar {
+	background: #e6edf5;
+	border: 0;
+	border-radius: 999px;
+	height: 0.45rem;
+}
+
+.sulayr-meter::-webkit-meter-optimum-value,
+.sulayr-meter::-moz-meter-bar {
+	background: #2f6fe0;
+	border-radius: 999px;
+}
+
+.sulayr-cal-toolbar {
+	align-items: flex-start;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem 1rem;
+	justify-content: space-between;
+	margin-bottom: 1rem;
+}
+
+.sulayr-cal-title {
+	margin: 0;
+}
+
+.sulayr-cal-tools {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.sulayr-cal-tools .sulayr-inline,
+.sulayr-cal-tools .sulayr-cal-note {
+	margin: 0;
+}
+
+.sulayr-panel a.sulayr-cal-move {
+	align-items: center;
+	background: #fff;
+	border: 1px solid #c9d5e6;
+	border-radius: 999px;
+	display: inline-flex;
+	min-height: 44px;
+	padding: 0.35rem 0.8rem;
+	text-decoration: none;
+}
+
+.sulayr-cal-weekdays {
+	display: none;
+}
+
+.sulayr-cal-grid {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.sulayr-day {
+	background: #f6f8fb;
+	border: 1px solid #e5ebf2;
+	border-radius: 12px;
+	min-width: 0;
+	padding: 0.55rem 0.65rem;
+	position: relative;
+}
+
+.sulayr-day-outside {
+	display: none;
+}
+
+.sulayr-day-today {
+	background: #f3f7ff;
+	border-color: #2f6fe0;
+	box-shadow: inset 0 0 0 1px #2f6fe0;
+}
+
+.sulayr-day-heading {
+	font-size: 0.95rem;
+	font-weight: 700;
+	margin: 0 0 0.35rem;
+}
+
+.sulayr-day-empty {
+	align-items: center;
+	display: flex;
+	gap: 0.75rem;
+	justify-content: space-between;
+}
+
+.sulayr-day-empty .sulayr-day-heading,
+.sulayr-day-empty-note {
+	margin: 0;
+}
+
+.sulayr-today-label {
+	background: #2f6fe0;
+	border-radius: 999px;
+	color: #fff;
+	display: inline-block;
+	font-size: 0.72rem;
+	font-weight: 700;
+	line-height: 1.4;
+	margin-left: 0.2rem;
+	padding: 0.05rem 0.4rem;
+	vertical-align: 0.1em;
+}
+
+.sulayr-day-sessions {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
+.sulayr-slot {
+	border: 1px solid transparent;
+	border-radius: 8px;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	font-size: 0.8125rem;
+	gap: 0.15rem;
+	line-height: 1.35;
+	min-width: 0;
+	overflow-wrap: break-word;
+	padding: 0.4rem 0.45rem;
+}
+
+.sulayr-slot p,
+.sulayr-slot-time {
+	margin: 0;
+}
+
+.sulayr-slot-time {
+	font-weight: 700;
+}
+
+.sulayr-slot-available {
+	background: #e5f6ea;
+	color: #0e5c32;
+}
+
+.sulayr-slot-mine {
+	background: #e5f0ff;
+	color: #14386e;
+}
+
+.sulayr-slot-full {
+	background: #fff3df;
+	color: #6d4300;
+}
+
+.sulayr-slot-disabled {
+	background: #f3f4f6;
+	border-color: #8b95a3;
+	border-style: dashed;
+	color: #3d4754;
+}
+
+.sulayr-slot-past {
+	background: #e8edf2;
+	color: #2f3a48;
+}
+
+.sulayr-slot a {
+	color: inherit;
+}
+
+.sulayr-slot .sulayr-link {
+	align-items: center;
+	display: inline-flex;
+	min-height: 44px;
+}
+
+.sulayr-slot .sulayr-inline {
+	margin: 0.15rem 0 0;
+	width: 100%;
+}
+
+.sulayr-people li,
+.sulayr-booking-list li,
+.sulayr-months li {
+	align-items: center;
+	border-top: 1px solid #e6ebf2;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem 0.75rem;
 	padding: 0.75rem 0;
 }
 
+.sulayr-people li:first-child,
+.sulayr-booking-list li:first-child,
+.sulayr-months li:first-child {
+	border-top: 0;
+}
+
+.sulayr-people li {
+	overflow-wrap: anywhere;
+}
+
 .sulayr-notice {
-	background: #f4f7fb;
-	border: 1px solid #9aafc8;
-	margin: 0 0 1rem;
+	background: #fff;
+	border: 1px solid #d5e2f5;
+	border-left: 4px solid #2f6fe0;
+	border-radius: 12px;
+	margin: 0;
 	padding: 0.75rem 1rem;
 }
 
@@ -60,19 +451,32 @@
 	margin: 0.5rem 0;
 }
 
-.sulayr-form label,
-.sulayr-profile {
+.sulayr-form {
+	max-width: 28rem;
+}
+
+.sulayr-form label {
 	display: block;
-	margin: 0.5rem 0;
+	font-weight: 600;
+	margin: 0.65rem 0;
+}
+
+.sulayr-profile {
+	display: grid;
+	gap: 0.35rem 0.75rem;
+	grid-template-columns: minmax(0, 1fr);
+	margin: 0.25rem 0 1rem;
 }
 
 .sulayr-profile dt {
-	font-weight: 700;
-	margin-top: 0.5rem;
+	color: #4d5c70;
+	font-weight: 600;
+	margin: 0.35rem 0 0;
 }
 
 .sulayr-profile dd {
 	margin: 0;
+	overflow-wrap: anywhere;
 }
 
 .sulayr-panel button,
@@ -82,32 +486,157 @@
 }
 
 .sulayr-panel button {
-	background: #123a73;
+	background: #2f6fe0;
 	border: 0;
+	border-radius: 8px;
 	color: #fff;
 	cursor: pointer;
+	line-height: 1.3;
 	margin: 0.25rem 0.25rem 0.25rem 0;
-	padding: 0.45rem 0.75rem;
+	min-height: 44px;
+	padding: 0.45rem 0.8rem;
+}
+
+.sulayr-panel button:hover {
+	background: #245ec4;
 }
 
 .sulayr-panel input[type="text"],
 .sulayr-panel input[type="email"],
 .sulayr-panel input[type="number"],
 .sulayr-panel select {
-	border: 1px solid #6d7c93;
+	background: #fff;
+	border: 1px solid #8b98ab;
+	border-radius: 8px;
+	color: #1a2740;
 	max-width: 100%;
-	padding: 0.4rem 0.5rem;
+	padding: 0.45rem 0.55rem;
 }
 
-@media (max-width: 40rem) {
-	.sulayr-nav {
-		flex-direction: column;
-		align-items: flex-start;
+.sulayr-form input[type="text"],
+.sulayr-form input[type="email"],
+.sulayr-form input[type="number"],
+.sulayr-form select {
+	display: block;
+	font-weight: 400;
+	margin-top: 0.3rem;
+	width: 100%;
+}
+
+.sulayr-form input[type="checkbox"] {
+	margin-right: 0.35rem;
+}
+
+@media (min-width: 40rem) {
+	.sulayr-profile {
+		grid-template-columns: 8.5rem minmax(0, 1fr);
 	}
 
-	.sulayr-panel button,
+	.sulayr-profile dt {
+		margin-top: 0;
+	}
+}
+
+@media (min-width: 48rem) {
+	.sulayr-side {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 64rem) {
+	.sulayr-cal-weekdays,
+	.sulayr-cal-grid {
+		display: grid;
+		gap: 0.45rem;
+		grid-template-columns: repeat(7, minmax(0, 1fr));
+		max-width: 70rem;
+	}
+
+	.sulayr-cal-weekdays {
+		color: #4d5c70;
+		font-size: 0.82rem;
+		font-weight: 700;
+		margin: 0 0 0.15rem;
+	}
+
+	.sulayr-day-outside {
+		background: transparent;
+		border-color: transparent;
+		display: block;
+		opacity: 0.72;
+	}
+
+	.sulayr-day-today.sulayr-day-outside {
+		opacity: 1;
+	}
+
+	.sulayr-day-name {
+		border: 0;
+		clip: rect(0, 0, 0, 0);
+		height: 1px;
+		margin: -1px;
+		overflow: hidden;
+		padding: 0;
+		position: absolute;
+		white-space: nowrap;
+		width: 1px;
+	}
+
+	.sulayr-day-empty {
+		display: block;
+	}
+
+	.sulayr-day {
+		min-height: 6.5rem;
+		padding: 0.4rem;
+	}
+
+	.sulayr-slot .sulayr-link {
+		min-height: 0;
+	}
+
+	.sulayr-slot .sulayr-inline button {
+		min-height: 36px;
+		width: 100%;
+	}
+}
+
+@media (min-width: 86.25rem) {
+	.sulayr-shell {
+		align-items: start;
+		grid-template-areas:
+			"nav nav"
+			"main side";
+		grid-template-columns: minmax(0, 1fr) 18rem;
+	}
+
+	.sulayr-side {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (min-width: 105rem) {
+	.sulayr-shell {
+		grid-template-areas: "nav main side";
+		grid-template-columns: 14rem minmax(0, 1fr) 18rem;
+	}
+
+	.sulayr-nav {
+		align-items: stretch;
+		flex-direction: column;
+	}
+}
+
+@media (max-width: 47.5rem) {
+	div.sulayr-panel {
+		border-radius: 16px;
+		padding: 0.75rem;
+	}
+
+	.sulayr-form button,
 	.sulayr-form input,
-	.sulayr-form select {
+	.sulayr-form select,
+	.sulayr-slot .sulayr-inline button {
 		width: 100%;
 	}
 }
