@@ -33,6 +33,9 @@ El archivo principal registra un autoload `SulayrReservas\` → `src/` y arranca
 | `Front\PanelRenderer` | HTML de los paneles |
 | `Front\PanelActions` | Formularios del front: nonce, capacidad y llamada al servicio |
 | `Front\PanelQuery` | Lecturas del calendario, las reservas y las fichas |
+| `Sync\SyncService` | Lee el club y actualiza la ficha local de reservas |
+| `Sync\SyncLog` | Escribe y lista el registro técnico del blog 1 |
+| `Sync\ClubSync` | Botón del perfil, guardado automático y pantalla del registro |
 
 `BlogContext` no cambia de sitio si la configuración es inválida. No hace falta volver a comprobar el identificador en cada clase si la operación ya entra por `onClub()` o `onBookings()`.
 
@@ -137,7 +140,7 @@ Ambos sitios usan `Europe/Madrid`, leído de la base de datos. La lógica de mes
 
 El plugin del club redirige a cualquier `athlete` que entre en `wp-admin`, en el sitio donde ese código se ejecuta. El bloqueo de este plugin solo actúa en el blog 2 y solo si el usuario tiene exclusivamente `nadador`, `gestor` o ambos. Un administrador, un superadministrador u otro rol del sitio no se redirige. `admin-ajax.php` no se redirige, porque WordPress lo necesita; la autorización de cada acción seguirá comprobándose por capacidad.
 
-Si existe una página publicada con `[sulayr_reservas]`, la redirección lleva a su enlace permanente. Si no existe, sigue yendo a la portada. La decisión de a quién bloquear se ha vuelto a comprobar con usuarios de prueba. La respuesta HTTP de `wp-admin` con una cookie de sesión no se ha recorrido: un intento con `curl` no llegó a autenticar y acabó en `wp-login.php`.
+Si existe una página publicada con `[sulayr_reservas]`, la redirección lleva a su enlace permanente. Si no existe, sigue yendo a la portada. Nadador y gestor, con sesión iniciada, salen de `wp-admin` hacia el panel. El administrador entra en el escritorio.
 
 ### Sales de `wp-config.php`
 
@@ -147,19 +150,18 @@ Siguen siendo los placeholders de instalación. Afectan a las sesiones reales de
 
 No hay suite PHPUnit. Lo comprobado hasta la fase 6 se ha ejecutado con scripts que cargan WordPress y, en la fase 5, con dos procesos PHP distintos. Queda pendiente decidir e implantar una estrategia de pruebas del plugin, incluidos los servicios y las operaciones de concurrencia.
 
-- Generación simultánea del mismo mes. La fase 4 probó un mes nuevo, la repetición, meses consecutivos, la ausencia de duplicados en una sola ejecución, el aislamiento en el blog 2, la conservación de sesiones deshabilitadas y reservas, el `ROLLBACK` y la zona horaria. No se lanzaron dos procesos a la vez sobre el mismo mes. La transacción y las claves únicas de `generated_month` y de `(session_date, start_time)` son la base, no la prueba. Hay que comprobar que no quedan sesiones duplicadas ni un mes a medias. No bloquea el avance de las fases siguientes.
-- Envío real del correo de alta. La fase 6 comprobó que una cuenta nueva pide `wp_send_new_user_notifications()` y que una cuenta reutilizada no lo pide. El envío se interceptó. No se ha visto el mensaje en un buzón.
-- PHP 7.4. Sigue siendo la versión objetivo. El código evita sintaxis de PHP 8. El entorno de las pruebas es PHP 8.4.17. No se ha ejecutado el plugin con PHP 7.4.
-- Redirección HTTP de `nadador` y `gestor` al entrar en `wp-admin` del blog 2. La regla se probó sin navegador. El destino, cuando la página del shortcode existe, es esa página.
-- Calendario y formularios con un usuario autenticado, vistos en el navegador de escritorio y de móvil. En el navegador solo se abrió la página sin sesión. El HTML autenticado se comprobó cargando WordPress, no en esa ventana.
+- Generación simultánea del mismo mes. En la fase 9 dos procesos generaron noviembre de 2026 a la vez, con la fecha fija del 26 de octubre. Uno creó el mes y el otro lo dejó igual: 38 sesiones, ninguna duplicada y ninguna en viernes ni domingo. Esas filas se borraron al terminar. No queda noviembre generado.
+- Envío real del correo de alta. La fase 6 comprobó que una cuenta nueva pide `wp_send_new_user_notifications()` y que una cuenta reutilizada no lo pide. El envío se interceptó. No se ha visto el mensaje en un buzón. No es un caso del apartado 18 del SPEC y no impide cerrar la fase 9. Queda para una revisión posterior.
+- PHP 7.4. Sigue siendo la versión objetivo. El código evita sintaxis de PHP 8. El entorno de las pruebas es PHP 8.4.17. No se ha ejecutado el plugin con PHP 7.4. No es un caso del apartado 18.
 - La concurrencia de reservas de la fase 5 sí se probó. No vuelve a esta lista.
+- La reserva para otra persona y la reserva retroactiva ya cuentan en la semana que corresponde. Esas dos comprobaciones cierran el apartado 18.4.
 
 ## Mejoras futuras
 
 - Dejar de ocultar el error de WooCommerce y resolverlo de otra forma. Antes, comprobar si hay más ganchos de plugins instalados con el mismo efecto. No crear `wp_2_wc_customer_lookup` solo para callar el aviso.
 - Reintento limitado si una reserva o una cancelación termina en interbloqueo. Hoy responde `failed`.
-- La salida del `wp-admin` ya apunta a la página del shortcode cuando existe. Sigue pendiente ver esa redirección en una petición HTTP autenticada.
-- Retención del registro técnico de sincronización. Propuesta aún no implementada: 1000 filas o 180 días.
+- La salida del `wp-admin` ya apunta a la página del shortcode. Nadador y gestor fueron redirigidos; el administrador entró.
+- Confirmar si 180 días y 1000 filas siguen siendo la retención adecuada del registro. Ya está aplicada en `SyncLog`.
 - Confirmar si el agrupamiento de capacidades de la tabla anterior se mantiene. Traduce el SPEC y no añade permisos; no está cerrado como decisión de producto.
 
 ## Verificaciones para la sincronización
@@ -176,7 +178,7 @@ Implementada en `Roles\Capabilities`, `Roles\RoleRegistrar` y `Access\AdminAcces
 
 `AdminAccess` redirige en `admin_init` y oculta la barra de administración. No actúa en el blog 1, ni con administradores, ni con superadministradores, ni si el usuario tiene otro rol además de `nadador` o `gestor`. No interrumpe AJAX ni cron.
 
-La redirección HTTP no se ha recorrido en un navegador. La decisión de bloquear o no se ha comprobado con usuarios de prueba creados y eliminados en el blog 2. El recorrido en navegador está en «Pruebas pendientes».
+La decisión de bloquear o no se comprobó primero con usuarios de prueba. El recorrido en el navegador se verificó después, en la fase 9: nadador y gestor salen de `wp-admin` y el administrador entra.
 
 ## Fase 4
 
@@ -239,4 +241,26 @@ La petición HTTP anónima a `/reservas-natacion/` respondió 200, incluyó `pan
 
 La prueba de generación dejó octubre de 2026 creado: 39 sesiones, ninguna reserva. Es el mes real, no un resto de prueba. Los usuarios y las sesiones ficticias de la prueba se borraron.
 
-Siguen abiertas la generación simultánea de un mes, el correo real de alta, la ejecución en PHP 7.4, el aviso de WooCommerce al retirar un usuario y la redirección HTTP autenticada de `wp-admin`. Esta fase no las cierra.
+En ese momento seguían sin verse el correo real de alta, la ejecución en PHP 7.4, el aviso de WooCommerce al retirar un usuario y la redirección HTTP autenticada de `wp-admin`. La generación simultánea se comprobó después, en la fase 9. La redirección y el calendario con sesión se comprobaron más tarde y quedan anotados en la fase 9. El correo real sigue pendiente.
+
+## Fase 8
+
+La sincronización vive en `Sync\SyncService`. El botón, el guardado del perfil y la pantalla están en `Sync\ClubSync`. El registro está en `Sync\SyncLog`. No hay cambio de esquema: la tabla `sulayr_swim_sync_log` ya existía en el blog 1.
+
+`SwimmerRepository` ganó `insertSynced()` y `updateSynced()`. El alta manual sigue creando la ficha con `linked_to_club = 0`. La sincronización no usa `SwimmerService`, porque el administrador del club puede no tener capacidades de reservas en el blog 2. Las reglas son las mismas: una reserva es futura cuando aún no ha llegado su hora de inicio.
+
+El club se lee en el blog 1. Se escribe solo la ficha del blog 2. No se llama a `wp_update_user()` ni se cambian las metas del club. Si la persona cumple `athlete`, natación `1` y estado `active`, se añade al blog 2 con `add_user_to_blog()` o, si ya pertenece, con `add_role( 'nadador' )`. La ficha queda activa y vinculada. Un campo vacío del club deja vacío el campo local. Si deja de cumplir las condiciones y la ficha estaba activa, se desactiva y se borran las reservas futuras. El historial pasado se conserva. Una segunda ejecución con los mismos datos no crea otra ficha ni otra reserva.
+
+`profile_update` con prioridad 30 solo actúa en el blog 1, solo si quien guarda tiene `manage_options` y el perfil es de un `athlete`. Así ocurre después de que ACF y `AthleteUpdate` hayan guardado. `remove_user_from_blog` se dispara antes de quitar el rol, por eso la salida del club y la pérdida de `athlete` fuerzan la desactivación en lugar de volver a leer unas condiciones que todavía parecen válidas.
+
+El botón «Sincronizar ahora en reservas» está en el perfil del deportista, en el `wp-admin` del club. Es un enlace con aspecto de botón a `admin-post.php`, protegido con nonce y `manage_options`. No usa un formulario propio porque la pantalla de edición de WordPress ya está dentro de otro formulario: anidarlos impedía guardar el perfil y hacía que el botón solo recargara la página. El objetivo tiene que ser `athlete`. Llama al mismo `sync()`. El registro se abre en Usuarios → Registro de sincronización, solo para administradores del club. Cada fila guarda fecha, usuario, nombre, origen, resultado, acción y un mensaje fijo. No guarda contraseñas. Se conservan 180 días y, como máximo, 1000 filas. Si el registro falla, la ficha no se deshace.
+
+Comprobado con usuarios temporales, borrados al terminar: alta, repetición, actualización, campo vacío, vínculo de una ficha manual sin duplicar la cuenta ni la reserva, desactivación, reactivación sin recuperar la plaza, prevalencia sobre un `active = 0`, salida del club, pérdida del rol, guardado del perfil, rechazo si no hay administrador, botón visible, registro sin la contraseña, borrado de una fila de 2020 y alta que sigue existiendo aunque el registro lance un error. El blog activo volvió al club. Al borrar los usuarios de prueba con `wpmu_delete_user` volvió a aparecer el aviso de WooCommerce por `wp_2_wc_customer_lookup`. La retirada del producto no se ha cambiado.
+
+## Fase 9
+
+La matriz está en [ACEPTACION.md](../../../ACEPTACION.md). La fase queda cerrada.
+
+Con sesión iniciada se verificaron la redirección de nadador y gestor fuera de `wp-admin`, la entrada del administrador, el calendario autenticado, la sesión deshabilitada, el historial y la retirada desde el panel. Después se comprobó que una reserva hecha para otra persona cuenta en el límite semanal de esa persona, y que una reserva retroactiva cuenta en la semana de la sesión.
+
+El correo real de alta sigue sin verse en un buzón. No forma parte del apartado 18 y queda anotado para más adelante. PHP 7.4, PHPUnit y el aviso de WooCommerce tampoco son casos de ese apartado. Siguen en «Pruebas pendientes» y en «Mejoras futuras».

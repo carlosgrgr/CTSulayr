@@ -2,7 +2,7 @@
 
 Rama de trabajo: `release/swimming-reservations-v1.0.0`.
 
-El commit `ce681881` («Swimming reservations spec») es el SPEC inicial, anterior a estas fases. Las fases 0 a 7 están en el árbol de trabajo y todavía no tienen commit propio. Cuando se creen, se anota aquí el hash.
+El commit `ce681881` («Swimming reservations spec») es el SPEC inicial, anterior a estas fases. Las fases 0 a 9 están en el árbol de trabajo y todavía no tienen commit propio. Cuando se creen los commits, se anota aquí el hash.
 
 Las pruebas que siguen abiertas no reabren estas fases. Están en `DEVELOPMENT.md`, sección «Pruebas pendientes».
 
@@ -16,5 +16,5 @@ Las pruebas que siguen abiertas no reabren estas fases. Están en `DEVELOPMENT.m
 | 5 | Reservas, cancelaciones, límite semanal y concurrencia | Hecha y comprobada en el árbol de trabajo | Pendiente |
 | 6 | Alta, activación, desactivación y eliminación de nadadores | Hecha y comprobada en el árbol de trabajo | Pendiente |
 | 7 | Shortcode y paneles | Hecha y comprobada en el árbol de trabajo | Pendiente |
-| 8 | Sincronización, botón y registro técnico | No empezada | — |
-| 9 | Criterios de aceptación del SPEC | No empezada | — |
+| 8 | Sincronización, botón y registro técnico | Hecha y comprobada en el árbol de trabajo | Pendiente |
+| 9 | Criterios de aceptación del SPEC | Hecha y comprobada en el árbol de trabajo | Pendiente |
