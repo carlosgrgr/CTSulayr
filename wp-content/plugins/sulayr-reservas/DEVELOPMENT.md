@@ -20,6 +20,9 @@ El archivo principal registra un autoload `SulayrReservas\` → `src/` y arranca
 | `Roles\RoleRegistrar` | Crea y actualiza `nadador` y `gestor` solo en el sitio de reservas |
 | `Access\AdminAccess` | Impide el `wp-admin` a nadador y gestor solo en el sitio de reservas |
 | `Admin\NetworkSettingsPage` | Pantalla de red para los identificadores de sitio |
+| `Sessions\Schedule` | Horario fijo y plazas de un mes |
+| `Sessions\GenerationWindow` | Mes que corresponde ofrecer en una fecha |
+| `Sessions\SessionGenerator` | Crea las sesiones en el blog 2 sin modificar las ya existentes |
 
 `BlogContext` no cambia de sitio si la configuración es inválida. No hace falta volver a comprobar el identificador en cada clase si la operación ya entra por `onClub()` o `onBookings()`.
 
@@ -124,7 +127,7 @@ Hasta que exista el panel, la redirección lleva a la portada del sitio de reser
 
 ## Verificaciones para fases posteriores
 
-- La generación del mes y las reservas deben rechazar peticiones simultáneas, no solo confiar en los índices únicos.
+- Las reservas siguen pendientes de su propio bloqueo de aforo y de límite semanal. La generación ya usa transacción y claves únicas; la prueba de dos peticiones a la vez está en «Pruebas pendientes».
 - La sincronización debe leer el club en `profile_update` con prioridad 30 y escribir solo la tabla local de nadadores.
 - Al asignar `nadador` a una cuenta nueva hay que pasar el rol en la creación, para que `UserService::assign_athlete_role()` no lo sustituya si el usuario aún es `subscriber`.
 - Usar `add_role( 'nadador' )` y no `set_role()`, para no quitar `gestor` o `administrator`.
@@ -140,3 +143,24 @@ Implementada en `Roles\Capabilities`, `Roles\RoleRegistrar` y `Access\AdminAcces
 `AdminAccess` redirige en `admin_init` y oculta la barra de administración. No actúa en el blog 1, ni con administradores, ni con superadministradores, ni si el usuario tiene otro rol además de `nadador` o `gestor`. No interrumpe AJAX ni cron.
 
 La redirección HTTP no se ha recorrido en un navegador. La decisión de bloquear o no se ha comprobado con usuarios de prueba creados y eliminados en el blog 2.
+
+## Pruebas pendientes
+
+Generación simultánea del mismo mes. La transacción y las claves únicas de `generated_month` y de `(session_date, start_time)` son la base, pero no se ha lanzado la prueba con dos peticiones concurrentes. Hay que comprobar que no quedan sesiones duplicadas ni un mes a medias si dos gestores generan el mismo mes a la vez. No bloquea el avance de las fases siguientes.
+
+## Fase 4
+
+Implementada en `Sessions\Schedule`, `Sessions\GenerationWindow` y `Sessions\SessionGenerator`. No hay cron ni pantalla: la generación se invoca con `generate()`.
+
+La ventana del SPEC, sección 7.4, queda aprobada así:
+
+- Si el mes en curso no está generado, se ofrece hasta el día 26 inclusive. El día 27 pasa al mes siguiente y el mes en curso ya no se puede crear.
+- Si el mes en curso ya está generado, el mes siguiente se ofrece desde el día 26.
+- El 25 de septiembre no se puede generar octubre. El 26, solo si septiembre ya está generado. Si septiembre sigue pendiente ese día, el botón sigue ofreciendo septiembre.
+- Nunca se ofrecen dos meses a la vez.
+
+Repetir la generación no hace `UPDATE`. Conserva capacidad, sesiones deshabilitadas y reservas. Si el mes quedó a medias, solo inserta las sesiones que faltan, también fuera de la ventana, para no dejar el mes marcado e incompleto. Un mes nuevo fuera de la ventana se rechaza. Quien no tiene `sulayr_manage_sessions` también.
+
+Un fallo dentro de la transacción hace `ROLLBACK`. Las fechas de los días se calculan con `wp_timezone()`. Las horas se guardan como hora de pared (`15:00:00`), sin convertirlas a UTC, así el cambio de hora de octubre no las desplaza.
+
+Comprobado cargando WordPress con fechas fijas de 2026: septiembre 40 sesiones, octubre 39, noviembre 38, ninguna en viernes ni domingo. La repetición devolvió `unchanged`. Una sesión deshabilitada con capacidad 10 y una reserva siguieron igual. El 26 de octubre de 2026, lunes posterior al cambio de hora, se guardó a las 15:00. El blog al terminar seguía siendo el 1 y el club no tiene tabla de sesiones. La generación simultánea queda como prueba pendiente.

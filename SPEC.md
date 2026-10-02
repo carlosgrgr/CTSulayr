@@ -323,19 +323,25 @@ Las sesiones se generan en bloque para un mes mediante una acción manual del ge
 
 La ventana de generación se rige por estas reglas para un mes objetivo **M**:
 
-1. El botón para generar el mes M aparece el día 26 del mes anterior.
-2. Permanece disponible hasta que se generen las sesiones de M o hasta que llegue el día 27 del propio mes M.
-3. Si se generan las sesiones de M, el botón desaparece inmediatamente.
-4. Si llega el día 27 de M y todavía no se han generado sus sesiones, el botón pasa a ofrecer la generación del mes siguiente.
-5. El botón nunca debe permitir generar dos veces el mismo mes.
+1. El botón para generar el mes M aparece el día 26 del mes anterior, siempre que ese mes anterior ya esté generado.
+2. Si el día 26 el mes en curso todavía no está generado, el botón sigue ofreciendo ese mes y no el siguiente.
+3. El botón del mes M permanece disponible hasta que se generen sus sesiones o hasta que llegue el día 27 del propio mes M.
+4. Si se generan las sesiones de M, el botón desaparece inmediatamente.
+5. Si llega el día 27 de M y todavía no se han generado sus sesiones, el mes M ya no se puede crear y el botón pasa a ofrecer la generación del mes siguiente.
+6. El botón nunca debe permitir generar dos veces el mismo mes.
+7. Nunca se ofrecen dos meses a la vez.
 
-Ejemplo para octubre:
+Ejemplo para octubre, con septiembre ya generado:
 - 25 de septiembre: no aparece el botón para generar octubre.
 - 26 de septiembre: aparece «Generar sesiones de octubre».
 - 30 de septiembre: sigue disponible.
 - 1 de octubre: sigue disponible.
-- 26 de octubre: sigue disponible si aún no se ha generado octubre.
+- 26 de octubre: sigue disponible si aún no se ha generado octubre. Ese día no se ofrece noviembre.
 - 27 de octubre: si octubre no se ha generado, el botón ofrece generar noviembre.
+
+Si septiembre todavía no está generado:
+- 26 de septiembre: se puede generar septiembre y no octubre.
+- 27 de septiembre: septiembre ya no se puede crear y el botón ofrece octubre.
 
 Las sesiones se podrán reservar desde el momento en que se hayan generado.
 
@@ -729,6 +735,7 @@ Salvo que se acuerde expresamente durante el desarrollo, no forman parte de esta
 - El sitio del club es el blog `1`. El sitio de reservas es el blog `2` (`cnnazari.clubtriatlonsulayr.local.com`).
 - La ficha del nadador vive en una tabla del sitio de reservas. No se escriben las claves globales del perfil del club.
 - El mes generado se identifica con `generated_month`, en formato `YYYY-MM`.
+- El mes siguiente solo se habilita cuando el mes en curso ya está generado. El día 26, si el mes en curso sigue pendiente, se completa ese mes y no el siguiente. A partir del día 27, el mes en curso ya no se crea y el botón ofrece el mes siguiente.
 - Los paneles públicos se integran con un shortcode del plugin.
 
 ## 21. Pendiente de confirmar
