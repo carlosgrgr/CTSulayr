@@ -11,7 +11,7 @@ El commit `ce681881` («Swimming reservations spec») es el SPEC inicial, anteri
 | 2 | Esquema `dbDelta`: sesiones, reservas, meses, nadadores y registro técnico | Hecha y comprobada | Pendiente |
 | 3 | Roles `nadador` y `gestor`, capacidades y bloqueo de `wp-admin` en reservas | Hecha y comprobada en el árbol de trabajo | Pendiente |
 | 4 | Generación de sesiones y ventana de fechas | Hecha y comprobada en el árbol de trabajo | Pendiente |
-| 5 | Reservas, cancelaciones, límite semanal y concurrencia | No empezada | — |
+| 5 | Reservas, cancelaciones, límite semanal y concurrencia | Hecha y comprobada en el árbol de trabajo | Pendiente |
 | 6 | Alta, activación, desactivación y eliminación de nadadores | No empezada | — |
 | 7 | Shortcode y paneles | No empezada | — |
 | 8 | Sincronización, botón y registro técnico | No empezada | — |

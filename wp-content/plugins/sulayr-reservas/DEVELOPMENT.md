@@ -23,6 +23,8 @@ El archivo principal registra un autoload `SulayrReservas\` → `src/` y arranca
 | `Sessions\Schedule` | Horario fijo y plazas de un mes |
 | `Sessions\GenerationWindow` | Mes que corresponde ofrecer en una fecha |
 | `Sessions\SessionGenerator` | Crea las sesiones en el blog 2 sin modificar las ya existentes |
+| `Bookings\BookingService` | Crea y cancela reservas en el blog 2 |
+| `Bookings\BookingRepository` | Lectura y escritura de esas reservas, dentro de la transacción |
 
 `BlogContext` no cambia de sitio si la configuración es inválida. No hace falta volver a comprobar el identificador en cada clase si la operación ya entra por `onClub()` o `onBookings()`.
 
@@ -59,7 +61,7 @@ Correspondencia con el SPEC:
 
 - Consultar calendario, plazas y estado de la sesión: `sulayr_view_calendar`.
 - Reservar para sí mismo: `sulayr_book_self`.
-- Cancelar la propia reserva cuando el plazo lo permita: `sulayr_cancel_own`. El plazo de 60 minutos se comprueba en la fase de reservas, no aquí.
+- Cancelar la propia reserva cuando el plazo lo permita: `sulayr_cancel_own`. El plazo de 60 minutos lo comprueba `BookingService`.
 - Ver reservas propias e historial propio: `sulayr_view_own_bookings`.
 - Ver reservas de todos, sesiones pasadas y asistentes: `sulayr_view_all_bookings`.
 - Reservar para otro usuario, incluida la reserva retroactiva del gestor: `sulayr_book_for_others`.
@@ -98,7 +100,11 @@ La versión actual es `1`, opción `sulayr_reservas_db_version` en cada sitio. U
 
 ### Concurrencia de las reservas
 
-Pendiente de la fase de reservas. Varias peticiones simultáneas no pueden superar el aforo ni el máximo de 5 reservas por semana. Los índices únicos de sesión y de reserva no bastan: impiden duplicar una sesión o una reserva del mismo usuario, pero no el aforo ni el límite semanal. Esas operaciones tendrán que usar transacción y bloqueo de filas, y habrá que probarlas.
+Implementada y probada en `BookingService`. Cada operación abre `START TRANSACTION` y cierra con `COMMIT` o `ROLLBACK`. El orden de bloqueo es siempre el mismo: primero la ficha del nadador (`FOR UPDATE`) y después la sesión (`FOR UPDATE`). La cancelación bloquea además la fila de la reserva. Así el límite semanal no depende solo del aforo de una sesión, y dos operaciones sobre sesiones distintas del mismo usuario quedan en serie.
+
+Después de bloquear se vuelven a contar las plazas y las reservas de la semana. La clave única `(session_id, user_id)` cubre el duplicado si el recuento no llegara a verlo. Un interbloqueo devuelve `failed` y no se reintenta solo. En las pruebas no apareció.
+
+Queda sin probar la generación simultánea de un mismo mes. Está en «Pruebas pendientes».
 
 ### Multisite
 
@@ -121,13 +127,14 @@ Hasta que exista el panel, la redirección lleva a la portada del sitio de reser
 ## Decisiones pendientes
 
 - Confirmar si el agrupamiento de capacidades de la tabla anterior se mantiene. Cubre el SPEC sin añadir permisos.
+- Confirmar dos lecturas ya aplicadas en la fase 5. Una sesión está pasada en cuanto llega su hora de inicio, también si aún no ha terminado. La reserva retroactiva respeta el aforo: no hay excepción en el SPEC 7.2.
 - La URL de salida del `wp-admin` pasará a ser el panel cuando exista. Mientras tanto es la portada.
 - Retención del registro técnico: propuesta de 1000 filas o 180 días, aún no implementada.
 - Las sales de `wp-config.php` siguen siendo los placeholders de instalación. Afectan a las sesiones reales y no forman parte del plugin.
 
 ## Verificaciones para fases posteriores
 
-- Las reservas siguen pendientes de su propio bloqueo de aforo y de límite semanal. La generación ya usa transacción y claves únicas; la prueba de dos peticiones a la vez está en «Pruebas pendientes».
+- La generación ya usa transacción y claves únicas; la prueba de dos peticiones a la vez está en «Pruebas pendientes».
 - La sincronización debe leer el club en `profile_update` con prioridad 30 y escribir solo la tabla local de nadadores.
 - Al asignar `nadador` a una cuenta nueva hay que pasar el rol en la creación, para que `UserService::assign_athlete_role()` no lo sustituya si el usuario aún es `subscriber`.
 - Usar `add_role( 'nadador' )` y no `set_role()`, para no quitar `gestor` o `administrator`.
@@ -164,3 +171,13 @@ Repetir la generación no hace `UPDATE`. Conserva capacidad, sesiones deshabilit
 Un fallo dentro de la transacción hace `ROLLBACK`. Las fechas de los días se calculan con `wp_timezone()`. Las horas se guardan como hora de pared (`15:00:00`), sin convertirlas a UTC, así el cambio de hora de octubre no las desplaza.
 
 Comprobado cargando WordPress con fechas fijas de 2026: septiembre 40 sesiones, octubre 39, noviembre 38, ninguna en viernes ni domingo. La repetición devolvió `unchanged`. Una sesión deshabilitada con capacidad 10 y una reserva siguieron igual. El 26 de octubre de 2026, lunes posterior al cambio de hora, se guardó a las 15:00. El blog al terminar seguía siendo el 1 y el club no tiene tabla de sesiones. La generación simultánea queda como prueba pendiente.
+
+## Fase 5
+
+Implementada en `Bookings\BookingService` y `Bookings\BookingRepository`. No hay formulario ni endpoint: las fases siguientes llaman a `book()` y `cancel()`. El actor es el usuario actual, comprobado en el blog 2 después del cambio de sitio.
+
+La ficha que se copia en la reserva sale de `sulayr_swim_swimmers`, no de `wp_usermeta`. El nadador de la reserva tiene que estar activo. Una reserva de gestor para una sesión ya empezada se guarda con `is_manual = 1` y `manager_id`. Una reserva futura, aunque la haga un gestor para otro, no lleva ese indicador. `created_by` es quien ejecuta la operación.
+
+La sesión se considera empezada cuando `now` alcanza la hora de inicio. Hasta ese momento se aplican habilitación, aforo y límite. A partir de ese momento solo puede reservar quien tiene `sulayr_book_for_others`, también si la sesión está deshabilitada. El aforo se aplica también a esa reserva retroactiva: el SPEC 7.2 no deja una excepción, a diferencia del límite semanal, que sí dice que no hay excepción administrativa. La cancelación del nadador exige 60 minutos o más; en el instante exacto se permite. El gestor, con `sulayr_cancel_any`, cancela sin ese plazo. La fila se borra.
+
+Comprobado con fechas fijas y usuarios de prueba, borrados al terminar junto con sus sesiones y reservas. Cinco rondas con dos procesos PHP: la última plaza quedó en una sola reserva; la reserva duplicada, en una sola fila; dos sesiones simultáneas del mismo usuario no pasaron de 5 en la semana; reserva y cancelación a la vez dejaron 0 o 1 plazas ocupadas, nunca 2. El blog al terminar seguía siendo el 1 y el club no tiene tabla de reservas. No se escribió `first_name` ni el teléfono global del usuario.
