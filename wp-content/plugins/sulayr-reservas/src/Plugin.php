@@ -9,6 +9,7 @@ use SulayrReservas\Context\BlogContext;
 use SulayrReservas\Database\Schema;
 use SulayrReservas\Front\Shortcode;
 use SulayrReservas\Roles\RoleRegistrar;
+use SulayrReservas\Swimmers\EmailChangeService;
 use SulayrReservas\Sync\ClubSync;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -37,6 +38,7 @@ class Plugin {
 		}
 
 		( new AdminAccess( $this->config ) )->register();
+		( new EmailChangeService( $this->config, $this->blog_context ) )->register();
 		( new ClubSync( $this->config, $this->blog_context ) )->register();
 		( new Shortcode( $this->config, $this->blog_context ) )->register();
 

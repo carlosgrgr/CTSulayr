@@ -43,12 +43,17 @@ class PanelQuery {
 			function () use ( $user_id ) {
 				global $wpdb;
 
-				return $wpdb->get_row(
+				$row = $wpdb->get_row(
 					$wpdb->prepare(
-						'SELECT user_id, active, linked_to_club, first_name, last_name, email, phone, dni FROM ' . $this->swimmersTable() . ' WHERE user_id = %d',
+						'SELECT user_id, active, linked_to_club, first_name, last_name, email, phone, dni, weekly_limit, photo_id, pending_email, created_at FROM ' . $this->swimmersTable() . ' WHERE user_id = %d',
 						(int) $user_id
 					)
 				);
+				if ( $row ) {
+					$row->photo_url = $this->photoUrl( isset( $row->photo_id ) ? (int) $row->photo_id : 0 );
+				}
+
+				return $row;
 			}
 		);
 	}
@@ -173,21 +178,88 @@ class PanelQuery {
 	}
 
 	/**
+	 * @param array{status?: string, search?: string} $filters Estado y búsqueda. Vacío para el listado completo.
 	 * @return object[]
 	 */
-	public function swimmers() {
+	public function swimmers( array $filters = array() ) {
 		return $this->blog_context->onBookings(
-			function () {
+			function () use ( $filters ) {
 				if ( ! current_user_can( Capabilities::MANAGE_SWIMMERS ) ) {
 					return array();
 				}
 
+				$status = isset( $filters['status'] ) ? (string) $filters['status'] : 'todos';
+				$search = isset( $filters['search'] ) ? (string) $filters['search'] : '';
+				if ( ! in_array( $status, array( 'todos', 'activos', 'inactivos' ), true ) ) {
+					$status = 'todos';
+				}
+
 				global $wpdb;
 
-				$rows = $wpdb->get_results( 'SELECT user_id, active, linked_to_club, first_name, last_name, email, phone FROM ' . $this->swimmersTable() . ' ORDER BY last_name ASC, first_name ASC, user_id ASC' );
+				$where  = array( '1=1' );
+				$values = array();
+				if ( 'activos' === $status ) {
+					$where[] = 'active = 1';
+				} elseif ( 'inactivos' === $status ) {
+					$where[] = 'active = 0';
+				}
+				if ( '' !== $search ) {
+					$like     = '%' . $wpdb->esc_like( $search ) . '%';
+					$where[]  = '(first_name LIKE %s OR last_name LIKE %s OR CONCAT(first_name, \' \', last_name) LIKE %s OR email LIKE %s)';
+					$values[] = $like;
+					$values[] = $like;
+					$values[] = $like;
+					$values[] = $like;
+				}
 
-				return is_array( $rows ) ? $rows : array();
+				$sql = 'SELECT user_id, active, linked_to_club, first_name, last_name, email, phone, weekly_limit, photo_id, created_at FROM ' . $this->swimmersTable() . ' WHERE ' . implode( ' AND ', $where ) . ' ORDER BY last_name ASC, first_name ASC, user_id ASC';
+				if ( array() !== $values ) {
+					$sql = $wpdb->prepare( $sql, $values );
+				}
+
+				$rows = $wpdb->get_results( $sql );
+				if ( ! is_array( $rows ) ) {
+					return array();
+				}
+
+				foreach ( $rows as $row ) {
+					$row->photo_url = $this->photoUrl( isset( $row->photo_id ) ? (int) $row->photo_id : 0 );
+				}
+
+				return $rows;
 			}
+		);
+	}
+
+	/**
+	 * Filtros del listado. El estado inicial es todos los nadadores.
+	 *
+	 * @return array{status: string, search: string}
+	 */
+	public function swimmerFilters() {
+		$status = isset( $_GET['estado'] ) ? sanitize_key( wp_unslash( $_GET['estado'] ) ) : 'todos';
+		$search = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '';
+
+		return $this->cleanFilters( $status, $search );
+	}
+
+	/**
+	 * @param string $status Estado recibido.
+	 * @param string $search Búsqueda recibida.
+	 * @return array{status: string, search: string}
+	 */
+	public function cleanFilters( $status, $search ) {
+		if ( ! in_array( $status, array( 'todos', 'activos', 'inactivos' ), true ) ) {
+			$status = 'todos';
+		}
+		$search = sanitize_text_field( (string) $search );
+		if ( mb_strlen( $search ) > 100 ) {
+			$search = mb_substr( $search, 0, 100 );
+		}
+
+		return array(
+			'status' => $status,
+			'search' => $search,
 		);
 	}
 
@@ -282,6 +354,20 @@ class PanelQuery {
 		$start = \DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $row->session_date . ' ' . $row->start_time, wp_timezone() );
 
 		return $start instanceof \DateTimeImmutable ? $start : null;
+	}
+
+	/**
+	 * @param int $photo_id Adjunto del blog actual.
+	 * @return string
+	 */
+	private function photoUrl( $photo_id ) {
+		if ( $photo_id < 1 ) {
+			return '';
+		}
+
+		$url = wp_get_attachment_image_url( $photo_id, 'medium' );
+
+		return is_string( $url ) ? $url : '';
 	}
 
 	/**

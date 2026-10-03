@@ -25,7 +25,7 @@ class BookingRepository {
 
 		return $this->row(
 			$wpdb->prepare(
-				'SELECT user_id, active, first_name, last_name, phone, email FROM ' . $this->swimmers() . ' WHERE user_id = %d FOR UPDATE',
+				'SELECT user_id, active, first_name, last_name, phone, email, weekly_limit FROM ' . $this->swimmers() . ' WHERE user_id = %d FOR UPDATE',
 				$user_id
 			)
 		);

@@ -80,3 +80,30 @@ Estos puntos no son criterios del apartado 18:
 | Calendario autenticado en el navegador | Cumplido y probado |
 | PHPUnit | No lo exige el SPEC. Sigue pendiente una suite del plugin |
 | Aviso de WooCommerce al retirar un usuario del blog 2 | Parcialmente cumplido. La retirada sigue. El error de `wp_2_wc_customer_lookup` se volvió a ver al borrar usuarios de prueba |
+
+## Fase 10
+
+La fila 18.4 «Máximo de 5 reservas por semana natural» describe la comprobación de la fase 9. Desde esta fase el máximo es el de la ficha, con defecto 3. Esa fila no se reabre: el comportamiento nuevo está aquí.
+
+| Requisito | Componente | Prueba | Resultado | Observaciones |
+|---|---|---|---|---|
+| Límite por ficha, defecto 3, solo 1–5 | `WeeklyLimit`, `SwimmerService`, `BookingService` | Alta y guardado con 0, 6, «2a», 1, 2, 3, 4 y 5 | Cumplido y probado | Las fichas ya existentes quedaron en 3 al añadir la columna |
+| Tres reservas de la misma semana bloquean la cuarta, también si la hace el gestor | `BookingService` | Sesiones del 2 al 6 de junio de 2036 | Cumplido y probado | Un primer intento con el 1 de junio falló la afirmación porque ese día es domingo y las fechas caían en dos semanas |
+| Subir el límite permite otra reserva; bajarlo no borra las hechas y bloquea la siguiente | `BookingService`, `SwimmerService` | Límite 4 y después 1, con 4 reservas | Cumplido y probado | |
+| Cancelar sigue borrando la fila | `BookingService` | Cancelación de una de esas reservas | Cumplido y probado | |
+| Cambiar capacidad y habilitación de la sesión | `SessionEditor` | Las mismas sesiones de prueba | Cumplido y probado | |
+| Nombre y teléfono manuales solo en la ficha local | `SwimmerService` | Actualización y lectura de metas globales | Cumplido y probado | `first_name` y `sulayr_user_phone` no cambiaron. El DNI tampoco |
+| Un vinculado no edita nombre, apellidos, teléfono ni DNI | `SwimmerService`, panel | Servicio y, en el navegador, perfil y ficha de gestor | Cumplido y probado | Seguían el correo, la foto y, para el propio usuario, la contraseña |
+| El nadador no cambia el límite ni la ficha de otro | `SwimmerService`, `PanelActions` | Llamada sin capacidad y con otro `user_id` | Cumplido y probado | |
+| Contraseña solo del usuario actual | `SwimmerService` | Contraseña incorrecta, el hash como si fuera la clave, cambio real y llamada como gestor | Cumplido y probado | En CLI, `wp_set_auth_cookie` avisó de cabeceras ya enviadas |
+| Correo nuevo solo tras confirmar, 24 h, un solo uso | `EmailChangeService` | Solicitud, confirmación, segundo uso y caducidad forzada | Cumplido y probado | El mensaje se interceptó. No se vio un buzón real. El enlace no pasa por `wp-admin` |
+| La confirmación actualiza la cuenta y la ficha | `EmailChangeService` | Lectura de `user_email` y de la columna local | Cumplido y probado | |
+| La sincronización restaura el nombre del club y conserva el límite | `SyncService` | Segunda sincronización con límite 5 y un nombre local distinto | Cumplido y probado | |
+| CSV: validar, no tocar cuentas existentes, crear solo las filas válidas | `CsvImporter`, `SwimmerService::createImported` | 11 filas, lugares club/reservas/ambos, tres altas | Cumplido y probado | El aviso de contraseña aumentó al confirmar, no en la validación. No se recorrió el formulario de previsualizar y confirmar en el navegador |
+| Filtros de estado y búsqueda | `SwimmerRepository`, panel | Servicio y, en el navegador, activos + «Navegador» | Cumplido y probado | La lista quedó en una sola ficha |
+| Exportación de fichas y de reservas | `CsvExporter` | CSV con BOM, inactivo, Nadador y Gestor | Cumplido y probado | La reserva cancelada no salió. No se descargó el archivo desde el botón del navegador |
+| Fotografía: tamaño, tipo, sustitución y borrado | `PhotoService` | POST HTTP real con JPEG, PNG, archivo de más de 5 MB y WebP | Cumplido y probado | El JPEG de 2000×800 quedó con el lado largo en 1200 o menos. No se probó un archivo que no fuera imagen con extensión `.jpg`. La subida con rol nadador, solo la propia foto, no se hizo por HTTP |
+| Perfil del club en Bento, sin cambiar el formulario | `ct-sulayr-theme/profile-bento.css` | Navegador con el tema activo un momento, a 1280 px, 954 px y 390 px | Cumplido y probado | El sitio del club usa Twenty Twenty-Five. Se restauró al terminar. Información y edición conservan campos y pestañas. No existe perfil público de otro deportista |
+| Panel de reservas en 390 px | `panel.css` | Lista filtrada | Cumplido y probado | Cabecera y navegación en columna. No se recorrió una reserva nueva en el navegador |
+
+La regresión de reservar, cancelar, editar una sesión y sincronizar se ejecutó con los usuarios de prueba de esta fase y quedó en el script de repetición, 16 comprobaciones y 0 fallos. Esos usuarios y las sesiones de junio de 2036 se borraron. El usuario de navegador `fase10ui` también se borra al cerrar la fase.

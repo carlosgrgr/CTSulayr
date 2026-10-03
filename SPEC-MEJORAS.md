@@ -127,54 +127,65 @@ No debe necesitar acceso a `wp-admin`.
 
 ## 4.2. Campos editables por el propio nadador
 
-El nadador podrá modificar:
+La edición depende de si la ficha está vinculada al club. El detalle cerrado está en el apartado 16.
+
+Si `linked_to_club = 0`, el nadador podrá modificar en la ficha local de reservas:
 
 * Nombre.
 * Apellidos.
-* Correo electrónico.
+* Correo electrónico, solo mediante confirmación.
 * Teléfono.
 * Contraseña.
 * Fotografía de perfil.
 
-No podrá modificar:
+Si `linked_to_club = 1`, el nadador puede ver nombre, apellidos, teléfono y DNI, pero no editarlos. Esos datos personales los mantiene el club. Sí puede cambiar su contraseña, solicitar el cambio de correo y gestionar la fotografía local de reservas.
+
+En ambos casos no podrá modificar:
 
 * Límite semanal.
 * Estado activo/inactivo.
+* DNI.
 * Identificadores internos.
 * Datos de gestión.
+* `first_name`, `last_name` ni `sulayr_user_phone` de `wp_usermeta`.
 * Cualquier otro dato reservado a gestores o administradores.
 
 ## 4.3. Edición por gestor
 
-El gestor podrá modificar los datos personales del nadador:
+Si `linked_to_club = 0`, el gestor podrá modificar en la ficha local:
 
 * Nombre.
 * Apellidos.
-* Correo electrónico.
 * Teléfono.
-* Fotografía.
-* Límite semanal.
-* Estado, según las funcionalidades de gestión existentes.
+
+Si `linked_to_club = 1`, nombre, apellidos, teléfono y DNI quedan en solo lectura. Los gestiona el club.
+
+En ambos casos el gestor podrá:
+
+* Iniciar el cambio de correo mediante el mismo proceso de confirmación del apartado 4.4.
+* Modificar la fotografía local de reservas.
+* Modificar el límite semanal.
+* Modificar el estado, según las funcionalidades de gestión existentes.
 
 El gestor NO podrá establecer ni conocer la contraseña actual del nadador.
 
-La gestión de contraseña deberá continuar utilizando mecanismos seguros de WordPress.
+La gestión de contraseña deberá continuar utilizando mecanismos seguros de WordPress. No se escriben desde reservas los metas globales de nombre o teléfono.
 
 ## 4.4. Cambio de correo electrónico
 
-Cuando un nadador solicite cambiar su correo electrónico:
+Cuando un nadador o un gestor solicite cambiar el correo de una ficha:
 
-1. El nuevo correo debe validarse.
-2. No debe sustituirse inmediatamente el correo actual.
-3. Debe enviarse un correo de confirmación a la nueva dirección.
-4. El cambio solo debe aplicarse después de que el usuario confirme mediante un enlace seguro.
-5. El enlace debe ser de un solo uso y tener una caducidad razonable.
+1. El nuevo correo debe validarse, también comprobando que ninguna otra cuenta lo esté usando.
+2. No debe sustituirse inmediatamente `wp_users.user_email`.
+3. Se guarda una solicitud pendiente con un token de un solo uso y una caducidad de 24 horas. En la base solo se almacena el hash del token.
+4. Debe enviarse un correo de confirmación a la nueva dirección.
+5. El cambio solo debe aplicarse después de que alguien abra el enlace.
 6. Mientras no se confirme, el correo actual seguirá siendo el activo.
-7. El usuario debe recibir información clara indicando que el cambio está pendiente de confirmación.
+7. El panel debe indicar que el cambio está pendiente de confirmación.
 
-Debe utilizarse el mecanismo nativo de WordPress siempre que sea compatible con el flujo frontend del plugin. No debe utilizarse directamente una llamada a `wp_update_user()` que permita cambiar el correo sin confirmación.
+El enlace apunta al frontend del sitio de reservas. No se usa el flujo de `wp-admin/profile.php`, porque el nadador no trabaja en el escritorio.
 
-El enlace de confirmación debe llevar a una página frontend apropiada y no debe obligar al nadador a entrar en `wp-admin`.
+Al confirmar un token vigente se actualizan `wp_users.user_email` y `sulayr_swim_swimmers.email`, y el token deja de servir. Si la ficha está vinculada al club, la siguiente sincronización vuelve a copiar el `user_email` vigente. Si en el club se guarda otra vez el correo anterior, la ficha local recupera ese valor.
 
 ## 4.5. Cambio de contraseña
 
@@ -505,11 +516,12 @@ No afecta directamente al plugin de reservas.
 
 ## 9.1. Perfiles afectados
 
-Se rediseñarán:
+Se rediseñarán las dos vistas que existen hoy en el sitio del club:
 
-1. Perfil que ve el propio deportista.
-2. Perfil público del deportista.
-3. Página de edición del propio perfil del deportista.
+1. Perfil que ve el propio deportista (pestaña de información).
+2. Página de edición del propio perfil del deportista (pestaña de edición y el mismo formulario ACF).
+
+No existe una vista funcional de perfil público de otro deportista. No se crea en esta fase.
 
 ## 9.2. Funcionalidad
 
@@ -764,3 +776,26 @@ La fase se considerará terminada cuando:
 8. `FASES.md` indique correctamente el estado de la fase.
 9. No existan cambios funcionales no documentados.
 10. No se haya creado ningún commit sin autorización explícita.
+
+---
+
+# 16. Decisiones cerradas de esta fase
+
+Estas decisiones precisan los apartados anteriores. Si un párrafo anterior dice lo contrario, manda este apartado.
+
+| Tema | Decisión |
+|---|---|
+| Nombre, apellidos y teléfono de un nadador manual (`linked_to_club = 0`) | Solo la ficha local `sulayr_swim_swimmers` del blog de reservas |
+| Nombre, apellidos, teléfono y DNI de un nadador vinculado (`linked_to_club = 1`) | Solo lectura en reservas, para el nadador y para el gestor. La fuente de verdad es el club |
+| Metas globales `first_name`, `last_name` y `sulayr_user_phone` | No se modifican desde reservas |
+| DNI | No se edita desde el perfil del nadador ni desde la ficha del gestor en esta fase |
+| Correo | Tras la confirmación se actualizan `wp_users.user_email` y la columna local `email` |
+| Confirmación de correo pedida por el nadador | Sí. Token de un solo uso, 24 horas, enlace al frontend de reservas |
+| Confirmación de correo iniciada por el gestor | El mismo proceso |
+| Contraseña | Solo el propio usuario. El gestor no puede verla ni establecerla |
+| Fotografía | Adjunto del blog de reservas. El identificador se guarda en `photo_id` de la ficha local |
+| Fotografía de un usuario vinculado | Editable por el nadador y por el gestor. No usa la foto ACF del club |
+| Límite semanal | Solo gestor o administrador, enteros del 1 al 5. El valor por defecto de una ficha nueva o antigua sin valor propio es 3 |
+| Perfiles del tema | Solo información y edición propias. Presentación Bento Grid, sin cambiar ACF, acciones, enlaces, permisos ni URLs |
+| Perfil público de otro deportista | Fuera de esta fase |
+| `SPEC.md` | No se modifica |

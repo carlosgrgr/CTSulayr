@@ -4,6 +4,7 @@ namespace SulayrReservas\Bookings;
 
 use SulayrReservas\Context\BlogContext;
 use SulayrReservas\Roles\Capabilities;
+use SulayrReservas\Swimmers\WeeklyLimit;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -15,8 +16,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  * El actor es el usuario actual. Las comprobaciones de permiso se hacen en el blog 2.
  */
 class BookingService {
-
-	const WEEKLY_LIMIT = 5;
 
 	/** @var BlogContext */
 	private $blog_context;
@@ -126,8 +125,9 @@ class BookingService {
 				return $this->result( BookingResult::FULL, 'No quedan plazas.' );
 			}
 
-			$week = $this->weekBounds( $session->session_date );
-			if ( $this->repository->countUserBookingsBetween( $swimmer_user_id, $week['from'], $week['to'] ) >= self::WEEKLY_LIMIT ) {
+			$week  = $this->weekBounds( $session->session_date );
+			$limit = WeeklyLimit::normalize( isset( $swimmer->weekly_limit ) ? $swimmer->weekly_limit : WeeklyLimit::DEFAULT_LIMIT );
+			if ( $this->repository->countUserBookingsBetween( $swimmer_user_id, $week['from'], $week['to'] ) >= $limit ) {
 				$this->rollback();
 				return $this->result( BookingResult::WEEKLY_LIMIT, 'Se ha alcanzado el máximo de reservas de la semana.' );
 			}

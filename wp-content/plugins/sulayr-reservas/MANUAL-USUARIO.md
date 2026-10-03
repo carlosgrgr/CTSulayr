@@ -40,7 +40,23 @@ Arriba aparecen tres enlaces:
 - **Mis reservas**
 - **Mi perfil**
 
-Mi perfil muestra tu nombre, apellidos, correo, teléfono y DNI tal como están en reservas. No puedes cambiarlos desde esta pantalla.
+Mi perfil muestra tu nombre, apellidos, correo, teléfono, DNI y el límite semanal que te ha puesto el gestor.
+
+Si tu ficha no está vinculada al club, puedes guardar nombre, apellidos y teléfono. Esos cambios se quedan en reservas y no modifican el nombre ni el teléfono de la cuenta del club. El DNI no se edita aquí.
+
+Si tu ficha está vinculada al club, el nombre, los apellidos, el teléfono y el DNI los ves, pero no los cambias. Los actualiza la sincronización del club.
+
+En los dos casos puedes:
+
+- pedir un cambio de correo
+- subir o quitar tu fotografía de reservas
+- cambiar tu contraseña
+
+El correo nuevo no se aplica al momento. Llega un mensaje a esa dirección con un enlace del panel de reservas, válido 24 horas. Hasta que lo confirmes sigues entrando con el correo anterior. Si estás vinculado al club, la siguiente sincronización puede volver a dejar el correo que tenga el club.
+
+La fotografía es solo de reservas. No sustituye a la foto del club. Admite JPG, PNG o WebP, hasta 5 MB. Se muestra en círculo.
+
+La contraseña la cambias tú. El gestor no puede verla ni poner otra.
 
 No verás los nombres de las demás personas apuntadas.
 
@@ -69,12 +85,12 @@ No podrás reservar si:
 - está deshabilitada
 - ya ha empezado
 - ya tienes plaza en esa sesión
-- llevas cinco reservas en esa semana
+- ya has llegado a tu límite de esa semana
 - tu ficha no está activa
 
-La semana va de lunes a domingo, según el día de la sesión.
+La semana va de lunes a domingo, según el día de la sesión. El límite es el de tu ficha, entre 1 y 5. Si nadie lo ha cambiado, es 3.
 
-El gestor puede apuntarte él mismo. En ese caso la reserva también cuenta para tu límite de cinco.
+El gestor puede apuntarte él mismo. En ese caso la reserva también cuenta para tu límite.
 
 ## 7. Cancelación de una reserva
 
@@ -85,7 +101,7 @@ Puedes cancelar mientras falten más de 60 minutos para el inicio. En el minuto 
 
 Si falta menos de una hora, el botón no aparece. Si aun así se enviara la cancelación, el sistema la rechaza y la plaza sigue tuya.
 
-Cancelar borra la reserva. La plaza queda libre y deja de contar para las cinco de la semana. No se guarda un historial de la cancelación.
+Cancelar borra la reserva. La plaza queda libre y deja de contar para el límite de la semana. No se guarda un historial de la cancelación.
 
 El gestor puede cancelar una reserva aunque falte menos de una hora.
 
@@ -104,6 +120,7 @@ Además de Calendario, Mis reservas y Mi perfil, el gestor ve:
 
 - **Nadadores**
 - **Alta de nadador**
+- **Importar**
 - **Meses anteriores**
 
 En el detalle de una sesión ve quién está apuntado, con su correo, y puede reservar o cancelar por ellos.
@@ -121,7 +138,7 @@ Bajar el número de plazas no borra a quien ya estaba apuntado. Mientras las pla
 
 Una sesión deshabilitada sigue en el calendario y conserva sus reservas, pero no admite reservas nuevas salvo que el gestor apunte a alguien cuando la sesión ya ha empezado.
 
-El gestor puede registrar una plaza aunque la sesión ya haya empezado, si queda sitio y esa persona no supera las cinco reservas de la semana. Esa reserva se marca como añadida por un gestor.
+El gestor puede registrar una plaza aunque la sesión ya haya empezado, si queda sitio y esa persona no supera el límite de su ficha. Esa reserva se marca como añadida por un gestor.
 
 ## 11. Generación del calendario mensual
 
@@ -150,15 +167,29 @@ No hay sesión los viernes ni los domingos. Cada sesión nueva tiene 24 plazas. 
 
 ## 12. Gestión de nadadores
 
-En **Nadadores** aparece cada persona con su nombre y si está activa o desactivada. También se indica si viene del club o si se dio de alta a mano.
+En **Nadadores** aparece cada persona con su nombre, si está activa o desactivada, si viene del club o se dio de alta a mano, y su límite semanal.
 
-Al abrir una ficha se ven el correo, el teléfono, el DNI y sus reservas. Desde el panel no se editan el nombre, el correo, el teléfono ni el DNI.
+Puedes filtrar por **Todos**, **Activos** o **Inactivos**, y buscar por nombre o correo. Los dos filtros se aplican a la vez. La lista no está paginada. **Exportar CSV** descarga esa misma lista.
+
+Al abrir una ficha se ven el correo, el teléfono, el DNI y sus reservas.
+
+Si la ficha no está vinculada al club, el gestor puede guardar nombre, apellidos y teléfono. El DNI no se edita. Si está vinculada, esos datos se ven y no se cambian: los actualiza el club.
+
+El gestor puede:
+
+- elegir el límite semanal, de 1 a 5, y pulsar **Guardar límite**. Bajarlo no cancela las reservas ya hechas. A partir de ese momento no se admiten más reservas de esa semana si ya se ha llegado al nuevo número
+- pedir un cambio de correo con el mismo enlace de confirmación de 24 horas. Hasta que se confirme, el correo no cambia
+- subir o quitar la fotografía de reservas
+- **Exportar reservas CSV** de esa persona
+
+El gestor no cambia la contraseña.
 
 ## 13. Alta manual de nadadores
 
 1. Entra en **Alta de nadador**.
 2. Rellena nombre, apellidos, correo, teléfono y DNI.
-3. Pulsa **Crear nadador**.
+3. Elige el límite semanal. Si lo dejas en 3, ese es el valor de la ficha.
+4. Pulsa **Crear nadador**.
 
 Si el correo ya tiene cuenta, se usa esa cuenta y no se cambia la contraseña. Si es un correo nuevo, la persona recibe un mensaje para elegirla.
 
@@ -216,7 +247,9 @@ También se lanza al guardar el perfil de un deportista, si quien guarda es admi
 
 El resultado aparece en un aviso. Si algo falla, se puede volver a pulsar el botón. No se reintenta solo.
 
-Un campo que en el club esté vacío sustituye al valor que hubiera en reservas. Lo que se cambie solo en reservas dura hasta la próxima sincronización: en ese momento manda el club.
+Un campo que en el club esté vacío sustituye al valor que hubiera en reservas. La próxima sincronización vuelve a copiar nombre, apellidos, correo, teléfono y DNI del club. No cambia el límite semanal ni la fotografía de reservas.
+
+Si alguien confirma un correo nuevo y después el club sigue teniendo el anterior, la siguiente sincronización deja otra vez el correo del club.
 
 Salir del club o dejar de ser deportista desactiva la ficha de reservas si existía. No borra el historial pasado.
 
@@ -236,7 +269,7 @@ No muestra contraseñas. Se conservan 180 días y, como máximo, las 1000 operac
 El nadador solo ve el mes en curso. El gestor ve el mes siguiente cuando ya se ha generado.
 
 **¿Por qué no puedo reservar si el calendario muestra plazas?**
-Puede que la sesión esté deshabilitada, que ya haya empezado o que ya tengas cinco reservas esa semana.
+Puede que la sesión esté deshabilitada, que ya haya empezado o que ya hayas llegado al límite de tu ficha esa semana.
 
 **¿Por qué ha desaparecido una reserva futura?**
 Alguien ha cancelado, te han desactivado o una sincronización del club te ha dejado inactivo. Las sesiones ya empezadas siguen en el historial.
@@ -245,7 +278,10 @@ Alguien ha cancelado, te han desactivado o una sincronización del club te ha de
 No. Desactivar mantiene la ficha y el acceso se puede recuperar. Retirar saca a la persona del sitio de reservas y borra la ficha.
 
 **He cambiado el teléfono en reservas y ha vuelto el anterior.**
-La siguiente sincronización copia los datos del club, también si allí están vacíos.
+Si la ficha está vinculada al club, el teléfono no se edita en reservas. Si era una ficha manual y después se sincronizó, la siguiente sincronización copia los datos del club, también si allí están vacíos.
+
+**He pedido cambiar el correo y no puedo entrar con el nuevo.**
+Hay que abrir el enlace que llegó a la dirección nueva. Caduca a las 24 horas. Hasta entonces sigue valiendo el correo anterior.
 
 ## 19. Problemas habituales y cómo actuar
 
@@ -258,3 +294,28 @@ La siguiente sincronización copia los datos del club, también si allí están 
 | «Ya no se puede cancelar esta reserva» | Falta menos de una hora. Solo un gestor puede cancelarla |
 | «Hoy no corresponde generar un mes» | El calendario del mes que tocaba ya existe, o todavía no ha llegado el día en que se puede crear el siguiente |
 | La sincronización del club muestra un error | Vuelve a pulsar **Sincronizar ahora en reservas**. Si se repite, un administrador puede mirar el registro técnico |
+| «Se ha alcanzado el máximo de reservas de la semana» justo después de bajar el límite | Las reservas ya hechas siguen. Hay que cancelar alguna o esperar a la semana siguiente |
+
+## 20. Importar nadadores desde un CSV
+
+Solo el gestor y el administrador del sitio de reservas.
+
+1. Entra en **Importar**.
+2. Si lo necesitas, pulsa **Descargar plantilla CSV**.
+3. Elige el archivo y pulsa **Validar y previsualizar**.
+4. Revisa las filas válidas y las que se rechazan.
+5. Confirma solo cuando el listado sea el que quieres crear.
+
+Columnas: `nombre`, `apellidos`, `email`, `telefono`, `limite_semanal` y `estado`. Obligatorios: nombre, apellidos y email. El teléfono puede ir vacío. El límite vacío queda en 3; si se indica, tiene que ser de 1 a 5. El estado vacío crea la ficha activa (`1`). Solo se aceptan `0` y `1`.
+
+Una fila incorrecta no impide crear las demás. Un correo que ya exista, en el club o en reservas, no se modifica: esa fila se rechaza y se indica dónde está la cuenta. No se envía el mensaje de contraseña hasta que la fila se crea de verdad, después de confirmar.
+
+La plantilla incluye una fila de ejemplo. Si se confirma tal cual, esa persona se daría de alta. Cámbiala o bórrala antes.
+
+El archivo no puede superar 2 MB.
+
+## 21. Exportar CSV
+
+**Exportar CSV**, en la lista de nadadores, descarga las fichas que cumplen el filtro activo: nombre, apellidos, email, teléfono, estado, fecha de alta y límite semanal.
+
+**Exportar reservas CSV**, en la ficha, descarga las reservas que siguen registradas de esa persona: fecha y hora de la sesión, el texto «Registrada», la fecha de la reserva y si la hizo el nadador o un gestor. Una cancelación no aparece, porque la reserva se borra.

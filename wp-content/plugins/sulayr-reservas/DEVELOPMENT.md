@@ -2,7 +2,7 @@
 
 Referencia técnica para implementar `sulayr-reservas`. Los requisitos funcionales están en [SPEC.md](../../../SPEC.md). Por qué el código existente obliga a ciertas adaptaciones está en [ANALISIS.md](../../../ANALISIS.md). El estado de las fases está en [FASES.md](../../../FASES.md).
 
-Si este documento contradice al SPEC, manda el SPEC. No se cambian requisitos ni decisiones ya aprobadas desde aquí.
+Si este documento contradice al SPEC, manda el SPEC. Donde `SPEC-MEJORAS.md` cambia un comportamiento, manda ese documento, y el apartado 16 si un párrafo anterior de las mejoras dice lo contrario. No se cambian requisitos ni decisiones ya aprobadas desde aquí.
 
 ## Arquitectura
 
@@ -25,8 +25,13 @@ El archivo principal registra un autoload `SulayrReservas\` → `src/` y arranca
 | `Sessions\SessionGenerator` | Crea las sesiones en el blog 2 sin modificar las ya existentes |
 | `Bookings\BookingService` | Crea y cancela reservas en el blog 2 |
 | `Bookings\BookingRepository` | Lectura y escritura de esas reservas, dentro de la transacción |
-| `Swimmers\SwimmerService` | Alta, activación, desactivación y baja de nadadores en el blog 2 |
+| `Swimmers\SwimmerService` | Alta, edición de la ficha local, límite, contraseña, activación, desactivación y baja |
 | `Swimmers\SwimmerRepository` | Ficha local y reservas asociadas de ese sitio |
+| `Swimmers\WeeklyLimit` | Rango 1–5 y valor por defecto 3 |
+| `Swimmers\EmailChangeService` | Solicitud y confirmación del correo, con token de 24 horas |
+| `Swimmers\PhotoService` | Fotografía local de reservas |
+| `Swimmers\CsvImporter` | Lectura y validación del CSV, sin escribir usuarios |
+| `Swimmers\CsvExporter` | CSV de fichas y de reservas de una ficha |
 | `Sessions\SessionEditor` | Cambia la capacidad o el estado de una sesión ya creada |
 | `Front\Shortcode` | Registra `[sulayr_reservas]` y decide qué panel puede ver el usuario |
 | `Front\PanelPage` | Localiza o crea la página pública que contiene el shortcode |
@@ -209,7 +214,7 @@ Comprobado con fechas fijas y usuarios de prueba, borrados al terminar junto con
 
 ## Fase 6
 
-Implementada en `Swimmers\SwimmerService`. No hay formulario. Operaciones: `create()`, `deactivate()`, `reactivate()` y `remove()`. El SPEC no define editar el nombre, el teléfono, el correo ni el DNI de una ficha ya creada, así que no hay operación de edición. Cambiar el correo tocaría `wp_users` y el perfil del club.
+Implementada en `Swimmers\SwimmerService`. No hay formulario. Operaciones: `create()`, `deactivate()`, `reactivate()` y `remove()`. El SPEC no define editar el nombre, el teléfono, el correo ni el DNI de una ficha ya creada, así que esta fase no tiene operación de edición. La fase 10 sí la define, con las reglas de `SPEC-MEJORAS.md`, apartado 16. Cambiar el correo toca `wp_users` y, por eso, no es inmediato.
 
 Una cuenta nueva se crea en el blog 2 con el rol `nadador` ya en `wp_insert_user()`, para que el gancho del club no la convierta en `athlete`. Después se llama a `wp_send_new_user_notifications()` solo para el usuario, para que elija contraseña. En las pruebas esa llamada se interceptó: no se comprobó un buzón real. Si el correo ya existe, se reutiliza esa cuenta y no se envía aviso: no se cambia la contraseña ni `first_name`, `sulayr_user_phone` ni `sulayr_user_dni`. Si todavía no está en el blog 2, `add_user_to_blog()` le asigna `nadador`. Si ya está, `add_role( 'nadador' )`, para no quitar `gestor`, `editor` o `administrator`. La ficha local nace activa y con `linked_to_club = 0`. El vínculo con el club lo pondrá la sincronización.
 
@@ -283,12 +288,48 @@ El color de cada sesión es solo una ayuda. El texto de estado sigue saliendo de
 
 No existe un estado de sesión cancelada: cancelar borra la reserva. La leyenda no lo inventa. Una sesión pasada no ofrece reservar. Una deshabilitada o completa tampoco ofrece la reserva ordinaria. Esas reglas siguen en `quickActions` y en `BookingService`.
 
-Las tarjetas laterales leen datos que ya estaban en el panel: la ficha del usuario actual, su próxima reserva que aún no ha empezado, el recuento de activas e historial y las reservas de la semana en curso. La semana es la de `BookingService`: de lunes a domingo, y el máximo es `BookingService::WEEKLY_LIMIT`. No muestran reservas de otro nadador. Si el gestor abre la ficha de otra persona, el lateral sigue siendo el suyo.
+Las tarjetas laterales leen datos que ya estaban en el panel: la ficha del usuario actual, su próxima reserva que aún no ha empezado, el recuento de activas e historial y las reservas de la semana en curso. La semana es la de `BookingService`: de lunes a domingo. El máximo es el `weekly_limit` de la ficha, no una constante. `WeeklyLimit::DEFAULT_LIMIT` es 3. No muestran reservas de otro nadador. Si el gestor abre la ficha de otra persona, el lateral sigue siendo el suyo.
 
 `bookingsFor()` añade `s.id AS session_id` para enlazar «Detalle» de la próxima sesión. No cambia el filtro ni el orden.
 
 En el tema, el contenido de la página es `alignfull`. El panel ocupa ese ancho y anula el máximo de 645 px que Twenty Twenty-Five aplica a los hijos con `:where`, de especificidad menor. La cuadrícula de siete columnas tiene un máximo para que las celdas no se estiren en pantallas muy anchas. Por debajo de 1024 px el mes pasa a una lista de días, y los días de otros meses se ocultan. En 390 px no hay desplazamiento horizontal. La columna lateral queda al lado del calendario desde 1380 px; en pantallas más estrechas, las tarjetas pasan debajo. Desde 1680 px el menú queda en una columna a la izquierda.
 
 No hay JavaScript nuevo. La hoja se encola con `filemtime` para que el navegador recoja el CSS nuevo sin subir la versión del plugin.
+
+## Fase 10
+
+Los requisitos están en `SPEC-MEJORAS.md`. El apartado 16 cierra las decisiones de datos. `SPEC.md` no se ha modificado. La versión de esquema pasa a 2. `dbDelta` añade a `sulayr_swim_swimmers`, sin borrar filas:
+
+| Columna | Uso |
+|---|---|
+| `weekly_limit` | Entero 1–5. Defecto 3, también en las fichas que ya existían |
+| `photo_id` | ID del adjunto en el blog 2. `0` si no hay foto |
+| `pending_email` | Correo pedido y todavía no confirmado |
+| `email_token_hash` | HMAC-SHA256 del token, con `wp_salt( 'auth' )`. Vacío si no hay solicitud |
+| `email_token_expires` | Caducidad. El valor vacío de columna es `1970-01-01 00:00:00` para no depender de NULL |
+
+`BookingService` lee el límite dentro de la misma transacción que ya bloquea la ficha. Ya no existe `WEEKLY_LIMIT`. Bajar el límite no borra reservas. La semana sigue siendo de lunes a domingo por la fecha de la sesión, y solo cuentan las filas que siguen en `sulayr_swim_bookings`.
+
+La edición de nombre, apellidos y teléfono escribe solo la ficha local y solo si `linked_to_club = 0`. No toca `wp_users.user_email` ni las metas `first_name`, `last_name` y `sulayr_user_phone`. El DNI no tiene formulario. Un vinculado ve esos datos y no los guarda, ni el nadador ni el gestor. `updateSynced()` no incluye `weekly_limit` ni `photo_id`, así que una sincronización posterior restaura nombre, teléfono y correo del club y conserva el límite y la foto.
+
+El cambio de correo, lo pida el nadador o el gestor, valida que la dirección no esté en otra cuenta, guarda el hash y envía el enlace al correo nuevo. La query es `sulayr_confirmar_email` y apunta al frontend de reservas. Al confirmar se actualizan `wp_users.user_email` y la columna local, y se invalida el token. Dura 24 horas. No usa `wp-admin/profile.php`. Si `wp_mail` falla, se borra la solicitud. Si la ficha no se actualiza después de cambiar la cuenta, se revierte `user_email`. Quien confirma no tiene que tener la sesión iniciada. Una solicitud nueva sustituye a la anterior. `wp_update_user()` puede avisar a la dirección antigua; se acepta. Confirmar un correo de un vinculado actualiza la cuenta, y la siguiente sincronización del club puede volver a copiar el correo que tenga el club, porque el gancho del club lee `user_email` en ese momento.
+
+La contraseña solo la cambia el usuario actual, con la contraseña vigente, un mínimo de 8 caracteres y la repetición. Un `swimmer_user_id` distinto del actor se rechaza antes del servicio. Después se renueva la cookie.
+
+La foto no concede `upload_files`. Comprueba que el archivo venga de una subida HTTP, 5 MB, extensión, tipo real y que sea imagen. Si un lado pasa de 1200 px, se reduce manteniendo la proporción. El adjunto queda en el blog 2 y `photo_id` en la ficha. Sustituir o quitar borra el adjunto anterior. La baja del nadador también lo borra. Puede cambiarla un vinculado. El círculo es CSS.
+
+El CSV de alta no reutiliza `create()`, porque ese método puede vincular una cuenta ya existente. `createImported()` rechaza cualquier correo existente e indica si está en el club, en reservas, en ambos o solo en WordPress, y no modifica esa cuenta. Teléfono y DNI pueden ir vacíos. El aviso de contraseña se envía solo después de guardar la ficha. La vista previa vive 15 minutos en el transient `sulayr_csv_preview_{usuario}`. Confirmar repite la validación. El separador es el punto y coma si la cabecera tiene más punto y coma que comas. Se admite BOM. El tope de 2 MB es una protección de esta implementación, no del requisito. No hay tope de filas. La plantilla trae una fila de ejemplo; la pantalla avisa de que confirmarla crearía esa cuenta.
+
+La exportación exige `sulayr_manage_swimmers`, usa consultas preparadas y antepone un apóstrofo si la celda empieza por `=`, `+`, `-`, `@` o un salto. Lleva BOM UTF-8. El estado de una reserva exportada es «Registrada»: no hay otro estado guardado. «Nadador» o «Gestor» sale de comparar `created_by` con `user_id`, no de `is_manual`.
+
+Los filtros son `estado=todos|activos|inactivos` (por defecto todos) y `q` (nombre o correo, 100 caracteres). No se ha añadido paginación. El desplegable de «reservar para» sigue llamando a la lista sin filtros.
+
+El tema activo del club en este entorno es Twenty Twenty-Five, no `ct-sulayr-theme`. El rediseño está en `wp-content/themes/ct-sulayr-theme/profile-bento.css` y se encola desde `functions.php` después de la hoja del plugin del club. No cambia PHP, ACF, pestañas, campos ni URLs. Cubre la pestaña de información y la de edición del propio perfil. No hay perfil público de otro deportista. Para verlo hay que tener activo `ct-sulayr-theme`. En la comprobación se activó un momento, se midió la rejilla a 1280 px, a 954 px y a 390 px, y se volvió a dejar Twenty Twenty-Five.
+
+Un gestor sin ficha de nadador puede cambiar su contraseña en Mi perfil y no puede pedir el cambio de correo: no hay fila donde guardar el token.
+
+Cobertura futura con PHPUnit, todavía sin suite: límite semanal y su concurrencia, validación del CSV, permisos de ficha vinculada y de fotografía, y confirmación del correo.
+
+Comprobado con scripts que cargan WordPress y usuarios temporales, borrados al terminar, y con el panel y el perfil del club en el navegador. El envío de correo se interceptó con `pre_wp_mail`. No se ejecutó PHP 7.4. No se subió por HTTP un archivo que no fuera imagen con extensión de imagen. No se recorrió en el navegador el POST de previsualizar y confirmar el CSV: la validación y `createImported()` sí se ejecutaron desde PHP.
 
 Comprobado con `do_shortcode` para nadador, gestor, administrador y anónimo, y en el navegador con el CSS del tema a 1440 px y a 390 px. El día 2 de octubre de 2026 salió como hoy. Las sesiones ya empezadas se vieron atenuadas, las reservadas por el nadador en azul y las libres en verde. El gestor conservó detalle, capacidad, habilitar o deshabilitar, reserva para otro y cancelación. Un nadador que pide la vista de nadadores o un mes futuro sigue en el mes en curso. No se envió ningún POST de reserva o cancelación, para no alterar las reservas existentes. No aparecieron avisos en `debug.log`. No hay PHPUnit. `SPEC.md`, `ACEPTACION.md` y `FASES.md` no se han modificado: esto no reabre ni cierra criterios de aceptación.

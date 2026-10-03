@@ -2,11 +2,11 @@
 
 namespace SulayrReservas\Front;
 
-use SulayrReservas\Bookings\BookingService;
 use SulayrReservas\Config\SiteConfig;
 use SulayrReservas\Context\BlogContext;
 use SulayrReservas\Roles\Capabilities;
 use SulayrReservas\Sessions\SessionGenerator;
+use SulayrReservas\Swimmers\WeeklyLimit;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -67,6 +67,8 @@ class PanelRenderer {
 			$this->swimmerDetail( $now );
 		} elseif ( 'alta' === $view && $manager ) {
 			$this->createForm();
+		} elseif ( 'importar' === $view && $manager ) {
+			$this->importView();
 		} elseif ( 'historial' === $view && $manager ) {
 			$this->history( $now );
 		} else {
@@ -87,7 +89,7 @@ class PanelRenderer {
 		$view = isset( $_GET['sulayr_vista'] ) ? sanitize_key( wp_unslash( $_GET['sulayr_vista'] ) ) : 'calendario';
 		$allowed = array( 'calendario', 'sesion', 'reservas', 'perfil' );
 		if ( $manager ) {
-			$allowed = array_merge( $allowed, array( 'nadadores', 'nadador', 'alta', 'historial' ) );
+			$allowed = array_merge( $allowed, array( 'nadadores', 'nadador', 'alta', 'importar', 'historial' ) );
 		}
 
 		return in_array( $view, $allowed, true ) ? $view : 'calendario';
@@ -100,11 +102,15 @@ class PanelRenderer {
 		$key    = 'sulayr_panel_notice_' . get_current_user_id();
 		$notice = get_transient( $key );
 		delete_transient( $key );
-		if ( ! is_array( $notice ) || empty( $notice['message'] ) ) {
-			return;
+		if ( is_array( $notice ) && ! empty( $notice['message'] ) ) {
+			echo '<p class="sulayr-notice" role="status">' . esc_html( (string) $notice['message'] ) . '</p>';
 		}
 
-		echo '<p class="sulayr-notice" role="status">' . esc_html( (string) $notice['message'] ) . '</p>';
+		$code = isset( $_GET['sulayr_aviso'] ) ? sanitize_key( wp_unslash( $_GET['sulayr_aviso'] ) ) : '';
+		$text = $this->emailNotice( $code );
+		if ( '' !== $text ) {
+			echo '<p class="sulayr-notice" role="status">' . esc_html( $text ) . '</p>';
+		}
 	}
 
 	/**
@@ -129,6 +135,7 @@ class PanelRenderer {
 		if ( $manager ) {
 			$this->navItem( 'Nadadores', 'users', array( 'sulayr_vista' => 'nadadores' ), 'nadadores', $current );
 			$this->navItem( 'Alta de nadador', 'plus', array( 'sulayr_vista' => 'alta' ), 'alta', $current );
+			$this->navItem( 'Importar', 'list', array( 'sulayr_vista' => 'importar' ), 'importar', $current );
 			$this->navItem( 'Meses anteriores', 'clock', array( 'sulayr_vista' => 'historial' ), 'historial', $current );
 		}
 		echo '</div></nav>';
@@ -170,7 +177,7 @@ class PanelRenderer {
 		if ( 'calendario' === $view ) {
 			$this->legendCard();
 		}
-		$this->summaryCard( $now, $own );
+		$this->summaryCard( $now, $own, $profile );
 		echo '</aside>';
 	}
 
@@ -190,9 +197,7 @@ class PanelRenderer {
 		}
 
 		echo '<section class="sulayr-card sulayr-user-card">';
-		if ( '' !== $name && preg_match( '/^\p{L}/u', $name, $found ) ) {
-			echo '<p class="sulayr-avatar" aria-hidden="true">' . esc_html( $found[0] ) . '</p>';
-		}
+		$this->avatar( $name, $profile && ! empty( $profile->photo_url ) ? (string) $profile->photo_url : '' );
 		echo '<div>';
 		echo '<h2>' . esc_html( '' !== $name ? 'Hola, ' . $name : 'Hola' ) . '</h2>';
 		echo '<p class="sulayr-role">' . esc_html( $this->roleLabel( $manager ) ) . '</p>';
@@ -262,8 +267,8 @@ class PanelRenderer {
 	 * @param array{active: object[], past: object[]} $own Reservas propias.
 	 * @return void
 	 */
-	private function summaryCard( \DateTimeImmutable $now, array $own ) {
-		$limit = BookingService::WEEKLY_LIMIT;
+	private function summaryCard( \DateTimeImmutable $now, array $own, $profile ) {
+		$limit = $profile ? WeeklyLimit::normalize( $profile->weekly_limit ) : WeeklyLimit::DEFAULT_LIMIT;
 		$count = $this->weekCount( $own, $now );
 		$value = min( $count, $limit );
 
@@ -275,7 +280,7 @@ class PanelRenderer {
 		echo '<li><span>Límite semanal</span><strong>' . esc_html( $count . ' / ' . $limit ) . '</strong></li>';
 		echo '</ul>';
 		echo '<meter class="sulayr-meter" min="0" max="' . esc_attr( (string) $limit ) . '" value="' . esc_attr( (string) $value ) . '" aria-hidden="true"></meter>';
-		echo '<p class="sulayr-summary-note">Reservas de esta semana, de lunes a domingo.</p>';
+		echo '<p class="sulayr-summary-note">Tu límite es de ' . esc_html( (string) $limit ) . ' reservas por semana, de lunes a domingo.</p>';
 		echo '</section>';
 	}
 
@@ -564,11 +569,13 @@ class PanelRenderer {
 			return;
 		}
 
+		$filters = $this->query->swimmerFilters();
 		echo '<div class="sulayr-card">';
 		echo '<h2>Nadadores</h2>';
-		$rows = $this->query->swimmers();
+		$this->filterForm( $filters );
+		$rows = $this->query->swimmers( $filters );
 		if ( array() === $rows ) {
-			echo '<p>No hay nadadores.</p></div>';
+			echo '<p>No hay nadadores con ese criterio.</p></div>';
 			return;
 		}
 
@@ -576,10 +583,15 @@ class PanelRenderer {
 		foreach ( $rows as $row ) {
 			$state  = 1 === (int) $row->active ? 'Activo' : 'Desactivado';
 			$origin = 1 === (int) $row->linked_to_club ? 'Vinculado al club' : 'Alta manual';
-			echo '<li><a href="' . esc_url( $this->url( array( 'sulayr_vista' => 'nadador', 'usuario' => (int) $row->user_id ) ) ) . '">' . esc_html( $row->first_name . ' ' . $row->last_name ) . '</a> ';
-			echo '<span>' . esc_html( $state . '. ' . $origin ) . '</span></li>';
+			$limit  = WeeklyLimit::normalize( $row->weekly_limit );
+			echo '<li>';
+			$this->avatar( trim( $row->first_name . ' ' . $row->last_name ), isset( $row->photo_url ) ? (string) $row->photo_url : '', 'sulayr-avatar sulayr-avatar-small' );
+			echo '<a href="' . esc_url( $this->url( array( 'sulayr_vista' => 'nadador', 'usuario' => (int) $row->user_id ) ) ) . '">' . esc_html( $row->first_name . ' ' . $row->last_name ) . '</a> ';
+			echo '<span>' . esc_html( $state . '. ' . $origin . '. Límite ' . $limit ) . '</span></li>';
 		}
-		echo '</ul></div>';
+		echo '</ul>';
+		$this->exportSwimmersForm( $filters );
+		echo '</div>';
 	}
 
 	/**
@@ -594,15 +606,31 @@ class PanelRenderer {
 			return;
 		}
 
+		$linked = 1 === (int) $row->linked_to_club;
+		$name   = trim( $row->first_name . ' ' . $row->last_name );
 		echo '<div class="sulayr-card">';
-		echo '<h2>' . esc_html( $row->first_name . ' ' . $row->last_name ) . '</h2>';
+		$this->avatar( $name, isset( $row->photo_url ) ? (string) $row->photo_url : '' );
+		echo '<h2>' . esc_html( $name ) . '</h2>';
 		echo '<p>' . esc_html( 1 === (int) $row->active ? 'Activo' : 'Desactivado' ) . '. ';
-		echo esc_html( 1 === (int) $row->linked_to_club ? 'Vinculado al club.' : 'Alta manual.' ) . '</p>';
+		echo esc_html( $linked ? 'Vinculado al club.' : 'Alta manual.' ) . '</p>';
 		echo '<dl class="sulayr-profile">';
 		$this->pair( 'Correo', (string) $row->email );
 		$this->pair( 'Teléfono', (string) $row->phone );
 		$this->pair( 'DNI', (string) $row->dni );
+		$this->pair( 'Límite semanal', (string) WeeklyLimit::normalize( $row->weekly_limit ) );
 		echo '</dl>';
+		if ( ! empty( $row->pending_email ) ) {
+			echo '<p>Cambio de correo pendiente de confirmación en ' . esc_html( (string) $row->pending_email ) . '. El correo actual sigue vigente.</p>';
+		}
+		if ( $linked ) {
+			echo '<p>El nombre, los apellidos, el teléfono y el DNI los gestiona el club.</p>';
+		} else {
+			$this->personalForm( (int) $row->user_id, $row, array( 'sulayr_vista' => 'nadador', 'usuario' => (int) $row->user_id ) );
+		}
+		$this->limitForm( (int) $row->user_id, $row );
+		$this->emailForm( (int) $row->user_id, array( 'sulayr_vista' => 'nadador', 'usuario' => (int) $row->user_id ) );
+		$this->photoForm( (int) $row->user_id, $row, array( 'sulayr_vista' => 'nadador', 'usuario' => (int) $row->user_id ) );
+		$this->exportBookingsForm( (int) $row->user_id );
 
 		if ( 1 === (int) $row->active ) {
 			$this->post( 'swimmer_deactivate', 'Desactivar', array( 'swimmer_user_id' => (int) $row->user_id ) );
@@ -629,11 +657,17 @@ class PanelRenderer {
 			$row = $this->query->swimmer( get_current_user_id() );
 		}
 		if ( ! $row ) {
-			echo '<div class="sulayr-card"><p>No hay una ficha de nadador para esta cuenta.</p></div>';
+			echo '<div class="sulayr-card"><p>No hay una ficha de nadador para esta cuenta.</p>';
+			$this->passwordForm( array( 'sulayr_vista' => 'perfil' ) );
+			echo '</div>';
 			return;
 		}
 
+		$linked = 1 === (int) $row->linked_to_club;
+		$name   = trim( (string) $row->first_name . ' ' . (string) $row->last_name );
+		$back   = array( 'sulayr_vista' => 'perfil' );
 		echo '<div class="sulayr-card">';
+		$this->avatar( $name, isset( $row->photo_url ) ? (string) $row->photo_url : '' );
 		echo '<h2>Mi perfil</h2>';
 		echo '<p>' . esc_html( 1 === (int) $row->active ? 'Activo' : 'Desactivado' ) . '.</p>';
 		echo '<dl class="sulayr-profile">';
@@ -642,7 +676,21 @@ class PanelRenderer {
 		$this->pair( 'Correo', (string) $row->email );
 		$this->pair( 'Teléfono', (string) $row->phone );
 		$this->pair( 'DNI', (string) $row->dni );
-		echo '</dl></div>';
+		$this->pair( 'Límite semanal', (string) WeeklyLimit::normalize( $row->weekly_limit ) );
+		echo '</dl>';
+		echo '<p>El límite semanal lo establece el gestor. No puedes cambiarlo.</p>';
+		if ( ! empty( $row->pending_email ) ) {
+			echo '<p>Cambio de correo pendiente de confirmación en ' . esc_html( (string) $row->pending_email ) . '. El correo actual sigue vigente.</p>';
+		}
+		if ( $linked ) {
+			echo '<p>El nombre, los apellidos, el teléfono y el DNI los gestiona el club. Puedes cambiar la contraseña, solicitar otro correo y actualizar tu fotografía de reservas.</p>';
+		} else {
+			$this->personalForm( (int) $row->user_id, $row, $back );
+		}
+		$this->emailForm( (int) $row->user_id, $back );
+		$this->photoForm( (int) $row->user_id, $row, $back );
+		$this->passwordForm( $back );
+		echo '</div>';
 	}
 
 	/**
@@ -677,6 +725,12 @@ class PanelRenderer {
 			$type  = 'email' === $name ? 'email' : 'text';
 			echo '<label>' . esc_html( $label ) . ' <input type="' . esc_attr( $type ) . '" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '" required></label>';
 		}
+		$selected = isset( $values['weekly_limit'] ) ? (string) $values['weekly_limit'] : (string) WeeklyLimit::DEFAULT_LIMIT;
+		echo '<label>Límite semanal <select name="weekly_limit">';
+		for ( $limit = WeeklyLimit::MIN; $limit <= WeeklyLimit::MAX; $limit++ ) {
+			echo '<option value="' . esc_attr( (string) $limit ) . '"' . selected( $selected, (string) $limit, false ) . '>' . esc_html( (string) $limit ) . '</option>';
+		}
+		echo '</select></label>';
 		echo '<button type="submit">Crear nadador</button></form></div>';
 	}
 
@@ -910,6 +964,225 @@ class PanelRenderer {
 		}
 
 		return add_query_arg( $clean, $base );
+	}
+
+	/**
+	 * @return void
+	 */
+	private function importView() {
+		if ( ! current_user_can( Capabilities::MANAGE_SWIMMERS ) ) {
+			echo '<div class="sulayr-card"><p>No tienes permiso para importar nadadores.</p></div>';
+			return;
+		}
+
+		echo '<div class="sulayr-card">';
+		echo '<h2>Importar nadadores</h2>';
+		echo '<p>Columnas: nombre, apellidos, email, telefono, limite_semanal y estado. Obligatorios: nombre, apellidos y email. El estado vacío se crea activo (1). El límite vacío queda en 3. Solo se admiten límites del 1 al 5 y estados 0 o 1.</p>';
+		echo '<p>La fila de ejemplo de la plantilla se importaría si confirmas ese archivo. Cámbiala o bórrala antes.</p>';
+		echo '<form method="post" action="' . esc_url( $this->url( array( 'sulayr_vista' => 'importar' ) ) ) . '" class="sulayr-inline">';
+		wp_nonce_field( PanelActions::NONCE, 'sulayr_nonce' );
+		echo '<input type="hidden" name="sulayr_action" value="export_template">';
+		echo '<input type="hidden" name="sulayr_return" value="' . esc_attr( $this->url( array( 'sulayr_vista' => 'importar' ) ) ) . '">';
+		echo '<button type="submit">Descargar plantilla CSV</button></form>';
+
+		echo '<form method="post" enctype="multipart/form-data" action="' . esc_url( $this->url( array( 'sulayr_vista' => 'importar' ) ) ) . '" class="sulayr-form">';
+		wp_nonce_field( PanelActions::NONCE, 'sulayr_nonce' );
+		echo '<input type="hidden" name="sulayr_action" value="csv_preview">';
+		echo '<input type="hidden" name="sulayr_return" value="' . esc_attr( $this->url( array( 'sulayr_vista' => 'importar' ) ) ) . '">';
+		echo '<label>Archivo CSV <input type="file" name="csv" accept=".csv,text/csv" required></label>';
+		echo '<button type="submit">Validar y previsualizar</button></form>';
+
+		$preview = get_transient( 'sulayr_csv_preview_' . get_current_user_id() );
+		if ( is_array( $preview ) && ! empty( $preview['rows'] ) && ! empty( $preview['token'] ) ) {
+			$this->importPreview( $preview );
+		}
+		echo '</div>';
+	}
+
+	/**
+	 * @param array<string, mixed> $preview Vista previa guardada.
+	 * @return void
+	 */
+	private function importPreview( array $preview ) {
+		$valid = 0;
+		echo '<h3>Vista previa</h3>';
+		echo '<ul class="sulayr-people">';
+		foreach ( $preview['rows'] as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$data = isset( $row['data'] ) && is_array( $row['data'] ) ? $row['data'] : array();
+			$line = isset( $row['line'] ) ? (int) $row['line'] : 0;
+			if ( ! empty( $row['ok'] ) ) {
+				++$valid;
+				echo '<li>Fila ' . esc_html( (string) $line ) . ': ' . esc_html( ( isset( $data['first_name'] ) ? $data['first_name'] : '' ) . ' ' . ( isset( $data['last_name'] ) ? $data['last_name'] : '' ) ) . ' — válida</li>';
+				continue;
+			}
+			$messages = isset( $row['messages'] ) && is_array( $row['messages'] ) ? implode( ' ', $row['messages'] ) : '';
+			echo '<li>Fila ' . esc_html( (string) $line ) . ': ' . esc_html( $messages ) . '</li>';
+		}
+		echo '</ul>';
+		echo '<p>' . esc_html( (string) $valid ) . ' filas válidas. Las filas con error no se crearán.</p>';
+		if ( $valid > 0 ) {
+			echo '<form method="post" action="' . esc_url( $this->url( array( 'sulayr_vista' => 'importar' ) ) ) . '" class="sulayr-form">';
+			wp_nonce_field( PanelActions::NONCE, 'sulayr_nonce' );
+			echo '<input type="hidden" name="sulayr_action" value="csv_confirm">';
+			echo '<input type="hidden" name="sulayr_return" value="' . esc_attr( $this->url( array( 'sulayr_vista' => 'importar' ) ) ) . '">';
+			echo '<input type="hidden" name="csv_token" value="' . esc_attr( (string) $preview['token'] ) . '">';
+			echo '<button type="submit">Confirmar importación de las filas válidas</button></form>';
+		}
+	}
+
+	/**
+	 * @param array{status: string, search: string} $filters Filtros actuales.
+	 * @return void
+	 */
+	private function filterForm( array $filters ) {
+		echo '<form method="get" action="' . esc_url( $this->url( array() ) ) . '" class="sulayr-form sulayr-filters">';
+		echo '<input type="hidden" name="sulayr_vista" value="nadadores">';
+		echo '<label>Estado <select name="estado">';
+		foreach ( array( 'todos' => 'Todos', 'activos' => 'Activos', 'inactivos' => 'Inactivos' ) as $value => $label ) {
+			echo '<option value="' . esc_attr( $value ) . '"' . selected( $filters['status'], $value, false ) . '>' . esc_html( $label ) . '</option>';
+		}
+		echo '</select></label>';
+		echo '<label>Nombre o correo <input type="search" name="q" value="' . esc_attr( $filters['search'] ) . '"></label>';
+		echo '<button type="submit">Filtrar</button></form>';
+	}
+
+	/**
+	 * @param array{status: string, search: string} $filters Filtros a exportar.
+	 * @return void
+	 */
+	private function exportSwimmersForm( array $filters ) {
+		echo '<form method="post" action="' . esc_url( $this->url( array() ) ) . '" class="sulayr-inline">';
+		wp_nonce_field( PanelActions::NONCE, 'sulayr_nonce' );
+		echo '<input type="hidden" name="sulayr_action" value="export_swimmers">';
+		echo '<input type="hidden" name="estado" value="' . esc_attr( $filters['status'] ) . '">';
+		echo '<input type="hidden" name="q" value="' . esc_attr( $filters['search'] ) . '">';
+		echo '<button type="submit">Exportar CSV</button></form>';
+	}
+
+	/**
+	 * @param int $user_id Nadador.
+	 * @return void
+	 */
+	private function exportBookingsForm( $user_id ) {
+		echo '<form method="post" action="' . esc_url( $this->url( array() ) ) . '" class="sulayr-inline">';
+		wp_nonce_field( PanelActions::NONCE, 'sulayr_nonce' );
+		echo '<input type="hidden" name="sulayr_action" value="export_bookings">';
+		echo '<input type="hidden" name="swimmer_user_id" value="' . esc_attr( (string) $user_id ) . '">';
+		echo '<button type="submit">Exportar reservas CSV</button></form>';
+	}
+
+	/**
+	 * @param int                     $user_id Nadador.
+	 * @param object                  $row     Ficha.
+	 * @param array<string, mixed>    $return  Vuelta.
+	 * @return void
+	 */
+	private function personalForm( $user_id, $row, array $return ) {
+		echo '<form method="post" action="' . esc_url( $this->url( array() ) ) . '" class="sulayr-form">';
+		wp_nonce_field( PanelActions::NONCE, 'sulayr_nonce' );
+		echo '<input type="hidden" name="sulayr_action" value="profile_save">';
+		echo '<input type="hidden" name="sulayr_return" value="' . esc_attr( $this->url( $return ) ) . '">';
+		echo '<input type="hidden" name="swimmer_user_id" value="' . esc_attr( (string) $user_id ) . '">';
+		echo '<label>Nombre <input type="text" name="first_name" value="' . esc_attr( (string) $row->first_name ) . '" required></label>';
+		echo '<label>Apellidos <input type="text" name="last_name" value="' . esc_attr( (string) $row->last_name ) . '" required></label>';
+		echo '<label>Teléfono <input type="text" name="phone" value="' . esc_attr( (string) $row->phone ) . '" required></label>';
+		echo '<button type="submit">Guardar datos</button></form>';
+	}
+
+	/**
+	 * @param int    $user_id Nadador.
+	 * @param object $row     Ficha.
+	 * @return void
+	 */
+	private function limitForm( $user_id, $row ) {
+		$current = (string) WeeklyLimit::normalize( $row->weekly_limit );
+		echo '<form method="post" action="' . esc_url( $this->url( array() ) ) . '" class="sulayr-form">';
+		wp_nonce_field( PanelActions::NONCE, 'sulayr_nonce' );
+		echo '<input type="hidden" name="sulayr_action" value="weekly_limit">';
+		echo '<input type="hidden" name="sulayr_return" value="' . esc_attr( $this->url( array( 'sulayr_vista' => 'nadador', 'usuario' => $user_id ) ) ) . '">';
+		echo '<input type="hidden" name="swimmer_user_id" value="' . esc_attr( (string) $user_id ) . '">';
+		echo '<label>Límite semanal <select name="weekly_limit">';
+		for ( $limit = WeeklyLimit::MIN; $limit <= WeeklyLimit::MAX; $limit++ ) {
+			echo '<option value="' . esc_attr( (string) $limit ) . '"' . selected( $current, (string) $limit, false ) . '>' . esc_html( (string) $limit ) . '</option>';
+		}
+		echo '</select></label>';
+		echo '<button type="submit">Guardar límite</button></form>';
+	}
+
+	/**
+	 * @param int                  $user_id Nadador.
+	 * @param array<string, mixed> $return  Vuelta.
+	 * @return void
+	 */
+	private function emailForm( $user_id, array $return ) {
+		echo '<form method="post" action="' . esc_url( $this->url( array() ) ) . '" class="sulayr-form">';
+		wp_nonce_field( PanelActions::NONCE, 'sulayr_nonce' );
+		echo '<input type="hidden" name="sulayr_action" value="email_request">';
+		echo '<input type="hidden" name="sulayr_return" value="' . esc_attr( $this->url( $return ) ) . '">';
+		echo '<input type="hidden" name="swimmer_user_id" value="' . esc_attr( (string) $user_id ) . '">';
+		echo '<label>Nuevo correo <input type="email" name="new_email" required></label>';
+		echo '<button type="submit">Solicitar cambio de correo</button></form>';
+	}
+
+	/**
+	 * @param array<string, mixed> $return Vuelta.
+	 * @return void
+	 */
+	private function passwordForm( array $return ) {
+		echo '<form method="post" action="' . esc_url( $this->url( array() ) ) . '" class="sulayr-form">';
+		wp_nonce_field( PanelActions::NONCE, 'sulayr_nonce' );
+		echo '<input type="hidden" name="sulayr_action" value="password_change">';
+		echo '<input type="hidden" name="sulayr_return" value="' . esc_attr( $this->url( $return ) ) . '">';
+		echo '<label>Contraseña actual <input type="password" name="current_password" autocomplete="current-password" required></label>';
+		echo '<label>Nueva contraseña <input type="password" name="new_password" autocomplete="new-password" required></label>';
+		echo '<label>Confirmar contraseña <input type="password" name="confirm_password" autocomplete="new-password" required></label>';
+		echo '<button type="submit">Cambiar contraseña</button></form>';
+	}
+
+	/**
+	 * @param int                  $user_id Nadador.
+	 * @param object               $row     Ficha.
+	 * @param array<string, mixed> $return  Vuelta.
+	 * @return void
+	 */
+	private function photoForm( $user_id, $row, array $return ) {
+		echo '<form method="post" enctype="multipart/form-data" action="' . esc_url( $this->url( array() ) ) . '" class="sulayr-form">';
+		wp_nonce_field( PanelActions::NONCE, 'sulayr_nonce' );
+		echo '<input type="hidden" name="sulayr_action" value="photo_save">';
+		echo '<input type="hidden" name="sulayr_return" value="' . esc_attr( $this->url( $return ) ) . '">';
+		echo '<input type="hidden" name="swimmer_user_id" value="' . esc_attr( (string) $user_id ) . '">';
+		echo '<label>Fotografía (JPG, PNG o WebP, máximo 5 MB) <input type="file" name="photo" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" required></label>';
+		echo '<button type="submit">Guardar fotografía</button></form>';
+		if ( ! empty( $row->photo_id ) ) {
+			$this->post( 'photo_delete', 'Quitar fotografía', array( 'swimmer_user_id' => $user_id ), $return );
+		}
+	}
+
+	/**
+	 * @param string $name Nombre visible, para la inicial.
+	 * @param string $url  URL de la foto. Vacía si no hay.
+	 * @param string $class Clases.
+	 * @return void
+	 */
+	private function avatar( $name, $url, $class = 'sulayr-avatar' ) {
+		if ( '' !== $url ) {
+			echo '<img class="' . esc_attr( $class ) . ' sulayr-avatar-photo" src="' . esc_url( $url ) . '" alt="" width="96" height="96">';
+			return;
+		}
+		if ( '' !== $name && preg_match( '/^\p{L}/u', $name, $found ) ) {
+			echo '<p class="' . esc_attr( $class ) . '" aria-hidden="true">' . esc_html( $found[0] ) . '</p>';
+		}
+	}
+
+	/**
+	 * @param string $code Código de la query, sin datos personales.
+	 * @return string
+	 */
+	private function emailNotice( $code ) {
+		return \SulayrReservas\Swimmers\EmailChangeService::notice( $code );
 	}
 
 	/**

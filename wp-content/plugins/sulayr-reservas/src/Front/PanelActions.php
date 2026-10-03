@@ -8,6 +8,11 @@ use SulayrReservas\Context\BlogContext;
 use SulayrReservas\Roles\Capabilities;
 use SulayrReservas\Sessions\SessionEditor;
 use SulayrReservas\Sessions\SessionGenerator;
+use SulayrReservas\Swimmers\CsvExporter;
+use SulayrReservas\Swimmers\CsvImporter;
+use SulayrReservas\Swimmers\EmailChangeService;
+use SulayrReservas\Swimmers\PhotoService;
+use SulayrReservas\Swimmers\SwimmerRepository;
 use SulayrReservas\Swimmers\SwimmerService;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -96,6 +101,39 @@ class PanelActions {
 				break;
 			case 'swimmer_remove':
 				$this->removeSwimmer();
+				break;
+			case 'profile_save':
+				$this->saveProfile();
+				break;
+			case 'weekly_limit':
+				$this->saveLimit();
+				break;
+			case 'email_request':
+				$this->requestEmail();
+				break;
+			case 'password_change':
+				$this->changePassword();
+				break;
+			case 'photo_save':
+				$this->savePhoto();
+				break;
+			case 'photo_delete':
+				$this->deletePhoto();
+				break;
+			case 'csv_preview':
+				$this->previewCsv();
+				break;
+			case 'csv_confirm':
+				$this->confirmCsv();
+				break;
+			case 'export_swimmers':
+				$this->exportSwimmers();
+				break;
+			case 'export_bookings':
+				$this->exportBookings();
+				break;
+			case 'export_template':
+				$this->exportTemplate();
 				break;
 			default:
 				$this->redirect( 'unauthorized', 'La petición no es válida. Vuelve a intentarlo.' );
@@ -200,8 +238,9 @@ class PanelActions {
 			'first_name' => isset( $_POST['first_name'] ) ? (string) wp_unslash( $_POST['first_name'] ) : '',
 			'last_name'  => isset( $_POST['last_name'] ) ? (string) wp_unslash( $_POST['last_name'] ) : '',
 			'email'      => isset( $_POST['email'] ) ? (string) wp_unslash( $_POST['email'] ) : '',
-			'phone'      => isset( $_POST['phone'] ) ? (string) wp_unslash( $_POST['phone'] ) : '',
-			'dni'        => isset( $_POST['dni'] ) ? (string) wp_unslash( $_POST['dni'] ) : '',
+			'phone'        => isset( $_POST['phone'] ) ? (string) wp_unslash( $_POST['phone'] ) : '',
+			'dni'          => isset( $_POST['dni'] ) ? (string) wp_unslash( $_POST['dni'] ) : '',
+			'weekly_limit' => isset( $_POST['weekly_limit'] ) ? (string) wp_unslash( $_POST['weekly_limit'] ) : '',
 		);
 		$result = ( new SwimmerService( $this->blog_context ) )->create( $data );
 		if ( 'created' !== $result->status() && 'reused' !== $result->status() ) {
@@ -242,6 +281,223 @@ class PanelActions {
 		$user_id = isset( $_POST['swimmer_user_id'] ) ? absint( $_POST['swimmer_user_id'] ) : 0;
 		$result  = ( new SwimmerService( $this->blog_context ) )->remove( $user_id );
 		$this->redirect( $result->status(), $result->message() );
+	}
+
+	/**
+	 * @return void
+	 */
+	private function saveProfile() {
+		$user_id = $this->targetSwimmer();
+		$data    = array(
+			'first_name' => isset( $_POST['first_name'] ) ? (string) wp_unslash( $_POST['first_name'] ) : '',
+			'last_name'  => isset( $_POST['last_name'] ) ? (string) wp_unslash( $_POST['last_name'] ) : '',
+			'phone'      => isset( $_POST['phone'] ) ? (string) wp_unslash( $_POST['phone'] ) : '',
+		);
+		$result  = ( new SwimmerService( $this->blog_context ) )->updatePersonal( $user_id, $data );
+		$this->redirect( $result->status(), $result->message() );
+	}
+
+	/**
+	 * @return void
+	 */
+	private function saveLimit() {
+		if ( ! current_user_can( Capabilities::MANAGE_SWIMMERS ) ) {
+			$this->redirect( 'unauthorized', 'No tienes permiso para esta operación.' );
+		}
+
+		$user_id = isset( $_POST['swimmer_user_id'] ) ? absint( $_POST['swimmer_user_id'] ) : 0;
+		$limit   = isset( $_POST['weekly_limit'] ) ? (string) wp_unslash( $_POST['weekly_limit'] ) : '';
+		$result  = ( new SwimmerService( $this->blog_context ) )->updateWeeklyLimit( $user_id, $limit );
+		$this->redirect( $result->status(), $result->message() );
+	}
+
+	/**
+	 * @return void
+	 */
+	private function requestEmail() {
+		$user_id = $this->targetSwimmer();
+		$email   = isset( $_POST['new_email'] ) ? (string) wp_unslash( $_POST['new_email'] ) : '';
+		$result  = ( new EmailChangeService( $this->config, $this->blog_context ) )->request( $user_id, $email );
+		$this->redirect( $result->status(), $result->message() );
+	}
+
+	/**
+	 * @return void
+	 */
+	private function changePassword() {
+		$posted = isset( $_POST['swimmer_user_id'] ) ? absint( $_POST['swimmer_user_id'] ) : 0;
+		if ( $posted > 0 && $posted !== get_current_user_id() ) {
+			$this->redirect( 'unauthorized', 'No tienes permiso para esta operación.' );
+		}
+
+		$result = ( new SwimmerService( $this->blog_context ) )->changePassword(
+			isset( $_POST['current_password'] ) ? (string) wp_unslash( $_POST['current_password'] ) : '',
+			isset( $_POST['new_password'] ) ? (string) wp_unslash( $_POST['new_password'] ) : '',
+			isset( $_POST['confirm_password'] ) ? (string) wp_unslash( $_POST['confirm_password'] ) : ''
+		);
+		$this->redirect( $result->status(), $result->message() );
+	}
+
+	/**
+	 * @return void
+	 */
+	private function savePhoto() {
+		$user_id = $this->targetSwimmer();
+		$file    = isset( $_FILES['photo'] ) && is_array( $_FILES['photo'] ) ? $_FILES['photo'] : array();
+		$result  = ( new PhotoService( $this->blog_context ) )->replace( $user_id, $file );
+		$this->redirect( $result->status(), $result->message() );
+	}
+
+	/**
+	 * @return void
+	 */
+	private function deletePhoto() {
+		$user_id = $this->targetSwimmer();
+		$result  = ( new PhotoService( $this->blog_context ) )->remove( $user_id );
+		$this->redirect( $result->status(), $result->message() );
+	}
+
+	/**
+	 * @return void
+	 */
+	private function previewCsv() {
+		if ( ! current_user_can( Capabilities::MANAGE_SWIMMERS ) ) {
+			$this->redirect( 'unauthorized', 'No tienes permiso para esta operación.' );
+		}
+
+		$file = isset( $_FILES['csv'] ) && is_array( $_FILES['csv'] ) ? $_FILES['csv'] : array();
+		if ( empty( $file['tmp_name'] ) || ! is_uploaded_file( $file['tmp_name'] ) ) {
+			$this->redirect( 'invalid', 'Selecciona un archivo CSV.' );
+		}
+		if ( ! empty( $file['size'] ) && (int) $file['size'] > 2097152 ) {
+			$this->redirect( 'invalid', 'El CSV supera el tamaño máximo de 2 MB.' );
+		}
+
+		$contents = file_get_contents( $file['tmp_name'] );
+		$parsed   = ( new CsvImporter() )->parse( is_string( $contents ) ? $contents : '' );
+		if ( '' !== $parsed['error'] ) {
+			delete_transient( $this->previewKey() );
+			$this->redirect( 'invalid', $parsed['error'] );
+		}
+
+		$rows = ( new CsvImporter() )->validate( $parsed['rows'], new EmailChangeService( $this->config, $this->blog_context ) );
+		set_transient(
+			$this->previewKey(),
+			array(
+				'token' => bin2hex( random_bytes( 16 ) ),
+				'rows'  => $rows,
+			),
+			15 * MINUTE_IN_SECONDS
+		);
+		$this->redirect( 'updated', 'Revisa la vista previa antes de crear nadadores.' );
+	}
+
+	/**
+	 * @return void
+	 */
+	private function confirmCsv() {
+		if ( ! current_user_can( Capabilities::MANAGE_SWIMMERS ) ) {
+			$this->redirect( 'unauthorized', 'No tienes permiso para esta operación.' );
+		}
+
+		$stored = get_transient( $this->previewKey() );
+		$token  = isset( $_POST['csv_token'] ) ? (string) wp_unslash( $_POST['csv_token'] ) : '';
+		if ( ! is_array( $stored ) || empty( $stored['token'] ) || ! hash_equals( (string) $stored['token'], $token ) ) {
+			$this->redirect( 'invalid', 'La vista previa ha caducado. Vuelve a subir el archivo.' );
+		}
+
+		delete_transient( $this->previewKey() );
+		$service = new SwimmerService( $this->blog_context );
+		$created = 0;
+		$skipped = 0;
+		foreach ( (array) $stored['rows'] as $row ) {
+			if ( empty( $row['ok'] ) || empty( $row['data'] ) || ! is_array( $row['data'] ) ) {
+				++$skipped;
+				continue;
+			}
+			$result = $service->createImported( $row['data'] );
+			if ( 'created' === $result->status() ) {
+				++$created;
+			} else {
+				++$skipped;
+			}
+		}
+
+		$this->redirect( 'updated', 'Se han creado ' . $created . ' nadadores. Filas no importadas: ' . $skipped . '.' );
+	}
+
+	/**
+	 * @return void
+	 */
+	private function exportSwimmers() {
+		if ( ! current_user_can( Capabilities::MANAGE_SWIMMERS ) ) {
+			$this->redirect( 'unauthorized', 'No tienes permiso para esta operación.' );
+		}
+
+		$query   = new PanelQuery( $this->blog_context );
+		$status  = isset( $_POST['estado'] ) ? sanitize_key( wp_unslash( $_POST['estado'] ) ) : 'todos';
+		$search  = isset( $_POST['q'] ) ? (string) wp_unslash( $_POST['q'] ) : '';
+		$filters = $query->cleanFilters( $status, $search );
+		$rows    = $query->swimmers( $filters );
+		( new CsvExporter() )->download( 'nadadores.csv', ( new CsvExporter() )->swimmers( $rows ) );
+	}
+
+	/**
+	 * @return void
+	 */
+	private function exportBookings() {
+		if ( ! current_user_can( Capabilities::MANAGE_SWIMMERS ) ) {
+			$this->redirect( 'unauthorized', 'No tienes permiso para esta operación.' );
+		}
+
+		$user_id = isset( $_POST['swimmer_user_id'] ) ? absint( $_POST['swimmer_user_id'] ) : 0;
+		$rows    = $this->blog_context->onBookings(
+			function () use ( $user_id ) {
+				if ( ! ( new SwimmerRepository() )->find( $user_id ) ) {
+					return null;
+				}
+
+				return ( new SwimmerRepository() )->bookingsForExport( $user_id );
+			}
+		);
+		if ( null === $rows ) {
+			$this->redirect( 'missing', 'El nadador no existe.' );
+		}
+
+		( new CsvExporter() )->download( 'reservas-nadador-' . $user_id . '.csv', ( new CsvExporter() )->bookings( $rows ) );
+	}
+
+	/**
+	 * @return void
+	 */
+	private function exportTemplate() {
+		if ( ! current_user_can( Capabilities::MANAGE_SWIMMERS ) ) {
+			$this->redirect( 'unauthorized', 'No tienes permiso para esta operación.' );
+		}
+
+		( new CsvExporter() )->download( 'plantilla-nadadores.csv', ( new CsvImporter() )->template() );
+	}
+
+	/**
+	 * El nadador solo actúa sobre sí mismo. El gestor puede indicar otra ficha.
+	 *
+	 * @return int
+	 */
+	private function targetSwimmer() {
+		$actor  = get_current_user_id();
+		$posted = isset( $_POST['swimmer_user_id'] ) ? absint( $_POST['swimmer_user_id'] ) : 0;
+		if ( current_user_can( Capabilities::MANAGE_SWIMMERS ) && $posted > 0 ) {
+			return $posted;
+		}
+
+		return $actor;
+	}
+
+	/**
+	 * @return string
+	 */
+	private function previewKey() {
+		return 'sulayr_csv_preview_' . get_current_user_id();
 	}
 
 	/**

@@ -21,6 +21,7 @@ class SwimmerResult {
 	const UNAUTHORIZED = 'unauthorized';
 	const MISSING      = 'missing';
 	const FAILED       = 'failed';
+	const UPDATED      = 'updated';
 
 	/** @var string */
 	private $status;

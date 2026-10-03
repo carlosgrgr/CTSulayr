@@ -49,8 +49,16 @@ class Shortcode {
 		}
 
 		if ( ! is_user_logged_in() ) {
-			$url = wp_login_url( ( new PanelPage( $this->config ) )->url() );
-			return '<p class="sulayr-panel">Entra con tu cuenta para ver las reservas. <a href="' . esc_url( $url ) . '">Iniciar sesión</a></p>';
+			$url    = wp_login_url( ( new PanelPage( $this->config ) )->url() );
+			$code   = isset( $_GET['sulayr_aviso'] ) ? sanitize_key( wp_unslash( $_GET['sulayr_aviso'] ) ) : '';
+			$notice = \SulayrReservas\Swimmers\EmailChangeService::notice( $code );
+			$html   = '';
+			if ( '' !== $notice ) {
+				$html .= '<p class="sulayr-panel" role="status">' . esc_html( $notice ) . '</p>';
+			}
+			$html .= '<p class="sulayr-panel">Entra con tu cuenta para ver las reservas. <a href="' . esc_url( $url ) . '">Iniciar sesión</a></p>';
+
+			return $html;
 		}
 
 		$manager = current_user_can( Capabilities::MANAGE_SWIMMERS )

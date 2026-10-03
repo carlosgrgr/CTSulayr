@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Schema {
 
-	const VERSION        = 1;
+	const VERSION        = 2;
 	const OPTION_VERSION = 'sulayr_reservas_db_version';
 
 	/** @var SiteConfig */
@@ -139,6 +139,11 @@ class Schema {
 			email varchar(100) NOT NULL DEFAULT '',
 			phone varchar(50) NOT NULL DEFAULT '',
 			dni varchar(20) NOT NULL DEFAULT '',
+			weekly_limit tinyint(3) unsigned NOT NULL DEFAULT 3,
+			photo_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			pending_email varchar(100) NOT NULL DEFAULT '',
+			email_token_hash char(64) NOT NULL DEFAULT '',
+			email_token_expires datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
 			created_at datetime NOT NULL,
 			updated_at datetime NOT NULL,
 			PRIMARY KEY  (user_id)

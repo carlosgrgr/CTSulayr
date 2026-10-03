@@ -22,7 +22,7 @@ class SwimmerRepository {
 
 		return $this->row(
 			$wpdb->prepare(
-				'SELECT user_id, active, linked_to_club, first_name, last_name, email, phone, dni FROM ' . $this->swimmers() . ' WHERE user_id = %d',
+				'SELECT user_id, active, linked_to_club, first_name, last_name, email, phone, dni, weekly_limit, photo_id, pending_email, email_token_hash, email_token_expires, created_at FROM ' . $this->swimmers() . ' WHERE user_id = %d',
 				$user_id
 			)
 		);
@@ -69,17 +69,20 @@ class SwimmerRepository {
 		global $wpdb;
 
 		$suppressed = $wpdb->suppress_errors( true );
+		$active = isset( $row['active'] ) ? (int) $row['active'] : 1;
+		$limit  = isset( $row['weekly_limit'] ) ? (int) $row['weekly_limit'] : WeeklyLimit::DEFAULT_LIMIT;
 		$inserted   = $wpdb->query(
 			$wpdb->prepare(
-				'INSERT INTO ' . $this->swimmers() . ' (user_id, active, linked_to_club, first_name, last_name, email, phone, dni, created_at, updated_at) VALUES (%d, %d, %d, %s, %s, %s, %s, %s, %s, %s)',
+				'INSERT INTO ' . $this->swimmers() . ' (user_id, active, linked_to_club, first_name, last_name, email, phone, dni, weekly_limit, created_at, updated_at) VALUES (%d, %d, %d, %s, %s, %s, %s, %s, %d, %s, %s)',
 				$row['user_id'],
-				1,
+				1 === $active ? 1 : 0,
 				0,
 				$row['first_name'],
 				$row['last_name'],
 				$row['email'],
 				$row['phone'],
 				$row['dni'],
+				$limit,
 				$row['stamp'],
 				$row['stamp']
 			)
@@ -270,6 +273,230 @@ class SwimmerRepository {
 		if ( false === $updated ) {
 			throw new \RuntimeException( 'No se pudo conservar el historial.' );
 		}
+	}
+
+	/**
+	 * Nombre, apellidos y teléfono de una ficha no vinculada al club.
+	 *
+	 * @param int    $user_id    Usuario.
+	 * @param string $first_name Nombre.
+	 * @param string $last_name  Apellidos.
+	 * @param string $phone      Teléfono.
+	 * @param string $stamp      Momento de la operación.
+	 * @return void
+	 */
+	public function updatePersonal( $user_id, $first_name, $last_name, $phone, $stamp ) {
+		global $wpdb;
+
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE ' . $this->swimmers() . ' SET first_name = %s, last_name = %s, phone = %s, updated_at = %s WHERE user_id = %d AND linked_to_club = 0',
+				$first_name,
+				$last_name,
+				$phone,
+				$stamp,
+				$user_id
+			)
+		);
+		$this->assertNoError();
+
+		if ( false === $updated ) {
+			throw new \RuntimeException( 'No se pudo actualizar la ficha.' );
+		}
+	}
+
+	/**
+	 * @param int    $user_id Usuario.
+	 * @param int    $limit   Límite entre 1 y 5.
+	 * @param string $stamp   Momento de la operación.
+	 * @return void
+	 */
+	public function setWeeklyLimit( $user_id, $limit, $stamp ) {
+		global $wpdb;
+
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE ' . $this->swimmers() . ' SET weekly_limit = %d, updated_at = %s WHERE user_id = %d',
+				$limit,
+				$stamp,
+				$user_id
+			)
+		);
+		$this->assertNoError();
+
+		if ( false === $updated ) {
+			throw new \RuntimeException( 'No se pudo actualizar el límite.' );
+		}
+	}
+
+	/**
+	 * @param int    $user_id  Usuario.
+	 * @param int    $photo_id Adjunto del blog de reservas. Cero si no hay.
+	 * @param string $stamp    Momento de la operación.
+	 * @return void
+	 */
+	public function setPhoto( $user_id, $photo_id, $stamp ) {
+		global $wpdb;
+
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE ' . $this->swimmers() . ' SET photo_id = %d, updated_at = %s WHERE user_id = %d',
+				$photo_id,
+				$stamp,
+				$user_id
+			)
+		);
+		$this->assertNoError();
+
+		if ( false === $updated ) {
+			throw new \RuntimeException( 'No se pudo actualizar la fotografía.' );
+		}
+	}
+
+	/**
+	 * @param int    $user_id Usuario.
+	 * @param string $email   Correo nuevo pendiente.
+	 * @param string $hash    Hash del token.
+	 * @param string $expires Caducidad en la zona del sitio.
+	 * @param string $stamp   Momento de la operación.
+	 * @return void
+	 */
+	public function setPendingEmail( $user_id, $email, $hash, $expires, $stamp ) {
+		global $wpdb;
+
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE ' . $this->swimmers() . ' SET pending_email = %s, email_token_hash = %s, email_token_expires = %s, updated_at = %s WHERE user_id = %d',
+				$email,
+				$hash,
+				$expires,
+				$stamp,
+				$user_id
+			)
+		);
+		$this->assertNoError();
+
+		if ( false === $updated ) {
+			throw new \RuntimeException( 'No se pudo guardar la solicitud de correo.' );
+		}
+	}
+
+	/**
+	 * @param string $hash Hash del token recibido.
+	 * @return object|null
+	 */
+	public function findByEmailToken( $hash ) {
+		global $wpdb;
+
+		return $this->row(
+			$wpdb->prepare(
+				'SELECT user_id, email, pending_email, email_token_hash, email_token_expires FROM ' . $this->swimmers() . ' WHERE email_token_hash = %s LIMIT 1',
+				$hash
+			)
+		);
+	}
+
+	/**
+	 * @param int    $user_id Usuario.
+	 * @param string $email   Correo ya confirmado.
+	 * @param string $hash    Hash que debe seguir vigente.
+	 * @param string $stamp   Momento de la operación.
+	 * @return bool False si el token ya no está.
+	 */
+	public function applyConfirmedEmail( $user_id, $email, $hash, $stamp ) {
+		global $wpdb;
+
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE ' . $this->swimmers() . ' SET email = %s, pending_email = %s, email_token_hash = %s, email_token_expires = %s, updated_at = %s WHERE user_id = %d AND email_token_hash = %s',
+				$email,
+				'',
+				'',
+				'1970-01-01 00:00:00',
+				$stamp,
+				$user_id,
+				$hash
+			)
+		);
+		$this->assertNoError();
+
+		return (int) $updated > 0;
+	}
+
+	/**
+	 * @param string $email   Correo.
+	 * @param int    $user_id Usuario que sí puede conservarlo.
+	 * @return int
+	 */
+	public function findOtherUserIdByEmail( $email, $user_id ) {
+		global $wpdb;
+
+		$value = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT user_id FROM ' . $this->swimmers() . ' WHERE email = %s AND user_id <> %d LIMIT 1',
+				$email,
+				$user_id
+			)
+		);
+		$this->assertNoError();
+
+		return (int) $value;
+	}
+
+	/**
+	 * Reservas que siguen en la tabla, con los datos que la exportación puede mostrar.
+	 *
+	 * @param int $user_id Usuario.
+	 * @return object[]
+	 */
+	public function bookingsForExport( $user_id ) {
+		global $wpdb;
+
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT b.user_id, b.created_at, b.created_by, s.session_date, s.start_time FROM ' . $this->bookingsTable() . ' b INNER JOIN ' . $this->sessions() . ' s ON s.id = b.session_id WHERE b.user_id = %d ORDER BY s.session_date ASC, s.start_time ASC, b.id ASC',
+				$user_id
+			)
+		);
+		$this->assertNoError();
+
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
+	 * @param string $status Estado `todos`, `activos` o `inactivos`.
+	 * @param string $search Texto de nombre o correo. Vacío si no hay búsqueda.
+	 * @return object[]
+	 */
+	public function search( $status, $search ) {
+		global $wpdb;
+
+		$where  = array( '1=1' );
+		$values = array();
+		if ( 'activos' === $status ) {
+			$where[] = 'active = 1';
+		} elseif ( 'inactivos' === $status ) {
+			$where[] = 'active = 0';
+		}
+
+		if ( '' !== $search ) {
+			$like     = '%' . $wpdb->esc_like( $search ) . '%';
+			$where[]  = '(first_name LIKE %s OR last_name LIKE %s OR CONCAT(first_name, \' \', last_name) LIKE %s OR email LIKE %s)';
+			$values[] = $like;
+			$values[] = $like;
+			$values[] = $like;
+			$values[] = $like;
+		}
+
+		$sql = 'SELECT user_id, active, linked_to_club, first_name, last_name, email, phone, weekly_limit, photo_id, created_at FROM ' . $this->swimmers() . ' WHERE ' . implode( ' AND ', $where ) . ' ORDER BY last_name ASC, first_name ASC, user_id ASC';
+		if ( array() !== $values ) {
+			$sql = $wpdb->prepare( $sql, $values );
+		}
+
+		$rows = $wpdb->get_results( $sql );
+		$this->assertNoError();
+
+		return is_array( $rows ) ? $rows : array();
 	}
 
 	/**

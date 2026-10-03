@@ -18,3 +18,4 @@ Las pruebas que siguen abiertas no reabren estas fases. Están en `DEVELOPMENT.m
 | 7 | Shortcode y paneles | Hecha y comprobada en el árbol de trabajo | Pendiente |
 | 8 | Sincronización, botón y registro técnico | Hecha y comprobada en el árbol de trabajo | Pendiente |
 | 9 | Criterios de aceptación del SPEC | Hecha y comprobada en el árbol de trabajo | Pendiente |
+| 10 | Límite por nadador, perfil, fotografía, CSV, filtros y Bento del perfil del club | Hecha y comprobada en el árbol de trabajo | Pendiente |

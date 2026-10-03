@@ -1,0 +1,189 @@
+/*
+ * Presentación Bento de las dos vistas reales del perfil del deportista.
+ * No cambia campos, formulario ACF, pestañas ni enlaces.
+ */
+
+.sulayr-athlete-profile-content {
+	--sulayr-bento-bg: #f3f6f8;
+	--sulayr-bento-card: #ffffff;
+	--sulayr-bento-line: #d9e3ea;
+	--sulayr-bento-text: #1c2b36;
+	--sulayr-bento-muted: #5d6f7c;
+	--sulayr-bento-accent: #1f7a4d;
+	background: var(--sulayr-bento-bg);
+	border-radius: 20px;
+	color: var(--sulayr-bento-text);
+	padding: 1rem;
+}
+
+.sulayr-athlete-profile-content .sulayr-profile-layout {
+	align-items: start;
+	display: grid;
+	gap: 1rem;
+	grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
+}
+
+.sulayr-athlete-profile-content .sulayr-profile-sidebar {
+	position: static;
+}
+
+.sulayr-athlete-profile-content .sulayr-profile-card,
+.sulayr-athlete-profile-content .sulayr-info-block,
+.sulayr-athlete-profile-content #edit.tab-pane.active.show,
+.sulayr-athlete-profile-content .sulayr-profile-tabs {
+	background: var(--sulayr-bento-card);
+	border: 1px solid var(--sulayr-bento-line);
+	border-radius: 16px;
+	box-shadow: 0 1px 2px rgba(28, 43, 54, 0.04), 0 8px 24px rgba(28, 43, 54, 0.05);
+}
+
+.sulayr-athlete-profile-content .sulayr-profile-card {
+	padding: 1.25rem;
+}
+
+.sulayr-athlete-profile-content .sulayr-profile-avatar,
+.sulayr-athlete-profile-content .sulayr-profile-card .img-profile-circle {
+	border: 3px solid #d9efe4;
+	border-radius: 50%;
+	height: 8.5rem;
+	object-fit: cover;
+	width: 8.5rem;
+}
+
+.sulayr-athlete-profile-content .sulayr-profile-name {
+	color: var(--sulayr-bento-text);
+	font-size: 1.25rem;
+	margin: 0.75rem 0 0;
+}
+
+.sulayr-athlete-profile-content .sulayr-profile-main {
+	display: grid;
+	gap: 1rem;
+	min-width: 0;
+}
+
+.sulayr-athlete-profile-content .sulayr-profile-tabs {
+	display: grid;
+	gap: 0.35rem;
+	grid-template-columns: 1fr 1fr;
+	padding: 0.35rem;
+}
+
+.sulayr-athlete-profile-content .sulayr-profile-tab {
+	border-radius: 12px;
+	color: var(--sulayr-bento-muted);
+	justify-content: center;
+	min-height: 44px;
+}
+
+.sulayr-athlete-profile-content .sulayr-profile-tab.active {
+	background: var(--sulayr-bento-accent);
+	color: #fff;
+}
+
+.sulayr-athlete-profile-content .sulayr-profile-panels {
+	background: transparent;
+	border: 0;
+	box-shadow: none;
+	overflow: visible;
+}
+
+.sulayr-athlete-profile-content .sulayr-profile-panels .tab-pane {
+	display: none;
+}
+
+.sulayr-athlete-profile-content #info.tab-pane.active.show {
+	background: transparent;
+	border: 0;
+	box-shadow: none;
+	display: grid;
+	gap: 1rem;
+	grid-template-columns: 1fr 1fr;
+	padding: 0;
+}
+
+.sulayr-athlete-profile-content #info .sulayr-info-block {
+	margin: 0;
+	padding: 1.15rem 1.25rem;
+}
+
+.sulayr-athlete-profile-content #info .sulayr-info-block:first-child {
+	grid-column: 1 / -1;
+}
+
+.sulayr-athlete-profile-content #info .sulayr-info-block + .sulayr-info-block {
+	border-top: 0;
+	padding-top: 1.15rem;
+}
+
+.sulayr-athlete-profile-content .sulayr-info-block-title {
+	color: var(--sulayr-bento-accent);
+	letter-spacing: 0.02em;
+}
+
+.sulayr-athlete-profile-content .sulayr-info-row dt {
+	color: var(--sulayr-bento-muted);
+}
+
+.sulayr-athlete-profile-content .sulayr-info-row dd,
+.sulayr-athlete-profile-content .sulayr-info-row dd a {
+	color: var(--sulayr-bento-text);
+}
+
+.sulayr-athlete-profile-content .sulayr-info-row dd a {
+	color: var(--sulayr-bento-accent);
+}
+
+.sulayr-athlete-profile-content #edit.tab-pane.active.show {
+	display: block;
+	padding: 1.15rem 1.25rem;
+}
+
+.sulayr-athlete-profile-content .sulayr-edit-block,
+.sulayr-athlete-profile-content .sulayr-edit-block form.acf-form {
+	max-width: none;
+}
+
+.sulayr-athlete-profile-content .sulayr-profile-form button[type="submit"],
+.sulayr-athlete-profile-content .sulayr-profile-form input[type="submit"] {
+	background: var(--sulayr-bento-accent);
+	border-radius: 10px;
+	min-height: 44px;
+}
+
+.sulayr-athlete-profile-content .sulayr-profile-form button[type="submit"]:hover,
+.sulayr-athlete-profile-content .sulayr-profile-form input[type="submit"]:hover {
+	background: #17633e;
+}
+
+@media (max-width: 64rem) {
+	.sulayr-athlete-profile-content .sulayr-profile-layout {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 26.25rem) {
+	.sulayr-athlete-profile-content {
+		border-radius: 16px;
+		padding: 0.75rem;
+	}
+
+	.sulayr-athlete-profile-content .sulayr-profile-tabs,
+	.sulayr-athlete-profile-content #info.tab-pane.active.show {
+		grid-template-columns: 1fr;
+	}
+
+	.sulayr-athlete-profile-content .sulayr-profile-tab {
+		width: 100%;
+	}
+
+	.sulayr-athlete-profile-content .sulayr-profile-avatar,
+	.sulayr-athlete-profile-content .sulayr-profile-card .img-profile-circle {
+		height: 6.5rem;
+		width: 6.5rem;
+	}
+
+	.sulayr-athlete-profile-content .sulayr-info-row {
+		grid-template-columns: 1fr;
+	}
+}

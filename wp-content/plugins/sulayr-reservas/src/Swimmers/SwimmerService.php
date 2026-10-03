@@ -51,6 +51,84 @@ class SwimmerService {
 	}
 
 	/**
+	 * Crea un nadador desde una fila de CSV ya validada.
+	 *
+	 * No reutiliza ni modifica una cuenta existente. El aviso de contraseña solo sale si el alta se completa.
+	 *
+	 * @param array<string, int|string> $data Datos de la fila.
+	 * @param \DateTimeImmutable|null   $now  Fecha de referencia.
+	 * @return SwimmerResult
+	 */
+	public function createImported( array $data, ?\DateTimeImmutable $now = null ) {
+		return $this->blog_context->onBookings(
+			function () use ( $data, $now ) {
+				return $this->importOnBookings( $data, $now );
+			}
+		);
+	}
+
+	/**
+	 * Actualiza nombre, apellidos y teléfono de una ficha manual.
+	 *
+	 * @param int                     $user_id Nadador.
+	 * @param array<string, string>   $data    Campos del formulario.
+	 * @param \DateTimeImmutable|null $now     Fecha de referencia.
+	 * @return SwimmerResult
+	 */
+	public function updatePersonal( $user_id, array $data, ?\DateTimeImmutable $now = null ) {
+		return $this->blog_context->onBookings(
+			function () use ( $user_id, $data, $now ) {
+				return $this->updatePersonalOnBookings( (int) $user_id, $data, $now );
+			}
+		);
+	}
+
+	/**
+	 * @param int                     $user_id Nadador.
+	 * @param mixed                   $limit   Valor recibido.
+	 * @param \DateTimeImmutable|null $now     Fecha de referencia.
+	 * @return SwimmerResult
+	 */
+	public function updateWeeklyLimit( $user_id, $limit, ?\DateTimeImmutable $now = null ) {
+		return $this->blog_context->onBookings(
+			function () use ( $user_id, $limit, $now ) {
+				return $this->updateLimitOnBookings( (int) $user_id, $limit, $now );
+			}
+		);
+	}
+
+	/**
+	 * Cambia la contraseña del usuario actual. Un gestor no puede cambiar la de otro.
+	 *
+	 * @param string $current Contraseña actual.
+	 * @param string $new     Contraseña nueva.
+	 * @param string $confirm Repetición.
+	 * @return SwimmerResult
+	 */
+	public function changePassword( $current, $new, $confirm ) {
+		$user_id = get_current_user_id();
+		$user    = get_userdata( $user_id );
+		if ( $user_id < 1 || ! $user instanceof \WP_User ) {
+			return $this->result( SwimmerResult::UNAUTHORIZED, 'No tienes permiso para esta operación.' );
+		}
+		if ( ! wp_check_password( (string) $current, $user->user_pass, $user_id ) ) {
+			return $this->result( SwimmerResult::INVALID, 'La contraseña actual no es correcta.' );
+		}
+		if ( (string) $new !== (string) $confirm ) {
+			return $this->result( SwimmerResult::INVALID, 'La confirmación no coincide con la nueva contraseña.' );
+		}
+		if ( strlen( (string) $new ) < 8 ) {
+			return $this->result( SwimmerResult::INVALID, 'La nueva contraseña debe tener al menos 8 caracteres.' );
+		}
+
+		wp_set_password( (string) $new, $user_id );
+		wp_set_current_user( $user_id );
+		wp_set_auth_cookie( $user_id, true );
+
+		return $this->result( SwimmerResult::UPDATED, 'Contraseña actualizada.', $user_id );
+	}
+
+	/**
 	 * Desactiva al nadador y elimina sus reservas futuras.
 	 *
 	 * @param int                     $user_id Nadador.
@@ -111,6 +189,13 @@ class SwimmerService {
 		if ( null === $fields ) {
 			return $this->result( SwimmerResult::INVALID, 'Revisa los datos del nadador.' );
 		}
+
+		$limit = $this->limitFrom( $data );
+		if ( null === $limit ) {
+			return $this->result( SwimmerResult::INVALID, 'El límite semanal debe estar entre 1 y 5.' );
+		}
+		$fields['weekly_limit'] = $limit;
+		$fields['active']       = 1;
 
 		if ( $this->repository->findUserIdByEmail( $fields['email'] ) > 0 ) {
 			return $this->result( SwimmerResult::DUPLICATE, 'Ya hay un nadador con ese correo.' );
@@ -256,7 +341,9 @@ class SwimmerService {
 			return $this->result( SwimmerResult::MISSING, 'El nadador no existe.' );
 		}
 
-		$existed = (bool) $this->repository->find( $user_id );
+		$current = $this->repository->find( $user_id );
+		$photo   = $current ? (int) $current->photo_id : 0;
+		$existed = (bool) $current;
 		$member  = is_user_member_of_blog( $user_id, get_current_blog_id() );
 		if ( ! $existed && ! $member ) {
 			return $this->result( SwimmerResult::MISSING, 'El nadador no existe.' );
@@ -279,6 +366,9 @@ class SwimmerService {
 		}
 
 		$this->detachFromBookings( $user_id );
+		if ( $photo > 0 ) {
+			wp_delete_attachment( $photo, true );
+		}
 
 		return $this->result( SwimmerResult::REMOVED, 'Nadador retirado del sitio de reservas.', $user_id );
 	}
@@ -345,6 +435,155 @@ class SwimmerService {
 		}
 
 		return $start;
+	}
+
+	/**
+	 * @param array<string, int|string> $data Datos de una fila válida.
+	 * @param \DateTimeImmutable|null   $now  Fecha de referencia.
+	 * @return SwimmerResult
+	 */
+	private function importOnBookings( array $data, ?\DateTimeImmutable $now ) {
+		if ( ! $this->canManage() ) {
+			return $this->result( SwimmerResult::UNAUTHORIZED, 'No tienes permiso para esta operación.' );
+		}
+
+		$first = $this->text( isset( $data['first_name'] ) ? $data['first_name'] : '', 100 );
+		$last  = $this->text( isset( $data['last_name'] ) ? $data['last_name'] : '', 100 );
+		$phone = $this->optionalText( isset( $data['phone'] ) ? $data['phone'] : '', 50 );
+		$email = sanitize_email( isset( $data['email'] ) ? (string) $data['email'] : '' );
+		$limit = $this->limitFrom( $data );
+		$active = isset( $data['active'] ) && ( 0 === (int) $data['active'] || '0' === (string) $data['active'] ) ? 0 : 1;
+
+		if ( '' === $first || '' === $last || null === $phone || null === $limit || ! is_email( $email ) || strlen( $email ) > 100 ) {
+			return $this->result( SwimmerResult::INVALID, 'Revisa los datos del nadador.' );
+		}
+		if ( $this->repository->findUserIdByEmail( $email ) > 0 || get_user_by( 'email', $email ) instanceof \WP_User ) {
+			return $this->result( SwimmerResult::DUPLICATE, 'El correo ya existe. No se ha modificado la cuenta.' );
+		}
+
+		$user_id = wp_insert_user(
+			array(
+				'user_login' => $this->uniqueLogin( $email ),
+				'user_pass'  => wp_generate_password( 24, true, true ),
+				'user_email' => $email,
+				'role'       => RoleRegistrar::ROLE_NADADOR,
+			)
+		);
+		if ( is_wp_error( $user_id ) ) {
+			return $this->result( SwimmerResult::FAILED, 'No se ha podido completar la operación.' );
+		}
+
+		$stored = $this->storeProfile(
+			(int) $user_id,
+			array(
+				'first_name'   => $first,
+				'last_name'    => $last,
+				'email'        => $email,
+				'phone'        => $phone,
+				'dni'          => '',
+				'weekly_limit' => $limit,
+				'active'       => $active,
+			),
+			$now
+		);
+		if ( SwimmerResult::CREATED !== $stored->status() ) {
+			return $stored;
+		}
+
+		wp_send_new_user_notifications( (int) $user_id, 'user' );
+
+		return $stored;
+	}
+
+	/**
+	 * @param int                     $user_id Nadador.
+	 * @param array<string, string>   $data    Campos.
+	 * @param \DateTimeImmutable|null $now     Fecha de referencia.
+	 * @return SwimmerResult
+	 */
+	private function updatePersonalOnBookings( $user_id, array $data, ?\DateTimeImmutable $now ) {
+		$actor = get_current_user_id();
+		if ( $actor < 1 || ( $actor !== $user_id && ! $this->canManage() ) ) {
+			return $this->result( SwimmerResult::UNAUTHORIZED, 'No tienes permiso para esta operación.' );
+		}
+
+		$row = $this->repository->find( $user_id );
+		if ( ! $row ) {
+			return $this->result( SwimmerResult::MISSING, 'El nadador no existe.' );
+		}
+		if ( 1 === (int) $row->linked_to_club ) {
+			return $this->result( SwimmerResult::INVALID, 'El club gestiona el nombre, los apellidos y el teléfono de este nadador.' );
+		}
+
+		$first = $this->text( isset( $data['first_name'] ) ? $data['first_name'] : '', 100 );
+		$last  = $this->text( isset( $data['last_name'] ) ? $data['last_name'] : '', 100 );
+		$phone = $this->text( isset( $data['phone'] ) ? $data['phone'] : '', 50 );
+		if ( '' === $first || '' === $last || '' === $phone ) {
+			return $this->result( SwimmerResult::INVALID, 'Revisa el nombre, los apellidos y el teléfono.' );
+		}
+
+		try {
+			$this->repository->updatePersonal( $user_id, $first, $last, $phone, $this->clock( $now )->format( 'Y-m-d H:i:s' ) );
+		} catch ( \Throwable $exception ) {
+			return $this->result( SwimmerResult::FAILED, 'No se ha podido completar la operación.' );
+		}
+
+		return $this->result( SwimmerResult::UPDATED, 'Datos actualizados.', $user_id );
+	}
+
+	/**
+	 * @param int                     $user_id Nadador.
+	 * @param mixed                   $limit   Valor recibido.
+	 * @param \DateTimeImmutable|null $now     Fecha de referencia.
+	 * @return SwimmerResult
+	 */
+	private function updateLimitOnBookings( $user_id, $limit, ?\DateTimeImmutable $now ) {
+		if ( ! $this->canManage() ) {
+			return $this->result( SwimmerResult::UNAUTHORIZED, 'No tienes permiso para esta operación.' );
+		}
+		if ( ! $this->repository->find( $user_id ) ) {
+			return $this->result( SwimmerResult::MISSING, 'El nadador no existe.' );
+		}
+		if ( ! WeeklyLimit::isValid( $limit ) ) {
+			return $this->result( SwimmerResult::INVALID, 'El límite semanal debe estar entre 1 y 5.' );
+		}
+
+		try {
+			$this->repository->setWeeklyLimit( $user_id, (int) $limit, $this->clock( $now )->format( 'Y-m-d H:i:s' ) );
+		} catch ( \Throwable $exception ) {
+			return $this->result( SwimmerResult::FAILED, 'No se ha podido completar la operación.' );
+		}
+
+		return $this->result( SwimmerResult::UPDATED, 'Límite semanal actualizado.', $user_id );
+	}
+
+	/**
+	 * @param array<string, mixed> $data Datos recibidos.
+	 * @return int|null Null si el valor existe y no está entre 1 y 5.
+	 */
+	private function limitFrom( array $data ) {
+		if ( ! array_key_exists( 'weekly_limit', $data ) || '' === trim( (string) $data['weekly_limit'] ) ) {
+			return WeeklyLimit::DEFAULT_LIMIT;
+		}
+		if ( ! WeeklyLimit::isValid( $data['weekly_limit'] ) ) {
+			return null;
+		}
+
+		return (int) $data['weekly_limit'];
+	}
+
+	/**
+	 * @param mixed $value Texto recibido.
+	 * @param int   $limit Longitud máxima.
+	 * @return string|null Null si supera la longitud. Cadena vacía si no hay texto.
+	 */
+	private function optionalText( $value, $limit ) {
+		$text = sanitize_text_field( (string) $value );
+		if ( mb_strlen( $text ) > $limit ) {
+			return null;
+		}
+
+		return $text;
 	}
 
 	/**

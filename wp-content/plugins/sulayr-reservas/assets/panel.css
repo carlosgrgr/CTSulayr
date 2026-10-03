@@ -167,7 +167,14 @@ p.sulayr-panel {
 	height: 3rem;
 	justify-content: center;
 	margin: 0;
+	object-fit: cover;
 	width: 3rem;
+}
+
+.sulayr-avatar-small {
+	font-size: 0.9rem;
+	height: 2.25rem;
+	width: 2.25rem;
 }
 
 .sulayr-role,
@@ -504,6 +511,9 @@ p.sulayr-panel {
 .sulayr-panel input[type="text"],
 .sulayr-panel input[type="email"],
 .sulayr-panel input[type="number"],
+.sulayr-panel input[type="password"],
+.sulayr-panel input[type="search"],
+.sulayr-panel input[type="file"],
 .sulayr-panel select {
 	background: #fff;
 	border: 1px solid #8b98ab;
@@ -516,6 +526,9 @@ p.sulayr-panel {
 .sulayr-form input[type="text"],
 .sulayr-form input[type="email"],
 .sulayr-form input[type="number"],
+.sulayr-form input[type="password"],
+.sulayr-form input[type="search"],
+.sulayr-form input[type="file"],
 .sulayr-form select {
 	display: block;
 	font-weight: 400;
