@@ -125,6 +125,56 @@ class SyncService {
 	}
 
 	/**
+	 * Deportista del club con natación y estado activo. Misma condición que la sincronización.
+	 *
+	 * @param int $user_id Usuario de red.
+	 * @return bool
+	 */
+	public function isEligibleAthlete( $user_id ) {
+		try {
+			return (bool) $this->blog_context->onClub(
+				function () use ( $user_id ) {
+					$user = get_userdata( (int) $user_id );
+					if ( ! $user instanceof \WP_User ) {
+						return false;
+					}
+
+					$profile = $this->profile( $user );
+
+					return ! empty( $profile['eligible'] );
+				}
+			);
+		} catch ( \Throwable $exception ) {
+			return false;
+		}
+	}
+
+	/**
+	 * Sigue siendo deportista activo en el club. No exige el suplemento de natación.
+	 *
+	 * @param int $user_id Usuario de red.
+	 * @return bool
+	 */
+	public function isActiveAthlete( $user_id ) {
+		try {
+			return (bool) $this->blog_context->onClub(
+				function () use ( $user_id ) {
+					$user = get_userdata( (int) $user_id );
+					if ( ! $user instanceof \WP_User || ! in_array( 'athlete', (array) $user->roles, true ) ) {
+						return false;
+					}
+
+					$status = (string) get_user_meta( $user->ID, 'sulayr_user_athlete_status', true );
+
+					return 'active' === $status;
+				}
+			);
+		} catch ( \Throwable $exception ) {
+			return false;
+		}
+	}
+
+	/**
 	 * @param \WP_User $user Usuario leído en el club.
 	 * @return array<string, int|string|bool>
 	 */

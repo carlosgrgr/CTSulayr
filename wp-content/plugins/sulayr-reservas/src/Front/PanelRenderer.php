@@ -2,6 +2,7 @@
 
 namespace SulayrReservas\Front;
 
+use SulayrReservas\Access\CrossSite;
 use SulayrReservas\Config\SiteConfig;
 use SulayrReservas\Context\BlogContext;
 use SulayrReservas\Roles\Capabilities;
@@ -27,6 +28,20 @@ class PanelRenderer {
 	private $blog_context;
 
 	/**
+	 * Fecha que los formularios del día móvil deben conservar al volver.
+	 *
+	 * @var string
+	 */
+	private $return_day = '';
+
+	/**
+	 * El tema ya pintó el menú en su cabecera durante esta petición.
+	 *
+	 * @var bool
+	 */
+	private static $menu_printed = false;
+
+	/**
 	 * @param SiteConfig  $config       Sitios.
 	 * @param BlogContext $blog_context Cambio de sitio.
 	 */
@@ -47,11 +62,17 @@ class PanelRenderer {
 		$profile = $this->query->swimmer( $user_id );
 		$own     = $this->query->bookingsFor( $user_id, $now );
 
+		$own_menu = ! self::$menu_printed;
+
 		ob_start();
 		echo '<div class="sulayr-panel">';
 		$this->notice();
-		echo '<div class="sulayr-shell">';
-		$this->nav( $manager, $view );
+		echo '<div class="' . esc_attr( $own_menu ? 'sulayr-shell' : 'sulayr-shell sulayr-shell-no-nav' ) . '">';
+		if ( $own_menu ) {
+			echo '<div class="sulayr-nav-card">';
+			$this->nav( $manager, $view );
+			echo '</div>';
+		}
 		echo '<div class="sulayr-main">';
 		if ( 'sesion' === $view ) {
 			$this->session( $manager, $now );
@@ -77,6 +98,21 @@ class PanelRenderer {
 		echo '</div>';
 		$this->aside( $manager, $now, $view, $profile, $own );
 		echo '</div></div>';
+
+		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Menú para la cabecera del tema. El panel ya no pinta el suyo después.
+	 *
+	 * @param bool $manager Gestor o administrador.
+	 * @return string
+	 */
+	public function brandMenu( $manager ) {
+		self::$menu_printed = true;
+
+		ob_start();
+		$this->nav( $manager, $this->view( $manager ) );
 
 		return (string) ob_get_clean();
 	}
@@ -126,9 +162,11 @@ class PanelRenderer {
 			$current = 'nadadores';
 		}
 
-		echo '<nav class="sulayr-nav-card" aria-label="Reservas">';
-		echo '<p class="sulayr-brand">' . $this->icon( 'calendar' ) . '<span>Reservas de natación</span></p>';
-		echo '<div class="sulayr-nav">';
+		echo '<nav class="sulayr-menu" aria-label="Reservas">';
+		echo '<button type="button" class="sulayr-nav-toggle" aria-expanded="false" aria-controls="sulayr-nav-menu" aria-label="Abrir menú">';
+		echo '<span class="sulayr-nav-toggle-bars" aria-hidden="true"></span>';
+		echo '</button>';
+		echo '<div class="sulayr-nav" id="sulayr-nav-menu">';
 		$this->navItem( 'Calendario', 'calendar', array(), 'calendario', $current );
 		$this->navItem( 'Mis reservas', 'list', array( 'sulayr_vista' => 'reservas' ), 'reservas', $current );
 		$this->navItem( 'Mi perfil', 'user', array( 'sulayr_vista' => 'perfil' ), 'perfil', $current );
@@ -138,6 +176,13 @@ class PanelRenderer {
 			$this->navItem( 'Importar', 'list', array( 'sulayr_vista' => 'importar' ), 'importar', $current );
 			$this->navItem( 'Meses anteriores', 'clock', array( 'sulayr_vista' => 'historial' ), 'historial', $current );
 		}
+
+		$bridge = new CrossSite( $this->config, $this->blog_context );
+		$club   = $bridge->clubProfileUrlForCurrentUser();
+		if ( '' !== $club ) {
+			$this->externalNavItem( 'Mi perfil en el club', 'external', $club );
+		}
+		$this->externalNavItem( 'Cerrar sesión', 'logout', $bridge->logoutUrl() );
 		echo '</div></nav>';
 	}
 
@@ -160,6 +205,17 @@ class PanelRenderer {
 			echo ' aria-current="page"';
 		}
 		echo '>' . $this->icon( $icon ) . '<span>' . esc_html( $label ) . '</span></a>';
+	}
+
+	/**
+	 * @param string $label Texto.
+	 * @param string $icon  Icono decorativo.
+	 * @param string $href  URL absoluta ya construida en el servidor.
+	 * @return void
+	 */
+	private function externalNavItem( $label, $icon, $href ) {
+		echo '<a class="sulayr-nav-link" href="' . esc_url( $href ) . '">';
+		echo $this->icon( $icon ) . '<span>' . esc_html( $label ) . '</span></a>';
 	}
 
 	/**
@@ -411,7 +467,183 @@ class PanelRenderer {
 			}
 			echo '</div>';
 		}
-		echo '</div></section>';
+		echo '</div>';
+		$this->mobileCalendar( $now );
+		echo '</section>';
+	}
+
+	/**
+	 * Un día visible. Los datos salen de las mismas sesiones que el mes.
+	 *
+	 * @param \DateTimeImmutable $now Ahora, en la zona del sitio.
+	 * @return void
+	 */
+	private function mobileCalendar( \DateTimeImmutable $now ) {
+		$selected = $this->selectedDay( $now );
+		$start    = $selected->modify( '-21 days' );
+		$start    = $start->modify( '-' . ( (int) $start->format( 'N' ) - 1 ) . ' days' );
+		$end      = $selected->modify( '+28 days' );
+		$end      = $end->modify( '+' . ( 7 - (int) $end->format( 'N' ) ) . ' days' );
+		$by_date  = $this->sessionsBetween( $start, $end );
+		$monday   = $selected->modify( '-' . ( (int) $selected->format( 'N' ) - 1 ) . ' days' );
+		$today    = $now->format( 'Y-m-d' );
+
+		echo '<div class="sulayr-mobile-cal" data-selected="' . esc_attr( $selected->format( 'Y-m-d' ) ) . '" data-today="' . esc_attr( $today ) . '">';
+		echo '<div class="sulayr-mobile-head">';
+		echo '<a class="sulayr-day-prev" href="' . esc_url( $this->dayUrl( $selected->modify( '-1 day' ) ) ) . '" aria-label="Día anterior"><span aria-hidden="true">‹</span></a>';
+		echo '<div class="sulayr-week" role="tablist" aria-label="Días de la semana">';
+		for ( $index = 0; $index < 7; $index++ ) {
+			$day = $monday->modify( '+' . $index . ' days' );
+			$this->weekTab( $day, $day->format( 'Y-m-d' ) === $selected->format( 'Y-m-d' ), $today );
+		}
+		echo '</div>';
+		echo '<a class="sulayr-day-next" href="' . esc_url( $this->dayUrl( $selected->modify( '+1 day' ) ) ) . '" aria-label="Día siguiente"><span aria-hidden="true">›</span></a>';
+		echo '</div>';
+		echo '<div class="sulayr-mobile-stage">';
+		for ( $day = $start; $day <= $end; $day = $day->modify( '+1 day' ) ) {
+			$this->mobileDay( $day, $by_date, $day->format( 'Y-m-d' ) === $selected->format( 'Y-m-d' ), $now );
+		}
+		echo '</div></div>';
+	}
+
+	/**
+	 * @param \DateTimeImmutable $now Ahora.
+	 * @return \DateTimeImmutable
+	 */
+	private function selectedDay( \DateTimeImmutable $now ) {
+		$today = $now->setTime( 0, 0 );
+		$raw   = isset( $_GET['sulayr_dia'] ) ? sanitize_text_field( wp_unslash( $_GET['sulayr_dia'] ) ) : '';
+		$picked = \DateTimeImmutable::createFromFormat( '!Y-m-d', $raw, wp_timezone() );
+		if ( ! $picked instanceof \DateTimeImmutable || $picked->format( 'Y-m-d' ) !== $raw ) {
+			return $today;
+		}
+
+		$min = $today->modify( '-18 months' );
+		$max = $today->modify( '+18 months' );
+		if ( $picked < $min || $picked > $max ) {
+			return $today;
+		}
+
+		return $picked;
+	}
+
+	/**
+	 * @param \DateTimeImmutable $start Primer día inclusive.
+	 * @param \DateTimeImmutable $end   Último día inclusive.
+	 * @return array<string, object[]>
+	 */
+	private function sessionsBetween( \DateTimeImmutable $start, \DateTimeImmutable $end ) {
+		$by_date = array();
+		$cursor  = $start->modify( 'first day of this month' );
+		$last    = $end->format( 'Y-m' );
+		$user_id = get_current_user_id();
+
+		while ( $cursor->format( 'Y-m' ) <= $last ) {
+			foreach ( $this->query->monthSessions( $cursor->format( 'Y-m' ), $user_id ) as $session ) {
+				$by_date[ (string) $session->session_date ][] = $session;
+			}
+			$cursor = $cursor->modify( '+1 month' );
+		}
+
+		return $by_date;
+	}
+
+	/**
+	 * @param \DateTimeImmutable $day      Día de la semana.
+	 * @param bool               $selected Está elegido.
+	 * @param string             $today    Fecha de hoy, Y-m-d.
+	 * @return void
+	 */
+	private function weekTab( \DateTimeImmutable $day, $selected, $today ) {
+		$is_today = $day->format( 'Y-m-d' ) === $today;
+		$class    = 'sulayr-week-day';
+		if ( $selected ) {
+			$class .= ' is-selected';
+		}
+		if ( $is_today ) {
+			$class .= ' is-today';
+		}
+
+		echo '<a class="' . esc_attr( $class ) . '" role="tab" href="' . esc_url( $this->dayUrl( $day ) ) . '"';
+		echo ' data-date="' . esc_attr( $day->format( 'Y-m-d' ) ) . '"';
+		echo ' aria-selected="' . ( $selected ? 'true' : 'false' ) . '"';
+		if ( $is_today ) {
+			echo ' aria-current="date"';
+		}
+		echo ' tabindex="' . ( $selected ? '0' : '-1' ) . '"';
+		echo '>';
+		echo '<span class="sulayr-week-name">' . esc_html( $this->weekdayShort( (int) $day->format( 'N' ) ) ) . '</span>';
+		echo '<span class="sulayr-week-num">' . esc_html( $day->format( 'j' ) ) . '</span>';
+		if ( $is_today ) {
+			echo '<span class="sulayr-week-today">Hoy</span>';
+		}
+		echo '</a>';
+	}
+
+	/**
+	 * @param \DateTimeImmutable        $day      Día.
+	 * @param array<string, object[]>   $by_date  Sesiones por fecha.
+	 * @param bool                      $selected Visible al cargar.
+	 * @param \DateTimeImmutable        $now      Ahora.
+	 * @return void
+	 */
+	private function mobileDay( \DateTimeImmutable $day, array $by_date, $selected, \DateTimeImmutable $now ) {
+		$iso     = $day->format( 'Y-m-d' );
+		$slots   = isset( $by_date[ $iso ] ) ? $by_date[ $iso ] : array();
+		$manager = current_user_can( Capabilities::MANAGE_SWIMMERS )
+			|| current_user_can( Capabilities::MANAGE_SESSIONS )
+			|| current_user_can( Capabilities::VIEW_ALL_BOOKINGS );
+
+		echo '<article class="sulayr-mobile-day" data-date="' . esc_attr( $iso ) . '"';
+		echo ' data-weekday="' . esc_attr( $this->weekdayShort( (int) $day->format( 'N' ) ) ) . '"';
+		echo ' data-day="' . esc_attr( $day->format( 'j' ) ) . '"';
+		if ( ! $selected ) {
+			echo ' hidden';
+		}
+		echo '>';
+		echo '<h3 class="sulayr-mobile-date">';
+		if ( $iso === $now->format( 'Y-m-d' ) ) {
+			echo '<span class="sulayr-today-label">Hoy</span>';
+		}
+		echo '<span class="sulayr-mobile-kicker">' . esc_html( $this->weekdayName( (int) $day->format( 'N' ), true ) ) . ' </span>';
+		echo '<time datetime="' . esc_attr( $iso ) . '">';
+		echo esc_html( $day->format( 'j' ) . ' de ' . $this->monthName( (int) $day->format( 'n' ) ) );
+		echo '</time></h3>';
+		if ( array() === $slots ) {
+			echo '<p class="sulayr-mobile-empty">No hay sesiones programadas.</p>';
+		} else {
+			echo '<ul class="sulayr-day-sessions">';
+			$this->return_day = $iso;
+			foreach ( $slots as $session ) {
+				$this->sessionSlot( $session, $manager, $now );
+			}
+			$this->return_day = '';
+			echo '</ul>';
+		}
+		echo '</article>';
+	}
+
+	/**
+	 * @param \DateTimeImmutable $day Día.
+	 * @return string
+	 */
+	private function dayUrl( \DateTimeImmutable $day ) {
+		$base = ( new PanelPage( $this->config ) )->url();
+		if ( '' === $base ) {
+			$base = home_url( '/' );
+		}
+
+		return add_query_arg( 'sulayr_dia', $day->format( 'Y-m-d' ), $base );
+	}
+
+	/**
+	 * @param int $iso_day Día ISO 1-7.
+	 * @return string
+	 */
+	private function weekdayShort( $iso_day ) {
+		$week = array( 1 => 'lun', 2 => 'mar', 3 => 'mié', 4 => 'jue', 5 => 'vie', 6 => 'sáb', 7 => 'dom' );
+
+		return isset( $week[ (int) $iso_day ] ) ? $week[ (int) $iso_day ] : '';
 	}
 
 	/**
@@ -963,6 +1195,10 @@ class PanelRenderer {
 			}
 		}
 
+		if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $this->return_day ) ) {
+			$clean['sulayr_dia'] = $this->return_day;
+		}
+
 		return add_query_arg( $clean, $base );
 	}
 
@@ -1274,6 +1510,8 @@ class PanelRenderer {
 			'users'    => '<circle cx="9" cy="8.5" r="2.75"></circle><path d="M3.5 19c1.1-2.6 2.9-4 5.5-4s4.4 1.4 5.5 4"></path><circle cx="17" cy="9" r="2.1"></circle><path d="M16 15.2c1.8.3 3.2 1.3 4.2 3.3"></path>',
 			'plus'     => '<path d="M12 5v14M5 12h14"></path>',
 			'clock'    => '<circle cx="12" cy="12" r="8"></circle><path d="M12 8v4.5l3 2"></path>',
+			'logout'   => '<path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h7A1.5 1.5 0 0 1 19 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 9 18.5V17"></path><path d="M13 12H4M6.5 9.5 4 12l2.5 2.5"></path>',
+			'external' => '<path d="M14 5h5v5"></path><path d="M19 5l-8 8"></path><path d="M17 13.5V18a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h4.5"></path>',
 		);
 		if ( ! isset( $paths[ $name ] ) ) {
 			return '';

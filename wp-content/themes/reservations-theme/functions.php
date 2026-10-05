@@ -130,6 +130,11 @@ function reservations_theme_brand() {
 	echo '<a class="reservations-brand-name" href="' . esc_url( home_url( '/' ) ) . '">';
 	echo esc_html( get_bloginfo( 'name' ) );
 	echo '</a>';
+
+	/**
+	 * Menú del panel. Lo pinta sulayr-reservas solo si el usuario puede ver el panel.
+	 */
+	do_action( 'sulayr_reservas_brand_menu' );
 	echo '</div>';
 }
 

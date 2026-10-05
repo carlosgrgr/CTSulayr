@@ -107,3 +107,16 @@ La fila 18.4 «Máximo de 5 reservas por semana natural» describe la comprobaci
 | Panel de reservas en 390 px | `panel.css` | Lista filtrada | Cumplido y probado | Cabecera y navegación en columna. No se recorrió una reserva nueva en el navegador |
 
 La regresión de reservar, cancelar, editar una sesión y sincronizar se ejecutó con los usuarios de prueba de esta fase y quedó en el script de repetición, 16 comprobaciones y 0 fallos. Esos usuarios y las sesiones de junio de 2036 se borraron. El usuario de navegador `fase10ui` también se borra al cerrar la fase.
+
+## Fase 11
+
+No reabre las filas del apartado 18. El acceso entre sitios y el calendario móvil están aquí.
+
+| Requisito | Componente | Prueba | Resultado | Observaciones |
+|---|---|---|---|---|
+| Identidad por la cookie de red, sin contraseña ni `user_id` | `CrossSite`, cookie `wordpress_logged_in_*` | Cookie válida, caducada, con el identificador cambiado y basura | Cumplido y probado | `COOKIE_DOMAIN` es `.clubtriatlonsulayr.local.com`. No hay token propio |
+| Elegible entra; sin natación, inactivo o anónimo no | `SyncService::isEligibleAthlete()` | Usuarios temporales en el club | Cumplido y probado | Misma condición que la sincronización. No crea ficha al pulsar el enlace |
+| Cerrar sesión con nonce y salida de los dos sitios | `wp_logout_url()` | HTML del nadador, gestor y administrador; anónimo sin el enlace | Cumplido y probado | La cookie es de red. El cierre es de toda la red. Quien llegó del club vuelve a su portada |
+| Perfil del club solo del usuario actual | `CrossSite::clubProfileUrlForCurrentUser()` | Atleta con ficha activa, nadador sin rol `athlete`, ficha inactiva y `user_id` ajeno en la petición | Cumplido y probado | La URL no lleva `user_id` |
+| Calendario de un día por debajo de 1024 px | `PanelRenderer`, `panel.js`, `panel.css` | 390, 414 y 768 px; anterior, siguiente, swipe, viernes, domingo y cambio de semana | Cumplido y probado | Desde 1024 px sigue la cuadrícula. Hoy es `Europe/Madrid` |
+| Reservar, cancelar y límite semanal | `BookingService` | Una reserva futura creada y cancelada; la cuarta de la misma semana rechazada | Cumplido y probado | Los formularios no han cambiado de nonce ni de campos |

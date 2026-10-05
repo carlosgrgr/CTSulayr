@@ -19,6 +19,7 @@ El archivo principal registra un autoload `SulayrReservas\` → `src/` y arranca
 | `Roles\Capabilities` | Nombres de capacidades del plugin |
 | `Roles\RoleRegistrar` | Crea y actualiza `nadador` y `gestor` solo en el sitio de reservas |
 | `Access\AdminAccess` | Impide el `wp-admin` a nadador y gestor solo en el sitio de reservas |
+| `Access\CrossSite` | Enlaces entre el club y reservas, sin autenticar por `user_id` |
 | `Admin\NetworkSettingsPage` | Pantalla de red para los identificadores de sitio |
 | `Sessions\Schedule` | Horario fijo y plazas de un mes |
 | `Sessions\GenerationWindow` | Mes que corresponde ofrecer en una fecha |
@@ -292,7 +293,7 @@ Las tarjetas laterales leen datos que ya estaban en el panel: la ficha del usuar
 
 `bookingsFor()` añade `s.id AS session_id` para enlazar «Detalle» de la próxima sesión. No cambia el filtro ni el orden.
 
-En el tema, el contenido de la página es `alignfull`. El panel ocupa ese ancho y anula el máximo de 645 px que Twenty Twenty-Five aplica a los hijos con `:where`, de especificidad menor. La cuadrícula de siete columnas tiene un máximo para que las celdas no se estiren en pantallas muy anchas. Por debajo de 1024 px el mes pasa a una lista de días, y los días de otros meses se ocultan. En 390 px no hay desplazamiento horizontal. La columna lateral queda al lado del calendario desde 1380 px; en pantallas más estrechas, las tarjetas pasan debajo. Desde 1680 px el menú queda en una columna a la izquierda.
+En el tema, el contenido de la página es `alignfull`. El panel ocupa ese ancho y anula el máximo de 645 px que Twenty Twenty-Five aplica a los hijos con `:where`, de especificidad menor. La cuadrícula de siete columnas tiene un máximo para que las celdas no se estiren en pantallas muy anchas. Desde la fase 11, por debajo de 1024 px esa lista deja de mostrarse y el calendario pasa a un solo día. En 390 px no hay desplazamiento horizontal. La columna lateral queda al lado del calendario desde 1380 px; en pantallas más estrechas, las tarjetas pasan debajo. Desde 1680 px el menú queda en una columna a la izquierda.
 
 No hay JavaScript nuevo. La hoja se encola con `filemtime` para que el navegador recoja el CSS nuevo sin subir la versión del plugin.
 
@@ -333,3 +334,53 @@ Cobertura futura con PHPUnit, todavía sin suite: límite semanal y su concurren
 Comprobado con scripts que cargan WordPress y usuarios temporales, borrados al terminar, y con el panel y el perfil del club en el navegador. El envío de correo se interceptó con `pre_wp_mail`. No se ejecutó PHP 7.4. No se subió por HTTP un archivo que no fuera imagen con extensión de imagen. No se recorrió en el navegador el POST de previsualizar y confirmar el CSV: la validación y `createImported()` sí se ejecutaron desde PHP.
 
 Comprobado con `do_shortcode` para nadador, gestor, administrador y anónimo, y en el navegador con el CSS del tema a 1440 px y a 390 px. El día 2 de octubre de 2026 salió como hoy. Las sesiones ya empezadas se vieron atenuadas, las reservadas por el nadador en azul y las libres en verde. El gestor conservó detalle, capacidad, habilitar o deshabilitar, reserva para otro y cancelación. Un nadador que pide la vista de nadadores o un mes futuro sigue en el mes en curso. No se envió ningún POST de reserva o cancelación, para no alterar las reservas existentes. No aparecieron avisos en `debug.log`. No hay PHPUnit. `SPEC.md`, `ACEPTACION.md` y `FASES.md` no se han modificado: esto no reabre ni cierra criterios de aceptación.
+
+## Fase 11
+
+La especificación está en `SPEC-FASE11.md`. `SPEC.md` y `SPEC-MEJORAS.md` no se han modificado.
+
+### Acceso Club → Reservas
+
+Los dos sitios son subdominios de la misma red: `clubtriatlonsulayr.local.com` y `cnnazari.clubtriatlonsulayr.local.com`. `SUBDOMAIN_INSTALL` es verdadero y WordPress define `COOKIE_DOMAIN` como `.clubtriatlonsulayr.local.com`. La cookie `wordpress_logged_in_*` ya es de red. No se ha añadido un token de un solo uso: `wp_set_auth_cookie()` escribiría esa misma cookie, así que un handshake no crearía una sesión distinta ni evitaría el cierre de sesión de red.
+
+La identidad sale de la cookie firmada y del token de sesión guardado en la cuenta. No viaja la contraseña. Un `user_id` en la URL no autentica a nadie. Cambiar el identificador dentro de la cookie rompe la firma y `wp_validate_auth_cookie()` la rechaza. Una cookie caducada también se rechaza.
+
+Estar autenticado en el club no autoriza reservas. El shortcode del blog 2 sigue exigiendo la capacidad y, si no es gestor ni administrador, una ficha activa. Si no se cumple, el panel muestra el aviso que ya existía y no crea una ficha. La sincronización no se dispara al pulsar el enlace.
+
+El enlace **Reservas de piscina** sale en la tarjeta del perfil del deportista, con `do_action( 'sulayr_athlete_profile_card' )`. Lo pinta `CrossSite` solo si `SyncService::isEligibleAthlete()` es verdadero: rol `athlete` en el club, `sulayr_user_swimming = 1` y `sulayr_user_athlete_status = active`. Es la misma condición que `profile()` usa para sincronizar. El perfil de Mi cuenta solo lo ve el propio deportista autenticado. Quien no es elegible no ve el enlace. La URL apunta al panel con `sulayr_desde=club`. Ese parámetro no elige al usuario: solo marca el origen para la vuelta tras cerrar sesión.
+
+En este entorno el club se sirve por HTTP y `is_ssl()` es falso. La cookie de WordPress lleva el indicador Secure cuando el sitio es HTTPS. Si `home` del sitio de reservas empieza por `https://`, la marca de origen no se guarda en una petición que no sea HTTPS.
+
+### Vuelta al perfil del club
+
+**Mi perfil en el club** aparece en el menú del panel cuando el usuario actual es `athlete` con estado `active` en el club y tiene ficha activa en reservas. El destino es el endpoint de WooCommerce `perfil-deportista` del propio usuario, calculado en el blog 1. No lleva `user_id`. Un nadador que no es deportista del club no ve el enlace. Pulsarlo no cierra la sesión.
+
+### Cerrar sesión
+
+**Cerrar sesión** usa `wp_logout_url()`, con el nonce `log-out` de WordPress. `wp_logout()` borra el token de sesión y la cookie de `COOKIE_DOMAIN`, así que la sesión termina en el club y en reservas a la vez. No hay un cierre solo de reservas: la cookie es la misma y dejarla viva mantendría al usuario autenticado en los dos sitios.
+
+Si la petición trae `sulayr_desde=club` o la cookie de origen `sulayr_reservas_origen=club`, el destino es la portada del club. Si no, es la página del panel, ya sin sesión. La cookie de origen es HttpOnly, SameSite Lax, dura 12 horas, no es de autenticación y se borra al salir. `allowed_redirect_hosts` solo añade los dos hosts configurados. Otra dirección se rechaza.
+
+### Menú en la cabecera
+
+El tema `reservations-theme` llama a `do_action( 'sulayr_reservas_brand_menu' )` dentro de `div.reservations-brand`. `Shortcode::brandMenu()` pinta ahí `nav.sulayr-menu` si el sitio es el de reservas y el usuario es gestor o nadador con ficha activa. `PanelRenderer` marca que el menú ya está impreso y el panel no repite la barra: la rejilla usa `sulayr-shell-no-nav`. Si otro tema no llama al hook, el panel pinta el menú en `div.sulayr-nav-card` como antes. Se quitó el título «Reservas de natación».
+
+`panel.js` suma el ancho de los enlaces y lo compara con el hueco del menú. Si no caben, añade `is-collapsed` y muestra el botón hamburguesa. El desplegable se abre bajo la cabecera, alineado a la derecha. `aria-expanded` cambia con él. Escape o un clic fuera lo cierran. El cálculo se repite al cambiar el ancho.
+
+### Calendario móvil
+
+Por debajo de 1024 px el calendario muestra un día. Desde 1024 px sigue la cuadrícula de siete columnas. La tablet de 768 px usa la vista de un día.
+
+La semana va de lunes a domingo. El día inicial es hoy en `wp_timezone()` (`Europe/Madrid`), no la zona del navegador. El selector y el contenido comparten `data-selected`. `data-today` guarda esa fecha. El día de hoy lleva `is-today` en el selector aunque esté elegido otro día, y el título del día muestra «Hoy» solo en esa fecha. En la cuadrícula de escritorio sigue el borde y la etiqueta que ya tenía la celda. Anterior, siguiente y cada día son enlaces. Sin JavaScript recargan `sulayr_dia`. Con JavaScript cambian el día ya pintado. Una fecha fuera de la ventana cargada, o más allá de 18 meses, vuelve a pedirse al servidor o se ignora.
+
+La ventana inicial va de tres semanas antes a cuatro después, alineada a lunes y domingo. Los meses que toca esa ventana se leen con `PanelQuery::monthSessions()`. No hay otra consulta ni otra librería. Viernes y domingo salen en el selector. Si no tienen filas, el texto es «No hay sesiones programadas.» Los horarios no están escritos en el JavaScript: salen de las sesiones.
+
+El swipe escucha `touchstart` y `touchend` en el día visible. Exige más de 48 px en horizontal y que ese desplazamiento supere al vertical. No actúa si el gesto empieza en un enlace, botón o formulario. `touch-action: pan-y` deja el scroll vertical. Las flechas del teclado en el selector también cambian de día.
+
+Reservar y cancelar siguen siendo los formularios de `quickActions`, con el nonce `sulayr_panel`. Al volver se conserva `sulayr_dia` de ese día. La cuadrícula de escritorio no lo añade.
+
+### Pruebas de esta fase
+
+Usuarios temporales, borrados al terminar. Elegible, sin natación, deportista inactivo, anónimo, nadador, ficha inactiva, suscriptor, gestor y administrador. Cookie válida, caducada, manipulada y basura. Reserva y cancelación de una sesión futura. Cuarta reserva de la misma semana rechazada por el límite y las tres anteriores canceladas. CSV de plantilla analizado. Sincronización manual de un elegible, con la ficha creada y luego borrada.
+
+En el navegador, a 390, 414 y 768 px, la vista de un día, sin scroll horizontal. Anterior, siguiente, viernes, domingo, el paso de domingo a lunes y el swipe. El gesto que empieza en «Detalle» no cambia de día. A 1024 y 1280 px sigue la cuadrícula y la vista móvil no se muestra. No se recorrió el formulario de acceso de WordPress dentro del navegador: la página autenticada se pidió con la cookie de sesión generada en el servidor.

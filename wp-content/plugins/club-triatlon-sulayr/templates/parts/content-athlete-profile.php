@@ -21,6 +21,12 @@ if ( ! defined( 'ABSPATH' ) ) {
                         width="140" height="140" loading="lazy">
                 </div>
                 <h2 class="sulayr-profile-name"><?php echo esc_html( $user_name ); ?></h2>
+                <?php
+                /**
+                 * Enlace a reservas. Lo pinta sulayr-reservas si el deportista es elegible.
+                 */
+                do_action( 'sulayr_athlete_profile_card' );
+                ?>
             </div>
         </aside>
 

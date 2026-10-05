@@ -319,3 +319,33 @@ El archivo no puede superar 2 MB.
 **Exportar CSV**, en la lista de nadadores, descarga las fichas que cumplen el filtro activo: nombre, apellidos, email, teléfono, estado, fecha de alta y límite semanal.
 
 **Exportar reservas CSV**, en la ficha, descarga las reservas que siguen registradas de esa persona: fecha y hora de la sesión, el texto «Registrada», la fecha de la reserva y si la hizo el nadador o un gestor. Una cancelación no aparece, porque la reserva se borra.
+
+## 22. Ir a reservas desde el club
+
+En **Mi cuenta → Perfil de deportista**, quien nada con el club y está activo ve **Reservas de piscina**.
+
+Si ya has entrado en el club, ese enlace abre el panel de reservas sin pedir otra vez la contraseña. Es la misma cuenta. Si tu ficha de reservas no está activa, el panel lo dice y no te da de alta solo por pulsar el enlace.
+
+Quien no tiene natación, o no está activo, no ve ese enlace.
+
+## 23. Volver al perfil del club
+
+En el menú de reservas, **Mi perfil en el club** sale si además eres deportista activo del club y tu ficha de reservas está activa. Abre tu perfil, no el de otra persona. No cierra la sesión de reservas.
+
+## 24. Cerrar sesión
+
+**Cerrar sesión** está en el menú del panel, con el resto de apartados.
+
+Al pulsarlo se cierra la sesión del club y la de reservas. La cuenta es la misma en los dos sitios y no se puede dejar abierta en uno y cerrada en el otro.
+
+Si habías llegado desde **Reservas de piscina**, vuelves a la portada del club. Si habías entrado directamente en reservas, vuelves a la página del panel, ya sin sesión.
+
+## 25. Calendario en el móvil
+
+En el móvil y en la tablet el calendario enseña un día. Arriba están los siete días de la semana, de lunes a domingo. El día elegido va resaltado. Al abrir, es el día de hoy en España (Madrid), aunque el teléfono tenga otra zona.
+
+Puedes cambiar de día con las flechas, tocando un día o deslizando el dedo en horizontal sobre las sesiones. Deslizar hacia arriba o abajo sigue siendo el scroll de la página. Si el gesto empieza en **Reservar**, **Cancelar** o **Detalle**, no cambia el día.
+
+El domingo pasa al lunes siguiente y el lunes vuelve al domingo anterior. El viernes y el domingo, si no tienen clase, dicen **No hay sesiones programadas.**
+
+En el ordenador se mantiene el calendario del mes, en columnas. Reservar y cancelar funcionan igual en las dos presentaciones.

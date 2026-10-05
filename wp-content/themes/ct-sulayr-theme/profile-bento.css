@@ -1,6 +1,7 @@
 /*
  * Presentación Bento de las dos vistas reales del perfil del deportista.
- * No cambia campos, formulario ACF, pestañas ni enlaces.
+ * No cambia campos, formulario ACF ni pestañas.
+ * El enlace a reservas lo imprime el plugin y aquí solo se presenta.
  */
 
 .sulayr-athlete-profile-content {
@@ -54,6 +55,29 @@
 	color: var(--sulayr-bento-text);
 	font-size: 1.25rem;
 	margin: 0.75rem 0 0;
+}
+
+.sulayr-athlete-profile-content .sulayr-pool-link-wrap {
+	margin: 1rem 0 0;
+}
+
+.sulayr-athlete-profile-content a.sulayr-pool-link {
+	align-items: center;
+	background: var(--sulayr-bento-accent);
+	border-radius: 12px;
+	color: #fff;
+	display: flex;
+	font-weight: 700;
+	justify-content: center;
+	min-height: 44px;
+	padding: 0.55rem 0.9rem;
+	text-decoration: none;
+}
+
+.sulayr-athlete-profile-content a.sulayr-pool-link:hover,
+.sulayr-athlete-profile-content a.sulayr-pool-link:focus-visible {
+	background: #17633e;
+	color: #fff;
 }
 
 .sulayr-athlete-profile-content .sulayr-profile-main {

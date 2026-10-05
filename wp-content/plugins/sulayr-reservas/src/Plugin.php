@@ -3,6 +3,7 @@
 namespace SulayrReservas;
 
 use SulayrReservas\Access\AdminAccess;
+use SulayrReservas\Access\CrossSite;
 use SulayrReservas\Admin\NetworkSettingsPage;
 use SulayrReservas\Config\SiteConfig;
 use SulayrReservas\Context\BlogContext;
@@ -38,6 +39,7 @@ class Plugin {
 		}
 
 		( new AdminAccess( $this->config ) )->register();
+		( new CrossSite( $this->config, $this->blog_context ) )->register();
 		( new EmailChangeService( $this->config, $this->blog_context ) )->register();
 		( new ClubSync( $this->config, $this->blog_context ) )->register();
 		( new Shortcode( $this->config, $this->blog_context ) )->register();
