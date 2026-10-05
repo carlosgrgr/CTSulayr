@@ -20,3 +20,31 @@ add_action(
 	},
 	30
 );
+
+add_action(
+	'login_enqueue_scripts',
+	function () {
+		$path = get_stylesheet_directory() . '/assets/img/CTSulayrlogo.png';
+		if ( ! is_readable( $path ) ) {
+			return;
+		}
+
+		$url = get_stylesheet_directory_uri() . '/assets/img/CTSulayrlogo.png';
+		$css = '.login h1 a{background-image:url("' . esc_url( $url ) . '");background-position:center;background-repeat:no-repeat;background-size:contain;height:74px;width:80px;}';
+		wp_add_inline_style( 'login', $css );
+	}
+);
+
+add_filter(
+	'login_headerurl',
+	function () {
+		return home_url( '/' );
+	}
+);
+
+add_filter(
+	'login_headertext',
+	function () {
+		return get_bloginfo( 'name' );
+	}
+);
