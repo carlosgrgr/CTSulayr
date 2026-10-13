@@ -2,6 +2,8 @@
 
 Este manual explica cómo reservar plaza y cómo gestionar las sesiones. No hace falta conocer el funcionamiento interno del sitio.
 
+Quien gestiona el calendario y las fichas tiene un manual aparte: `MANUAL-GESTOR.md`.
+
 No incluye capturas. El calendario con una sesión iniciada no se ha podido abrir en el navegador durante la redacción: solo se comprobó la página antes de entrar.
 
 ## 1. Introducción
