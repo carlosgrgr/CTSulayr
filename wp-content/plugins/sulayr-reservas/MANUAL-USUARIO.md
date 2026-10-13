@@ -167,9 +167,15 @@ No hay sesión los viernes ni los domingos. Cada sesión nueva tiene 24 plazas. 
 
 ## 12. Gestión de nadadores
 
-En **Nadadores** aparece cada persona con su nombre, si está activa o desactivada, si viene del club o se dio de alta a mano, y su límite semanal.
+En **Nadadores** las fichas se ven en una tabla. Cada fila muestra la foto, el nombre, los apellidos, el correo, el teléfono, si está activa o desactivada, si viene del club o se dio de alta a mano, el límite semanal y la fecha de alta. El nombre y los apellidos abren la ficha.
 
-Puedes filtrar por **Todos**, **Activos** o **Inactivos**, y buscar por nombre o correo. Los dos filtros se aplican a la vez. La lista no está paginada. **Exportar CSV** descarga esa misma lista.
+Debajo del filtro aparece el total de ese estado: por ejemplo, «Total: 4 nadadores», «Total: 4 nadadores activos» o «Total: 0 nadadores inactivos». Buscar por nombre o correo no cambia ese total. Solo reduce las filas de la tabla.
+
+Puedes filtrar por **Todos**, **Activos** o **Inactivos**, y buscar por nombre o correo. Los dos se aplican a la vez. La tabla no está paginada.
+
+Para ordenar, pulsa el título de la columna. La primera vez ordena de menor a mayor, o de la A a la Z. Pulsar otra vez invierte el orden. Al entrar, la tabla va por apellidos, de la A a la Z. La foto no se ordena. El filtro y la búsqueda se mantienen al cambiar el orden.
+
+**Exportar CSV** descarga esas mismas filas, en el orden que se está viendo.
 
 Al abrir una ficha se ven el correo, el teléfono, el DNI y sus reservas.
 
@@ -316,7 +322,7 @@ El archivo no puede superar 2 MB.
 
 ## 21. Exportar CSV
 
-**Exportar CSV**, en la lista de nadadores, descarga las fichas que cumplen el filtro activo: nombre, apellidos, email, teléfono, estado, fecha de alta y límite semanal.
+**Exportar CSV**, en la tabla de nadadores, descarga las fichas que cumplen el filtro y la búsqueda activos, en el mismo orden de la tabla: nombre, apellidos, email, teléfono, estado, fecha de alta y límite semanal.
 
 **Exportar reservas CSV**, en la ficha, descarga las reservas que siguen registradas de esa persona: fecha y hora de la sesión, el texto «Registrada», la fecha de la reserva y si la hizo el nadador o un gestor. Una cancelación no aparece, porque la reserva se borra.
 

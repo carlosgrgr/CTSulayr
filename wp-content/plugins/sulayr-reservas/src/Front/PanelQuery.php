@@ -178,7 +178,7 @@ class PanelQuery {
 	}
 
 	/**
-	 * @param array{status?: string, search?: string} $filters Estado y búsqueda. Vacío para el listado completo.
+	 * @param array{status?: string, search?: string, sort?: string, direction?: string} $filters Estado, búsqueda y orden. Vacío para el listado completo.
 	 * @return object[]
 	 */
 	public function swimmers( array $filters = array() ) {
@@ -188,11 +188,14 @@ class PanelQuery {
 					return array();
 				}
 
-				$status = isset( $filters['status'] ) ? (string) $filters['status'] : 'todos';
-				$search = isset( $filters['search'] ) ? (string) $filters['search'] : '';
-				if ( ! in_array( $status, array( 'todos', 'activos', 'inactivos' ), true ) ) {
-					$status = 'todos';
-				}
+				$filters = $this->cleanFilters(
+					isset( $filters['status'] ) ? (string) $filters['status'] : 'todos',
+					isset( $filters['search'] ) ? (string) $filters['search'] : '',
+					isset( $filters['sort'] ) ? (string) $filters['sort'] : 'apellidos',
+					isset( $filters['direction'] ) ? (string) $filters['direction'] : 'asc'
+				);
+				$status = $filters['status'];
+				$search = $filters['search'];
 
 				global $wpdb;
 
@@ -212,7 +215,7 @@ class PanelQuery {
 					$values[] = $like;
 				}
 
-				$sql = 'SELECT user_id, active, linked_to_club, first_name, last_name, email, phone, weekly_limit, photo_id, created_at FROM ' . $this->swimmersTable() . ' WHERE ' . implode( ' AND ', $where ) . ' ORDER BY last_name ASC, first_name ASC, user_id ASC';
+				$sql = 'SELECT user_id, active, linked_to_club, first_name, last_name, email, phone, weekly_limit, photo_id, created_at FROM ' . $this->swimmersTable() . ' WHERE ' . implode( ' AND ', $where ) . ' ORDER BY ' . $this->swimmerOrder( $filters['sort'], $filters['direction'] );
 				if ( array() !== $values ) {
 					$sql = $wpdb->prepare( $sql, $values );
 				}
@@ -232,23 +235,61 @@ class PanelQuery {
 	}
 
 	/**
-	 * Filtros del listado. El estado inicial es todos los nadadores.
+	 * Nadadores del estado elegido. La búsqueda y el orden no entran en la cuenta.
 	 *
-	 * @return array{status: string, search: string}
+	 * @param array{status?: string, search?: string, sort?: string, direction?: string} $filters Filtros del listado.
+	 * @return int
 	 */
-	public function swimmerFilters() {
-		$status = isset( $_GET['estado'] ) ? sanitize_key( wp_unslash( $_GET['estado'] ) ) : 'todos';
-		$search = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '';
+	public function swimmerCount( array $filters = array() ) {
+		return $this->blog_context->onBookings(
+			function () use ( $filters ) {
+				if ( ! current_user_can( Capabilities::MANAGE_SWIMMERS ) ) {
+					return 0;
+				}
 
-		return $this->cleanFilters( $status, $search );
+				$filters = $this->cleanFilters(
+					isset( $filters['status'] ) ? (string) $filters['status'] : 'todos',
+					'',
+					'apellidos',
+					'asc'
+				);
+
+				global $wpdb;
+
+				$where = '1=1';
+				if ( 'activos' === $filters['status'] ) {
+					$where = 'active = 1';
+				} elseif ( 'inactivos' === $filters['status'] ) {
+					$where = 'active = 0';
+				}
+
+				return (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . $this->swimmersTable() . ' WHERE ' . $where );
+			}
+		);
 	}
 
 	/**
-	 * @param string $status Estado recibido.
-	 * @param string $search Búsqueda recibida.
-	 * @return array{status: string, search: string}
+	 * Filtros del listado. El estado inicial es todos los nadadores y el orden, apellidos ascendentes.
+	 *
+	 * @return array{status: string, search: string, sort: string, direction: string}
 	 */
-	public function cleanFilters( $status, $search ) {
+	public function swimmerFilters() {
+		$status    = isset( $_GET['estado'] ) ? sanitize_key( wp_unslash( $_GET['estado'] ) ) : 'todos';
+		$search    = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '';
+		$sort      = isset( $_GET['orden'] ) ? sanitize_key( wp_unslash( $_GET['orden'] ) ) : 'apellidos';
+		$direction = isset( $_GET['dir'] ) ? sanitize_key( wp_unslash( $_GET['dir'] ) ) : 'asc';
+
+		return $this->cleanFilters( $status, $search, $sort, $direction );
+	}
+
+	/**
+	 * @param string $status    Estado recibido.
+	 * @param string $search    Búsqueda recibida.
+	 * @param string $sort      Columna de orden.
+	 * @param string $direction Sentido `asc` o `desc`.
+	 * @return array{status: string, search: string, sort: string, direction: string}
+	 */
+	public function cleanFilters( $status, $search, $sort = 'apellidos', $direction = 'asc' ) {
 		if ( ! in_array( $status, array( 'todos', 'activos', 'inactivos' ), true ) ) {
 			$status = 'todos';
 		}
@@ -256,10 +297,50 @@ class PanelQuery {
 		if ( mb_strlen( $search ) > 100 ) {
 			$search = mb_substr( $search, 0, 100 );
 		}
+		$sort = sanitize_key( (string) $sort );
+		if ( ! isset( $this->swimmerOrders()[ $sort ] ) ) {
+			$sort = 'apellidos';
+		}
+		$direction = 'desc' === sanitize_key( (string) $direction ) ? 'desc' : 'asc';
 
 		return array(
-			'status' => $status,
-			'search' => $search,
+			'status'    => $status,
+			'search'    => $search,
+			'sort'      => $sort,
+			'direction' => $direction,
+		);
+	}
+
+	/**
+	 * Orden fijo. La columna y el sentido ya vienen validados.
+	 *
+	 * @param string $sort      Columna permitida.
+	 * @param string $direction Sentido `asc` o `desc`.
+	 * @return string
+	 */
+	private function swimmerOrder( $sort, $direction ) {
+		$orders = $this->swimmerOrders();
+		$dir    = 'desc' === $direction ? 'DESC' : 'ASC';
+		$order  = isset( $orders[ $sort ] ) ? $orders[ $sort ] : $orders['apellidos'];
+
+		return str_replace( '%DIR%', $dir, $order );
+	}
+
+	/**
+	 * Fragmentos de ORDER BY. `%DIR%` se sustituye por ASC o DESC.
+	 *
+	 * @return array<string, string>
+	 */
+	private function swimmerOrders() {
+		return array(
+			'nombre'    => 'first_name %DIR%, last_name %DIR%, user_id ASC',
+			'apellidos' => 'last_name %DIR%, first_name %DIR%, user_id ASC',
+			'correo'    => 'email %DIR%, user_id ASC',
+			'telefono'  => 'phone %DIR%, user_id ASC',
+			'estado'    => "CASE WHEN active = 1 THEN 'Activo' ELSE 'Desactivado' END %DIR%, last_name ASC, first_name ASC, user_id ASC",
+			'origen'    => "CASE WHEN linked_to_club = 1 THEN 'Vinculado al club' ELSE 'Alta manual' END %DIR%, last_name ASC, first_name ASC, user_id ASC",
+			'limite'    => 'weekly_limit %DIR%, last_name ASC, first_name ASC, user_id ASC',
+			'alta'      => 'created_at %DIR%, user_id ASC',
 		);
 	}
 

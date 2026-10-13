@@ -525,6 +525,76 @@ p.sulayr-panel {
 	overflow-wrap: anywhere;
 }
 
+.sulayr-swimmer-total {
+	color: #4d5c70;
+	font-weight: 700;
+	margin: 0.75rem 0 0;
+}
+
+.sulayr-table-wrap {
+	margin: 0.75rem 0;
+	overflow-x: auto;
+}
+
+.sulayr-table {
+	border-collapse: collapse;
+	min-width: 56rem;
+	width: 100%;
+}
+
+.sulayr-table th,
+.sulayr-table td {
+	border-bottom: 1px solid #e6ebf2;
+	padding: 0.65rem 0.7rem;
+	text-align: left;
+	vertical-align: middle;
+}
+
+.sulayr-table th {
+	color: #4d5c70;
+	font-size: 0.8125rem;
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.sulayr-table th a {
+	align-items: center;
+	color: inherit;
+	display: inline-flex;
+	gap: 0.2rem;
+	min-height: 44px;
+	text-decoration: none;
+}
+
+.sulayr-table th a:hover,
+.sulayr-table th[aria-sort="ascending"] a,
+.sulayr-table th[aria-sort="descending"] a {
+	color: #1d4e9e;
+	text-decoration: underline;
+	text-underline-offset: 0.15em;
+}
+
+.sulayr-table td {
+	overflow-wrap: anywhere;
+}
+
+.sulayr-table .sulayr-avatar {
+	margin: 0;
+}
+
+.sulayr-sr {
+	border: 0;
+	clip: rect(1px, 1px, 1px, 1px);
+	clip-path: inset(50%);
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	padding: 0;
+	position: absolute;
+	width: 1px;
+	word-wrap: normal !important;
+}
+
 .sulayr-notice {
 	background: #fff;
 	border: 1px solid #d5e2f5;

@@ -805,25 +805,130 @@ class PanelRenderer {
 		echo '<div class="sulayr-card">';
 		echo '<h2>Nadadores</h2>';
 		$this->filterForm( $filters );
+		$this->swimmerTotal( $this->query->swimmerCount( $filters ), $filters['status'] );
 		$rows = $this->query->swimmers( $filters );
 		if ( array() === $rows ) {
 			echo '<p>No hay nadadores con ese criterio.</p></div>';
 			return;
 		}
 
-		echo '<ul class="sulayr-people">';
-		foreach ( $rows as $row ) {
-			$state  = 1 === (int) $row->active ? 'Activo' : 'Desactivado';
-			$origin = 1 === (int) $row->linked_to_club ? 'Vinculado al club' : 'Alta manual';
-			$limit  = WeeklyLimit::normalize( $row->weekly_limit );
-			echo '<li>';
-			$this->avatar( trim( $row->first_name . ' ' . $row->last_name ), isset( $row->photo_url ) ? (string) $row->photo_url : '', 'sulayr-avatar sulayr-avatar-small' );
-			echo '<a href="' . esc_url( $this->url( array( 'sulayr_vista' => 'nadador', 'usuario' => (int) $row->user_id ) ) ) . '">' . esc_html( $row->first_name . ' ' . $row->last_name ) . '</a> ';
-			echo '<span>' . esc_html( $state . '. ' . $origin . '. Límite ' . $limit ) . '</span></li>';
-		}
-		echo '</ul>';
+		$this->swimmerTable( $rows, $filters );
 		$this->exportSwimmersForm( $filters );
 		echo '</div>';
+	}
+
+	/**
+	 * @param int    $count  Nadadores del estado elegido.
+	 * @param string $status Estado `todos`, `activos` o `inactivos`.
+	 * @return void
+	 */
+	private function swimmerTotal( $count, $status ) {
+		$count = (int) $count;
+		if ( 'activos' === $status ) {
+			$text = 1 === $count ? 'Total: 1 nadador activo' : 'Total: ' . $count . ' nadadores activos';
+		} elseif ( 'inactivos' === $status ) {
+			$text = 1 === $count ? 'Total: 1 nadador inactivo' : 'Total: ' . $count . ' nadadores inactivos';
+		} else {
+			$text = 1 === $count ? 'Total: 1 nadador' : 'Total: ' . $count . ' nadadores';
+		}
+
+		echo '<p class="sulayr-swimmer-total">' . esc_html( $text ) . '</p>';
+	}
+
+	/**
+	 * @param object[]                                                    $rows    Fichas ya filtradas y ordenadas.
+	 * @param array{status: string, search: string, sort: string, direction: string} $filters Orden y filtros visibles.
+	 * @return void
+	 */
+	private function swimmerTable( array $rows, array $filters ) {
+		echo '<div class="sulayr-table-wrap">';
+		echo '<table class="sulayr-table">';
+		echo '<thead><tr>';
+		echo '<th scope="col">Foto</th>';
+		foreach ( $this->swimmerColumns() as $key => $label ) {
+			$this->swimmerSortHeader( $label, $key, $filters );
+		}
+		echo '</tr></thead><tbody>';
+		foreach ( $rows as $row ) {
+			$name  = trim( (string) $row->first_name . ' ' . (string) $row->last_name );
+			$href  = $this->url( array( 'sulayr_vista' => 'nadador', 'usuario' => (int) $row->user_id ) );
+			$phone = trim( (string) $row->phone );
+			echo '<tr>';
+			echo '<td>';
+			$this->avatar( $name, isset( $row->photo_url ) ? (string) $row->photo_url : '', 'sulayr-avatar sulayr-avatar-small' );
+			echo '</td>';
+			echo '<td><a href="' . esc_url( $href ) . '">' . esc_html( (string) $row->first_name ) . '</a></td>';
+			echo '<td><a href="' . esc_url( $href ) . '">' . esc_html( (string) $row->last_name ) . '</a></td>';
+			echo '<td>' . esc_html( (string) $row->email ) . '</td>';
+			echo '<td>' . esc_html( '' !== $phone ? $phone : '—' ) . '</td>';
+			echo '<td>' . esc_html( 1 === (int) $row->active ? 'Activo' : 'Desactivado' ) . '</td>';
+			echo '<td>' . esc_html( 1 === (int) $row->linked_to_club ? 'Vinculado al club' : 'Alta manual' ) . '</td>';
+			echo '<td>' . esc_html( (string) WeeklyLimit::normalize( $row->weekly_limit ) ) . '</td>';
+			echo '<td>' . esc_html( $this->createdLabel( (string) $row->created_at ) ) . '</td>';
+			echo '</tr>';
+		}
+		echo '</tbody></table></div>';
+	}
+
+	/**
+	 * Columnas ordenables del listado.
+	 *
+	 * @return array<string, string>
+	 */
+	private function swimmerColumns() {
+		return array(
+			'nombre'    => 'Nombre',
+			'apellidos' => 'Apellidos',
+			'correo'    => 'Correo',
+			'telefono'  => 'Teléfono',
+			'estado'    => 'Estado',
+			'origen'    => 'Origen',
+			'limite'    => 'Límite',
+			'alta'      => 'Fecha de alta',
+		);
+	}
+
+	/**
+	 * @param string                                                                     $label   Texto de la cabecera.
+	 * @param string                                                                     $column  Clave de orden.
+	 * @param array{status: string, search: string, sort: string, direction: string}    $filters Orden actual.
+	 * @return void
+	 */
+	private function swimmerSortHeader( $label, $column, array $filters ) {
+		$active    = $column === $filters['sort'];
+		$ascending = $active && 'asc' === $filters['direction'];
+		$aria      = $active ? ( $ascending ? 'ascending' : 'descending' ) : 'none';
+		echo '<th scope="col" aria-sort="' . esc_attr( $aria ) . '">';
+		echo '<a href="' . esc_url( $this->swimmerSortUrl( $filters, $column ) ) . '">' . esc_html( $label );
+		if ( $active ) {
+			echo '<span aria-hidden="true">' . ( $ascending ? ' ↑' : ' ↓' ) . '</span>';
+			echo '<span class="sulayr-sr">' . esc_html( $ascending ? ', orden ascendente. Activar para orden descendente.' : ', orden descendente. Activar para orden ascendente.' ) . '</span>';
+		} else {
+			echo '<span class="sulayr-sr">. Activar para orden ascendente.</span>';
+		}
+		echo '</a></th>';
+	}
+
+	/**
+	 * @param array{status: string, search: string, sort: string, direction: string} $filters Filtros que deben conservarse.
+	 * @param string                                                                  $column  Columna pulsada.
+	 * @return string
+	 */
+	private function swimmerSortUrl( array $filters, $column ) {
+		$direction = ( $column === $filters['sort'] && 'asc' === $filters['direction'] ) ? 'desc' : 'asc';
+		$args      = array( 'sulayr_vista' => 'nadadores' );
+		if ( 'apellidos' !== $column || 'asc' !== $direction ) {
+			$args['orden'] = $column;
+			$args['dir']   = $direction;
+		}
+		if ( 'todos' !== $filters['status'] ) {
+			$args['estado'] = $filters['status'];
+		}
+		if ( '' !== $filters['search'] ) {
+			$args['q'] = $filters['search'];
+		}
+
+		return $this->url( $args );
 	}
 
 	/**
@@ -1192,6 +1297,20 @@ class PanelRenderer {
 				$clean[ $key ] = sanitize_text_field( (string) $value );
 			} elseif ( in_array( $key, array( 'sesion', 'usuario' ), true ) ) {
 				$clean[ $key ] = absint( $value );
+			} elseif ( 'estado' === $key && in_array( sanitize_key( (string) $value ), array( 'activos', 'inactivos' ), true ) ) {
+				$clean['estado'] = sanitize_key( (string) $value );
+			} elseif ( 'q' === $key ) {
+				$search = sanitize_text_field( (string) $value );
+				if ( mb_strlen( $search ) > 100 ) {
+					$search = mb_substr( $search, 0, 100 );
+				}
+				if ( '' !== $search ) {
+					$clean['q'] = $search;
+				}
+			} elseif ( 'orden' === $key && in_array( sanitize_key( (string) $value ), array( 'nombre', 'apellidos', 'correo', 'telefono', 'estado', 'origen', 'limite', 'alta' ), true ) ) {
+				$clean['orden'] = sanitize_key( (string) $value );
+			} elseif ( 'dir' === $key && in_array( sanitize_key( (string) $value ), array( 'asc', 'desc' ), true ) ) {
+				$clean['dir'] = sanitize_key( (string) $value );
 			}
 		}
 
@@ -1270,12 +1389,16 @@ class PanelRenderer {
 	}
 
 	/**
-	 * @param array{status: string, search: string} $filters Filtros actuales.
+	 * @param array{status: string, search: string, sort: string, direction: string} $filters Filtros actuales.
 	 * @return void
 	 */
 	private function filterForm( array $filters ) {
 		echo '<form method="get" action="' . esc_url( $this->url( array() ) ) . '" class="sulayr-form sulayr-filters">';
 		echo '<input type="hidden" name="sulayr_vista" value="nadadores">';
+		if ( 'apellidos' !== $filters['sort'] || 'asc' !== $filters['direction'] ) {
+			echo '<input type="hidden" name="orden" value="' . esc_attr( $filters['sort'] ) . '">';
+			echo '<input type="hidden" name="dir" value="' . esc_attr( $filters['direction'] ) . '">';
+		}
 		echo '<label>Estado <select name="estado">';
 		foreach ( array( 'todos' => 'Todos', 'activos' => 'Activos', 'inactivos' => 'Inactivos' ) as $value => $label ) {
 			echo '<option value="' . esc_attr( $value ) . '"' . selected( $filters['status'], $value, false ) . '>' . esc_html( $label ) . '</option>';
@@ -1286,7 +1409,7 @@ class PanelRenderer {
 	}
 
 	/**
-	 * @param array{status: string, search: string} $filters Filtros a exportar.
+	 * @param array{status: string, search: string, sort: string, direction: string} $filters Filtros a exportar.
 	 * @return void
 	 */
 	private function exportSwimmersForm( array $filters ) {
@@ -1295,6 +1418,8 @@ class PanelRenderer {
 		echo '<input type="hidden" name="sulayr_action" value="export_swimmers">';
 		echo '<input type="hidden" name="estado" value="' . esc_attr( $filters['status'] ) . '">';
 		echo '<input type="hidden" name="q" value="' . esc_attr( $filters['search'] ) . '">';
+		echo '<input type="hidden" name="orden" value="' . esc_attr( $filters['sort'] ) . '">';
+		echo '<input type="hidden" name="dir" value="' . esc_attr( $filters['direction'] ) . '">';
 		echo '<button type="submit">Exportar CSV</button></form>';
 	}
 
@@ -1441,6 +1566,19 @@ class PanelRenderer {
 		}
 
 		return $this->monthName( (int) $date->format( 'n' ) ) . ' de ' . $date->format( 'Y' );
+	}
+
+	/**
+	 * @param string $created_at Fecha de alta `Y-m-d H:i:s`.
+	 * @return string
+	 */
+	private function createdLabel( $created_at ) {
+		$date = \DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $created_at, wp_timezone() );
+		if ( ! $date instanceof \DateTimeImmutable ) {
+			return '' !== $created_at ? $created_at : '—';
+		}
+
+		return $date->format( 'd/m/Y' );
 	}
 
 	/**

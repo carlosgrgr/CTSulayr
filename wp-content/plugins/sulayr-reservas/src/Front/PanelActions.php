@@ -434,10 +434,12 @@ class PanelActions {
 			$this->redirect( 'unauthorized', 'No tienes permiso para esta operación.' );
 		}
 
-		$query   = new PanelQuery( $this->blog_context );
-		$status  = isset( $_POST['estado'] ) ? sanitize_key( wp_unslash( $_POST['estado'] ) ) : 'todos';
-		$search  = isset( $_POST['q'] ) ? (string) wp_unslash( $_POST['q'] ) : '';
-		$filters = $query->cleanFilters( $status, $search );
+		$query     = new PanelQuery( $this->blog_context );
+		$status    = isset( $_POST['estado'] ) ? sanitize_key( wp_unslash( $_POST['estado'] ) ) : 'todos';
+		$search    = isset( $_POST['q'] ) ? (string) wp_unslash( $_POST['q'] ) : '';
+		$sort      = isset( $_POST['orden'] ) ? sanitize_key( wp_unslash( $_POST['orden'] ) ) : 'apellidos';
+		$direction = isset( $_POST['dir'] ) ? sanitize_key( wp_unslash( $_POST['dir'] ) ) : 'asc';
+		$filters   = $query->cleanFilters( $status, $search, $sort, $direction );
 		$rows    = $query->swimmers( $filters );
 		( new CsvExporter() )->download( 'nadadores.csv', ( new CsvExporter() )->swimmers( $rows ) );
 	}
