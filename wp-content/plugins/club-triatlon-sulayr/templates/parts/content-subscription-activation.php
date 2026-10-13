@@ -35,7 +35,7 @@ if ( ! defined( 'ABSPATH' ) ) {
             <p><strong><?php esc_html_e( 'Suscripción activa', SULAYR_TEXTDOMAIN ); ?></strong></p>
             <p><?php esc_html_e( 'Tu cuota se cobra automáticamente cada mes. Puedes ver el historial en "Mis pagos".', SULAYR_TEXTDOMAIN ); ?></p>
         </div>
-    <?php elseif ( ! empty( $can_activate_subscription ) ) : ?>
+    <?php /* elseif ( ! empty( $can_activate_subscription ) ) : ?>
         <div class="sulayr-subscription-activate">
             <?php if ( ! empty( $user_is_directive ) ) : ?>
                 <p><?php esc_html_e( 'Activa tu suscripción de natación para directiva (29,50 €/mes) para que se cobre automáticamente cada mes.', SULAYR_TEXTDOMAIN ); ?></p>
@@ -49,5 +49,5 @@ if ( ! defined( 'ABSPATH' ) ) {
                 </button>
             </form>
         </div>
-    <?php endif; ?>
+    <?php */ endif; ?>
 </div>
