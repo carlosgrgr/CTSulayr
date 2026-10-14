@@ -25,8 +25,8 @@ class CsvImporter {
 		}
 
 		fwrite( $handle, "\xEF\xBB\xBF" );
-		fputcsv( $handle, self::COLUMNS, ',', '"', '\\' );
-		fputcsv( $handle, array( 'Ana', 'García López', 'ana.garcia@example.com', '600000000', '3', '1' ), ',', '"', '\\' );
+		fputcsv( $handle, self::COLUMNS, ';', '"', '\\' );
+		fputcsv( $handle, array( 'Ana', 'García López', 'ana.garcia@example.com', '600000000', '3', '1' ), ';', '"', '\\' );
 		rewind( $handle );
 		$csv = stream_get_contents( $handle );
 		fclose( $handle );
@@ -54,7 +54,7 @@ class CsvImporter {
 		$first = strtok( str_replace( array( "\r\n", "\r" ), "\n", $contents ), "\n" );
 		$comma = substr_count( (string) $first, ',' );
 		$semi  = substr_count( (string) $first, ';' );
-		$delim = $semi > $comma ? ';' : ',';
+		$delim = $comma > $semi ? ',' : ';';
 
 		$handle = fopen( 'php://temp', 'w+' );
 		if ( false === $handle ) {

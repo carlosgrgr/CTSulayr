@@ -179,7 +179,7 @@ Si falta algún dato o el correo no es válido, el formulario conserva lo escrit
 
 Columnas: `nombre`, `apellidos`, `email`, `telefono`, `limite_semanal` y `estado`. Obligatorios: nombre, apellidos y email. El teléfono puede ir vacío. El límite vacío queda en 3; si se indica, tiene que ser de 1 a 5. El estado vacío crea la ficha activa (`1`). Solo se aceptan `0` y `1`. El CSV no lleva DNI: la ficha queda sin él.
 
-El archivo admite coma o punto y coma, y no puede superar 2 MB. La vista previa se conserva unos 15 minutos. Una fila incorrecta no impide crear las demás. Un correo que ya exista no se modifica: esa fila se rechaza y se indica dónde está la cuenta. El mensaje para elegir contraseña se envía cuando la fila se crea de verdad, después de confirmar.
+El archivo usa punto y coma (;) como separador, igual que la plantilla y la exportación; también se aceptan archivos antiguos separados por comas. No puede superar 2 MB. La vista previa se conserva unos 15 minutos. Una fila incorrecta no impide crear las demás. Un correo que ya exista no se modifica: esa fila se rechaza y se indica dónde está la cuenta. El mensaje para elegir contraseña se envía cuando la fila se crea de verdad, después de confirmar.
 
 La plantilla incluye una fila de ejemplo (Ana García López). Si se confirma tal cual, esa persona se daría de alta. Cámbiala o bórrala antes.
 

@@ -85,7 +85,7 @@ class CsvExporter {
 			foreach ( $line as $value ) {
 				$safe[] = $this->cell( (string) $value );
 			}
-			fputcsv( $handle, $safe, ',', '"', '\\' );
+			fputcsv( $handle, $safe, ';', '"', '\\' );
 		}
 		rewind( $handle );
 		$csv = stream_get_contents( $handle );

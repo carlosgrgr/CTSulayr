@@ -970,17 +970,17 @@ class PanelRenderer {
 		$this->exportBookingsForm( (int) $row->user_id );
 
 		if ( 1 === (int) $row->active ) {
-			$this->post( 'swimmer_deactivate', 'Desactivar', array( 'swimmer_user_id' => (int) $row->user_id ) );
+			$this->post( 'swimmer_deactivate', 'Desactivar nadador', array( 'swimmer_user_id' => (int) $row->user_id ) );
 		} else {
-			$this->post( 'swimmer_reactivate', 'Reactivar', array( 'swimmer_user_id' => (int) $row->user_id ) );
+			$this->post( 'swimmer_reactivate', 'Reactivar nadador', array( 'swimmer_user_id' => (int) $row->user_id ) );
 		}
 		echo '<form method="post" action="' . esc_url( $this->url( array() ) ) . '" class="sulayr-form">';
 		wp_nonce_field( PanelActions::NONCE, 'sulayr_nonce' );
 		echo '<input type="hidden" name="sulayr_action" value="swimmer_remove">';
 		echo '<input type="hidden" name="sulayr_return" value="' . esc_attr( $this->url( array( 'sulayr_vista' => 'nadadores' ) ) ) . '">';
 		echo '<input type="hidden" name="swimmer_user_id" value="' . esc_attr( (string) $row->user_id ) . '">';
-		echo '<label><input type="checkbox" name="confirm_remove" value="1"> Confirmo la retirada de este nadador del sitio de reservas</label> ';
-		echo '<button type="submit">Retirar del sitio</button></form>';
+		echo '<label><input type="checkbox" name="confirm_remove" value="1"> Confirmo la eliminación de este nadador del sitio de reservas</label> ';
+		echo '<button type="submit">Eliminar nadador</button></form>';
 		$this->bookings( (int) $row->user_id, $now, true );
 		echo '</div>';
 	}
