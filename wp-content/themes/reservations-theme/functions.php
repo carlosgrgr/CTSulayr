@@ -63,6 +63,9 @@ add_filter(
 	function ( $classes ) {
 		if ( reservations_theme_is_panel() ) {
 			$classes[] = 'reservations-panel-page';
+			if ( ! is_user_logged_in() ) {
+				$classes[] = 'reservations-guest';
+			}
 		}
 
 		return $classes;
@@ -121,6 +124,14 @@ function reservations_theme_brand() {
 		return;
 	}
 
+	if ( ! is_user_logged_in() ) {
+		$logo = get_stylesheet_directory_uri() . '/assets/img/ctsulayrnazari.png';
+		echo '<div class="reservations-brand reservations-guest-brand">';
+		echo '<img class="reservations-guest-logo" src="' . esc_url( $logo ) . '" alt="' . esc_attr( get_bloginfo( 'name' ) ) . '" width="197" height="99">';
+		echo '</div>';
+		return;
+	}
+
 	echo '<div class="reservations-brand">';
 
 	if ( has_custom_logo() ) {
@@ -143,14 +154,17 @@ add_action( 'astra_entry_top', 'reservations_theme_brand', 5 );
 add_action(
 	'login_enqueue_scripts',
 	function () {
-		$path = get_stylesheet_directory() . '/assets/img/CTSulayrlogo.png';
+		$path = get_stylesheet_directory() . '/assets/css/login.css';
 		if ( ! is_readable( $path ) ) {
 			return;
 		}
 
-		$url = get_stylesheet_directory_uri() . '/assets/img/CTSulayrlogo.png';
-		$css = '.login h1 a{background-image:url("' . esc_url( $url ) . '");background-position:center;background-repeat:no-repeat;background-size:contain;height:74px;width:80px;}';
-		wp_add_inline_style( 'login', $css );
+		wp_enqueue_style(
+			'reservations-theme-login',
+			get_stylesheet_directory_uri() . '/assets/css/login.css',
+			array( 'login' ),
+			(string) filemtime( $path )
+		);
 	}
 );
 

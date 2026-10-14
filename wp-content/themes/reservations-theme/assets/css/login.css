@@ -1,0 +1,8 @@
+.login h1 a {
+	background-image: url("../img/ctsulayrnazari.png");
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	height: 120px;
+	width: 240px;
+}
