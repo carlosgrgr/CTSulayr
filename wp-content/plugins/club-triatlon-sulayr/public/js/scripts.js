@@ -112,11 +112,28 @@
         });
     }
 
+    /**
+     * Tarifa, tipo de entrenamiento y suplemento quedan visibles, sin desplegable.
+     */
+    function lockPlanFields() {
+        var fields = document.querySelectorAll('.sulayr-profile-form .sulayr-field-locked select');
+        fields.forEach(function(select) {
+            select.disabled = true;
+            select.setAttribute('aria-disabled', 'true');
+        });
+    }
+
     // Ejecutar solo cuando el DOM esté listo
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initProfileTabs);
+        document.addEventListener('DOMContentLoaded', lockPlanFields);
     } else {
         // DOM ya está listo
         initProfileTabs();
+        lockPlanFields();
+    }
+
+    if (window.acf && typeof window.acf.addAction === 'function') {
+        window.acf.addAction('ready', lockPlanFields);
     }
 })();

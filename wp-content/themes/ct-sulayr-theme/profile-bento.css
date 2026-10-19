@@ -68,10 +68,23 @@
 	color: #fff;
 	display: flex;
 	font-weight: 700;
+	gap: 0.4rem;
 	justify-content: center;
 	min-height: 44px;
 	padding: 0.55rem 0.9rem;
 	text-decoration: none;
+}
+
+.sulayr-external-icon {
+	display: inline-block;
+	flex: 0 0 auto;
+	vertical-align: -0.15em;
+}
+
+body .woocommerce-MyAccount-navigation-link--reservas-piscina a {
+	align-items: center;
+	display: flex;
+	gap: 0.35rem;
 }
 
 .sulayr-athlete-profile-content a.sulayr-pool-link:hover,

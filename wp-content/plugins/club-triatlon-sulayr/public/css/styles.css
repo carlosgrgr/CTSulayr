@@ -378,6 +378,33 @@ body .select2-dropdown {
     display: none;
 }
 
+.sulayr-profile-form .sulayr-field-locked select,
+.sulayr-profile-form .sulayr-field-locked .select2-container {
+    pointer-events: none;
+}
+
+.sulayr-profile-form .sulayr-field-locked .select2-selection,
+.sulayr-profile-form .sulayr-field-locked select {
+    background-color: #f4f6f8;
+    cursor: default;
+    opacity: 1;
+}
+
+.sulayr-profile-form .sulayr-field-locked .select2-selection__arrow {
+    display: none;
+}
+
+.sulayr-plan-change-notice {
+    margin: 0.75rem 0 0;
+    padding: 0.7rem 0.85rem;
+    background: #fff8e6;
+    color: #5c4a00;
+    border: 1px solid #f0e0b2;
+    border-radius: 6px;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
 .sulayr-edit-block form.acf-form {
     max-width: 36rem;
 }

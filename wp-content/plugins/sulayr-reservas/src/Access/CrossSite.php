@@ -36,6 +36,9 @@ class CrossSite {
 	/** @var bool|null Resultado de la petición actual. */
 	private $pool_link_visible;
 
+	/** @var int|null Nivel del buffer del menú de Mi cuenta. */
+	private $nav_buffer_level;
+
 	/**
 	 * @param SiteConfig  $config       Sitios.
 	 * @param BlogContext $blog_context Cambio de sitio.
@@ -55,6 +58,8 @@ class CrossSite {
 		add_action( 'sulayr_athlete_profile_card', array( $this, 'renderPoolLink' ) );
 		add_filter( 'woocommerce_account_menu_items', array( $this, 'addPoolMenuItem' ), 20 );
 		add_filter( 'woocommerce_get_endpoint_url', array( $this, 'poolMenuUrl' ), 10, 4 );
+		add_action( 'woocommerce_before_account_navigation', array( $this, 'bufferAccountNav' ), 0 );
+		add_action( 'woocommerce_after_account_navigation', array( $this, 'decorateAccountNav' ), 999 );
 	}
 
 	/**
@@ -113,7 +118,52 @@ class CrossSite {
 			return;
 		}
 
-		echo '<p class="sulayr-pool-link-wrap"><a class="sulayr-pool-link" href="' . esc_url( $url ) . '">Reservas de piscina</a></p>';
+		echo '<p class="sulayr-pool-link-wrap"><a class="sulayr-pool-link" href="' . esc_url( $url ) . '" target="_blank" rel="noopener noreferrer">Reservas de piscina' . $this->externalLinkIcon() . '<span class="screen-reader-text"> (se abre en una pestaña nueva)</span></a></p>';
+	}
+
+	/**
+	 * Empieza a capturar el menú de Mi cuenta para marcar el enlace externo.
+	 *
+	 * @return void
+	 */
+	public function bufferAccountNav() {
+		if ( ! $this->showsPoolLink() ) {
+			return;
+		}
+
+		ob_start();
+		$this->nav_buffer_level = ob_get_level();
+	}
+
+	/**
+	 * Abre el enlace del menú en una pestaña nueva y le añade el icono.
+	 *
+	 * @return void
+	 */
+	public function decorateAccountNav() {
+		if ( null === $this->nav_buffer_level || ob_get_level() !== $this->nav_buffer_level ) {
+			return;
+		}
+
+		$html = ob_get_clean();
+		$this->nav_buffer_level = null;
+		if ( ! is_string( $html ) ) {
+			return;
+		}
+
+		$endpoint = preg_quote( self::MENU_ITEM, '/' );
+		$pattern  = '/<li class="([^"]*\bwoocommerce-MyAccount-navigation-link--' . $endpoint . '\b[^"]*)">\s*<a href="([^"]*)"[^>]*>\s*Reservas de piscina\s*<\/a>/';
+		$icon     = $this->externalLinkIcon();
+		$replaced = preg_replace_callback(
+			$pattern,
+			static function ( $matches ) use ( $icon ) {
+				return '<li class="' . $matches[1] . '"><a href="' . $matches[2] . '" target="_blank" rel="noopener noreferrer">Reservas de piscina' . $icon . '<span class="screen-reader-text"> (se abre en una pestaña nueva)</span></a>';
+			},
+			$html,
+			1
+		);
+
+		echo is_string( $replaced ) ? $replaced : $html;
 	}
 
 	/**
@@ -177,6 +227,15 @@ class CrossSite {
 		$target = $this->poolLinkUrl();
 
 		return '' !== $target ? $target : $url;
+	}
+
+	/**
+	 * Icono de enlace externo. El texto del enlace queda fuera del dibujo.
+	 *
+	 * @return string
+	 */
+	private function externalLinkIcon() {
+		return '<svg class="sulayr-external-icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5h5v5"></path><path d="M19 5l-8 8"></path><path d="M17 13.5V18a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h4.5"></path></svg>';
 	}
 
 	/**

@@ -11,9 +11,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class UserService {
 
-    const DAYS_LEFT_TO_LOCK_FIELDS = 5;
-    
     public function __construct() {
+        static $hooks_registered = false;
+        if ( $hooks_registered ) {
+            return;
+        }
+        $hooks_registered = true;
+
         // Hooks de usuario
         add_action('user_register', [$this, 'assign_athlete_role'], 10, 1);
         add_filter('login_redirect', [$this, 'redirect_after_login'], 10, 3);
@@ -25,15 +29,18 @@ class UserService {
         add_filter('acf/update_value/name=' . CustomFields::USER_PROFILE_IS_DIRECTIVE, [$this, 'preserve_directive_field_value'], 10, 3);
 
         if ( ! is_admin() ) {
-            add_filter('acf/prepare_field/name=' . CustomFields::USER_PROFILE_MEMBERSHIP_PLAN, [$this, 'maybe_lock_field']);
-            add_filter('acf/prepare_field/name=' . CustomFields::USER_PROFILE_SWIMMING, [$this, 'maybe_lock_field']);
-            add_filter('acf/prepare_field/name=' . CustomFields::USER_PROFILE_TRAINING_TYPE, [$this, 'maybe_lock_field']);
+            $locked_fields = [
+                CustomFields::USER_PROFILE_MEMBERSHIP_PLAN,
+                CustomFields::USER_PROFILE_TRAINING_TYPE,
+                CustomFields::USER_PROFILE_SWIMMING,
+            ];
+            foreach ( $locked_fields as $field_name ) {
+                add_filter( 'acf/prepare_field/name=' . $field_name, [ $this, 'lock_public_plan_field' ] );
+                add_action( 'acf/render_field/name=' . $field_name, [ $this, 'render_locked_plan_value' ], 20 );
+                add_filter( 'acf/update_value/name=' . $field_name, [ $this, 'preserve_locked_field_value' ], 10, 3 );
+            }
+            add_action( 'acf/render_field/name=' . CustomFields::USER_PROFILE_SWIMMING, [ $this, 'render_plan_change_notice' ], 21 );
             add_filter('acf/load_field/name=' . CustomFields::USER_PROFILE_JOIN_DATE, [$this, 'lock_field']);
-            
-            // Proteger valores de campos bloqueados al guardar
-            add_filter('acf/update_value/name=' . CustomFields::USER_PROFILE_MEMBERSHIP_PLAN, [$this, 'preserve_locked_field_value'], 10, 3);
-            add_filter('acf/update_value/name=' . CustomFields::USER_PROFILE_SWIMMING, [$this, 'preserve_locked_field_value'], 10, 3);
-            add_filter('acf/update_value/name=' . CustomFields::USER_PROFILE_TRAINING_TYPE, [$this, 'preserve_locked_field_value'], 10, 3);
         }
         add_action( 'login_footer', [$this, 'reset_page_login_link'] );
         add_action( 'admin_init', [$this, 'redirect_athlete_to_profile'] );
@@ -239,30 +246,59 @@ class UserService {
     }
 
     /**
-     * Bloquear campos a final de mes
+     * Tarifa, tipo de entrenamiento y suplemento de natación no se editan en la ficha pública.
      *
      * @param array $field Campo ACF
      * @return array Campo ACF modificado
      */
-    public function maybe_lock_field($field) {
+    public function lock_public_plan_field( $field ) {
         if ( ! is_array( $field ) ) {
             return $field;
         }
 
-        $today = new \DateTime();
-        $last_day = new \DateTime('last day of this month');
-        $interval = $today->diff($last_day);
-        $days_left = (int) $interval->format('%a');
+        $field['readonly'] = 1;
+        $field['disabled'] = 1;
 
-        // Si faltan menos de 5 días (4 días o menos)
-        if ($days_left < self::DAYS_LEFT_TO_LOCK_FIELDS) {
-            // Usar readonly en lugar de disabled para que el valor se envíe en el formulario
-            $field['readonly'] = 1; // Hace el campo solo lectura
-            // NO usar disabled porque los campos disabled no se envían en el formulario
-            $field['instructions'] = '<span style="color:#c00;">' . esc_html__( 'Este campo no puede modificarse a final de mes.', SULAYR_TEXTDOMAIN ) . '</span>';
+        if ( ! isset( $field['wrapper'] ) || ! is_array( $field['wrapper'] ) ) {
+            $field['wrapper'] = [];
+        }
+        $class = isset( $field['wrapper']['class'] ) ? (string) $field['wrapper']['class'] : '';
+        if ( false === strpos( $class, 'sulayr-field-locked' ) ) {
+            $field['wrapper']['class'] = trim( $class . ' sulayr-field-locked' );
         }
 
         return $field;
+    }
+
+    /**
+     * Reenvía el valor guardado. El select queda deshabilitado y no viaja en el formulario.
+     *
+     * @param array $field Campo ACF ya preparado.
+     * @return void
+     */
+    public function render_locked_plan_value( $field ) {
+        if ( ! is_array( $field ) || empty( $field['name'] ) ) {
+            return;
+        }
+
+        $value = $field['value'] ?? '';
+        if ( is_array( $value ) ) {
+            $value = reset( $value );
+        }
+
+        echo '<input type="hidden" name="' . esc_attr( (string) $field['name'] ) . '" value="' . esc_attr( (string) $value ) . '" />';
+    }
+
+    /**
+     * Aviso bajo el suplemento de natación, el último de los campos de tarifa.
+     *
+     * @param array $field Campo ACF.
+     * @return void
+     */
+    public function render_plan_change_notice( $field ) {
+        unset( $field );
+
+        echo '<p class="sulayr-plan-change-notice">' . esc_html__( 'Para cambiar la tarifa y el suplemento de natación hay que avisar al administrador antes de que empiece el mes en el que se quiere efectuar el cambio.', SULAYR_TEXTDOMAIN ) . '</p>';
     }
 
     /**
@@ -341,53 +377,32 @@ class UserService {
     }
 
     /**
-     * Preservar valores de campos bloqueados cuando se intenta guardar
-     * 
-     * Este método protege los valores de campos bloqueados (tarifa y suplemento)
-     * cuando se guarda el formulario, evitando que se reseteen si no están en $_POST
-     * o si están vacíos.
+     * Impide cambiar tarifa, tipo de entrenamiento y suplemento desde la ficha pública.
      *
      * @param mixed  $value   Nuevo valor que se intenta guardar
-     * @param int    $post_id ID del post o usuario
+     * @param int|string $post_id ID del post o usuario
      * @param array  $field   Array del campo ACF
-     * @return mixed Valor original si el campo está bloqueado, o el nuevo valor si no
+     * @return mixed Valor ya guardado
      */
     public function preserve_locked_field_value( $value, $post_id, $field ) {
-        // Solo procesar si es un usuario (formato 'user_X')
         if ( ! is_string( $post_id ) || strpos( $post_id, 'user_' ) !== 0 ) {
+            return $value;
+        }
+        if ( ! is_array( $field ) || empty( $field['name'] ) ) {
             return $value;
         }
 
         $user_id = (int) str_replace( 'user_', '', $post_id );
-        
-        // Verificar si estamos en período de bloqueo
-        $today = new \DateTime();
-        $last_day = new \DateTime('last day of this month');
-        $interval = $today->diff($last_day);
-        $days_left = (int) $interval->format('%a');
-
-        // Si NO estamos en período de bloqueo (5 días o más), permitir el cambio
-        if ( $days_left >= self::DAYS_LEFT_TO_LOCK_FIELDS ) {
+        if ( $user_id < 1 ) {
             return $value;
         }
 
-        // Si estamos en período de bloqueo, preservar el valor actual
-        // Obtener el valor actual del campo
-        $current_value = get_field( $field['name'], $post_id );
-        
-        // Si el nuevo valor está vacío o es null, mantener el valor actual
-        if ( empty( $value ) && $value !== '0' && $value !== 0 ) {
-            return $current_value;
+        $stored = get_user_meta( $user_id, $field['name'], true );
+        if ( is_array( $stored ) ) {
+            return $value;
         }
 
-        // Si el valor nuevo es diferente al actual, preservar el actual (bloqueado)
-        // Esto previene cambios incluso si alguien intenta modificar el valor
-        if ( $current_value !== null && $current_value !== false && $current_value !== '' ) {
-            return $current_value;
-        }
-
-        // Si no hay valor actual, permitir el nuevo valor (primera vez)
-        return $value;
+        return $stored;
     }
 
     /**
