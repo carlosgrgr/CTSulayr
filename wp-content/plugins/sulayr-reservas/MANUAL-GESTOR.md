@@ -2,6 +2,8 @@
 
 Este manual es para quien entra al panel con el rol de gestor. Explica cómo preparar el calendario, apuntar y dar de baja a nadadores, y mantener sus fichas.
 
+La versión corta, con pantallas del móvil, está en `GUIA-RAPIDA-GESTOR.html`.
+
 El nadador tiene su propio manual: `MANUAL-USUARIO.md`. Aquí solo se resume lo que el gestor hace consigo mismo.
 
 No incluye capturas. Los nombres en negrita son los textos de los botones y los apartados del menú.
@@ -127,15 +129,21 @@ Cancelar borra la reserva. La plaza queda libre y deja de contar para el límite
 
 ## 8. Listado de nadadores
 
-**Nadadores** muestra una tabla: foto, nombre, apellidos, correo, teléfono, si está activa o desactivada, si viene del club o se dio de alta a mano, el límite semanal y la fecha de alta. El nombre y los apellidos abren la ficha.
+**Nadadores** muestra primero un **Contador**. Cuenta todas las fichas, sin mirar el filtro ni la búsqueda:
 
-Debajo del filtro aparece el total de ese estado: por ejemplo, «Total: 4 nadadores», «Total: 4 nadadores activos» o «Total: 0 nadadores inactivos». Buscar por nombre o correo no cambia ese total. Solo reduce las filas.
+- **Total**: activos e inactivos.
+- **CN Nazarí**: altas hechas en reservas.
+- **CT Sulayr**: fichas que vienen del club.
 
-Puedes filtrar por **Todos**, **Activos** o **Inactivos**, y buscar por nombre o correo. Pulsa **Filtrar**. Los dos criterios se aplican a la vez. La tabla no está paginada.
+Cada línea dice, por ejemplo, «3 nadadores activos / 1 nadador inactivo».
 
-Para ordenar, pulsa el título de la columna. La primera vez ordena de menor a mayor, o de la A a la Z. Pulsar otra vez invierte el orden. Al entrar, la tabla va por apellidos, de la A a la Z. La foto no se ordena. El filtro y la búsqueda se mantienen al cambiar el orden.
+Debajo está el filtro. Puedes combinar **Estado** (**Todos**, **Activos** o **Inactivos**), **Origen** (**Todos**, **CN Nazarí** o **CT Sulayr**) y la búsqueda por nombre o correo. Pulsa **Filtrar**. El contador no cambia. Solo cambia la tabla.
 
-**Exportar CSV** descarga esas mismas filas, en el orden que se está viendo: nombre, apellidos, email, teléfono, estado, fecha de alta y límite semanal.
+La tabla tiene foto, nombre, apellidos, correo, teléfono, estado, origen, límite semanal y fecha de alta. El origen dice **CN Nazarí** o **CT Sulayr**. El nombre y los apellidos abren la ficha. La tabla no está paginada. En el móvil se desliza hacia la derecha para ver el resto de columnas.
+
+Para ordenar, pulsa el título de la columna. La primera vez ordena de menor a mayor, o de la A a la Z. Pulsar otra vez invierte el orden. Al entrar, la tabla va por apellidos, de la A a la Z. La foto no se ordena. El estado, el origen y la búsqueda se mantienen al cambiar el orden.
+
+**Exportar CSV** descarga las filas que se están viendo, con el mismo filtro, origen, búsqueda y orden: nombre, apellidos, email, teléfono, estado, fecha de alta y límite semanal.
 
 ## 9. Ficha de un nadador
 
@@ -238,8 +246,8 @@ Tiene que abrir el enlace que llegó a la dirección nueva. Caduca a las 24 hora
 **¿Desactivar y retirar es lo mismo?**
 Desactivar mantiene la ficha y se puede volver a activar. Retirar saca a la persona del sitio de reservas y borra la ficha.
 
-**¿Por qué el total de nadadores no baja al buscar?**
-El total cuenta el estado elegido (todos, activos o inactivos). La búsqueda solo acorta la tabla.
+**¿Por qué el contador no cambia al filtrar o al buscar?**
+El contador es de todas las fichas, separadas en CN Nazarí y CT Sulayr. El filtro solo cambia la tabla.
 
 ## 15. Mensajes habituales
 

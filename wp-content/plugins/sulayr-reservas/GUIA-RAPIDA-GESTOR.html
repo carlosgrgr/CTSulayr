@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía rápida del gestor — Reservas de natación</title>
+<style>
+	:root {
+		--azul: #2f6fe0;
+		--texto: #1a2740;
+		--suave: #5b6b84;
+		--fondo: #eef3f8;
+		--borde: #e4ebf3;
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+
+	body {
+		background: var(--fondo);
+		color: var(--texto);
+		font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+		font-size: 1rem;
+		line-height: 1.5;
+		margin: 0;
+		padding: 1rem;
+	}
+
+	main {
+		margin: 0 auto;
+		max-width: 46rem;
+	}
+
+	header {
+		margin-bottom: 1rem;
+	}
+
+	h1 {
+		font-size: 1.6rem;
+		margin: 0 0 0.25rem;
+	}
+
+	header p {
+		color: var(--suave);
+		margin: 0;
+	}
+
+	nav {
+		background: #fff;
+		border: 1px solid var(--borde);
+		border-radius: 16px;
+		margin-bottom: 1rem;
+		padding: 0.75rem 1rem;
+	}
+
+	nav ol {
+		margin: 0;
+		padding-left: 1.25rem;
+	}
+
+	nav a {
+		color: var(--azul);
+	}
+
+	section {
+		background: #fff;
+		border: 1px solid var(--borde);
+		border-radius: 16px;
+		box-shadow: 0 8px 24px rgba(23, 42, 79, 0.05);
+		margin-bottom: 1rem;
+		padding: 1rem 1.15rem;
+	}
+
+	h2 {
+		font-size: 1.25rem;
+		margin: 0 0 0.75rem;
+	}
+
+	.paso {
+		align-items: flex-start;
+		display: grid;
+		gap: 1rem;
+		grid-template-columns: 1fr;
+	}
+
+	figure {
+		margin: 0;
+	}
+
+	figure img {
+		border: 1px solid var(--borde);
+		border-radius: 12px;
+		display: block;
+		height: auto;
+		margin: 0 auto;
+		max-width: 100%;
+		width: 260px;
+	}
+
+	figure + figure {
+		margin-top: 0.75rem;
+	}
+
+	figcaption {
+		color: var(--suave);
+		font-size: 0.85rem;
+		margin-top: 0.35rem;
+		text-align: center;
+	}
+
+	ol, ul {
+		margin: 0 0 0.75rem;
+		padding-left: 1.25rem;
+	}
+
+	li + li {
+		margin-top: 0.3rem;
+	}
+
+	p {
+		margin: 0 0 0.75rem;
+	}
+
+	b {
+		white-space: nowrap;
+	}
+
+	.aviso {
+		background: #fff7e6;
+		border-left: 4px solid #f0a020;
+		border-radius: 8px;
+		padding: 0.6rem 0.8rem;
+	}
+
+	@media (min-width: 40rem) {
+		.paso {
+			grid-template-columns: 1fr 260px;
+		}
+	}
+</style>
+</head>
+<body>
+<main>
+
+<header>
+	<h1>Guía rápida del gestor</h1>
+	<p>Reservas de natación, en el móvil.</p>
+</header>
+
+<nav aria-label="Contenido">
+	<ol>
+		<li><a href="#entrar">Entrar y menú</a></li>
+		<li><a href="#calendario">Calendario</a></li>
+		<li><a href="#sesion">Gestionar una sesión</a></li>
+		<li><a href="#asistio">Apuntar a quien vino sin reservar</a></li>
+		<li><a href="#nadadores">Nadadores</a></li>
+		<li><a href="#editar">Editar un nadador</a></li>
+		<li><a href="#alta">Alta de nadador</a></li>
+	</ol>
+</nav>
+
+<section id="entrar">
+	<h2>1. Entrar y menú</h2>
+	<div class="paso">
+		<div>
+			<p>Abre la web de reservas y pulsa <b>Iniciar sesión</b>.</p>
+			<p>Pulsa el botón de las tres rayas para abrir el menú:</p>
+			<ul>
+				<li><b>Calendario</b>: las sesiones.</li>
+				<li><b>Nadadores</b>: el listado y las fichas.</li>
+				<li><b>Alta de nadador</b> e <b>Importar</b>: añadir personas.</li>
+				<li><b>Meses anteriores</b>: calendarios ya pasados.</li>
+				<li><b>Cerrar sesión</b>.</li>
+			</ul>
+		</div>
+		<figure>
+			<img src="docs/guia-gestor/02-menu.png" alt="Menú del gestor desplegado">
+			<figcaption>Menú</figcaption>
+		</figure>
+	</div>
+</section>
+
+<section id="calendario">
+	<h2>2. Calendario</h2>
+	<div class="paso">
+		<div>
+			<p>Se ve un día. Cambia de día con las flechas o tocando el día.</p>
+			<p>Cada sesión dice si está disponible, completa, deshabilitada o si ya ha comenzado, y cuántas plazas quedan.</p>
+			<p><b>Detalle</b> abre la sesión.</p>
+			<p>Si aparece <b>Generar sesiones de…</b>, púlsalo una vez para crear el mes. Si dice «Hoy no corresponde generar un mes», no hay nada que hacer.</p>
+		</div>
+		<figure>
+			<img src="docs/guia-gestor/01-calendario.png" alt="Calendario con un día y una sesión">
+			<figcaption>Calendario de un día</figcaption>
+		</figure>
+	</div>
+</section>
+
+<section id="sesion">
+	<h2>3. Gestionar una sesión</h2>
+	<div class="paso">
+		<div>
+			<ul>
+				<li><b>Guardar capacidad</b>: cambia el número de plazas. Bajarlo no quita a quien ya está apuntado.</li>
+				<li><b>Deshabilitar sesión</b>: la sesión sigue en el calendario, pero nadie puede reservarla.</li>
+				<li><b>Reservar para</b>: elige un nadador y pulsa <b>Reservar</b>.</li>
+				<li><b>Cancelar reserva</b>, en la lista de abajo, libera esa plaza.</li>
+			</ul>
+			<p>Cada nadador tiene un máximo de reservas por semana, de lunes a domingo. Si lo ha alcanzado, no se le puede apuntar.</p>
+		</div>
+		<figure>
+			<img src="docs/guia-gestor/03-sesion.png" alt="Detalle de una sesión con capacidad, deshabilitar y reservar para">
+			<figcaption>Detalle de una sesión</figcaption>
+		</figure>
+	</div>
+</section>
+
+<section id="asistio">
+	<h2>4. Apuntar a quien vino sin reservar</h2>
+	<div class="paso">
+		<div>
+			<ol>
+				<li>En el calendario, vuelve al día de la sesión con la flecha de la izquierda.</li>
+				<li>Pulsa <b>Detalle</b>. La sesión dice «Ya ha comenzado».</li>
+				<li>En <b>Reservar para</b>, elige al nadador.</li>
+				<li>Pulsa <b>Reservar</b>.</li>
+			</ol>
+			<p>En su ficha, esa sesión sale en el <b>Historial</b> con el texto «Añadida por un gestor».</p>
+			<p class="aviso">La asistencia añadida cuenta en su límite de esa semana. Si el nadador ya lo había completado, no podrás añadir la reserva a no ser que aumentes su límite en la ficha.</p>
+		</div>
+		<div>
+			<figure>
+				<img src="docs/guia-gestor/08-sesion-pasada.png" alt="Sesión ya comenzada con un nadador elegido en Reservar para">
+				<figcaption>Sesión ya comenzada</figcaption>
+			</figure>
+			<figure>
+				<img src="docs/guia-gestor/09-historial.png" alt="Historial del nadador con una sesión añadida por un gestor">
+				<figcaption>Así queda en su historial</figcaption>
+			</figure>
+		</div>
+	</div>
+</section>
+
+<section id="nadadores">
+	<h2>5. Nadadores</h2>
+	<div class="paso">
+		<div>
+			<p>Arriba hay un <b>Contador</b> de todas las fichas: total, <b>CN Nazarí</b> y <b>CT Sulayr</b>, con activos e inactivos. No cambia al filtrar.</p>
+			<p>Puedes filtrar por estado, por origen (<b>CN Nazarí</b> o <b>CT Sulayr</b>) y por nombre o correo. Pulsa <b>Filtrar</b>.</p>
+			<p>La columna <b>Origen</b> dice de cuál es cada ficha. La tabla se desliza hacia la derecha para ver el resto.</p>
+			<p>Toca el nombre para abrir la ficha.</p>
+		</div>
+		<figure>
+			<img src="docs/guia-gestor/04-nadadores.png" alt="Listado de nadadores con filtro">
+			<figcaption>Listado de nadadores</figcaption>
+		</figure>
+	</div>
+</section>
+
+<section id="editar">
+	<h2>6. Editar un nadador</h2>
+	<div class="paso">
+		<div>
+			<ul>
+				<li>Nombre, apellidos o teléfono: cámbialos y pulsa <b>Guardar datos</b>.</li>
+				<li>Reservas por semana: elige de 1 a 5 y pulsa <b>Guardar límite</b>.</li>
+				<li>Correo: escribe el nuevo y pulsa <b>Solicitar cambio de correo</b>. La persona recibe un enlace en ese correo y tiene 24 horas para confirmarlo.</li>
+				<li>Fotografía: elige la imagen y pulsa <b>Guardar fotografía</b>.</li>
+			</ul>
+			<p>Si en una ficha no aparecen los campos de nombre o teléfono, esos datos no se cambian desde aquí.</p>
+			<p><b>Desactivar nadador</b> le impide reservar y borra sus reservas futuras. Se puede volver a activar.</p>
+			<p class="aviso"><b>Eliminar nadador</b> borra la ficha y no se puede deshacer. Hay que marcar antes la casilla de confirmación.</p>
+		</div>
+		<div>
+			<figure>
+				<img src="docs/guia-gestor/06-ficha.png" alt="Ficha de un nadador con nombre, apellidos y teléfono editables">
+				<figcaption>Datos del nadador</figcaption>
+			</figure>
+			<figure>
+				<img src="docs/guia-gestor/07-ficha-limite.png" alt="Límite semanal, correo, fotografía, desactivar y eliminar">
+				<figcaption>Límite, correo y estado</figcaption>
+			</figure>
+		</div>
+	</div>
+</section>
+
+<section id="alta">
+	<h2>7. Alta de nadador</h2>
+	<div class="paso">
+		<div>
+			<ol>
+				<li>Rellena nombre, apellidos, correo, teléfono y DNI.</li>
+				<li>Elige el límite semanal. Si no lo cambias, queda en 3.</li>
+				<li>Pulsa <b>Crear nadador</b>.</li>
+			</ol>
+			<p>La persona recibe un correo para elegir su contraseña.</p>
+			<p>Para dar de alta a varias a la vez, entra en <b>Importar</b>, descarga la plantilla, rellénala y confirma las filas.</p>
+		</div>
+		<figure>
+			<img src="docs/guia-gestor/05-alta.png" alt="Formulario de alta de nadador">
+			<figcaption>Alta de nadador</figcaption>
+		</figure>
+	</div>
+</section>
+
+</main>
+</body>
+</html>

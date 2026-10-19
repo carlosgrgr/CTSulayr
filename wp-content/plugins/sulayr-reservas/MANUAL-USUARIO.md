@@ -169,15 +169,15 @@ No hay sesión los viernes ni los domingos. Cada sesión nueva tiene 24 plazas. 
 
 ## 12. Gestión de nadadores
 
-En **Nadadores** las fichas se ven en una tabla. Cada fila muestra la foto, el nombre, los apellidos, el correo, el teléfono, si está activa o desactivada, si viene del club o se dio de alta a mano, el límite semanal y la fecha de alta. El nombre y los apellidos abren la ficha.
+En **Nadadores**, arriba del filtro, hay un **Contador** de todas las fichas. No cambia al filtrar ni al buscar. Tiene tres líneas: **Total**, **CN Nazarí** (altas hechas en reservas) y **CT Sulayr** (fichas que vienen del club). Cada una dice cuántos están activos y cuántos inactivos, por ejemplo «3 nadadores activos / 1 nadador inactivo».
 
-Debajo del filtro aparece el total de ese estado: por ejemplo, «Total: 4 nadadores», «Total: 4 nadadores activos» o «Total: 0 nadadores inactivos». Buscar por nombre o correo no cambia ese total. Solo reduce las filas de la tabla.
+El filtro combina **Estado** (**Todos**, **Activos** o **Inactivos**), **Origen** (**Todos**, **CN Nazarí** o **CT Sulayr**) y la búsqueda por nombre o correo. Pulsa **Filtrar**. Solo cambia la tabla.
 
-Puedes filtrar por **Todos**, **Activos** o **Inactivos**, y buscar por nombre o correo. Los dos se aplican a la vez. La tabla no está paginada.
+Cada fila muestra la foto, el nombre, los apellidos, el correo, el teléfono, el estado, el origen (**CN Nazarí** o **CT Sulayr**), el límite semanal y la fecha de alta. El nombre y los apellidos abren la ficha. La tabla no está paginada. En el móvil se desliza hacia la derecha para ver el resto de columnas.
 
-Para ordenar, pulsa el título de la columna. La primera vez ordena de menor a mayor, o de la A a la Z. Pulsar otra vez invierte el orden. Al entrar, la tabla va por apellidos, de la A a la Z. La foto no se ordena. El filtro y la búsqueda se mantienen al cambiar el orden.
+Para ordenar, pulsa el título de la columna. La primera vez ordena de menor a mayor, o de la A a la Z. Pulsar otra vez invierte el orden. Al entrar, la tabla va por apellidos, de la A a la Z. La foto no se ordena. El estado, el origen y la búsqueda se mantienen al cambiar el orden.
 
-**Exportar CSV** descarga esas mismas filas, en el orden que se está viendo.
+**Exportar CSV** descarga las filas que se están viendo, con el mismo filtro, origen, búsqueda y orden.
 
 Al abrir una ficha se ven el correo, el teléfono, el DNI y sus reservas.
 
@@ -324,7 +324,7 @@ El archivo no puede superar 2 MB.
 
 ## 21. Exportar CSV
 
-**Exportar CSV**, en la tabla de nadadores, descarga las fichas que cumplen el filtro y la búsqueda activos, en el mismo orden de la tabla: nombre, apellidos, email, teléfono, estado, fecha de alta y límite semanal.
+**Exportar CSV**, en la tabla de nadadores, descarga las fichas que cumplen el estado, el origen y la búsqueda activos, en el mismo orden de la tabla: nombre, apellidos, email, teléfono, estado, fecha de alta y límite semanal. El contador de arriba no entra en el archivo.
 
 **Exportar reservas CSV**, en la ficha, descarga las reservas que siguen registradas de esa persona: fecha y hora de la sesión, el texto «Registrada», la fecha de la reserva y si la hizo el nadador o un gestor. Una cancelación no aparece, porque la reserva se borra.
 

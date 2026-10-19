@@ -804,8 +804,8 @@ class PanelRenderer {
 		$filters = $this->query->swimmerFilters();
 		echo '<div class="sulayr-card">';
 		echo '<h2>Nadadores</h2>';
+		$this->swimmerCensus( $this->query->swimmerCensus() );
 		$this->filterForm( $filters );
-		$this->swimmerTotal( $this->query->swimmerCount( $filters ), $filters['status'] );
 		$rows = $this->query->swimmers( $filters );
 		if ( array() === $rows ) {
 			echo '<p>No hay nadadores con ese criterio.</p></div>';
@@ -818,26 +818,44 @@ class PanelRenderer {
 	}
 
 	/**
-	 * @param int    $count  Nadadores del estado elegido.
-	 * @param string $status Estado `todos`, `activos` o `inactivos`.
+	 * @param array{total: array{activos: int, inactivos: int}, nazari: array{activos: int, inactivos: int}, sulayr: array{activos: int, inactivos: int}} $census Recuento del listado completo.
 	 * @return void
 	 */
-	private function swimmerTotal( $count, $status ) {
-		$count = (int) $count;
-		if ( 'activos' === $status ) {
-			$text = 1 === $count ? 'Total: 1 nadador activo' : 'Total: ' . $count . ' nadadores activos';
-		} elseif ( 'inactivos' === $status ) {
-			$text = 1 === $count ? 'Total: 1 nadador inactivo' : 'Total: ' . $count . ' nadadores inactivos';
-		} else {
-			$text = 1 === $count ? 'Total: 1 nadador' : 'Total: ' . $count . ' nadadores';
-		}
+	private function swimmerCensus( array $census ) {
+		$lines = array(
+			'Contador:',
+			'Total: ' . $this->swimmerStatePair( $census['total'] ),
+			'CN Nazarí: ' . $this->swimmerStatePair( $census['nazari'] ),
+			'CT Sulayr: ' . $this->swimmerStatePair( $census['sulayr'] ),
+		);
 
-		echo '<p class="sulayr-swimmer-total">' . esc_html( $text ) . '</p>';
+		echo '<p class="sulayr-swimmer-total">' . implode( '<br>', array_map( 'esc_html', $lines ) ) . '</p>';
+	}
+
+	/**
+	 * @param array{activos: int, inactivos: int} $counts Activos e inactivos de un grupo.
+	 * @return string
+	 */
+	private function swimmerStatePair( array $counts ) {
+		return $this->swimmerStateAmount( $counts['activos'], 'activo' ) . ' / ' . $this->swimmerStateAmount( $counts['inactivos'], 'inactivo' );
+	}
+
+	/**
+	 * @param int    $count  Cantidad.
+	 * @param string $state  `activo` o `inactivo`.
+	 * @return string
+	 */
+	private function swimmerStateAmount( $count, $state ) {
+		$count = (int) $count;
+		$noun  = 1 === $count ? 'nadador' : 'nadadores';
+		$word  = 1 === $count ? $state : $state . 's';
+
+		return $count . ' ' . $noun . ' ' . $word;
 	}
 
 	/**
 	 * @param object[]                                                    $rows    Fichas ya filtradas y ordenadas.
-	 * @param array{status: string, search: string, sort: string, direction: string} $filters Orden y filtros visibles.
+	 * @param array{status: string, search: string, sort: string, direction: string, origin: string} $filters Orden y filtros visibles.
 	 * @return void
 	 */
 	private function swimmerTable( array $rows, array $filters ) {
@@ -862,7 +880,7 @@ class PanelRenderer {
 			echo '<td>' . esc_html( (string) $row->email ) . '</td>';
 			echo '<td>' . esc_html( '' !== $phone ? $phone : '—' ) . '</td>';
 			echo '<td>' . esc_html( 1 === (int) $row->active ? 'Activo' : 'Desactivado' ) . '</td>';
-			echo '<td>' . esc_html( 1 === (int) $row->linked_to_club ? 'Vinculado al club' : 'Alta manual' ) . '</td>';
+			echo '<td>' . esc_html( $this->originName( $row->linked_to_club ) ) . '</td>';
 			echo '<td>' . esc_html( (string) WeeklyLimit::normalize( $row->weekly_limit ) ) . '</td>';
 			echo '<td>' . esc_html( $this->createdLabel( (string) $row->created_at ) ) . '</td>';
 			echo '</tr>';
@@ -891,7 +909,7 @@ class PanelRenderer {
 	/**
 	 * @param string                                                                     $label   Texto de la cabecera.
 	 * @param string                                                                     $column  Clave de orden.
-	 * @param array{status: string, search: string, sort: string, direction: string}    $filters Orden actual.
+	 * @param array{status: string, search: string, sort: string, direction: string, origin: string} $filters Orden actual.
 	 * @return void
 	 */
 	private function swimmerSortHeader( $label, $column, array $filters ) {
@@ -910,8 +928,8 @@ class PanelRenderer {
 	}
 
 	/**
-	 * @param array{status: string, search: string, sort: string, direction: string} $filters Filtros que deben conservarse.
-	 * @param string                                                                  $column  Columna pulsada.
+	 * @param array{status: string, search: string, sort: string, direction: string, origin: string} $filters Filtros que deben conservarse.
+	 * @param string                                                                                 $column  Columna pulsada.
 	 * @return string
 	 */
 	private function swimmerSortUrl( array $filters, $column ) {
@@ -924,11 +942,22 @@ class PanelRenderer {
 		if ( 'todos' !== $filters['status'] ) {
 			$args['estado'] = $filters['status'];
 		}
+		if ( 'todos' !== $filters['origin'] ) {
+			$args['origen'] = $filters['origin'];
+		}
 		if ( '' !== $filters['search'] ) {
 			$args['q'] = $filters['search'];
 		}
 
 		return $this->url( $args );
+	}
+
+	/**
+	 * @param int|string $linked Indicador `linked_to_club`.
+	 * @return string
+	 */
+	private function originName( $linked ) {
+		return 1 === (int) $linked ? 'CT Sulayr' : 'CN Nazarí';
 	}
 
 	/**
@@ -1299,6 +1328,8 @@ class PanelRenderer {
 				$clean[ $key ] = absint( $value );
 			} elseif ( 'estado' === $key && in_array( sanitize_key( (string) $value ), array( 'activos', 'inactivos' ), true ) ) {
 				$clean['estado'] = sanitize_key( (string) $value );
+			} elseif ( 'origen' === $key && in_array( sanitize_key( (string) $value ), array( 'sulayr', 'nazari' ), true ) ) {
+				$clean['origen'] = sanitize_key( (string) $value );
 			} elseif ( 'q' === $key ) {
 				$search = sanitize_text_field( (string) $value );
 				if ( mb_strlen( $search ) > 100 ) {
@@ -1389,7 +1420,7 @@ class PanelRenderer {
 	}
 
 	/**
-	 * @param array{status: string, search: string, sort: string, direction: string} $filters Filtros actuales.
+	 * @param array{status: string, search: string, sort: string, direction: string, origin: string} $filters Filtros actuales.
 	 * @return void
 	 */
 	private function filterForm( array $filters ) {
@@ -1404,12 +1435,17 @@ class PanelRenderer {
 			echo '<option value="' . esc_attr( $value ) . '"' . selected( $filters['status'], $value, false ) . '>' . esc_html( $label ) . '</option>';
 		}
 		echo '</select></label>';
+		echo '<label>Origen <select name="origen">';
+		foreach ( array( 'todos' => 'Todos', 'nazari' => 'CN Nazarí', 'sulayr' => 'CT Sulayr' ) as $value => $label ) {
+			echo '<option value="' . esc_attr( $value ) . '"' . selected( $filters['origin'], $value, false ) . '>' . esc_html( $label ) . '</option>';
+		}
+		echo '</select></label>';
 		echo '<label>Nombre o correo <input type="search" name="q" value="' . esc_attr( $filters['search'] ) . '"></label>';
 		echo '<button type="submit">Filtrar</button></form>';
 	}
 
 	/**
-	 * @param array{status: string, search: string, sort: string, direction: string} $filters Filtros a exportar.
+	 * @param array{status: string, search: string, sort: string, direction: string, origin: string} $filters Filtros a exportar.
 	 * @return void
 	 */
 	private function exportSwimmersForm( array $filters ) {
@@ -1417,6 +1453,7 @@ class PanelRenderer {
 		wp_nonce_field( PanelActions::NONCE, 'sulayr_nonce' );
 		echo '<input type="hidden" name="sulayr_action" value="export_swimmers">';
 		echo '<input type="hidden" name="estado" value="' . esc_attr( $filters['status'] ) . '">';
+		echo '<input type="hidden" name="origen" value="' . esc_attr( $filters['origin'] ) . '">';
 		echo '<input type="hidden" name="q" value="' . esc_attr( $filters['search'] ) . '">';
 		echo '<input type="hidden" name="orden" value="' . esc_attr( $filters['sort'] ) . '">';
 		echo '<input type="hidden" name="dir" value="' . esc_attr( $filters['direction'] ) . '">';

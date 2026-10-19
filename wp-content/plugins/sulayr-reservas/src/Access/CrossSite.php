@@ -24,11 +24,17 @@ class CrossSite {
 	const ORIGIN_QUERY  = 'sulayr_desde';
 	const ORIGIN_COOKIE = 'sulayr_reservas_origen';
 
+	/** Clave del ítem en el menú de Mi cuenta. No es un endpoint de WooCommerce. */
+	const MENU_ITEM = 'reservas-piscina';
+
 	/** @var SiteConfig */
 	private $config;
 
 	/** @var BlogContext */
 	private $blog_context;
+
+	/** @var bool|null Resultado de la petición actual. */
+	private $pool_link_visible;
 
 	/**
 	 * @param SiteConfig  $config       Sitios.
@@ -47,6 +53,8 @@ class CrossSite {
 		add_action( 'init', array( $this, 'captureOrigin' ) );
 		add_action( 'wp_logout', array( $this, 'forgetOrigin' ) );
 		add_action( 'sulayr_athlete_profile_card', array( $this, 'renderPoolLink' ) );
+		add_filter( 'woocommerce_account_menu_items', array( $this, 'addPoolMenuItem' ), 20 );
+		add_filter( 'woocommerce_get_endpoint_url', array( $this, 'poolMenuUrl' ), 10, 4 );
 	}
 
 	/**
@@ -100,20 +108,105 @@ class CrossSite {
 	 * @return void
 	 */
 	public function renderPoolLink() {
-		if ( ! $this->config->isClubSite() || ! is_user_logged_in() ) {
-			return;
-		}
-
-		if ( ! ( new SyncService( $this->blog_context ) )->isEligibleAthlete( get_current_user_id() ) ) {
-			return;
-		}
-
-		$url = $this->bookingsEntryUrl();
+		$url = $this->poolLinkUrl();
 		if ( '' === $url ) {
 			return;
 		}
 
 		echo '<p class="sulayr-pool-link-wrap"><a class="sulayr-pool-link" href="' . esc_url( $url ) . '">Reservas de piscina</a></p>';
+	}
+
+	/**
+	 * Añade el enlace al menú de Mi cuenta, junto al perfil del deportista.
+	 *
+	 * @param array<string, string> $items Etiquetas del menú.
+	 * @return array<string, string>
+	 */
+	public function addPoolMenuItem( $items ) {
+		if ( ! is_array( $items ) || '' === $this->poolLinkUrl() ) {
+			return is_array( $items ) ? $items : array();
+		}
+
+		$label    = 'Reservas de piscina';
+		$menu     = array();
+		$inserted = false;
+
+		foreach ( $items as $key => $item_label ) {
+			$menu[ $key ] = $item_label;
+			if ( 'perfil-deportista' === $key ) {
+				$menu[ self::MENU_ITEM ] = $label;
+				$inserted                = true;
+			}
+		}
+
+		if ( $inserted ) {
+			return $menu;
+		}
+
+		$menu = array();
+		foreach ( $items as $key => $item_label ) {
+			if ( 'customer-logout' === $key ) {
+				$menu[ self::MENU_ITEM ] = $label;
+			}
+			$menu[ $key ] = $item_label;
+		}
+
+		if ( ! isset( $menu[ self::MENU_ITEM ] ) ) {
+			$menu[ self::MENU_ITEM ] = $label;
+		}
+
+		return $menu;
+	}
+
+	/**
+	 * El ítem del menú apunta al sitio de reservas, no a un endpoint local.
+	 *
+	 * @param string $url       URL que WooCommerce iba a usar.
+	 * @param string $endpoint  Endpoint pedido.
+	 * @param string $value     Valor del endpoint.
+	 * @param string $permalink Permalink base.
+	 * @return string
+	 */
+	public function poolMenuUrl( $url, $endpoint, $value, $permalink ) {
+		unset( $value, $permalink );
+
+		if ( self::MENU_ITEM !== $endpoint ) {
+			return $url;
+		}
+
+		$target = $this->poolLinkUrl();
+
+		return '' !== $target ? $target : $url;
+	}
+
+	/**
+	 * URL del enlace si el usuario actual puede verlo. Vacía en caso contrario.
+	 *
+	 * @return string
+	 */
+	private function poolLinkUrl() {
+		if ( ! $this->showsPoolLink() ) {
+			return '';
+		}
+
+		return $this->bookingsEntryUrl();
+	}
+
+	/**
+	 * Misma condición que el enlace de la ficha: sitio del club y natación activa.
+	 *
+	 * @return bool
+	 */
+	private function showsPoolLink() {
+		if ( null !== $this->pool_link_visible ) {
+			return $this->pool_link_visible;
+		}
+
+		$this->pool_link_visible = $this->config->isClubSite()
+			&& is_user_logged_in()
+			&& ( new SyncService( $this->blog_context ) )->isEligibleAthlete( get_current_user_id() );
+
+		return $this->pool_link_visible;
 	}
 
 	/**

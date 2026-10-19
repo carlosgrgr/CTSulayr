@@ -178,7 +178,7 @@ class PanelQuery {
 	}
 
 	/**
-	 * @param array{status?: string, search?: string, sort?: string, direction?: string} $filters Estado, búsqueda y orden. Vacío para el listado completo.
+	 * @param array{status?: string, search?: string, sort?: string, direction?: string, origin?: string} $filters Estado, búsqueda, orden y origen. Vacío para el listado completo.
 	 * @return object[]
 	 */
 	public function swimmers( array $filters = array() ) {
@@ -192,10 +192,12 @@ class PanelQuery {
 					isset( $filters['status'] ) ? (string) $filters['status'] : 'todos',
 					isset( $filters['search'] ) ? (string) $filters['search'] : '',
 					isset( $filters['sort'] ) ? (string) $filters['sort'] : 'apellidos',
-					isset( $filters['direction'] ) ? (string) $filters['direction'] : 'asc'
+					isset( $filters['direction'] ) ? (string) $filters['direction'] : 'asc',
+					isset( $filters['origin'] ) ? (string) $filters['origin'] : 'todos'
 				);
 				$status = $filters['status'];
 				$search = $filters['search'];
+				$origin = $filters['origin'];
 
 				global $wpdb;
 
@@ -205,6 +207,11 @@ class PanelQuery {
 					$where[] = 'active = 1';
 				} elseif ( 'inactivos' === $status ) {
 					$where[] = 'active = 0';
+				}
+				if ( 'sulayr' === $origin ) {
+					$where[] = 'linked_to_club = 1';
+				} elseif ( 'nazari' === $origin ) {
+					$where[] = 'linked_to_club = 0';
 				}
 				if ( '' !== $search ) {
 					$like     = '%' . $wpdb->esc_like( $search ) . '%';
@@ -235,35 +242,57 @@ class PanelQuery {
 	}
 
 	/**
-	 * Nadadores del estado elegido. La búsqueda y el orden no entran en la cuenta.
+	 * Activos e inactivos del listado completo, en total y por origen. Los filtros no entran.
 	 *
-	 * @param array{status?: string, search?: string, sort?: string, direction?: string} $filters Filtros del listado.
-	 * @return int
+	 * @return array{total: array{activos: int, inactivos: int}, nazari: array{activos: int, inactivos: int}, sulayr: array{activos: int, inactivos: int}}
 	 */
-	public function swimmerCount( array $filters = array() ) {
-		return $this->blog_context->onBookings(
-			function () use ( $filters ) {
-				if ( ! current_user_can( Capabilities::MANAGE_SWIMMERS ) ) {
-					return 0;
-				}
+	public function swimmerCensus() {
+		$empty = array(
+			'activos'   => 0,
+			'inactivos' => 0,
+		);
 
-				$filters = $this->cleanFilters(
-					isset( $filters['status'] ) ? (string) $filters['status'] : 'todos',
-					'',
-					'apellidos',
-					'asc'
+		return $this->blog_context->onBookings(
+			function () use ( $empty ) {
+				$blank = array(
+					'total'  => $empty,
+					'nazari' => $empty,
+					'sulayr' => $empty,
 				);
+				if ( ! current_user_can( Capabilities::MANAGE_SWIMMERS ) ) {
+					return $blank;
+				}
 
 				global $wpdb;
 
-				$where = '1=1';
-				if ( 'activos' === $filters['status'] ) {
-					$where = 'active = 1';
-				} elseif ( 'inactivos' === $filters['status'] ) {
-					$where = 'active = 0';
+				$row = $wpdb->get_row(
+					'SELECT
+						COUNT(CASE WHEN active = 1 THEN 1 END) AS total_activos,
+						COUNT(CASE WHEN active = 0 THEN 1 END) AS total_inactivos,
+						COUNT(CASE WHEN active = 1 AND linked_to_club = 0 THEN 1 END) AS nazari_activos,
+						COUNT(CASE WHEN active = 0 AND linked_to_club = 0 THEN 1 END) AS nazari_inactivos,
+						COUNT(CASE WHEN active = 1 AND linked_to_club = 1 THEN 1 END) AS sulayr_activos,
+						COUNT(CASE WHEN active = 0 AND linked_to_club = 1 THEN 1 END) AS sulayr_inactivos
+					FROM ' . $this->swimmersTable()
+				);
+				if ( ! is_object( $row ) ) {
+					return $blank;
 				}
 
-				return (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . $this->swimmersTable() . ' WHERE ' . $where );
+				return array(
+					'total'  => array(
+						'activos'   => (int) $row->total_activos,
+						'inactivos' => (int) $row->total_inactivos,
+					),
+					'nazari' => array(
+						'activos'   => (int) $row->nazari_activos,
+						'inactivos' => (int) $row->nazari_inactivos,
+					),
+					'sulayr' => array(
+						'activos'   => (int) $row->sulayr_activos,
+						'inactivos' => (int) $row->sulayr_inactivos,
+					),
+				);
 			}
 		);
 	}
@@ -271,15 +300,16 @@ class PanelQuery {
 	/**
 	 * Filtros del listado. El estado inicial es todos los nadadores y el orden, apellidos ascendentes.
 	 *
-	 * @return array{status: string, search: string, sort: string, direction: string}
+	 * @return array{status: string, search: string, sort: string, direction: string, origin: string}
 	 */
 	public function swimmerFilters() {
 		$status    = isset( $_GET['estado'] ) ? sanitize_key( wp_unslash( $_GET['estado'] ) ) : 'todos';
 		$search    = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '';
 		$sort      = isset( $_GET['orden'] ) ? sanitize_key( wp_unslash( $_GET['orden'] ) ) : 'apellidos';
 		$direction = isset( $_GET['dir'] ) ? sanitize_key( wp_unslash( $_GET['dir'] ) ) : 'asc';
+		$origin    = isset( $_GET['origen'] ) ? sanitize_key( wp_unslash( $_GET['origen'] ) ) : 'todos';
 
-		return $this->cleanFilters( $status, $search, $sort, $direction );
+		return $this->cleanFilters( $status, $search, $sort, $direction, $origin );
 	}
 
 	/**
@@ -287,9 +317,10 @@ class PanelQuery {
 	 * @param string $search    Búsqueda recibida.
 	 * @param string $sort      Columna de orden.
 	 * @param string $direction Sentido `asc` o `desc`.
-	 * @return array{status: string, search: string, sort: string, direction: string}
+	 * @param string $origin    Origen `todos`, `sulayr` o `nazari`.
+	 * @return array{status: string, search: string, sort: string, direction: string, origin: string}
 	 */
-	public function cleanFilters( $status, $search, $sort = 'apellidos', $direction = 'asc' ) {
+	public function cleanFilters( $status, $search, $sort = 'apellidos', $direction = 'asc', $origin = 'todos' ) {
 		if ( ! in_array( $status, array( 'todos', 'activos', 'inactivos' ), true ) ) {
 			$status = 'todos';
 		}
@@ -302,12 +333,17 @@ class PanelQuery {
 			$sort = 'apellidos';
 		}
 		$direction = 'desc' === sanitize_key( (string) $direction ) ? 'desc' : 'asc';
+		$origin    = sanitize_key( (string) $origin );
+		if ( ! in_array( $origin, array( 'todos', 'sulayr', 'nazari' ), true ) ) {
+			$origin = 'todos';
+		}
 
 		return array(
 			'status'    => $status,
 			'search'    => $search,
 			'sort'      => $sort,
 			'direction' => $direction,
+			'origin'    => $origin,
 		);
 	}
 
@@ -338,7 +374,7 @@ class PanelQuery {
 			'correo'    => 'email %DIR%, user_id ASC',
 			'telefono'  => 'phone %DIR%, user_id ASC',
 			'estado'    => "CASE WHEN active = 1 THEN 'Activo' ELSE 'Desactivado' END %DIR%, last_name ASC, first_name ASC, user_id ASC",
-			'origen'    => "CASE WHEN linked_to_club = 1 THEN 'Vinculado al club' ELSE 'Alta manual' END %DIR%, last_name ASC, first_name ASC, user_id ASC",
+			'origen'    => "CASE WHEN linked_to_club = 1 THEN 'CT Sulayr' ELSE 'CN Nazarí' END %DIR%, last_name ASC, first_name ASC, user_id ASC",
 			'limite'    => 'weekly_limit %DIR%, last_name ASC, first_name ASC, user_id ASC',
 			'alta'      => 'created_at %DIR%, user_id ASC',
 		);

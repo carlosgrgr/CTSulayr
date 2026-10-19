@@ -439,7 +439,8 @@ class PanelActions {
 		$search    = isset( $_POST['q'] ) ? (string) wp_unslash( $_POST['q'] ) : '';
 		$sort      = isset( $_POST['orden'] ) ? sanitize_key( wp_unslash( $_POST['orden'] ) ) : 'apellidos';
 		$direction = isset( $_POST['dir'] ) ? sanitize_key( wp_unslash( $_POST['dir'] ) ) : 'asc';
-		$filters   = $query->cleanFilters( $status, $search, $sort, $direction );
+		$origin    = isset( $_POST['origen'] ) ? sanitize_key( wp_unslash( $_POST['origen'] ) ) : 'todos';
+		$filters   = $query->cleanFilters( $status, $search, $sort, $direction, $origin );
 		$rows    = $query->swimmers( $filters );
 		( new CsvExporter() )->download( 'nadadores.csv', ( new CsvExporter() )->swimmers( $rows ) );
 	}

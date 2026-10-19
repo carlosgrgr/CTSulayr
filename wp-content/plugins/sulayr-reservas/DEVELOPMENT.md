@@ -323,7 +323,7 @@ El CSV de alta no reutiliza `create()`, porque ese método puede vincular una cu
 
 La exportación exige `sulayr_manage_swimmers`, usa consultas preparadas y antepone un apóstrofo si la celda empieza por `=`, `+`, `-`, `@` o un salto. Lleva BOM UTF-8. El estado de una reserva exportada es «Registrada»: no hay otro estado guardado. «Nadador» o «Gestor» sale de comparar `created_by` con `user_id`, no de `is_manual`.
 
-Los filtros son `estado=todos|activos|inactivos` (por defecto todos) y `q` (nombre o correo, 100 caracteres). No se ha añadido paginación. El desplegable de «reservar para» sigue llamando a la lista sin filtros.
+Los filtros de esta fase son `estado=todos|activos|inactivos` (por defecto todos) y `q` (nombre o correo, 100 caracteres). No se ha añadido paginación. El desplegable de «reservar para» sigue llamando a la lista sin filtros. El contador y el filtro por origen se añadieron después y están descritos en «Listado de nadadores».
 
 El tema activo del club en este entorno es Twenty Twenty-Five, no `ct-sulayr-theme`. El rediseño está en `wp-content/themes/ct-sulayr-theme/profile-bento.css` y se encola desde `functions.php` después de la hoja del plugin del club. No cambia PHP, ACF, pestañas, campos ni URLs. Cubre la pestaña de información y la de edición del propio perfil. No hay perfil público de otro deportista. Para verlo hay que tener activo `ct-sulayr-theme`. En la comprobación se activó un momento, se midió la rejilla a 1280 px, a 954 px y a 390 px, y se volvió a dejar Twenty Twenty-Five.
 
@@ -384,3 +384,13 @@ Reservar y cancelar siguen siendo los formularios de `quickActions`, con el nonc
 Usuarios temporales, borrados al terminar. Elegible, sin natación, deportista inactivo, anónimo, nadador, ficha inactiva, suscriptor, gestor y administrador. Cookie válida, caducada, manipulada y basura. Reserva y cancelación de una sesión futura. Cuarta reserva de la misma semana rechazada por el límite y las tres anteriores canceladas. CSV de plantilla analizado. Sincronización manual de un elegible, con la ficha creada y luego borrada.
 
 En el navegador, a 390, 414 y 768 px, la vista de un día, sin scroll horizontal. Anterior, siguiente, viernes, domingo, el paso de domingo a lunes y el swipe. El gesto que empieza en «Detalle» no cambia de día. A 1024 y 1280 px sigue la cuadrícula y la vista móvil no se muestra. No se recorrió el formulario de acceso de WordPress dentro del navegador: la página autenticada se pidió con la cookie de sesión generada en el servidor.
+
+## Listado de nadadores
+
+El listado de la fase 10 ganó un contador y un filtro por origen. No cambia el esquema ni las fichas.
+
+`PanelQuery::swimmerCensus()` cuenta todas las filas de `sulayr_swim_swimmers`, sin leer `estado`, `origen` ni `q`. Devuelve activos e inactivos en tres grupos: total, `nazari` (`linked_to_club = 0`) y `sulayr` (`linked_to_club = 1`). `PanelRenderer::swimmerCensus()` lo pinta encima del filtro, en `p.sulayr-swimmer-total`, con el texto «Contador:», «Total:», «CN Nazarí:» y «CT Sulayr:». Cada grupo sale como «N nadadores activos / N nadadores inactivos». El singular se usa solo cuando la cantidad es 1.
+
+El filtro añade `origen=todos|nazari|sulayr`. `todos` no se escribe en la URL. Se combina con `estado` y `q`. `swimmers()` traduce `nazari` a `linked_to_club = 0` y `sulayr` a `linked_to_club = 1`. La columna Origen muestra «CN Nazarí» o «CT Sulayr». La ficha sigue diciendo «Alta manual» o «Vinculado al club».
+
+Ordenar conserva `origen`. **Exportar CSV** recibe el mismo `origen` y exporta las filas filtradas. El archivo no añade una columna de origen: sigue siendo nombre, apellidos, email, teléfono, estado, fecha de alta y límite semanal. El desplegable «Reservar para» no usa este filtro.
