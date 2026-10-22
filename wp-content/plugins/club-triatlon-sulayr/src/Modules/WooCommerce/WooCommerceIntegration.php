@@ -8,6 +8,7 @@
 namespace ClubTriatlonSulayr\Modules\WooCommerce;
 
 use ClubTriatlonSulayr\Services\UserService;
+use ClubTriatlonSulayr\Services\HelperService;
 use ClubTriatlonSulayr\Infrastructure\CustomFields;
 use ClubTriatlonSulayr\Modules\PostTypes\WalletPostType;
 use ClubTriatlonSulayr\Modules\Subscriptions\SubscriptionService;
@@ -35,6 +36,7 @@ class WooCommerceIntegration {
         add_filter( 'woocommerce_account_menu_items', [ $this, 'add_athlete_menu_items' ], 10, 2 );
         add_filter( 'woocommerce_login_redirect', [ $this, 'redirect_athlete_to_my_account' ], 10, 2 );
         add_filter( 'body_class', [ $this, 'add_athlete_body_class' ] );
+        add_filter( 'wp_nav_menu_objects', [ $this, 'greet_athlete_in_account_menu_item' ] );
 
         add_action( 'woocommerce_account_' . self::ENDPOINT_PERFIL_DEPORTISTA . '_endpoint', [ $this, 'output_perfil_deportista_endpoint' ] );
         add_action( 'woocommerce_account_' . self::ENDPOINT_MONEDERO . '_endpoint', [ $this, 'output_monedero_endpoint' ] );
@@ -390,6 +392,35 @@ class WooCommerceIntegration {
             $classes[] = 'sulayr-athlete';
         }
         return $classes;
+    }
+
+    /**
+     * Cambia el texto del ítem "Mi cuenta" del menú por "Hola, <nombre>!" si el deportista ha iniciado sesión.
+     */
+    public function greet_athlete_in_account_menu_item( array $items ): array {
+        if ( ! $this->is_athlete() ) {
+            return $items;
+        }
+
+        $account_page_id = (int) wc_get_page_id( 'myaccount' );
+        if ( $account_page_id <= 0 ) {
+            return $items;
+        }
+
+        $user_id = get_current_user_id();
+        $name    = trim( (string) get_user_meta( $user_id, 'first_name', true ) );
+        if ( '' === $name ) {
+            $name = HelperService::get_user_full_name( $user_id );
+        }
+
+        foreach ( $items as $item ) {
+            if ( 'post_type' === $item->type && (int) $item->object_id === $account_page_id ) {
+                /* translators: %s: nombre del deportista */
+                $item->title = sprintf( __( '¡Hola, %s!', SULAYR_TEXTDOMAIN ), esc_html( $name ) );
+            }
+        }
+
+        return $items;
     }
 
     private function is_athlete(): bool {

@@ -822,3 +822,9 @@ a.logout-button:hover {
         width: 100%;
     }
 }
+nav.woocommerce-MyAccount-navigation {
+    margin: 0;
+}
+.entry-content .woocommerce-MyAccount-navigation ul {
+	padding-left: 0;
+}
