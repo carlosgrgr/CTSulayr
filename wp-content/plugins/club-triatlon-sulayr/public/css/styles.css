@@ -471,6 +471,102 @@ body .select2-dropdown {
     white-space: nowrap;
 }
 
+/* Documentos (Mi cuenta → Documentos) */
+.sulayr-documents {
+    max-width: 48rem;
+}
+.sulayr-documents .sulayr-documents-empty {
+    color: #6c757d;
+    margin: 1rem 0;
+}
+.sulayr-documents .sulayr-documents-group + .sulayr-documents-group {
+    margin-top: 2rem;
+}
+.sulayr-documents .sulayr-documents-group-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--sulayr-profile-value, #2c3e50);
+    margin: 0 0 0.75rem;
+}
+.sulayr-documents .sulayr-documents-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: var(--sulayr-profile-border, 1px solid #e9ecef);
+    border-radius: var(--sulayr-profile-radius, 10px);
+    background: #fff;
+}
+.sulayr-documents .sulayr-document {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0;
+    padding: 1rem 1.25rem;
+    list-style: none;
+}
+.sulayr-documents .sulayr-document + .sulayr-document {
+    border-top: 1px solid #eee;
+}
+.sulayr-documents .sulayr-document-type {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 3rem;
+    height: 2.25rem;
+    padding: 0 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #fff;
+    background: var(--sulayr-profile-label, #5a6c7d);
+}
+.sulayr-documents .sulayr-document-type--pdf {
+    background: #b02a37;
+}
+.sulayr-documents .sulayr-document-body {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.sulayr-documents .sulayr-document-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--sulayr-profile-value, #2c3e50);
+    margin: 0 0 0.25rem;
+    overflow-wrap: anywhere;
+}
+.sulayr-documents .sulayr-document-description {
+    margin: 0 0 0.25rem;
+    font-size: 0.95rem;
+    color: var(--sulayr-profile-value, #2c3e50);
+}
+.sulayr-documents .sulayr-document-meta {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--sulayr-profile-label, #5a6c7d);
+}
+.woocommerce-account .sulayr-documents .sulayr-document-action.button {
+    flex: 0 0 auto;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+@media (max-width: 575.98px) {
+    .sulayr-documents .sulayr-document {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+    .sulayr-documents .sulayr-document-body {
+        flex-basis: calc(100% - 4rem);
+    }
+    .woocommerce-account .sulayr-documents .sulayr-document-action.button {
+        flex-basis: 100%;
+    }
+}
+
 .user-profile-page .user-profile-photo {
     text-align: center;
     margin-bottom: 1.5rem;

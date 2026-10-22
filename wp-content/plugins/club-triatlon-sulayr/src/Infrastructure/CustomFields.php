@@ -40,4 +40,21 @@ class CustomFields
     const SUB_CHANGE_EFFECTIVE_DATE = 'sulayr_change_effective_date';
     const SUB_CHANGE_REASON = 'sulayr_change_reason';
     const SUB_CHANGE_STRIPE_SUBSCRIPTION_ID = 'sulayr_stripe_subscription_id';
+
+    /** Documentos CPT (sulayr_document) */
+    const DOCUMENT_FIELDS_GROUP = 'document_fields';
+    const DOCUMENT_DESCRIPTION = 'sulayr_document_description';
+    const DOCUMENT_FILE = 'sulayr_document_file';
+    /** Campo ACF que escribe la taxonomía sulayr_doc_category. */
+    const DOCUMENT_CATEGORY = 'sulayr_document_category';
+    /** Visible para: 'all' (todos los deportistas activos) o 'users' (deportistas concretos). */
+    const DOCUMENT_AUDIENCE = 'sulayr_document_audience';
+    /** Campo ACF de edición de los destinatarios. */
+    const DOCUMENT_USERS = 'sulayr_document_users';
+    /** Una fila de postmeta por destinatario, para consultar. */
+    const DOCUMENT_USER_INDEX = '_sulayr_document_user';
+    /** Fecha del último cambio de archivo. */
+    const DOCUMENT_FILE_UPDATED = '_sulayr_document_file_updated';
+    /** Marca del adjunto guardado en el directorio privado. */
+    const DOCUMENT_PRIVATE_ATTACHMENT = '_sulayr_private_document';
 }

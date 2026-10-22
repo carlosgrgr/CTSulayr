@@ -21,6 +21,12 @@ use ClubTriatlonSulayr\Modules\PostTypes\SubscriptionChangesPostType;
 use ClubTriatlonSulayr\Modules\Fields\SubscriptionChangesFields\SubscriptionChangesFields;
 use ClubTriatlonSulayr\Modules\Wallet\WalletAdminList;
 use ClubTriatlonSulayr\Modules\Wallet\WalletBalancePage;
+use ClubTriatlonSulayr\Modules\PostTypes\DocumentPostType;
+use ClubTriatlonSulayr\Modules\Documents\DocumentCapabilities;
+use ClubTriatlonSulayr\Modules\Documents\DocumentStorage;
+use ClubTriatlonSulayr\Modules\Fields\DocumentFields\DocumentFields;
+use ClubTriatlonSulayr\Modules\Documents\DocumentsAccountEndpoint;
+use ClubTriatlonSulayr\Services\DocumentService;
 
 /**
  * App
@@ -85,6 +91,10 @@ class App {
         new SubscriptionChangesPostType( [] );
         $wallet_fields = new WalletFields();
         new SubscriptionChangesFields();
+        new DocumentPostType();
+        new DocumentCapabilities();
+        new DocumentFields();
+        new DocumentStorage();
         $userService = new UserService();
         $userTemplate = new TemplatesManager();
         $athlete_role = new AthleteRole();
@@ -102,6 +112,7 @@ class App {
         $stripe_webhook->init();
 
         if ( class_exists( 'WooCommerce' ) ) {
+            new DocumentsAccountEndpoint( new DocumentService() );
             new WooCommerceIntegration();
             new SubscriptionProducts();
         }

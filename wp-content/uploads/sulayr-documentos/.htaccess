@@ -1,0 +1,8 @@
+# Documentos privados del club. Solo se sirven desde Mi cuenta.
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+</IfModule>

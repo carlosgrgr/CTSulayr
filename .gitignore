@@ -1,3 +1,7 @@
 wp-content/uploads/ast-block-templates-json/
 *.log
 wp-config.php
+# Documentos privados del club: solo se versiona la protección del directorio.
+wp-content/uploads/sulayr-documentos/*
+!wp-content/uploads/sulayr-documentos/.htaccess
+!wp-content/uploads/sulayr-documentos/index.html
