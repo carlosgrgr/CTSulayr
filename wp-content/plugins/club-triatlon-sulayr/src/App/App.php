@@ -27,6 +27,8 @@ use ClubTriatlonSulayr\Modules\Documents\DocumentStorage;
 use ClubTriatlonSulayr\Modules\Fields\DocumentFields\DocumentFields;
 use ClubTriatlonSulayr\Modules\Documents\DocumentsAccountEndpoint;
 use ClubTriatlonSulayr\Services\DocumentService;
+use ClubTriatlonSulayr\Modules\Taxonomies\DocumentCategoryTaxonomy;
+use ClubTriatlonSulayr\Modules\Documents\DocumentAdminList;
 
 /**
  * App
@@ -92,6 +94,7 @@ class App {
         $wallet_fields = new WalletFields();
         new SubscriptionChangesFields();
         new DocumentPostType();
+        new DocumentCategoryTaxonomy();
         new DocumentCapabilities();
         new DocumentFields();
         new DocumentStorage();
@@ -103,6 +106,7 @@ class App {
         if ( is_admin() ) {
             new WalletAdminList();
             new WalletBalancePage();
+            new DocumentAdminList( new DocumentService() );
         }
         $email_config = new EmailConfig();
         $athlete_admin_profile = new AthleteAdminProfile();

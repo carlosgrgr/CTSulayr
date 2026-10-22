@@ -6,6 +6,7 @@ use ClubTriatlonSulayr\Modules\Fields\Fields;
 use ClubTriatlonSulayr\Infrastructure\CustomFields;
 use ClubTriatlonSulayr\Modules\PostTypes\DocumentPostType;
 use ClubTriatlonSulayr\Modules\Documents\DocumentStorage;
+use ClubTriatlonSulayr\Modules\Taxonomies\DocumentCategoryTaxonomy;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -101,6 +102,21 @@ class DocumentFields extends Fields {
                         __( 'PDF o imagen (JPG, PNG), máximo %d MB. Súbelo desde aquí: solo podrán abrirlo los deportistas activos a los que vaya dirigido.', SULAYR_TEXTDOMAIN ),
                         self::MAX_SIZE_MB
                     ),
+                ],
+                [
+                    'key' => self::key( CustomFields::DOCUMENT_CATEGORY ),
+                    'label' => __( 'Categoría', SULAYR_TEXTDOMAIN ),
+                    'name' => CustomFields::DOCUMENT_CATEGORY,
+                    'type' => 'taxonomy',
+                    'taxonomy' => DocumentCategoryTaxonomy::TAXONOMY_NAME,
+                    'field_type' => 'radio',
+                    'allow_null' => 1,
+                    'add_term' => 0,
+                    'save_terms' => 1,
+                    'load_terms' => 1,
+                    'return_format' => 'id',
+                    'multiple' => 0,
+                    'instructions' => __( 'Opcional. Agrupa el documento en la sección del deportista; sin categoría aparece en «Otros documentos». Los documentos para deportistas concretos se muestran en «Para ti», tengan la categoría que tengan.', SULAYR_TEXTDOMAIN ),
                 ],
                 [
                     'key' => self::key( CustomFields::DOCUMENT_AUDIENCE ),

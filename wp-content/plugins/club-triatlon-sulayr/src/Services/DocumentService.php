@@ -7,6 +7,7 @@ use ClubTriatlonSulayr\Modules\Documents\DocumentCapabilities;
 use ClubTriatlonSulayr\Modules\Documents\DocumentStorage;
 use ClubTriatlonSulayr\Modules\Fields\DocumentFields\DocumentFields;
 use ClubTriatlonSulayr\Modules\PostTypes\DocumentPostType;
+use ClubTriatlonSulayr\Modules\Taxonomies\DocumentCategoryTaxonomy;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -293,6 +294,89 @@ class DocumentService {
             'date' => '' !== $updated ? $updated : $post->post_date,
             'date_is_update' => '' !== $updated,
             'url' => $this->download_url( $post->ID ),
+            'category' => $this->category_of( $post->ID ),
+        ];
+    }
+
+    /**
+     * Agrupa documentos generales por categoría: grupos por nombre de categoría y
+     * «Otros documentos» al final. Si ninguno tiene categoría, un único grupo sin
+     * título (lista plana).
+     *
+     * @param   array $documents Documentos ya presentados (present()).
+     * @return 	array[] Lista de [ 'title' => string, 'documents' => array ].
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public function group_by_category( array $documents ): array {
+        if ( empty( $documents ) ) {
+            return [];
+        }
+
+        $groups = [];
+        $uncategorized = [];
+        foreach ( $documents as $doc ) {
+            if ( null === $doc['category'] ) {
+                $uncategorized[] = $doc;
+                continue;
+            }
+
+            $id = $doc['category']['id'];
+            if ( ! isset( $groups[ $id ] ) ) {
+                $groups[ $id ] = [
+                    'title' => $doc['category']['name'],
+                    'documents' => [],
+                ];
+            }
+            $groups[ $id ]['documents'][] = $doc;
+        }
+
+        if ( empty( $groups ) ) {
+            return [
+                [
+                    'title' => '',
+                    'documents' => $uncategorized,
+                ],
+            ];
+        }
+
+        // Por nombre, sin distinguir mayúsculas ni tildes.
+        uasort( $groups, function ( array $a, array $b ): int {
+            return strcasecmp( remove_accents( $a['title'] ), remove_accents( $b['title'] ) );
+        } );
+        $groups = array_values( $groups );
+
+        if ( ! empty( $uncategorized ) ) {
+            $groups[] = [
+                'title' => __( 'Otros documentos', SULAYR_TEXTDOMAIN ),
+                'documents' => $uncategorized,
+            ];
+        }
+
+        return $groups;
+    }
+
+    /**
+     * Categoría del documento, o null. Si por error tuviera varias, la primera por nombre.
+     *
+     * @param   int $document_id ID del documento.
+     * @return 	array|null { id, name }
+     * @access 	private
+     * @package	club-triatlon-sulayr
+     */
+    private function category_of( int $document_id ): ?array {
+        $terms = get_the_terms( $document_id, DocumentCategoryTaxonomy::TAXONOMY_NAME );
+        if ( false === is_array( $terms ) || empty( $terms ) ) {
+            return null;
+        }
+
+        usort( $terms, function ( \WP_Term $a, \WP_Term $b ): int {
+            return strcasecmp( remove_accents( $a->name ), remove_accents( $b->name ) );
+        } );
+
+        return [
+            'id' => (int) $terms[0]->term_id,
+            'name' => $terms[0]->name,
         ];
     }
 }

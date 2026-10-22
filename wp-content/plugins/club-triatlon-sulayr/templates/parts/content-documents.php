@@ -4,8 +4,9 @@
  * Requiere:
  *   $personal (array) documentos dirigidos al usuario,
  *   $groups   (array) de [ 'title' => string, 'documents' => array ] con los generales,
+ *             por categoría; un único grupo con título vacío si ninguno tiene categoría,
  *   $total    (int)   número total de documentos.
- * Cada documento: id, title, description, type_label, ext, size, date, date_is_update, url.
+ * Cada documento: id, title, description, type_label, ext, size, date, date_is_update, url, category.
  */
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -64,7 +65,8 @@ $sulayr_render_document = function ( array $doc ) {
         <?php foreach ( $groups as $index => $group ) : ?>
             <?php
             $has_title = '' !== $group['title'];
-            // Sin documentos personales y sin título de grupo, la lista es plana.
+            // Grupo sin título (ningún general tiene categoría): lista plana, salvo que
+            // haya «Para ti»; entonces se titula «Documentos del club» para separarlos.
             $heading_id = 'sulayr-documents-group-' . (int) $index;
             ?>
             <section class="sulayr-documents-group"<?php echo $has_title ? ' aria-labelledby="' . esc_attr( $heading_id ) . '"' : ''; ?>>

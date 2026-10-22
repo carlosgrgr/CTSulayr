@@ -1,7 +1,7 @@
 # SPEC — Documentos en el perfil del deportista
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr`
-**Estado:** Decisiones D1–D8 tomadas (sección 12). Fases D1 a D4 hechas y comprobadas en el árbol de trabajo, sin commit (11.8).
+**Estado:** Decisiones D1–D8 tomadas (sección 12). Fases D1 a D4 en `main` y en producción (commit `cfed7450`). Fases D5 a D7 hechas y comprobadas en el árbol de trabajo, sin commit (11.8).
 **Fecha:** octubre 2026
 
 Este documento analiza el código actual, compara arquitecturas y propone una solución para publicar documentos desde la administración y ofrecerlos a los deportistas en su área privada. Las decisiones que dependían de información ausente en el código se marcaron como pendientes y ya están resueltas en la sección 12. El texto de las secciones 4 a 11 refleja esas decisiones.
@@ -355,6 +355,7 @@ Alternativa evaluada: `WC_Download_Handler::download_file_force()`. Fuerza siemp
 | Sustitución del archivo | Al guardar, si el ID del archivo cambia, se borra el adjunto anterior (mismo control) y se actualiza `_sulayr_document_file_updated` (D7: sin versionado). |
 | Cambio de destinatarios | Al guardar se reescriben las filas `_sulayr_document_user`. El acceso cambia de inmediato. |
 | Borrado del adjunto desde la Media Library | El documento queda sin archivo: deja de listarse y la administración lo marca como «Sin archivo». |
+| Archivos subidos y no usados | Al guardar, se borran los adjuntos privados subidos a ese documento (`post_parent`) que no son su archivo actual, con el mismo control. Así no se acumulan las pruebas del modal de medios. |
 
 ---
 
@@ -501,7 +502,8 @@ El texto de ayuda de «Visible para» recuerda que «Todos» lo ve cualquier dep
 | Fecha | Nativa (publicado / programado / última modificación) |
 
 - Orden por defecto: `menu_order ASC`, luego `title ASC`.
-- Filtro por categoría: el desplegable nativo de la taxonomía.
+- Filtro por categoría: desplegable propio. WordPress solo pinta el nativo para `category`. Usa los parámetros `taxonomy` + `term`, los mismos que los enlaces de la columna Categorías (la taxonomía no tiene query var).
+- Se quita la acción de fila «Edit with WPBakery Page Builder»: el documento no tiene editor de contenido.
 - Filtro por audiencia: desplegable «Todos / Personales» (`restrict_manage_posts` + `pre_get_posts`).
 - Búsqueda: nativa, por título.
 - Sin edición rápida de archivo. La edición rápida nativa permite cambiar título, estado, orden y fecha.
@@ -525,6 +527,7 @@ Menú resultante: Escritorio, Perfil de deportista, Reservas de piscina, Mi mone
 - Después, los documentos generales agrupados por categoría. Grupos por nombre de categoría; «Otros documentos» al final para los que no tienen categoría.
 - Dentro de cada grupo: `menu_order ASC`, después `post_date DESC`.
 - Si no hay documentos personales y ningún general tiene categoría, la lista es plana, sin cabeceras.
+- Si hay documentos personales y ningún general tiene categoría, los generales van bajo «Documentos del club», para separarlos de «Para ti» (decidido en D4, se mantiene en D5).
 
 ### 9.3. Estructura HTML aproximada
 
@@ -688,10 +691,13 @@ Las fases D1–D4 dan una primera versión utilizable. D5 se puede posponer si n
 
 | Fase | Estado | Notas |
 |---|---|---|
-| D1 | Hecha y comprobada en el árbol de trabajo, sin commit | Ver abajo |
-| D2 | Hecha y comprobada en el árbol de trabajo, sin commit | Ver abajo. El campo de categoría pasa a D5, con la taxonomía. |
-| D3 | Hecha y comprobada en el árbol de trabajo, sin commit | Ver abajo |
-| D4 | Hecha y comprobada en el árbol de trabajo, sin commit | Ver abajo. Primera versión utilizable. |
+| D1 | Hecha. En `main` y en producción (`cfed7450`). | Ver abajo |
+| D2 | Hecha. En `main` y en producción (`cfed7450`). | Ver abajo. El campo de categoría pasa a D5, con la taxonomía. |
+| D3 | Hecha. En `main` y en producción (`cfed7450`). | Ver abajo |
+| D4 | Hecha. En `main` y en producción (`cfed7450`). | Ver abajo. Primera versión utilizable (MVP). |
+| D5 | Hecha y comprobada en el árbol de trabajo, sin commit | Ver abajo |
+| D6 | Hecha y comprobada en el árbol de trabajo, sin commit | Ver abajo |
+| D7 | Hecha, salvo el límite de subida en producción | Ver abajo. Guía: `wp-content/plugins/club-triatlon-sulayr/MANUAL-DOCUMENTOS.md`. |
 
 **D1.** Archivos: `src/Modules/PostTypes/DocumentPostType.php`, `src/Modules/Documents/DocumentCapabilities.php`, constantes `DOCUMENT_*` en `Infrastructure/CustomFields.php` y registro en `App::load_classes()`.
 
@@ -805,6 +811,52 @@ Comprobado:
 - Usuarios, documentos y archivos de prueba borrados. Sin entradas nuevas en `debug.log` relacionadas con documentos.
 
 No probado: la navegación real con un lector de pantalla y los navegadores móviles reales. Las capturas son de Chromium.
+
+**D5.** Archivos: `src/Modules/Taxonomies/DocumentCategoryTaxonomy.php` (nuevo), campo de categoría en `DocumentFields`, `category` y `group_by_category()` en `DocumentService`, agrupación en `DocumentsAccountEndpoint::render_section()` y registro en `App::load_classes()`.
+
+Cómo funciona:
+
+- Taxonomía `sulayr_doc_category`, registrada para `sulayr_document` con los argumentos de 8.2. Sobrescribe `add_custom_taxonomy()` (la base no admite `meta_box_cb` ni `rewrite => false`) y las etiquetas, en español.
+- Capacidades de la taxonomía: gestionar, editar y borrar términos con `edit_others_sulayr_documents`; asignar con `edit_sulayr_documents`. Solo el administrador.
+- `show_in_quick_edit => false`: la edición rápida y en bloque usaría casillas y permitiría varias categorías.
+- Campo ACF «Categoría» (radio, opcional, sin crear términos, `save_terms` y `load_terms`) entre «Archivo» y «Visible para».
+- `present()` añade `category` (`id`, `name`) o `null`. Si un documento tuviera varias por error, se usa la primera por nombre.
+- `group_by_category()`: grupos por nombre de categoría, sin distinguir mayúsculas ni tildes; «Otros documentos» al final; un único grupo sin título si ninguno tiene categoría. Dentro de cada grupo se mantiene el orden de la consulta (`menu_order`, fecha).
+
+**D6.** Archivos: ciclo de vida en `DocumentStorage`, `src/Modules/Documents/DocumentAdminList.php` (nuevo) y registro en `App::load_classes()` (solo en `is_admin()`).
+
+Cómo funciona:
+
+- `acf/save_post` (prioridad 5, antes de que ACF guarde) anota el archivo actual. En la prioridad 20, si ha cambiado, borra el anterior y, si hay archivo nuevo, escribe `_sulayr_document_file_updated`. Después borra los adjuntos privados subidos a ese documento que no son su archivo actual.
+- `before_delete_post`: al borrar definitivamente un documento se borran su archivo y los adjuntos privados subidos a él. La papelera no los toca.
+- Un adjunto solo se borra si es privado (marca y ruta) y ningún otro documento, en cualquier estado, lo usa como archivo.
+- Si la validación de ACF falla, ACF no guarda y no se borra nada.
+- Listado: columnas, avisos, orden por defecto, filtros y «Ver archivo» de 8.4. Además, la columna Visible para muestra el nombre si hay un solo deportista y «Sin definir» si falta la audiencia.
+
+Comprobado:
+
+- Script `wp eval-file`, 34 comprobaciones:
+  - Taxonomía: argumentos, capacidades (administrador sí; editor y deportista no), orden de los campos y configuración del campo.
+  - El campo escribe y lee el término; cambiar de categoría deja una sola; vaciarlo borra el término.
+  - Agrupación: «Árbitros», «calendario», «Normativa» en ese orden, orden manual dentro, «Otros documentos» al final, personales solo en «Para ti», categoría vacía sin grupo, lista plana sin categorías, dos categorías por error.
+  - Ciclo de vida: primer archivo sin fecha; guardar sin cambios no toca nada pero borra lo subido y no usado; la sustitución borra el adjunto y el archivo en disco y pone la fecha, que el front muestra como «Actualizado el»; un archivo usado por otro documento en la papelera no se borra; un adjunto público nunca se borra; vaciar el archivo borra el anterior sin fecha; papelera y restaurar conservan el archivo; el borrado definitivo lo elimina; borrar una página no toca sus adjuntos.
+- Formulario real: subida por `async-upload.php` con `_acfuploader` (como el modal) y envío de `post.php`. El archivo anterior y una subida descartada desaparecen del disco y de la base de datos, la fecha cambia, y un segundo guardado sin cambios no toca nada.
+- HTTP, 40 comprobaciones: columnas y su orden, valores y avisos de cada columna, orden por defecto y por Orden, los dos filtros (incluido un valor no válido y «Todas las categorías»), «Ver archivo» solo con archivo, sin enlace de WPBakery, otras pantallas sin cambios, pantalla de edición sin caja nativa y con el campo, «Documentos → Categorías» (administrador 200, editor 403), sin REST, y la sección del deportista con los grupos en orden y aria-labelledby.
+- Capturas del listado y de la sección.
+- Datos de prueba borrados. Se borró también un borrador automático de las pruebas de D1.
+
+Hallazgo durante las pruebas (sin cambio de código): el campo «Deportistas» es obligatorio con lógica condicional. Con «Todos», el JavaScript de ACF lo desactiva y no se envía. Un envío sin JavaScript que incluya ese campo vacío no supera la validación y ACF no guarda. Con un navegador normal no ocurre.
+
+**D7.** Archivos: `wp-content/plugins/club-triatlon-sulayr/MANUAL-DOCUMENTOS.md` (guía del administrador).
+
+Comprobado en producción el 22/10/2026, desde fuera y sin sesión:
+
+- `uploads/sulayr-documentos/index.html`, `.htaccess` y un PDF inexistente: 403. Un archivo inexistente en `uploads/2025/08/`: 404. Una imagen pública: 200. El 403 lo pone la regla del directorio.
+- `/mi-cuenta/documentos/`: 200, y una ruta inventada de Mi cuenta da 404, así que la regla de reescritura del endpoint está activa. `/mi-cuenta/documentos/999999/` sin sesión redirige a Mi cuenta.
+
+Pendiente: comprobar `upload_max_filesize` y `post_max_size` (10 MB o más) en **Medios → Añadir nuevo** del escritorio de producción. Desde fuera no se puede ver.
+
+No probado: la interfaz del modal de medios, la lógica condicional y los mensajes de ACF en un navegador real con JavaScript. Las pruebas usan las mismas peticiones que hace el navegador.
 
 ## 12. Decisiones tomadas
 

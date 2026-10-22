@@ -3,6 +3,7 @@
 namespace ClubTriatlonSulayr\Modules\Documents;
 
 use ClubTriatlonSulayr\Infrastructure\CustomFields;
+use ClubTriatlonSulayr\Modules\PostTypes\DocumentPostType;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -15,6 +16,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  * uploads/sulayr-documentos/, bloqueado por .htaccess. Siguen siendo adjuntos
  * de la Media Library (ACF los necesita), marcados con _sulayr_private_document.
  * Solo se sirven por PHP tras comprobar permisos (fase D3).
+ *
+ * Ciclo de vida (D7, sin versionado): al cambiar el archivo de un documento se
+ * borra el anterior; al borrar definitivamente el documento se borran sus
+ * archivos. Nunca se borra un archivo que use otro documento.
  */
 class DocumentStorage {
 
@@ -23,6 +28,9 @@ class DocumentStorage {
 
     /** True mientras dura una subida desde el campo de archivo del documento. */
     private bool $redirecting_upload = false;
+
+    /** Archivo de cada documento antes de que ACF guarde: [ document_id => attachment_id ]. */
+    private array $previous_files = [];
 
     /**
      * __construct()
@@ -36,6 +44,160 @@ class DocumentStorage {
         add_filter( 'wp_handle_upload', [ $this, 'stop_private_upload' ] );
         add_action( 'add_attachment', [ $this, 'mark_private_attachment' ] );
         add_action( 'admin_init', [ $this, 'ensure_protection_for_managers' ] );
+
+        // ACF guarda los valores en acf/save_post con prioridad 10.
+        add_action( 'acf/save_post', [ $this, 'remember_previous_file' ], 5 );
+        add_action( 'acf/save_post', [ $this, 'handle_file_change' ], 20 );
+        add_action( 'before_delete_post', [ $this, 'delete_document_files' ], 10, 2 );
+    }
+
+    /**
+     * Antes de que ACF guarde: anota el archivo actual del documento.
+     *
+     * @param   int|string $post_id ID del post que ACF va a guardar.
+     * @return 	void
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public function remember_previous_file( $post_id ): void {
+        $document_id = self::document_id( $post_id );
+        if ( 0 === $document_id ) {
+            return;
+        }
+
+        $this->previous_files[ $document_id ] = (int) get_post_meta( $document_id, CustomFields::DOCUMENT_FILE, true );
+    }
+
+    /**
+     * Después de que ACF guarde: si el archivo ha cambiado, borra el anterior y
+     * actualiza la fecha de cambio. Borra también los archivos privados subidos a
+     * este documento que no se llegaron a usar.
+     *
+     * @param   int|string $post_id ID del post que ACF acaba de guardar.
+     * @return 	void
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public function handle_file_change( $post_id ): void {
+        $document_id = self::document_id( $post_id );
+        if ( 0 === $document_id || false === array_key_exists( $document_id, $this->previous_files ) ) {
+            return;
+        }
+
+        $previous = $this->previous_files[ $document_id ];
+        unset( $this->previous_files[ $document_id ] );
+        $current = (int) get_post_meta( $document_id, CustomFields::DOCUMENT_FILE, true );
+
+        if ( $previous > 0 && $previous !== $current ) {
+            $this->delete_if_unused( $previous, $document_id );
+            if ( $current > 0 ) {
+                update_post_meta( $document_id, CustomFields::DOCUMENT_FILE_UPDATED, current_time( 'mysql' ) );
+            }
+        }
+
+        foreach ( $this->attached_private_files( $document_id ) as $attachment_id ) {
+            if ( $attachment_id !== $current ) {
+                $this->delete_if_unused( $attachment_id, $document_id );
+            }
+        }
+    }
+
+    /**
+     * Borrado definitivo de un documento: elimina su archivo y los archivos
+     * privados subidos a él. La papelera no pasa por aquí: conserva el archivo.
+     *
+     * @param   int           $post_id ID del post que se va a borrar.
+     * @param   \WP_Post|null $post    Post (WordPress 5.5+).
+     * @return 	void
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public function delete_document_files( int $post_id, $post = null ): void {
+        if ( DocumentPostType::POST_TYPE_NAME !== get_post_type( $post_id ) ) {
+            return;
+        }
+
+        $files = $this->attached_private_files( $post_id );
+        $files[] = (int) get_post_meta( $post_id, CustomFields::DOCUMENT_FILE, true );
+
+        foreach ( array_unique( array_filter( $files ) ) as $attachment_id ) {
+            $this->delete_if_unused( $attachment_id, $post_id );
+        }
+    }
+
+    /**
+     * Borra un adjunto privado (registro y archivo) si ningún otro documento lo usa.
+     * Los adjuntos que no son privados no se tocan nunca.
+     *
+     * @param   int $attachment_id ID del adjunto.
+     * @param   int $document_id   Documento que deja de usarlo.
+     * @return 	void
+     * @access 	private
+     * @package	club-triatlon-sulayr
+     */
+    private function delete_if_unused( int $attachment_id, int $document_id ): void {
+        if ( false === self::is_private_attachment( $attachment_id ) ) {
+            return;
+        }
+
+        // Todos los estados: un documento en la papelera o en borrador también cuenta como uso.
+        $users = get_posts( [
+            'post_type' => DocumentPostType::POST_TYPE_NAME,
+            'post_status' => array_values( get_post_stati() ),
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'no_found_rows' => true,
+            'post__not_in' => [ $document_id ],
+            'meta_query' => [
+                [
+                    'key' => CustomFields::DOCUMENT_FILE,
+                    'value' => $attachment_id,
+                    'compare' => '=',
+                ],
+            ],
+        ] );
+        if ( ! empty( $users ) ) {
+            return;
+        }
+
+        wp_delete_attachment( $attachment_id, true );
+    }
+
+    /**
+     * Adjuntos privados subidos a un documento (post_parent).
+     *
+     * @param   int $document_id ID del documento.
+     * @return 	int[]
+     * @access 	private
+     * @package	club-triatlon-sulayr
+     */
+    private function attached_private_files( int $document_id ): array {
+        return array_map( 'intval', get_posts( [
+            'post_type' => 'attachment',
+            'post_status' => 'inherit',
+            'post_parent' => $document_id,
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'no_found_rows' => true,
+            'meta_key' => CustomFields::DOCUMENT_PRIVATE_ATTACHMENT,
+            'meta_value' => '1',
+        ] ) );
+    }
+
+    /**
+     * ID del documento si el post es un sulayr_document, o 0.
+     *
+     * @param   int|string $post_id ID recibido de ACF.
+     * @return 	int
+     * @access 	private
+     * @package	club-triatlon-sulayr
+     */
+    private static function document_id( $post_id ): int {
+        if ( false === is_numeric( $post_id ) ) {
+            return 0;
+        }
+
+        return DocumentPostType::POST_TYPE_NAME === get_post_type( (int) $post_id ) ? (int) $post_id : 0;
     }
 
     /**

@@ -142,13 +142,7 @@ class DocumentsAccountEndpoint {
 
         $visible = $this->documents->get_visible_documents( $user_id );
         $personal = $visible['personal'];
-        // Un único grupo sin título hasta que existan las categorías (fase D5).
-        $groups = empty( $visible['general'] ) ? [] : [
-            [
-                'title' => '',
-                'documents' => $visible['general'],
-            ],
-        ];
+        $groups = $this->documents->group_by_category( $visible['general'] );
         $total = count( $personal ) + count( $visible['general'] );
 
         $part = SULAYR_TEMPLATE_DIR . '/parts/content-documents.php';
