@@ -7,3 +7,132 @@
  Template: astra
  Version: 1.0.0
 */
+/* ===== Marca Sulayr ===== */
+:root {
+	--sulayr-noche: #0B1638;  --sulayr-cielo: #4FE6F2;  --sulayr-menta: #1EE8A3;
+	--sulayr-sol: #F46F5C;    --sulayr-nieve: #F3F7FA;  --sulayr-pizarra: #2A3550;
+	--sulayr-texto2: #566079; --sulayr-acento: #0A7C8A;
+	--sulayr-display: "Archivo", "Arial Narrow", Arial, sans-serif;
+	--sulayr-texto: "Instrument Sans", system-ui, "Segoe UI", Arial, sans-serif;
+	--sulayr-mono: "JetBrains Mono", Consolas, monospace;
+}
+
+body, button, input, select, textarea { font-family: var(--sulayr-texto); }
+body { font-size: 16px; line-height: 1.6; color: var(--sulayr-noche); }
+
+h1, h2, h3, h4, h5, h6, .site-title { font-family: var(--sulayr-display); }
+h1, h2, .is-style-sulayr-display {
+	font-weight: 900; font-style: italic; font-stretch: 118%;
+	line-height: 1.02; letter-spacing: -0.01em; text-wrap: balance;
+}
+h3, h4 { font-weight: 700; font-stretch: 108%; }
+
+/* Etiqueta mono (eyebrow) */
+.is-style-sulayr-etiqueta {
+	font-family: var(--sulayr-mono); font-size: 12px;
+	letter-spacing: 0.14em; text-transform: uppercase;
+}
+
+/* Botón de acción: Sol de Alba con texto Noche */
+.wp-block-button.is-style-sulayr-sol .wp-block-button__link {
+	background: var(--sulayr-sol); color: var(--sulayr-noche);
+	border-radius: 4px; font-weight: 600;
+}
+
+/* Portada con perfil de Veleta, Mulhacén y Alcazaba al pie */
+.wp-block-cover.is-style-sulayr-cumbres { position: relative; overflow: hidden; }
+.wp-block-cover.is-style-sulayr-cumbres::after {
+	content: ""; position: absolute; left: 0; right: 0; bottom: -1px; z-index: 2;
+	height: clamp(60px, 9vw, 128px); pointer-events: none;
+	background: url("./assets/img/cumbres.svg") bottom / 100% 100% no-repeat;
+}
+
+/* Tabla de convocatoria */
+.is-style-sulayr-convocatoria table { border-collapse: collapse; }
+.is-style-sulayr-convocatoria thead th {
+	background: var(--sulayr-noche); color: var(--sulayr-nieve);
+	font-family: var(--sulayr-mono); font-size: 11px; letter-spacing: 0.12em;
+	text-transform: uppercase; text-align: left;
+}
+.is-style-sulayr-convocatoria tbody tr:nth-child(even) { background: var(--sulayr-nieve); }
+.is-style-sulayr-convocatoria td:nth-child(2),
+.is-style-sulayr-convocatoria td:nth-child(5) {
+	font-family: var(--sulayr-mono); font-variant-numeric: tabular-nums;
+}
+
+/* Cita como separador sobre Cielo */
+.wp-block-quote.is-style-sulayr-cita {
+	border: 0; padding: 0; font-family: var(--sulayr-display);
+	font-weight: 900; font-style: italic; font-stretch: 115%;
+	font-size: clamp(1.6rem, 3.6vw, 2.6rem); line-height: 1.08;
+}
+.wp-block-quote.is-style-sulayr-cita cite {
+	font-family: var(--sulayr-mono); font-style: normal; font-size: 12px;
+	letter-spacing: 0.14em; text-transform: uppercase;
+}
+
+/* Bordes rectos en toda la web */
+.wp-block-button__link, .ast-button, .button { border-radius: 4px; }
+
+/* Franja tricolor bajo el pie */
+.site-footer::after {
+	content: ""; display: block; height: 8px;
+	background: linear-gradient(90deg,
+		var(--sulayr-cielo) 0 33.33%, var(--sulayr-menta) 33.33% 66.66%, var(--sulayr-sol) 66.66%);
+}
+
+/* ===== Cabecera y pie Sulayr ===== */
+/* Los enlaces a anclas de la home no se marcan todos como activos */
+.ast-site-title-wrap {
+    display: none;
+}
+.main-header-menu .menu-item.current-menu-item > a.menu-link[href*="#"] { color: inherit; }
+.main-header-menu .menu-link { font-weight: 600; }
+
+.site-footer .sulayr-lema {
+	font-family: var(--sulayr-display); font-weight: 900; font-style: italic;
+	font-stretch: 115%; font-size: 1.25rem; line-height: 1.1; color: var(--sulayr-nieve);
+}
+.site-footer .widget-title,
+.site-footer .sulayr-foot-h {
+	font-family: var(--sulayr-mono); font-size: 11px; font-weight: 600; font-style: normal;
+	letter-spacing: 0.14em; text-transform: uppercase; color: var(--sulayr-cielo); margin: 0 0 10px;
+}
+.site-footer .widget_nav_menu ul { list-style: none; margin: 0; padding: 0; }
+.site-footer .widget_nav_menu li { margin: 0 0 6px; }
+
+/* Bootstrap (plugin del club) pisa colores de Astra: se restauran */
+a { color: var(--sulayr-acento); }
+a:hover, a:focus { color: var(--sulayr-noche); }
+.site-footer, .site-footer p { color: #C9D1DE; }
+.site-footer a { color: var(--sulayr-nieve); text-decoration: none; }
+.site-footer a:hover { color: var(--sulayr-menta); }
+.site-footer .footer-widget-area, .site-footer .ast-builder-html-element { text-align: left; }
+.ast-theme-transparent-header .main-header-menu .menu-item.current-menu-item > a.menu-link[href*="#"] { color: var(--sulayr-nieve); }
+.ast-theme-transparent-header .main-header-menu .menu-item > a.menu-link:hover { color: var(--sulayr-menta); }
+/* ===== FIN MARCA SULAYR ===== */
+
+/* ===== SECCIONES HOME SULAYR ===== */
+.sulayr-cifra { font-family: var(--sulayr-display); font-weight: 900; font-style: italic; font-stretch: 118%;
+	font-size: 2.4rem; line-height: 1; font-variant-numeric: tabular-nums; margin: 0; color: var(--sulayr-noche); }
+/* Datos de ejemplo: resaltados para sustituirlos antes de publicar */
+.sulayr-ejemplo { background: #FFF4CC; color: #3B2F00; outline: 1px dashed #E5C766; padding: 0 4px; border-radius: 3px; }
+.sulayr-ticks { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.sulayr-ticks li { display: flex; gap: 10px; align-items: baseline; }
+.sulayr-ticks li::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--sulayr-sol); flex: none; transform: translateY(-2px); }
+.wp-block-table.is-style-sulayr-convocatoria { overflow-x: auto; border: 1px solid #D6DCE5; border-radius: 6px; background: #fff; }
+.wp-block-table.is-style-sulayr-convocatoria table { min-width: 720px; width: 100%; font-size: 14.5px; }
+.wp-block-table.is-style-sulayr-convocatoria th,
+.wp-block-table.is-style-sulayr-convocatoria td { border: 0; border-top: 1px solid #E3E8EF; padding: 12px 14px; vertical-align: top; }
+.wp-block-table.is-style-sulayr-convocatoria thead { border: 0; }
+.wp-block-quote.is-style-sulayr-cita { border: 0 !important; padding-left: 0 !important; color: var(--sulayr-noche); }
+.wp-block-quote.is-style-sulayr-cita p { margin: 0 0 14px; max-width: 26ch; }
+.wp-block-quote.is-style-sulayr-cita::before { content: ""; display: block; width: 55px; height: 9px; margin-bottom: 14px;
+	background: radial-gradient(circle, var(--sulayr-sol) 4.5px, transparent 5px) 0 0 / 17px 9px repeat-x; }
+.sulayr-noticias > li { background: #fff; border: 1px solid #D6DCE5; border-radius: 6px; overflow: hidden; }
+.sulayr-noticias .wp-block-post-title a { color: var(--sulayr-noche); text-decoration: none; }
+.sulayr-noticias .wp-block-post-terms a { color: var(--sulayr-acento); text-decoration: none; }
+.wp-block-cover.is-style-sulayr-cumbres .wp-block-button.is-style-outline .wp-block-button__link { background: transparent; }
+@media (max-width: 781px) { .wp-block-cover.is-style-sulayr-cumbres { padding-top: 120px !important; padding-bottom: 130px !important; } }
+.entry-content h1, .entry-content h2, h1, h2, .is-style-sulayr-display { font-weight: 900; }
+/* ===== FIN SECCIONES HOME SULAYR ===== */

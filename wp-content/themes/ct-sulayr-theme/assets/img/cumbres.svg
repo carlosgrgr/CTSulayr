@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 140" preserveAspectRatio="none">
+  <path fill="#4FE6F2" d="M0 140V112L140 100L260 84L360 66L430 46L470 30L505 44L560 52L620 40L700 28L760 16L805 30L850 44L900 38L960 34L1010 48L1080 62L1180 78L1300 92L1440 104V140Z"/>
+  <polyline fill="none" stroke="#F3F7FA" stroke-width="2.5" vector-effect="non-scaling-stroke" points="0,112 140,100 260,84 360,66 430,46 470,30 505,44 560,52 620,40 700,28 760,16 805,30 850,44 900,38 960,34 1010,48 1080,62 1180,78 1300,92 1440,104"/>
+  <rect y="122" width="1440" height="18" fill="#0B1638"/>
+</svg>
