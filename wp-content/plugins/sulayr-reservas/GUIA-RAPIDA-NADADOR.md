@@ -10,8 +10,7 @@ Reservas de natación, en el móvil. Hay una versión para el navegador en `GUIA
 
 Abre la web de reservas y pulsa **Iniciar sesión**. Escribe tu correo y tu contraseña y pulsa **Acceder**.
 
-- Si eres deportista del club, usa el correo y la contraseña de siempre.
-- Si te dieron de alta desde reservas, te llegó un correo para elegir la contraseña.
+- Cuando te dieron de alta, te llegó un correo para elegir la contraseña.
 - Si no la recuerdas, pulsa **¿Has olvidado tu contraseña?**.
 
 ## 2. Menú
@@ -56,9 +55,8 @@ No podrás reservar si la sesión está completa, deshabilitada o ya ha empezado
 
 ![Límite de la semana alcanzado](docs/guia-nadador/06-limite.png)
 
-Cada nadador puede reservar un número máximo de sesiones por semana. Lo pone el gestor, entre 1 y 5. Si no lo ha cambiado, es 3.
+Cada nadador puede reservar un número máximo de sesiones por semana.
 
-- La semana va de **lunes a domingo**, según el día de la sesión, no el día en que reservas.
 - Al llegar al máximo sale «Se ha alcanzado el máximo de reservas de la semana.» y no se crea la reserva.
 - Si cancelas una reserva de esa semana, vuelves a tener hueco.
 - Si el gestor te apunta a una sesión, también cuenta.
@@ -98,15 +96,13 @@ Cuando falta menos de una hora, el botón **Cancelar** desaparece, en el calenda
 
 Si tenías la página abierta desde antes y pulsas **Cancelar** fuera de plazo, sale «Ya no se puede cancelar esta reserva.» y la reserva no se borra.
 
-> Si no vas a poder ir y falta menos de una hora, avisa al gestor. Solo el gestor puede cancelarla.
-
 ## 9. Mi perfil
 
 ![Datos del perfil](docs/guia-nadador/13-perfil.png)
 
 Ves tu nombre, apellidos, correo, teléfono, DNI y tu límite semanal. El límite solo lo cambia el gestor.
 
-- Nombre, apellidos o teléfono: cámbialos y pulsa **Guardar datos**. Si eres deportista del club, estos datos no salen para editar: los mantiene el club.
+- Nombre, apellidos o teléfono: cámbialos y pulsa **Guardar datos**.
 
 ![Correo, fotografía y contraseña](docs/guia-nadador/14-perfil-cuenta.png)
 
@@ -116,7 +112,7 @@ Ves tu nombre, apellidos, correo, teléfono, DNI y tu límite semanal. El límit
 
 ## 10. Cerrar sesión
 
-En el menú, pulsa **Cerrar sesión**. Se cierra a la vez en reservas y en la web del club.
+En el menú, pulsa **Cerrar sesión**.
 
 ## 11. Si algo no sale
 
@@ -126,5 +122,5 @@ En el menú, pulsa **Cerrar sesión**. Se cierra a la vez en reservas y en la we
 | «No puedes acceder al sistema de reservas» | Tu ficha está desactivada. Habla con el gestor |
 | «No quedan plazas» | Elige otra sesión |
 | «Se ha alcanzado el máximo de reservas de la semana» | Cancela otra de esa semana o reserva en la siguiente |
-| «Ya no se puede cancelar esta reserva» | Falta menos de una hora. Avisa al gestor |
+| «Ya no se puede cancelar esta reserva» | Falta menos de una hora. |
 | No aparece el botón **Cancelar** | Falta menos de una hora, o la sesión ya empezó |
