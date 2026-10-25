@@ -1089,7 +1089,8 @@ class PanelRenderer {
 		foreach ( $fields as $name => $label ) {
 			$value = isset( $values[ $name ] ) ? (string) $values[ $name ] : '';
 			$type  = 'email' === $name ? 'email' : 'text';
-			echo '<label>' . esc_html( $label ) . ' <input type="' . esc_attr( $type ) . '" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '" required></label>';
+			$required = in_array( $name, array( 'phone', 'dni' ), true ) ? '' : ' required';
+			echo '<label>' . esc_html( $label ) . ' <input type="' . esc_attr( $type ) . '" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '"' . $required . '></label>';
 		}
 		$selected = isset( $values['weekly_limit'] ) ? (string) $values['weekly_limit'] : (string) WeeklyLimit::DEFAULT_LIMIT;
 		echo '<label>Límite semanal <select name="weekly_limit">';
@@ -1486,7 +1487,7 @@ class PanelRenderer {
 		echo '<input type="hidden" name="swimmer_user_id" value="' . esc_attr( (string) $user_id ) . '">';
 		echo '<label>Nombre <input type="text" name="first_name" value="' . esc_attr( (string) $row->first_name ) . '" required></label>';
 		echo '<label>Apellidos <input type="text" name="last_name" value="' . esc_attr( (string) $row->last_name ) . '" required></label>';
-		echo '<label>Teléfono <input type="text" name="phone" value="' . esc_attr( (string) $row->phone ) . '" required></label>';
+		echo '<label>Teléfono <input type="text" name="phone" value="' . esc_attr( (string) $row->phone ) . '"></label>';
 		echo '<button type="submit">Guardar datos</button></form>';
 	}
 

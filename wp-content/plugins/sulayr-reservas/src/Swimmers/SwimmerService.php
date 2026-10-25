@@ -517,8 +517,8 @@ class SwimmerService {
 
 		$first = $this->text( isset( $data['first_name'] ) ? $data['first_name'] : '', 100 );
 		$last  = $this->text( isset( $data['last_name'] ) ? $data['last_name'] : '', 100 );
-		$phone = $this->text( isset( $data['phone'] ) ? $data['phone'] : '', 50 );
-		if ( '' === $first || '' === $last || '' === $phone ) {
+		$phone = $this->optionalText( isset( $data['phone'] ) ? $data['phone'] : '', 50 );
+		if ( '' === $first || '' === $last || null === $phone ) {
 			return $this->result( SwimmerResult::INVALID, 'Revisa el nombre, los apellidos y el teléfono.' );
 		}
 
@@ -588,14 +588,14 @@ class SwimmerService {
 
 	/**
 	 * @param array<string, mixed> $data Datos recibidos.
-	 * @return array<string, string>|null
+	 * @return array<string, string>|null Null si falta un dato obligatorio o alguno supera su longitud.
 	 */
 	private function fields( array $data ) {
 		$fields = array(
 			'first_name' => $this->text( isset( $data['first_name'] ) ? $data['first_name'] : '', 100 ),
 			'last_name'  => $this->text( isset( $data['last_name'] ) ? $data['last_name'] : '', 100 ),
-			'phone'      => $this->text( isset( $data['phone'] ) ? $data['phone'] : '', 50 ),
-			'dni'        => $this->text( isset( $data['dni'] ) ? $data['dni'] : '', 20 ),
+			'phone'      => $this->optionalText( isset( $data['phone'] ) ? $data['phone'] : '', 50 ),
+			'dni'        => $this->optionalText( isset( $data['dni'] ) ? $data['dni'] : '', 20 ),
 		);
 		$email  = sanitize_email( isset( $data['email'] ) ? (string) $data['email'] : '' );
 
@@ -603,10 +603,9 @@ class SwimmerService {
 			return null;
 		}
 
-		foreach ( $fields as $value ) {
-			if ( '' === $value ) {
-				return null;
-			}
+		// Nombre y apellidos son obligatorios. Teléfono y DNI son opcionales, pero no pueden superar su longitud.
+		if ( '' === $fields['first_name'] || '' === $fields['last_name'] || null === $fields['phone'] || null === $fields['dni'] ) {
+			return null;
 		}
 
 		$fields['email'] = $email;

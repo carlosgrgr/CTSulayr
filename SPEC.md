@@ -483,8 +483,8 @@ Los datos requeridos para el alta serán:
 - Nombre.
 - Apellidos.
 - Email.
-- Teléfono.
-- DNI.
+
+El teléfono y el DNI son opcionales, tanto en el alta manual como en la importación por CSV y en la edición de la ficha.
 
 El gestor no asignará una contraseña. Para una cuenta nueva, se utilizará el flujo nativo de WordPress para que el usuario establezca su contraseña mediante el correo correspondiente.
 
