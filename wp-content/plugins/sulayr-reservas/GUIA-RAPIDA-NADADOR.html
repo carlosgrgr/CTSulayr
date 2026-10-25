@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía rápida del nadador — Reservas de natación</title>
+<style>
+	:root {
+		--azul: #2f6fe0;
+		--texto: #1a2740;
+		--suave: #5b6b84;
+		--fondo: #eef3f8;
+		--borde: #e4ebf3;
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+
+	body {
+		background: var(--fondo);
+		color: var(--texto);
+		font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+		font-size: 1rem;
+		line-height: 1.5;
+		margin: 0;
+		padding: 1rem;
+	}
+
+	main {
+		margin: 0 auto;
+		max-width: 46rem;
+	}
+
+	header {
+		margin-bottom: 1rem;
+	}
+
+	h1 {
+		font-size: 1.6rem;
+		margin: 0 0 0.25rem;
+	}
+
+	header p {
+		color: var(--suave);
+		margin: 0;
+	}
+
+	nav {
+		background: #fff;
+		border: 1px solid var(--borde);
+		border-radius: 16px;
+		margin-bottom: 1rem;
+		padding: 0.75rem 1rem;
+	}
+
+	nav ol {
+		margin: 0;
+		padding-left: 1.25rem;
+	}
+
+	nav a {
+		color: var(--azul);
+	}
+
+	section {
+		background: #fff;
+		border: 1px solid var(--borde);
+		border-radius: 16px;
+		box-shadow: 0 8px 24px rgba(23, 42, 79, 0.05);
+		margin-bottom: 1rem;
+		padding: 1rem 1.15rem;
+	}
+
+	h2 {
+		font-size: 1.25rem;
+		margin: 0 0 0.75rem;
+	}
+
+	.paso {
+		align-items: flex-start;
+		display: grid;
+		gap: 1rem;
+		grid-template-columns: 1fr;
+	}
+
+	figure {
+		margin: 0;
+	}
+
+	figure img {
+		border: 1px solid var(--borde);
+		border-radius: 12px;
+		display: block;
+		height: auto;
+		margin: 0 auto;
+		max-width: 100%;
+		width: 260px;
+	}
+
+	figure + figure {
+		margin-top: 0.75rem;
+	}
+
+	figcaption {
+		color: var(--suave);
+		font-size: 0.85rem;
+		margin-top: 0.35rem;
+		text-align: center;
+	}
+
+	ol, ul {
+		margin: 0 0 0.75rem;
+		padding-left: 1.25rem;
+	}
+
+	li + li {
+		margin-top: 0.3rem;
+	}
+
+	p {
+		margin: 0 0 0.75rem;
+	}
+
+	b {
+		white-space: nowrap;
+	}
+
+	.aviso {
+		background: #fff7e6;
+		border-left: 4px solid #f0a020;
+		border-radius: 8px;
+		padding: 0.6rem 0.8rem;
+	}
+
+	.ok {
+		background: #eaf6ee;
+		border-left: 4px solid #2e9e5b;
+		border-radius: 8px;
+		padding: 0.6rem 0.8rem;
+	}
+
+	table {
+		border-collapse: collapse;
+		width: 100%;
+	}
+
+	th, td {
+		border-bottom: 1px solid var(--borde);
+		padding: 0.5rem 0.4rem;
+		text-align: left;
+		vertical-align: top;
+	}
+
+	th {
+		color: var(--suave);
+		font-size: 0.85rem;
+	}
+
+	@media (min-width: 40rem) {
+		.paso {
+			grid-template-columns: 1fr 260px;
+		}
+	}
+</style>
+</head>
+<body>
+<main>
+
+<header>
+	<h1>Guía rápida del nadador</h1>
+	<p>Reservas de natación, en el móvil.</p>
+</header>
+
+<nav aria-label="Contenido">
+	<ol>
+		<li><a href="#entrar">Entrar</a></li>
+		<li><a href="#menu">Menú</a></li>
+		<li><a href="#calendario">Calendario</a></li>
+		<li><a href="#reservar">Reservar una sesión</a></li>
+		<li><a href="#limite">Límite semanal</a></li>
+		<li><a href="#mis-reservas">Mis reservas</a></li>
+		<li><a href="#cancelar">Cancelar una reserva</a></li>
+		<li><a href="#menos-hora">Menos de una hora antes</a></li>
+		<li><a href="#perfil">Mi perfil</a></li>
+		<li><a href="#salir">Cerrar sesión</a></li>
+		<li><a href="#problemas">Si algo no sale</a></li>
+	</ol>
+</nav>
+
+<section id="entrar">
+	<h2>1. Entrar</h2>
+	<div class="paso">
+		<div>
+			<p>Abre la web de reservas y pulsa <b>Iniciar sesión</b>. Escribe tu correo y tu contraseña y pulsa <b>Acceder</b>.</p>
+			<ul>
+				<li>Si eres deportista del club, usa el correo y la contraseña de siempre.</li>
+				<li>Si te dieron de alta desde reservas, te llegó un correo para elegir la contraseña.</li>
+				<li>Si no la recuerdas, pulsa <b>¿Has olvidado tu contraseña?</b>.</li>
+			</ul>
+		</div>
+		<div>
+			<figure>
+				<img src="docs/guia-nadador/01-portada.png" alt="Portada de reservas sin sesión iniciada">
+				<figcaption>Portada</figcaption>
+			</figure>
+			<figure>
+				<img src="docs/guia-nadador/02-entrar.png" alt="Pantalla para entrar con correo y contraseña">
+				<figcaption>Entrar</figcaption>
+			</figure>
+		</div>
+	</div>
+</section>
+
+<section id="menu">
+	<h2>2. Menú</h2>
+	<div class="paso">
+		<div>
+			<p>Pulsa el botón de las tres rayas para abrir el menú:</p>
+			<ul>
+				<li><b>Calendario</b>: las sesiones y el botón para reservar.</li>
+				<li><b>Mis reservas</b>: tus plazas y tu historial.</li>
+				<li><b>Mi perfil</b>: tus datos, correo, foto y contraseña.</li>
+				<li><b>Mi perfil en el club</b>: solo si también eres deportista del club.</li>
+				<li><b>Cerrar sesión</b>.</li>
+			</ul>
+		</div>
+		<figure>
+			<img src="docs/guia-nadador/03-menu.png" alt="Menú del nadador desplegado">
+			<figcaption>Menú</figcaption>
+		</figure>
+	</div>
+</section>
+
+<section id="calendario">
+	<h2>3. Calendario</h2>
+	<div class="paso">
+		<div>
+			<p>Se ve un día. Cambia de día con las flechas, tocando el día arriba o deslizando el dedo hacia los lados.</p>
+			<p>Cada sesión indica su hora y su estado, y cuántas plazas quedan:</p>
+			<ul>
+				<li><b>Disponible</b>: puedes reservar.</li>
+				<li><b>Reservada por ti</b>: ya tienes plaza.</li>
+				<li><b>Completa</b>: no quedan plazas.</li>
+				<li><b>Deshabilitada</b>: no admite reservas.</li>
+				<li><b>Ya ha comenzado</b>: ya no se puede reservar.</li>
+			</ul>
+			<p>Horario habitual: de lunes a jueves de 15:00 a 16:30 y de 21:00 a 22:30, y los sábados de 13:00 a 14:30. Los viernes y los domingos no hay sesión.</p>
+		</div>
+		<figure>
+			<img src="docs/guia-nadador/04-calendario.png" alt="Calendario de un lunes con dos sesiones disponibles">
+			<figcaption>Calendario de un día</figcaption>
+		</figure>
+	</div>
+</section>
+
+<section id="reservar">
+	<h2>4. Reservar una sesión</h2>
+	<div class="paso">
+		<div>
+			<ol>
+				<li>En el <b>Calendario</b>, busca el día y una sesión <b>Disponible</b>.</li>
+				<li>Pulsa <b>Reservar</b>.</li>
+				<li>Arriba sale «Reserva creada.» y la sesión pasa a <b>Reservada por ti</b>.</li>
+			</ol>
+			<p>No podrás reservar si:</p>
+			<ul>
+				<li>la sesión está completa o deshabilitada,</li>
+				<li>ya ha empezado,</li>
+				<li>ya tienes plaza en ella,</li>
+				<li>o has llegado a tu límite de la semana.</li>
+			</ul>
+		</div>
+		<figure>
+			<img src="docs/guia-nadador/05-reservada.png" alt="Aviso Reserva creada y sesión reservada por ti">
+			<figcaption>Reserva creada</figcaption>
+		</figure>
+	</div>
+</section>
+
+<section id="limite">
+	<h2>5. Límite semanal</h2>
+	<div class="paso">
+		<div>
+			<p>Cada nadador puede reservar un número máximo de sesiones por semana. Lo pone el gestor, entre 1 y 5. Si no lo ha cambiado, es 3.</p>
+			<ul>
+				<li>La semana va de <b>lunes a domingo</b>, según el día de la sesión, no el día en que reservas.</li>
+				<li>Al llegar al máximo sale «Se ha alcanzado el máximo de reservas de la semana.» y no se crea la reserva.</li>
+				<li>Si cancelas una reserva de esa semana, vuelves a tener hueco.</li>
+				<li>Si el gestor te apunta a una sesión, también cuenta.</li>
+			</ul>
+			<p>En el <b>Calendario</b>, más abajo, <b>Tu resumen</b> muestra cuántas reservas llevas esta semana y tu límite, por ejemplo <b>2 / 2</b>. <b>Tu próxima sesión</b> te recuerda la siguiente que tienes.</p>
+		</div>
+		<div>
+			<figure>
+				<img src="docs/guia-nadador/06-limite.png" alt="Aviso de máximo de reservas de la semana">
+				<figcaption>Límite alcanzado</figcaption>
+			</figure>
+			<figure>
+				<img src="docs/guia-nadador/07-resumen.png" alt="Tu próxima sesión y Tu resumen con límite 2 de 2">
+				<figcaption>Tu resumen</figcaption>
+			</figure>
+		</div>
+	</div>
+</section>
+
+<section id="mis-reservas">
+	<h2>6. Mis reservas</h2>
+	<div class="paso">
+		<div>
+			<ul>
+				<li><b>Reservas activas</b>: sesiones que todavía no han empezado. Junto a cada una está <b>Cancelar</b>, si aún estás a tiempo.</li>
+				<li><b>Historial</b>: sesiones a las que ya fuiste. Si el gestor te apuntó, pone «Añadida por un gestor».</li>
+			</ul>
+		</div>
+		<figure>
+			<img src="docs/guia-nadador/08-mis-reservas.png" alt="Mis reservas con dos reservas activas y el botón Cancelar">
+			<figcaption>Mis reservas</figcaption>
+		</figure>
+	</div>
+</section>
+
+<section id="cancelar">
+	<h2>7. Cancelar una reserva</h2>
+	<div class="paso">
+		<div>
+			<ol>
+				<li>Entra en <b>Mis reservas</b>, o abre el día de la sesión en el <b>Calendario</b>.</li>
+				<li>Pulsa <b>Cancelar</b> (en el calendario, <b>Cancelar mi reserva</b>).</li>
+				<li>Arriba sale «Reserva cancelada.».</li>
+			</ol>
+			<p>La plaza queda libre para otra persona y deja de contar en tu límite de esa semana.</p>
+			<p class="ok">Puedes cancelar hasta <b>una hora antes</b> del inicio de la sesión.</p>
+		</div>
+		<figure>
+			<img src="docs/guia-nadador/09-cancelada.png" alt="Aviso Reserva cancelada">
+			<figcaption>Reserva cancelada</figcaption>
+		</figure>
+	</div>
+</section>
+
+<section id="menos-hora">
+	<h2>8. Menos de una hora antes: ya no se puede cancelar</h2>
+	<div class="paso">
+		<div>
+			<p>Solo puedes cancelar hasta <b>una hora antes</b> del inicio. Por ejemplo, en una sesión de las 21:00 puedes cancelar hasta las 20:00 en punto.</p>
+			<p>Cuando falta menos de una hora, el botón <b>Cancelar</b> desaparece, en el calendario y en <b>Mis reservas</b>. La plaza sigue siendo tuya.</p>
+			<p>Si tenías la página abierta desde antes y pulsas <b>Cancelar</b> fuera de plazo, sale «Ya no se puede cancelar esta reserva.» y la reserva no se borra.</p>
+			<p class="aviso">Si no vas a poder ir y falta menos de una hora, avisa al gestor. Solo el gestor puede cancelarla.</p>
+		</div>
+		<div>
+			<figure>
+				<img src="docs/guia-nadador/10-menos-hora.png" alt="Sesión de hoy reservada sin botón para cancelar">
+				<figcaption>En el calendario: sin botón</figcaption>
+			</figure>
+			<figure>
+				<img src="docs/guia-nadador/11-menos-hora-lista.png" alt="Mis reservas: la del martes se puede cancelar, las de hoy no">
+				<figcaption>En Mis reservas: solo la del martes se puede cancelar</figcaption>
+			</figure>
+			<figure>
+				<img src="docs/guia-nadador/12-ya-no-se-puede.png" alt="Aviso Ya no se puede cancelar esta reserva">
+				<figcaption>Fuera de plazo</figcaption>
+			</figure>
+		</div>
+	</div>
+</section>
+
+<section id="perfil">
+	<h2>9. Mi perfil</h2>
+	<div class="paso">
+		<div>
+			<p>Ves tu nombre, apellidos, correo, teléfono, DNI y tu límite semanal. El límite solo lo cambia el gestor.</p>
+			<ul>
+				<li>Nombre, apellidos o teléfono: cámbialos y pulsa <b>Guardar datos</b>. Si eres deportista del club, estos datos no salen para editar: los mantiene el club.</li>
+				<li><b>Solicitar cambio de correo</b>: llega un enlace al correo nuevo. Tienes 24 horas para abrirlo. Hasta entonces sigues entrando con el anterior.</li>
+				<li><b>Guardar fotografía</b>: JPG, PNG o WebP, hasta 5 MB.</li>
+				<li><b>Cambiar contraseña</b>: escribe la actual y dos veces la nueva.</li>
+			</ul>
+		</div>
+		<div>
+			<figure>
+				<img src="docs/guia-nadador/13-perfil.png" alt="Datos del perfil del nadador">
+				<figcaption>Tus datos</figcaption>
+			</figure>
+			<figure>
+				<img src="docs/guia-nadador/14-perfil-cuenta.png" alt="Formularios de correo, fotografía y contraseña">
+				<figcaption>Correo, foto y contraseña</figcaption>
+			</figure>
+		</div>
+	</div>
+</section>
+
+<section id="salir">
+	<h2>10. Cerrar sesión</h2>
+	<p>En el menú, pulsa <b>Cerrar sesión</b>. Se cierra a la vez en reservas y en la web del club.</p>
+</section>
+
+<section id="problemas">
+	<h2>11. Si algo no sale</h2>
+	<table>
+		<thead><tr><th>Lo que ves</th><th>Qué hacer</th></tr></thead>
+		<tbody>
+			<tr><td>«Entra con tu cuenta para ver las reservas»</td><td>Pulsa <b>Iniciar sesión</b>.</td></tr>
+			<tr><td>«No puedes acceder al sistema de reservas»</td><td>Tu ficha está desactivada. Habla con el gestor.</td></tr>
+			<tr><td>«No quedan plazas»</td><td>Elige otra sesión.</td></tr>
+			<tr><td>«Se ha alcanzado el máximo de reservas de la semana»</td><td>Cancela otra de esa semana o reserva en la siguiente.</td></tr>
+			<tr><td>«Ya no se puede cancelar esta reserva»</td><td>Falta menos de una hora. Avisa al gestor.</td></tr>
+			<tr><td>No aparece el botón <b>Cancelar</b></td><td>Falta menos de una hora, o la sesión ya empezó.</td></tr>
+		</tbody>
+	</table>
+</section>
+
+</main>
+</body>
+</html>
