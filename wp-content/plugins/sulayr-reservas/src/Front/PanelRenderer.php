@@ -1003,6 +1003,9 @@ class PanelRenderer {
 		} else {
 			$this->post( 'swimmer_reactivate', 'Reactivar nadador', array( 'swimmer_user_id' => (int) $row->user_id ) );
 		}
+		if ( $linked && current_user_can( 'manage_options' ) ) {
+			$this->releaseForm( (int) $row->user_id );
+		}
 		echo '<form method="post" action="' . esc_url( $this->url( array() ) ) . '" class="sulayr-form">';
 		wp_nonce_field( PanelActions::NONCE, 'sulayr_nonce' );
 		echo '<input type="hidden" name="sulayr_action" value="swimmer_remove">';
@@ -1012,6 +1015,27 @@ class PanelRenderer {
 		echo '<button type="submit">Eliminar nadador</button></form>';
 		$this->bookings( (int) $row->user_id, $now, true );
 		echo '</div>';
+	}
+
+	/**
+	 * Pasa una ficha del club a CN Nazarí sin borrar la cuenta ni el historial.
+	 *
+	 * @param int $user_id Nadador.
+	 * @return void
+	 */
+	private function releaseForm( $user_id ) {
+		$return = array(
+			'sulayr_vista' => 'nadador',
+			'usuario'      => $user_id,
+		);
+		echo '<p>Si deja el club y sigue en natación, pásalo a CN Nazarí. Quedará activo. Una baja o un cambio de perfil en el club ya no desactivará esta ficha. El nombre, los apellidos y el teléfono se editarán aquí. Si más adelante vuelve a ser deportista activo con natación, la sincronización del club puede volver a vincular la ficha.</p>';
+		echo '<form method="post" action="' . esc_url( $this->url( array() ) ) . '" class="sulayr-form">';
+		wp_nonce_field( PanelActions::NONCE, 'sulayr_nonce' );
+		echo '<input type="hidden" name="sulayr_action" value="swimmer_release">';
+		echo '<input type="hidden" name="sulayr_return" value="' . esc_attr( $this->url( $return ) ) . '">';
+		echo '<input type="hidden" name="swimmer_user_id" value="' . esc_attr( (string) $user_id ) . '">';
+		echo '<label><input type="checkbox" name="confirm_release" value="1"> Confirmo el paso de este nadador a CN Nazarí</label> ';
+		echo '<button type="submit">Pasar a CN Nazarí</button></form>';
 	}
 
 	/**

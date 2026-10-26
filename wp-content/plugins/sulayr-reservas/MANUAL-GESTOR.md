@@ -26,7 +26,7 @@ El panel lateral es siempre el tuyo: tu nombre, tu próxima sesión y tu resumen
 
 ## 2. Qué queda fuera de tu panel
 
-La sincronización con el club la hace un administrador del club, desde el perfil del deportista. Tú puedes activar o desactivar a alguien en reservas; la siguiente sincronización deja el estado que tenga el club en ese momento.
+La sincronización con el club la hace un administrador del club, desde el perfil del deportista. En una ficha vinculada al club, puedes activar o desactivar a alguien en reservas; la siguiente sincronización deja el estado que tenga el club en ese momento. Pasar la ficha a CN Nazarí lo hace un administrador del sitio de reservas. Tú no ves ese botón. Cuando la ficha ya es de CN Nazarí, la baja del club ya no la desactiva.
 
 El registro técnico de esas sincronizaciones está en el escritorio del club, en **Usuarios → Registro de sincronización**. Solo lo ve un administrador del club.
 
@@ -196,9 +196,23 @@ La plantilla incluye una fila de ejemplo (Ana García López). Si se confirma ta
 En la ficha del nadador:
 
 - **Desactivar** impide reservar y borra las reservas de sesiones que aún no han empezado. El historial de sesiones ya empezadas se conserva. La persona sigue pudiendo entrar al club si también es deportista. La ficha sigue en **Nadadores**, como desactivada.
-- **Reactivar** vuelve a permitir reservas. No recupera las plazas que se borraron al desactivar.
+- **Reactivar** vuelve a permitir reservas. No recupera las plazas que se borraron al desactivar. En una ficha vinculada al club, la siguiente sincronización puede volver a desactivarla si en el club sigue de baja.
 
 Desactivar no borra la cuenta.
+
+**Pasar a CN Nazarí** sirve cuando la persona deja el club y sigue en natación. La ficha tiene que estar vinculada al club. El botón solo lo ve un administrador del sitio de reservas. El gestor no lo tiene.
+
+1. El administrador abre la ficha.
+2. Marca **Confirmo el paso de este nadador a CN Nazarí**.
+3. Pulsa **Pasar a CN Nazarí**.
+
+Qué ocurre:
+
+- El origen pasa a **CN Nazarí** y la ficha queda activa, aunque estuviera desactivada por la baja.
+- No se borra la cuenta, el historial ni las reservas que sigan vigentes.
+- El nombre, los apellidos y el teléfono ya se editan en reservas.
+- Una baja, un guardado del perfil en el club o salir del sitio del club ya no desactiva esta ficha.
+- Si más adelante vuelve a ser deportista activo con natación, la sincronización del club puede volver a vincularla.
 
 Retirar es otra operación y no se puede deshacer desde el panel.
 
@@ -219,9 +233,9 @@ Si más adelante vuelve a cumplir las condiciones del club, una sincronización 
 
 Cuando un administrador del club sincroniza a un deportista, reservas copia nombre, apellidos, correo, teléfono y DNI. Un campo vacío en el club sustituye al valor que hubiera en reservas. El límite semanal y la fotografía de reservas se conservan.
 
-La persona queda activa en reservas cuando, a la vez, es deportista del club, tiene la natación activada y su estado de deportista es activo. Si deja de cumplir alguna condición, la sincronización desactiva la ficha y borra las reservas de sesiones que aún no han empezado. El historial pasado se conserva.
+La persona queda activa en reservas cuando, a la vez, es deportista del club, tiene la natación activada y su estado de deportista es activo. Si deja de cumplir alguna condición y la ficha sigue vinculada al club, la sincronización la desactiva y borra las reservas de sesiones que aún no han empezado. El historial pasado se conserva. Una ficha que ya es de CN Nazarí no se desactiva por eso.
 
-Por eso una desactivación o un cambio de correo que hagas tú puede quedar deshecho en la siguiente sincronización, si el club sigue enviando otros datos. El aviso de la sincronización lo ve quien pulsa el botón en el club.
+Por eso una desactivación o un cambio de correo que hagas tú en una ficha vinculada puede quedar deshecho en la siguiente sincronización, si el club sigue enviando otros datos. El aviso de la sincronización lo ve quien pulsa el botón en el club.
 
 ## 14. Preguntas frecuentes
 

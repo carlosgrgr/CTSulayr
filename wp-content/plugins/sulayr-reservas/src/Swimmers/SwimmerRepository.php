@@ -102,6 +102,32 @@ class SwimmerRepository {
 	}
 
 	/**
+	 * Pasa una ficha vinculada al club a alta de CN Nazarí y la deja activa.
+	 *
+	 * @param int    $user_id Usuario.
+	 * @param string $stamp   Momento de la operación.
+	 * @return bool False si la ficha ya no estaba vinculada al club.
+	 */
+	public function releaseFromClub( $user_id, $stamp ) {
+		global $wpdb;
+
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE ' . $this->swimmers() . ' SET active = 1, linked_to_club = 0, updated_at = %s WHERE user_id = %d AND linked_to_club = 1',
+				$stamp,
+				$user_id
+			)
+		);
+		$this->assertNoError();
+
+		if ( false === $updated ) {
+			throw new \RuntimeException( 'No se pudo desvincular la ficha.' );
+		}
+
+		return $updated > 0;
+	}
+
+	/**
 	 * @param int    $user_id Usuario.
 	 * @param int    $active  1 o 0.
 	 * @param string $stamp   Momento de la operación.

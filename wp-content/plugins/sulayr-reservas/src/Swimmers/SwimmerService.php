@@ -158,6 +158,25 @@ class SwimmerService {
 	}
 
 	/**
+	 * Pasa una ficha del club a CN Nazarí y la deja activa.
+	 *
+	 * Solo un administrador del sitio de reservas. La baja del club ya no la
+	 * desactiva. Si más adelante vuelve a cumplir las condiciones del club,
+	 * la sincronización puede volver a vincularla.
+	 *
+	 * @param int                     $user_id Nadador.
+	 * @param \DateTimeImmutable|null $now     Fecha de referencia.
+	 * @return SwimmerResult
+	 */
+	public function releaseFromClub( $user_id, ?\DateTimeImmutable $now = null ) {
+		return $this->blog_context->onBookings(
+			function () use ( $user_id, $now ) {
+				return $this->releaseOnBookings( (int) $user_id, $now );
+			}
+		);
+	}
+
+	/**
 	 * Retira al nadador del sitio de reservas.
 	 *
 	 * Borra las reservas futuras, deja el historial pasado sin `user_id` y sin DNI,
@@ -326,6 +345,82 @@ class SwimmerService {
 		}
 
 		return $this->result( SwimmerResult::DEACTIVATED, 'Nadador desactivado.', $user_id );
+	}
+
+	/**
+	 * @param int                     $user_id Nadador.
+	 * @param \DateTimeImmutable|null $now     Fecha de referencia.
+	 * @return SwimmerResult
+	 */
+	private function releaseOnBookings( $user_id, ?\DateTimeImmutable $now ) {
+		if ( ! $this->canAdminister() ) {
+			return $this->result( SwimmerResult::UNAUTHORIZED, 'No tienes permiso para esta operación.' );
+		}
+		if ( $user_id < 1 ) {
+			return $this->result( SwimmerResult::MISSING, 'El nadador no existe.' );
+		}
+
+		$row = $this->repository->find( $user_id );
+		if ( ! $row ) {
+			return $this->result( SwimmerResult::MISSING, 'El nadador no existe.' );
+		}
+		if ( 1 !== (int) $row->linked_to_club ) {
+			return $this->result( SwimmerResult::INVALID, 'Este nadador ya es de CN Nazarí.', $user_id );
+		}
+
+		$role = $this->ensureNadador( $user_id );
+		if ( null !== $role ) {
+			return $role;
+		}
+
+		try {
+			$this->begin();
+			if ( ! $this->repository->lock( $user_id ) ) {
+				$this->rollback();
+				return $this->result( SwimmerResult::MISSING, 'El nadador no existe.' );
+			}
+
+			$released = $this->repository->releaseFromClub( $user_id, $this->clock( $now )->format( 'Y-m-d H:i:s' ) );
+			$this->commit();
+		} catch ( \Throwable $exception ) {
+			$this->rollback();
+			return $this->result( SwimmerResult::FAILED, 'No se ha podido completar la operación.' );
+		}
+
+		if ( ! $released ) {
+			return $this->result( SwimmerResult::INVALID, 'Este nadador ya es de CN Nazarí.', $user_id );
+		}
+
+		return $this->result( SwimmerResult::RELEASED, 'El nadador ha pasado a CN Nazarí y queda activo en reservas.', $user_id );
+	}
+
+	/**
+	 * Garantiza el rol de nadador en el sitio de reservas. No quita otros roles.
+	 *
+	 * @param int $user_id Usuario.
+	 * @return SwimmerResult|null Null si la cuenta puede entrar, o ya no existe.
+	 */
+	private function ensureNadador( $user_id ) {
+		$user = get_userdata( $user_id );
+		if ( ! $user instanceof \WP_User ) {
+			return null;
+		}
+
+		$blog_id = get_current_blog_id();
+		if ( ! is_user_member_of_blog( $user_id, $blog_id ) ) {
+			$added = add_user_to_blog( $blog_id, $user_id, RoleRegistrar::ROLE_NADADOR );
+			if ( is_wp_error( $added ) ) {
+				return $this->result( SwimmerResult::FAILED, 'No se ha podido completar la operación.' );
+			}
+
+			return null;
+		}
+
+		if ( ! in_array( RoleRegistrar::ROLE_NADADOR, (array) $user->roles, true ) ) {
+			$user->add_role( RoleRegistrar::ROLE_NADADOR );
+		}
+
+		return null;
 	}
 
 	/**
@@ -660,6 +755,15 @@ class SwimmerService {
 	 */
 	private function canManage() {
 		return get_current_user_id() > 0 && current_user_can( Capabilities::MANAGE_SWIMMERS );
+	}
+
+	/**
+	 * El paso a CN Nazarí queda reservado al administrador del sitio de reservas.
+	 *
+	 * @return bool
+	 */
+	private function canAdminister() {
+		return get_current_user_id() > 0 && current_user_can( 'manage_options' );
 	}
 
 	/**

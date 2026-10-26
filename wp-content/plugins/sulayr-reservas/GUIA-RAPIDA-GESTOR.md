@@ -60,7 +60,7 @@ Puedes filtrar por estado, por origen (**CN Nazarí** o **CT Sulayr**) y por nom
 
 Si no aparecen los campos de nombre o teléfono, esos datos no se cambian desde aquí.
 
-**Desactivar nadador** impide reservar y borra sus reservas futuras; se puede volver a activar. **Eliminar nadador** borra la ficha y no se puede deshacer.
+**Desactivar nadador** impide reservar y borra sus reservas futuras; se puede volver a activar. **Pasar a CN Nazarí** lo ve solo un administrador: deja activa una ficha del club que sigue en natación después de la baja, y el club ya no la desactiva. **Eliminar nadador** borra la ficha y no se puede deshacer.
 
 ## 7. Alta de nadador
 

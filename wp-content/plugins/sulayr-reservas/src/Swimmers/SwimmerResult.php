@@ -15,6 +15,7 @@ class SwimmerResult {
 	const REUSED       = 'reused';
 	const DEACTIVATED  = 'deactivated';
 	const REACTIVATED  = 'reactivated';
+	const RELEASED     = 'released';
 	const REMOVED      = 'removed';
 	const DUPLICATE    = 'duplicate';
 	const INVALID      = 'invalid';

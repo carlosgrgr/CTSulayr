@@ -240,6 +240,10 @@ class SyncService {
 			return new SyncResult( SyncResult::OK, SyncResult::UPDATED, 'Los datos del deportista se han actualizado en reservas.' );
 		}
 
+		if ( $current && 1 === (int) $current->active && 1 !== (int) $current->linked_to_club ) {
+			return new SyncResult( SyncResult::OK, SyncResult::UNCHANGED, 'La ficha es de CN Nazarí y no se desactiva desde el club.' );
+		}
+
 		if ( ! $current || 1 !== (int) $current->active ) {
 			return new SyncResult( SyncResult::OK, SyncResult::UNCHANGED, 'No había cambios que aplicar.' );
 		}

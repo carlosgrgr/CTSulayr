@@ -99,6 +99,9 @@ class PanelActions {
 			case 'swimmer_reactivate':
 				$this->changeSwimmer( 'reactivate' );
 				break;
+			case 'swimmer_release':
+				$this->releaseSwimmer();
+				break;
 			case 'swimmer_remove':
 				$this->removeSwimmer();
 				break;
@@ -262,6 +265,24 @@ class PanelActions {
 		$user_id = isset( $_POST['swimmer_user_id'] ) ? absint( $_POST['swimmer_user_id'] ) : 0;
 		$service = new SwimmerService( $this->blog_context );
 		$result  = 'reactivate' === $operation ? $service->reactivate( $user_id ) : $service->deactivate( $user_id );
+		$this->redirect( $result->status(), $result->message() );
+	}
+
+	/**
+	 * @return void
+	 */
+	private function releaseSwimmer() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			$this->redirect( 'unauthorized', 'No tienes permiso para esta operación.' );
+		}
+
+		$confirm = isset( $_POST['confirm_release'] ) ? (string) wp_unslash( $_POST['confirm_release'] ) : '';
+		if ( '1' !== $confirm ) {
+			$this->redirect( 'invalid', 'Confirma el paso a CN Nazarí.' );
+		}
+
+		$user_id = isset( $_POST['swimmer_user_id'] ) ? absint( $_POST['swimmer_user_id'] ) : 0;
+		$result  = ( new SwimmerService( $this->blog_context ) )->releaseFromClub( $user_id );
 		$this->redirect( $result->status(), $result->message() );
 	}
 

@@ -259,7 +259,7 @@ Un campo que en el club esté vacío sustituye al valor que hubiera en reservas.
 
 Si alguien confirma un correo nuevo y después el club sigue teniendo el anterior, la siguiente sincronización deja otra vez el correo del club.
 
-Salir del club o dejar de ser deportista desactiva la ficha de reservas si existía. No borra el historial pasado.
+Salir del club o dejar de ser deportista desactiva la ficha de reservas si seguía vinculada al club. No borra el historial pasado. Una ficha pasada a CN Nazarí sigue activa: la baja del club ya no la desactiva. Si esa persona vuelve a ser deportista activo con natación, la sincronización puede volver a vincular la ficha.
 
 ## 17. Consulta del registro técnico
 
