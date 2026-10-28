@@ -7,13 +7,13 @@ Este documento fija el orden de lo que falta por definir. No es una spec y no ca
 El orden es el de la lista. Definir una tarea no adelanta las siguientes.
 
 
-| Orden | Tarea                              | Estado               | Documento cercano                                                                   |
-| ----- | ---------------------------------- | -------------------- | ----------------------------------------------------------------------------------- |
-| 1     | Facturación Reservas               | Cerrada, sin desplegar en PROD | [SPEC-FACTURACION-RESERVAS.md](reservas/SPEC-FACTURACION-RESERVAS.md)               |
-| 2     | Tienda online                      | Pendiente de definir | No hay                                                                              |
-| 3     | Pago online                        | Pendiente de definir | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) |
-| 4     | Rentabilidad frente a SportEasy    | Valorada             | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) |
-| 5     | Consentimiento legal (RGPD y LOPD) | Pendiente de definir | Mención en el borrador de cobros                                                    |
+| Orden | Tarea                              | Estado                      | Documento cercano                                                                   |
+| ----- | ---------------------------------- | --------------------------- | ----------------------------------------------------------------------------------- |
+| 1     | Facturación Reservas               | Cerrada, desplegada en PROD | [SPEC-FACTURACION-RESERVAS.md](reservas/SPEC-FACTURACION-RESERVAS.md)               |
+| 2     | Tienda online                      | Pendiente de definir        | No hay                                                                              |
+| 3     | Pago online                        | Pendiente de definir        | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) |
+| 4     | Rentabilidad frente a SportEasy    | Valorada                    | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) |
+| 5     | Consentimiento legal (RGPD y LOPD) | Pendiente de definir        | Mención en el borrador de cobros                                                    |
 
 
 El documento cercano no es la definición de la tarea. Hay que confirmar si vale o si la tarea es otra cosa.
