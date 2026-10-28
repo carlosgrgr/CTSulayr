@@ -182,7 +182,7 @@ class PanelRenderer {
 			$this->navItem( 'Meses anteriores', 'clock', array( 'sulayr_vista' => 'historial' ), 'historial', $current );
 		}
 		if ( BillingView::allowed() ) {
-			$this->navItem( 'Facturación', 'list', array( 'sulayr_vista' => BillingView::VIEW ), BillingView::VIEW, $current );
+			// $this->navItem( 'Facturación', 'list', array( 'sulayr_vista' => BillingView::VIEW ), BillingView::VIEW, $current );
 		}
 
 		$bridge = new CrossSite( $this->config, $this->blog_context );
