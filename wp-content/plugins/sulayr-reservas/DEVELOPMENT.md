@@ -434,4 +434,6 @@ Implementa [SPEC-FACTURACION-RESERVAS.md](../../../docs/reservas/SPEC-FACTURACIO
 
 Script en el árbol de trabajo, fuera del repositorio, ejecutado con `wp eval-file` en el blog 2 el 28 de octubre de 2026. Cubre los 24 criterios de la sección 11 con fichas ficticias (`user_id` ≥ 990000) y fechas fijas, y deja los datos como estaban. 0 fallos. Además: HTML de la sección como gestor (se ve) y como nadador (ni sección ni enlace), página de ajustes como administrador, CSV con BOM y `;`, y tres generaciones simultáneas del mismo mes (un resumen y 30 filas, sin duplicados).
 
-Pendiente: ver las pantallas en el navegador a 390 px y a escritorio, y probar la tarea diaria con WP-Cron real. En local `DISABLE_WP_CRON` no está activo, pero el cron solo corre con visitas.
+La tarea diaria se probó con `wp cron event run sulayr_billing_daily` en el blog 2: se ejecuta y no sustituye un resumen manual. En el blog 1 no queda programada. Las pantallas se revisaron en el navegador.
+
+Estado: cerrada. No desplegada en PROD. Al desplegar, la primera carga del blog 2 sube el esquema a `3` y los roles a `2`, crea la tarifa inicial y fija el mes de instalación: el primer mes facturable será el del despliegue en PROD, no octubre de 2026. El importe por deportista empieza vacío y hay que configurarlo en PROD.
