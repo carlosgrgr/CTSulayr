@@ -20,3 +20,5 @@ Las pruebas que siguen abiertas no reabren estas fases. Están en `DEVELOPMENT.m
 | 9 | Criterios de aceptación del SPEC | Hecha y comprobada en el árbol de trabajo | Pendiente |
 | 10 | Límite por nadador, perfil, fotografía, CSV, filtros y Bento del perfil del club | Hecha y comprobada en el árbol de trabajo | Pendiente |
 | 11 | Acceso Club ↔ Reservas, cierre de sesión y calendario móvil de un día | Hecha y comprobada en el árbol de trabajo | Pendiente |
+| 12 | Facturación: coste mensual del sistema y liquidación con CN Nazarí (`SPEC-FACTURACION.md`) | No definida, sin implementar | Pendiente |
+| 13 | Cobros de cuotas desde la web: cobro de cuotas con TPV virtual y cobros recurrentes (`SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md`) | No definida, sin implementar | Pendiente |
