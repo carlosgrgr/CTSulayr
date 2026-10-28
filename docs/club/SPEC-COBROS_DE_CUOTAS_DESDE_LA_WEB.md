@@ -162,6 +162,15 @@ El administrador gestiona excepciones y revisa el lote mensual; el socio gestion
 - Al socio: cobro realizado, cobro fallido, tarjeta a punto de caducar, solicitud aprobada o rechazada.
 - Al administrador: borrador listo para revisar, resumen tras el cobro.
 
+**Apunte para la revisión** (28 de octubre de 2026, sin decidir)
+
+Cinco días antes del vencimiento, mandar a cada socio el resumen de lo que se le va a cobrar: la cuantía de su tarifa más los servicios añadidos (toppings). Por dos vías, como el recordatorio de SportEasy:
+
+- Correo.
+- Aviso en su perfil, en Comunicaciones o Alertas.
+
+El aviso interno puede llevar directamente al pago. Al revisarlo hay que encajarlo con el cobro automático del día 1: si la tarjeta ya está guardada, el resumen informa de lo que se cobrará; el enlace de pago sirve cuando no hay tarjeta o el cobro anterior falló.
+
 ## Seguridad y protección de datos
 
 La web nunca ve ni guarda datos de tarjeta: el socio los introduce en la página del banco y la web solo recibe una referencia. Eso deja el plugin fuera del ámbito de la normativa de seguridad de tarjetas (PCI DSS).
@@ -207,6 +216,7 @@ Enviado el 28 de octubre de 2026. Pendiente de respuesta.
 - [ ] Cuántos reintentos tras un cobro fallido y si se aplica penalización por retraso.
 - [ ] ¿Los cambios de servicio pedidos por socios se aplican solos o necesitan aprobación?
 - [ ] ¿Qué pasa con el socio que paga ahora con suscripción de Stripe?
+- [ ] Recordatorio 5 días antes del vencimiento, con el importe de la tarifa y los toppings, por correo y por aviso en el perfil (Comunicaciones o Alertas), con enlace al pago. Ver el apunte del apartado de notificaciones.
 
 **Plan de implantación**
 
