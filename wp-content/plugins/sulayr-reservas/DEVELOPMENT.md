@@ -436,7 +436,9 @@ Script en el árbol de trabajo, fuera del repositorio, ejecutado con `wp eval-fi
 
 La tarea diaria se probó con `wp cron event run sulayr_billing_daily` en el blog 2: se ejecuta y no sustituye un resumen manual. En el blog 1 no queda programada. Las pantallas se revisaron en el navegador.
 
-Estado: cerrada. No desplegada en PROD. Al desplegar, la primera carga del blog 2 sube el esquema a `3` y los roles a `2`, crea la tarifa inicial y fija el mes de instalación: el primer mes facturable será el del despliegue en PROD, no octubre de 2026. El importe por deportista empieza vacío y hay que configurarlo en PROD.
+Estado: cerrada. Desplegada en PROD el 28 de octubre de 2026. La primera carga del blog 2 sube el esquema a `3` y los roles a `2`, crea la tarifa inicial y fija el mes de instalación: el primer mes facturable es el del despliegue. El importe por deportista empieza vacío y hay que configurarlo en PROD antes de usar la facturación.
+
+El enlace «Facturación» de `PanelRenderer::nav()` está comentado hasta que se empiece a usar. La vista sigue respondiendo a `?sulayr_vista=facturacion` para quien tenga `sulayr_view_billing`; solo se oculta el enlace. Para activarla basta con descomentar esa línea.
 
 ## Identidad visual Sulayr
 
@@ -447,7 +449,9 @@ El panel, la cabecera del tema `reservations-theme`, la portada sin sesión y `w
 - Estados de sesión con las variables `--slot-bg`, `--slot-fg` y `--slot-acento`, que comparten la tarjeta y la muestra de la leyenda: disponible en menta, reservada por ti en Noche, completa en sol, deshabilitada con borde discontinuo, empezada en gris.
 - `PanelRenderer::post()` añade `sulayr-action-{acción}` al formulario. «Reservar» (`book`) es el único botón en Sol de Alba; `cancel`, `swimmer_deactivate` y `photo_delete` son secundarios con borde. El resto, Noche.
 - Tablas con cabecera Noche, filas alternas Nieve y cifras tabulares. Franja tricolor (cielo, menta, sol) al pie de la cabecera, de la tarjeta de acceso y del formulario de `wp-login.php`.
-- Con sesión iniciada, el tema quita el padding del `article` de Astra y la cabecera no tiene radio: barra y panel van a todo el ancho. La portada sin sesión conserva el padding.
+- Con sesión iniciada, el tema quita el padding del `article` de Astra y la cabecera no tiene radio ni margen: barra y panel van a todo el ancho, uno pegado al otro. La portada sin sesión conserva el padding del `article`; su tarjeta del logo usa la misma clase `.reservations-brand` y tampoco tiene margen inferior.
 - El logo conjunto Sulayr + CN Nazarí va siempre sobre blanco, porque el de CN Nazarí no se lee sobre Noche.
 
-Comprobado en el navegador a 1440 px y 390 px como anónimo, nadador y gestor: calendario, sesión, reservas, perfil, nadadores, ficha, alta, facturación y acceso. La sesión «reservada por ti» se vio simulando la clase en el navegador, sin crear reservas. No se envió ningún POST.
+Comprobado en el navegador a 1440 px y 390 px como anónimo, nadador y gestor: calendario, sesión, reservas, perfil, nadadores, ficha, alta, facturación y acceso. La sesión «reservada por ti» se vio simulando la clase en el navegador, sin crear reservas. No se envió ningún POST. Desplegado en PROD el 28 de octubre de 2026.
+
+Pendiente: las capturas de `docs/guia-nadador/`, `docs/guia-gestor/` y las guías rápidas en HTML son del diseño anterior. El texto de los manuales sigue siendo válido: describe estados por su texto, no por su color.

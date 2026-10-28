@@ -34,7 +34,7 @@ Plugin `sulayr-reservas`. Estas specs llevan el sufijo `-RESERVAS`. `SPEC-RESERV
 | Spec | Documento | Estado |
 |---|---|---|
 | Reservas | [SPEC-RESERVAS.md](reservas/SPEC-RESERVAS.md), [SPEC-MEJORAS-RESERVAS.md](reservas/SPEC-MEJORAS-RESERVAS.md), [SPEC-FASE11-RESERVAS.md](reservas/SPEC-FASE11-RESERVAS.md) | Cerrada. Fases 0 a 11 en `main`. |
-| Facturación | [SPEC-FACTURACION-RESERVAS.md](reservas/SPEC-FACTURACION-RESERVAS.md) | Cerrada. Criterios de la sección 11 probados (ver `ACEPTACION.md`). Rama `facturacion-reservas`, sin fusionar en `main`. **No desplegada en PROD.** |
+| Facturación | [SPEC-FACTURACION-RESERVAS.md](reservas/SPEC-FACTURACION-RESERVAS.md) | Cerrada. Criterios de la sección 11 probados (ver `ACEPTACION.md`). En `main` y desplegada en PROD el 28 de octubre de 2026. El enlace «Facturación» del menú del panel está comentado en `PanelRenderer` hasta que se empiece a usar. |
 
 ## Web del club
 
@@ -44,5 +44,7 @@ Plugin `club-triatlon-sulayr`. Estas specs conservan su nombre. No modifican `SP
 |---|---|---|
 | Documentos | [SPEC-DOCUMENTOS.md](club/SPEC-DOCUMENTOS.md) | Fases D0 a D7 en `main`. D5 a D7 en `deb5398e`. |
 | Cobros de cuotas | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) | Borrador abierto. Sin implementar. |
+
+La identidad visual Sulayr del panel, la cabecera del tema y el acceso no tiene spec: no cambia comportamiento. Está en `main` y en PROD desde el 28 de octubre de 2026. Detalle en `DEVELOPMENT.md`, sección «Identidad visual Sulayr».
 
 Una spec de reservas no modifica el plugin del club: la integración se engancha desde `sulayr-reservas`. El estado vivo de cada spec está en su documento.

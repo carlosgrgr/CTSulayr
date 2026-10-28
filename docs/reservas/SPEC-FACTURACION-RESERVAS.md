@@ -3,7 +3,7 @@
 ## Resumen mensual del coste del sistema de reservas y liquidación con CN Nazarí
 
 **Proyecto:** Club Triatlón Sulayr / sulayr-reservas  
-**Estado:** Cerrada. Implementada y probada en la rama `facturacion-reservas`. **No desplegada en PROD.** Decisiones cerradas (sección 12). Pruebas en `ACEPTACION.md`.  
+**Estado:** Cerrada. Implementada, probada y desplegada en PROD el 28 de octubre de 2026. El enlace «Facturación» del menú del panel está comentado hasta que se empiece a usar. Decisiones cerradas (sección 12). Pruebas en `ACEPTACION.md`.  
 **Fecha:** octubre 2026
 
 ---
