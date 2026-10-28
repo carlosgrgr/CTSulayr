@@ -25,16 +25,20 @@ El club cobrará las mensualidades desde su propia web WordPress con un TPV virt
 
 - Contabilidad general del club (gastos, visión anual).
 
+
+
 ## Medio de pago elegido
 
 TPV virtual del banco con pago por referencia (cobro recurrente con tarjeta guardada). Cuesta lo mismo que las alternativas y es el único que permite automatizar el registro de pagos en la web.
 
-| Opción | Coste anual aprox. | Automatización | Comentario |
-| --- | --- | --- | --- |
-| SportEasy (actual) | 182,49 € (3,96 €/deportista/año; 46 deportistas) | Solo cobros | Valorado. La diferencia con el TPV es de unos 20 € al año |
-| TPV virtual | 160–196,80 € | Casi total | 0,70 % tarjetas nacionales, 2 % internacionales, 5 €/mes de mantenimiento |
-| Domiciliación SEPA (norma 19) | \~181 € + 0,60 €/devolución | Parcial | 0,36 €/recibo en otras entidades, 0 € en la propia; requiere subir el fichero cada mes y mandatos firmados |
-| Stripe | Más del doble que el TPV | Total | 1,5 % + 0,25 € por cobro con tarjeta europea |
+
+| Opción                        | Coste anual aprox.                               | Automatización | Comentario                                                                                                 |
+| ----------------------------- | ------------------------------------------------ | -------------- | ---------------------------------------------------------------------------------------------------------- |
+| SportEasy (actual)            | 182,49 € (3,96 €/deportista/año; 46 deportistas) | Solo cobros    | Valorado. La diferencia con el TPV es de unos 20 € al año                                                  |
+| TPV virtual                   | 160–196,80 €                                     | Casi total     | 0,70 % tarjetas nacionales, 2 % internacionales, 5 €/mes de mantenimiento                                  |
+| Domiciliación SEPA (norma 19) | 181 € + 0,60 €/devolución                        | Parcial        | 0,36 €/recibo en otras entidades, 0 € en la propia; requiere subir el fichero cada mes y mandatos firmados |
+| Stripe                        | Más del doble que el TPV                         | Total          | 1,5 % + 0,25 € por cobro con tarjeta europea                                                               |
+
 
 Valoración de octubre de 2026, el mes con más deportistas del año: 47 deportistas y 1.626,58 € a cobrar.
 
@@ -79,21 +83,25 @@ La web no guarda un importe fijo por socio: cada mes calcula el recibo con la ta
 4. El banco responde y la web marca cada recibo como pagado o fallido.
 5. Los fallidos se reintentan y, si siguen fallando, se avisa al socio y al administrador.
 
+
+
 ## Estructura de tablas
 
 Nueve tablas propias del plugin, con prefijo `{wp_prefix}sulayr_`. Los importes se guardan en céntimos (enteros) para evitar errores de redondeo, y las fechas en formato `DATE`/`DATETIME`.
 
-| Tabla | Para qué | Campos principales |
-| --- | --- | --- |
-| `socios` | Ficha del socio (si el plugin ya tiene una, se reutiliza) | id, user\_id (WordPress), num\_socio, tipo (normal, junta, externo), estado (activo, congelado, baja), fecha\_alta, fecha\_baja |
-| `tarifas` | Catálogo de conceptos cobrables | id, codigo, nombre, tipo (cuota\_base, servicio, puntual), activa |
-| `tarifa_precios` | Precio de cada tarifa en el tiempo | id, tarifa\_id, importe\_cent, vigente\_desde, vigente\_hasta |
-| `socio_servicios` | Qué tiene contratado cada socio y desde cuándo | id, socio\_id, tarifa\_id, fecha\_inicio, fecha\_fin, estado (pendiente, aprobado, rechazado), solicitado\_por, aprobado\_por |
-| `ajustes` | Importes puntuales o por periodo | id, socio\_id, tipo (matricula, prorrateo, saldo\_favor, descuento, promocion, penalizacion, exencion), importe\_cent (±), periodo\_desde, periodo\_hasta, motivo, recibo\_id, creado\_por |
-| `recibos` | Lo que se cobra a un socio en un mes | id, socio\_id, periodo (AAAA-MM), importe\_cent, estado (borrador, aprobado, cobrando, pagado, fallido, exento, anulado), intentos, fecha\_cobro, metodo\_pago\_id |
-| `recibo_lineas` | Desglose del recibo | id, recibo\_id, concepto, tarifa\_id o ajuste\_id, importe\_cent |
-| `metodos_pago` | Referencia de la tarjeta que da Redsys | id, socio\_id, redsys\_identifier, cof\_txnid, tarjeta\_enmascarada, caducidad (AAMM), estado (activo, caducado, revocado), fecha\_alta |
-| `transacciones` | Cada operación enviada a Redsys | id, recibo\_id, ds\_order, tipo (inicial, recurrente, puntual, devolucion), importe\_cent, ds\_response, codigo\_autorizacion, estado, respuesta (JSON sin datos sensibles), creado |
+
+| Tabla             | Para qué                                                  | Campos principales                                                                                                                                                           |
+| ----------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `socios`          | Ficha del socio (si el plugin ya tiene una, se reutiliza) | id, userid (WordPress), numsocio, tipo (normal, junta, externo), estado (activo, congelado, baja), fechaalta, fechabaja                                                      |
+| `tarifas`         | Catálogo de conceptos cobrables                           | id, codigo, nombre, tipo (cuotabase, servicio, puntual), activa                                                                                                              |
+| `tarifa_precios`  | Precio de cada tarifa en el tiempo                        | id, tarifaid, importecent, vigentedesde, vigentehasta                                                                                                                        |
+| `socio_servicios` | Qué tiene contratado cada socio y desde cuándo            | id, socioid, tarifaid, fechainicio, fechafin, estado (pendiente, aprobado, rechazado), solicitadopor, aprobadopor                                                            |
+| `ajustes`         | Importes puntuales o por periodo                          | id, socioid, tipo (matricula, prorrateo, saldofavor, descuento, promocion, penalizacion, exencion), importecent (±), periododesde, periodohasta, motivo, reciboid, creadopor |
+| `recibos`         | Lo que se cobra a un socio en un mes                      | id, socioid, periodo (AAAA-MM), importecent, estado (borrador, aprobado, cobrando, pagado, fallido, exento, anulado), intentos, fechacobro, metodopagoid                     |
+| `recibo_lineas`   | Desglose del recibo                                       | id, reciboid, concepto, tarifaid o ajusteid, importecent                                                                                                                     |
+| `metodos_pago`    | Referencia de la tarjeta que da Redsys                    | id, socioid, redsysidentifier, coftxnid, tarjetaenmascarada, caducidad (AAMM), estado (activo, caducado, revocado), fechaalta                                                |
+| `transacciones`   | Cada operación enviada a Redsys                           | id, reciboid, dsorder, tipo (inicial, recurrente, puntual, devolucion), importecent, dsresponse, codigoautorizacion, estado, respuesta (JSON sin datos sensibles), creado    |
+
 
 Una décima tabla `log_cambios` (quién, qué, cuándo, valor anterior y nuevo) guarda la auditoría de cambios en servicios, ajustes y recibos.
 
@@ -103,11 +111,13 @@ Una décima tabla `log_cambios` (quién, qué, cuándo, valor anterior y nuevo) 
 - Un recibo tiene varias líneas y una o más transacciones (reintentos).
 - Un recibo se identifica de forma única por socio + periodo, lo que evita cobrar dos veces el mismo mes.
 
+
+
 ## Flujo con Redsys
 
 El socio registra su tarjeta una vez en la página del banco; a partir de ahí la web cobra cada mes sin que tenga que hacer nada. Los nombres de parámetros son los habituales de Redsys y hay que confirmarlos con el manual de integración del banco.
 
-&#91;embedded content: cobro mensual · 6 pasos, 1 decisión\]
+[embedded content: cobro mensual · 6 pasos, 1 decisión
 
 Solo los recibos fallidos tras los reintentos requieren atención del socio o de tesorería.
 
@@ -129,11 +139,13 @@ Para cambiar de tarjeta sin pagar un recibo, preguntar al banco si permite una o
 
 **3. Detalles técnicos**
 
-- **Número de pedido (`Ds_Order`):** de 4 a 12 caracteres, los 4 primeros numéricos, único por intento. Propuesta: periodo AAMM + id del recibo + número de intento.
+- **Número de pedido (**`Ds_Order`**):** de 4 a 12 caracteres, los 4 primeros numéricos, único por intento. Propuesta: periodo AAMM + id del recibo + número de intento.
 - **Importe:** en céntimos y moneda 978 (euro), que coincide con cómo se guarda en la base de datos.
 - **Firma:** HMAC SHA-256 con la clave del comercio, tanto al enviar como al recibir.
 - **Caducidad de tarjeta:** aviso al socio 30 días antes; si caduca, el recibo pasa a pago manual hasta que registre otra.
 - **Pago manual:** un recibo fallido se paga desde el área de socio con el mismo flujo del registro de tarjeta, lo que aprovecha para guardar la nueva tarjeta.
+
+
 
 ## Panel de administración y área de socio
 
@@ -164,7 +176,7 @@ El administrador gestiona excepciones y revisa el lote mensual; el socio gestion
 
 **Apunte para la revisión** (28 de octubre de 2026, sin decidir)
 
-Cinco días antes del vencimiento, mandar a cada socio el resumen de lo que se le va a cobrar: la cuantía de su tarifa más los servicios añadidos (toppings). Por dos vías, como el recordatorio de SportEasy:
+Cinco días antes del vencimiento, mandar a cada socio el resumen de lo que se le va a cobrar: la cuantía de su tarifa más los servicios añadidos. Por dos vías:
 
 - Correo.
 - Aviso en su perfil, en Comunicaciones o Alertas.
@@ -194,6 +206,8 @@ La web nunca ve ni guarda datos de tarjeta: el socio los introduce en la página
 - Añadir al formulario de alta online la información sobre el tratamiento de datos de pago y la autorización expresa para cargos recurrentes en la tarjeta.
 - Definir cuánto tiempo se conservan recibos y transacciones (obligaciones fiscales) y cuándo se borra la referencia de tarjeta tras una baja.
 - Incluir al banco como encargado o responsable del tratamiento en el registro de actividades del club.
+
+
 
 ## Preguntas abiertas y plan
 
@@ -228,3 +242,4 @@ Enviado el 28 de octubre de 2026. Pendiente de respuesta.
 6. Piloto real con la junta directiva durante un mes, en paralelo con el Excel.
 7. Migración del resto de socios: cada uno registra su tarjeta antes del día de corte.
 8. Dejar de cobrar mensualidades por SportEasy.
+

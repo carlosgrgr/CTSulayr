@@ -1,26 +1,28 @@
 # Prioridades
 
-Oct 28, 2026 · Estado: orden cerrado. El punto 4 está valorado; el resto sigue sin definir.
+Oct 28, 2026 · Estado: orden cerrado. El punto 1 está definido y el punto 4 está valorado; el resto sigue sin definir.
 
 Este documento fija el orden de lo que falta por definir. No es una spec y no cambia requisitos ya escritos. Una fila de aquí no se implementa hasta que tenga su propio documento.
 
 El orden es el de la lista. Definir una tarea no adelanta las siguientes.
 
-| Orden | Tarea | Estado | Documento cercano |
-|---|---|---|---|
-| 1 | Facturación | Pendiente de definir | [SPEC-FACTURACION-RESERVAS.md](reservas/SPEC-FACTURACION-RESERVAS.md) |
-| 2 | Tienda online | Pendiente de definir | No hay |
-| 3 | Pago online | Pendiente de definir | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) |
-| 4 | Rentabilidad frente a SportEasy | Valorada | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) |
-| 5 | Consentimiento legal (RGPD y LOPD) | Pendiente de definir | Mención en el borrador de cobros |
+
+| Orden | Tarea                              | Estado               | Documento cercano                                                                   |
+| ----- | ---------------------------------- | -------------------- | ----------------------------------------------------------------------------------- |
+| 1     | Facturación Reservas               | Definida             | [SPEC-FACTURACION-RESERVAS.md](reservas/SPEC-FACTURACION-RESERVAS.md)               |
+| 2     | Tienda online                      | Pendiente de definir | No hay                                                                              |
+| 3     | Pago online                        | Pendiente de definir | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) |
+| 4     | Rentabilidad frente a SportEasy    | Valorada             | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) |
+| 5     | Consentimiento legal (RGPD y LOPD) | Pendiente de definir | Mención en el borrador de cobros                                                    |
+
 
 El documento cercano no es la definición de la tarea. Hay que confirmar si vale o si la tarea es otra cosa.
 
-## 1. Facturación
+## 1. Facturación Reservas
 
-[SPEC-FACTURACION-RESERVAS.md](reservas/SPEC-FACTURACION-RESERVAS.md) describe el coste mensual del sistema de reservas y la liquidación con CN Nazarí. Está escrita, sin implementar, y deja abiertas las decisiones P1 a P4 de su sección 12. El plugin sería `sulayr-reservas`.
+[SPEC-FACTURACION-RESERVAS.md](reservas/SPEC-FACTURACION-RESERVAS.md) describe el coste mensual del sistema de reservas y la liquidación con CN Nazarí. Está escrita, sin implementar, y sus decisiones (P1 a P4 y D5 a D16) están cerradas en su sección 12. El plugin sería `sulayr-reservas`.
 
-Falta decidir si esta prioridad es esa spec o la facturación del club (cuotas, tienda, gastos).
+Esta prioridad es esa spec. El siguiente paso es implementarla.
 
 ## 2. Tienda online
 
