@@ -1,8 +1,126 @@
+/* Acceso al sitio de reservas con la identidad del Club Triatlón Sulayr. */
+body.login {
+	background: #0b1638;
+	color: #0b1638;
+	font-family: "Instrument Sans", system-ui, "Segoe UI", Arial, sans-serif;
+}
+
+/* El logo conjunto necesita fondo claro. */
 .login h1 a {
+	background-color: #fff;
 	background-image: url("../img/ctsulayrnazari.png");
+	background-origin: content-box;
 	background-position: center;
 	background-repeat: no-repeat;
 	background-size: contain;
+	border-radius: 6px;
 	height: 120px;
+	padding: 12px 20px;
 	width: 240px;
+}
+
+.login #loginform,
+.login #lostpasswordform,
+.login #registerform,
+.login #resetpassform {
+	border: 0;
+	border-radius: 6px;
+	box-shadow: none;
+	position: relative;
+}
+
+/* Franja tricolor: cielo, menta y sol. */
+.login #loginform::after,
+.login #lostpasswordform::after,
+.login #registerform::after,
+.login #resetpassform::after {
+	background: linear-gradient(90deg, #4fe6f2 0 33.33%, #1ee8a3 33.33% 66.66%, #f46f5c 66.66% 100%);
+	border-radius: 0 0 6px 6px;
+	bottom: 0;
+	content: "";
+	height: 4px;
+	left: 0;
+	position: absolute;
+	right: 0;
+}
+
+.login label {
+	color: #0b1638;
+	font-weight: 600;
+}
+
+.login input[type="text"],
+.login input[type="password"],
+.login input[type="email"] {
+	border: 1px solid #8c93a3;
+	border-radius: 4px;
+	color: #0b1638;
+}
+
+.login input[type="text"]:focus,
+.login input[type="password"]:focus,
+.login input[type="email"]:focus {
+	border-color: #0b1638;
+	box-shadow: 0 0 0 1px #0b1638;
+}
+
+.login .button.wp-hide-pw,
+.login .button.wp-hide-pw .dashicons {
+	color: #0b1638;
+}
+
+.wp-core-ui .button-primary,
+.wp-core-ui .button-primary:hover,
+.wp-core-ui .button-primary:focus {
+	background: #f46f5c;
+	border-color: #f46f5c;
+	border-radius: 4px;
+	box-shadow: none;
+	color: #0b1638;
+	font-weight: 700;
+	text-shadow: none;
+}
+
+.wp-core-ui .button-primary:hover {
+	background: #e85e4a;
+	border-color: #e85e4a;
+}
+
+.wp-core-ui .button-primary:focus {
+	box-shadow: 0 0 0 2px #fff, 0 0 0 4px #4fe6f2;
+}
+
+.login #nav a,
+.login #backtoblog a,
+.login .privacy-policy-page-link a {
+	color: #f3f7fa;
+}
+
+.login #nav a:hover,
+.login #backtoblog a:hover {
+	color: #4fe6f2;
+}
+
+.login .message,
+.login .notice,
+.login .success {
+	border-left-color: #4fe6f2;
+	border-radius: 4px;
+}
+
+.login #login_error,
+.login .notice-error {
+	border-left-color: #f46f5c;
+}
+
+.login .language-switcher .button {
+	background: transparent;
+	border-color: #f3f7fa;
+	border-radius: 4px;
+	color: #f3f7fa;
+}
+
+.login .language-switcher .button:hover {
+	border-color: #4fe6f2;
+	color: #4fe6f2;
 }

@@ -159,10 +159,22 @@ add_action(
 			return;
 		}
 
+		$deps  = array( 'login' );
+		$fonts = WP_PLUGIN_DIR . '/sulayr-reservas/assets/fonts.css';
+		if ( is_readable( $fonts ) ) {
+			wp_enqueue_style(
+				'sulayr-reservas-fonts',
+				plugins_url( 'sulayr-reservas/assets/fonts.css' ),
+				array(),
+				(string) filemtime( $fonts )
+			);
+			$deps[] = 'sulayr-reservas-fonts';
+		}
+
 		wp_enqueue_style(
 			'reservations-theme-login',
 			get_stylesheet_directory_uri() . '/assets/css/login.css',
-			array( 'login' ),
+			$deps,
 			(string) filemtime( $path )
 		);
 	}

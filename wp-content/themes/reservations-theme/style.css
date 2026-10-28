@@ -5,27 +5,68 @@
  Author: Club Triatlón Sulayr
  Author URI: https://clubtriatlonsulayr.com/
  Template: astra
- Version: 1.0.3
+ Version: 1.1.0
  Text Domain: reservations-theme
 */
+
+/*
+ * Identidad del Club Triatlón Sulayr (manual 1.1).
+ * Las tipografías las carga sulayr-reservas (assets/fonts.css) en la página del panel.
+ */
+:root {
+	--rt-noche: #0b1638;
+	--rt-cielo: #4fe6f2;
+	--rt-menta: #1ee8a3;
+	--rt-sol: #f46f5c;
+	--rt-nieve: #f3f7fa;
+	--rt-pizarra: #2a3550;
+	--rt-titular: "Archivo", "Arial Narrow", Arial, sans-serif;
+	--rt-texto: "Instrument Sans", system-ui, "Segoe UI", Arial, sans-serif;
+	--rt-mono: "JetBrains Mono", Consolas, monospace;
+	--rt-franja: linear-gradient(90deg, var(--rt-cielo) 0 33.33%, var(--rt-menta) 33.33% 66.66%, var(--rt-sol) 66.66% 100%);
+}
+
+body.reservations-panel-page {
+	background: #fff;
+	font-family: var(--rt-texto);
+}
+
+/* Panel a todo el ancho: sin el padding que Astra da al article. La portada sin sesión lo conserva. */
+body.reservations-panel-page:not(.reservations-guest) article.ast-article-single {
+	padding: 0;
+}
 
 .reservations-panel-page .entry-content > .sulayr-panel {
 	margin-bottom: 2rem;
 }
 
+/* Cabecera: barra noche con la franja tricolor al pie. */
 .reservations-panel-page .reservations-brand {
 	align-items: center;
-	background: #fff;
-	border: 1px solid #e4ebf3;
-	border-radius: 16px;
-	box-shadow: 0 1px 2px rgba(23, 42, 79, 0.04), 0 8px 24px rgba(23, 42, 79, 0.05);
+	background: var(--rt-noche);
+	border-radius: 0;
+	color: var(--rt-nieve);
 	display: flex;
 	gap: 0.85rem;
-	margin: 0 0 1rem;
-	padding: 0.65rem 0.9rem;
+	margin: 0;
+	padding: 0.65rem 0.9rem 0.85rem 1.1rem;
+	position: relative;
+	z-index: 20;
+}
+
+.reservations-panel-page .reservations-brand::after {
+	background: var(--rt-franja);
+	bottom: 0;
+	content: "";
+	height: 4px;
+	left: 0;
+	position: absolute;
+	right: 0;
 }
 
 .reservations-panel-page .reservations-brand .custom-logo-link {
+	background: #fff;
+	border-radius: 50%;
 	display: flex;
 	flex: 0 0 auto;
 	line-height: 0;
@@ -35,15 +76,20 @@
 	border-radius: 50%;
 	height: 2.75rem;
 	max-width: 2.75rem;
-	object-fit: cover;
+	object-fit: contain;
 	width: 2.75rem;
 }
 
-.reservations-panel-page .reservations-brand-name {
-	color: #1a2740;
+.reservations-panel-page .reservations-brand-name,
+.reservations-panel-page .reservations-brand-name:hover,
+.reservations-panel-page .reservations-brand-name:focus {
+	color: var(--rt-nieve);
 	flex: 0 1 auto;
-	font-size: 1.2rem;
-	font-weight: 700;
+	font-family: var(--rt-titular);
+	font-size: 1.35rem;
+	font-stretch: 118%;
+	font-style: italic;
+	font-weight: 900;
 	letter-spacing: -0.01em;
 	line-height: 1.2;
 	min-width: 0;
@@ -53,31 +99,31 @@
 	white-space: nowrap;
 }
 
-.reservations-panel-page .reservations-brand .sulayr-menu {
-	margin-left: auto;
+.reservations-panel-page .reservations-brand-name:focus-visible {
+	outline: 2px solid var(--rt-cielo);
+	outline-offset: 2px;
 }
 
-.reservations-panel-page .reservations-brand {
-	position: relative;
-	z-index: 20;
+.reservations-panel-page .reservations-brand .sulayr-menu {
+	margin-left: auto;
 }
 
 @media (max-width: 47.5rem) {
 	.reservations-panel-page .reservations-brand {
 		gap: 0.65rem;
-		padding: 0.55rem 0.75rem;
+		padding: 0.55rem 0.75rem 0.75rem 0.9rem;
 	}
 
 	.reservations-panel-page .reservations-brand-name {
-		font-size: 1.05rem;
+		font-size: 1.1rem;
 	}
 }
 
-/* Portada sin sesión: logo y foto de fondo. */
+/* Portada sin sesión: foto real de piscina bajo un velo noche. */
 body.reservations-guest {
-	background-color: #0c2436;
+	background-color: var(--rt-noche);
 	background-image:
-		linear-gradient(180deg, rgba(8, 24, 40, 0.42), rgba(8, 24, 40, 0.55)),
+		linear-gradient(180deg, rgba(11, 22, 56, 0.5), rgba(11, 22, 56, 0.72)),
 		url("assets/img/natacion.jpg");
 	background-position: center;
 	background-repeat: no-repeat;
@@ -103,9 +149,12 @@ body.reservations-guest .site-content > .ast-container {
 	padding-top: 8vh;
 }
 
+/* El logo conjunto va sobre blanco: el escudo y el de CN Nazarí se leen en fondo claro. */
 body.reservations-guest .reservations-guest-brand {
+	background: #fff;
+	color: var(--rt-noche);
 	justify-content: center;
-	padding: 1.15rem 1.4rem;
+	padding: 1.4rem 1.4rem 1.6rem;
 }
 
 body.reservations-guest .reservations-guest-logo {

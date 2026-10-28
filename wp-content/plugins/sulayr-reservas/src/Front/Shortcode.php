@@ -131,10 +131,18 @@ class Shortcode {
 		$path    = SULAYR_RESERVAS_DIR . 'assets/panel.css';
 		$version = is_readable( $path ) ? (string) filemtime( $path ) : SULAYR_RESERVAS_VERSION;
 
+		$fonts = SULAYR_RESERVAS_DIR . 'assets/fonts.css';
+		wp_enqueue_style(
+			'sulayr-reservas-fonts',
+			plugins_url( 'assets/fonts.css', SULAYR_RESERVAS_FILE ),
+			array(),
+			is_readable( $fonts ) ? (string) filemtime( $fonts ) : SULAYR_RESERVAS_VERSION
+		);
+
 		wp_enqueue_style(
 			'sulayr-reservas-panel',
 			plugins_url( 'assets/panel.css', SULAYR_RESERVAS_FILE ),
-			array(),
+			array( 'sulayr-reservas-fonts' ),
 			$version
 		);
 

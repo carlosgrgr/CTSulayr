@@ -437,3 +437,17 @@ Script en el árbol de trabajo, fuera del repositorio, ejecutado con `wp eval-fi
 La tarea diaria se probó con `wp cron event run sulayr_billing_daily` en el blog 2: se ejecuta y no sustituye un resumen manual. En el blog 1 no queda programada. Las pantallas se revisaron en el navegador.
 
 Estado: cerrada. No desplegada en PROD. Al desplegar, la primera carga del blog 2 sube el esquema a `3` y los roles a `2`, crea la tarifa inicial y fija el mes de instalación: el primer mes facturable será el del despliegue en PROD, no octubre de 2026. El importe por deportista empieza vacío y hay que configurarlo en PROD.
+
+## Identidad visual Sulayr
+
+El panel, la cabecera del tema `reservations-theme`, la portada sin sesión y `wp-login.php` del blog 2 siguen el manual de identidad del club (v1.1, `https://clubtriatlonsulayr.com/docs/identidad-sulayr.html`). No cambia PHP de negocio, permisos, formularios ni nombres de campo.
+
+- Colores como variables `--sr-*` en `assets/panel.css` y `--rt-*` en el `style.css` del tema. Texto siempre en Noche `#0B1638` sobre fondo claro; Cielo, Menta y Sol solo como forma o sobre Noche. El acento legible en claro es `#0A7C8A`.
+- Tipografías Archivo (titulares), Instrument Sans (texto) y JetBrains Mono (horas, cifras y etiquetas), servidas desde `assets/fonts/` con `assets/fonts.css`. No se pide nada a Google Fonts. `Shortcode::assets()` encola `sulayr-reservas-fonts` como dependencia del panel; el tema la encola también en `wp-login.php` si el archivo existe.
+- Estados de sesión con las variables `--slot-bg`, `--slot-fg` y `--slot-acento`, que comparten la tarjeta y la muestra de la leyenda: disponible en menta, reservada por ti en Noche, completa en sol, deshabilitada con borde discontinuo, empezada en gris.
+- `PanelRenderer::post()` añade `sulayr-action-{acción}` al formulario. «Reservar» (`book`) es el único botón en Sol de Alba; `cancel`, `swimmer_deactivate` y `photo_delete` son secundarios con borde. El resto, Noche.
+- Tablas con cabecera Noche, filas alternas Nieve y cifras tabulares. Franja tricolor (cielo, menta, sol) al pie de la cabecera, de la tarjeta de acceso y del formulario de `wp-login.php`.
+- Con sesión iniciada, el tema quita el padding del `article` de Astra y la cabecera no tiene radio: barra y panel van a todo el ancho. La portada sin sesión conserva el padding.
+- El logo conjunto Sulayr + CN Nazarí va siempre sobre blanco, porque el de CN Nazarí no se lee sobre Noche.
+
+Comprobado en el navegador a 1440 px y 390 px como anónimo, nadador y gestor: calendario, sesión, reservas, perfil, nadadores, ficha, alta, facturación y acceso. La sesión «reservada por ti» se vio simulando la clase en el navegador, sin crear reservas. No se envió ningún POST.

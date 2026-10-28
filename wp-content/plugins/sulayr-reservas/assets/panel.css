@@ -1,7 +1,37 @@
+/*
+ * Panel de reservas con la identidad del Club Triatlón Sulayr (manual 1.1).
+ * Colores, tipografías y recursos en las variables de .sulayr-panel y .sulayr-menu.
+ * Las tipografías se cargan desde fonts.css.
+ */
+
+.sulayr-panel,
+.sulayr-menu,
+.sulayr-nav-card {
+	--sr-noche: #0b1638;
+	--sr-cielo: #4fe6f2;
+	--sr-menta: #1ee8a3;
+	--sr-sol: #f46f5c;
+	--sr-nube: #8c93a3;
+	--sr-nieve: #f3f7fa;
+	--sr-pizarra: #2a3550;
+	--sr-texto-2: #566079;
+	--sr-acento: #0a7c8a;
+	--sr-blanco: #fff;
+	--sr-linea: rgba(11, 22, 56, 0.12);
+	--sr-linea-suave: rgba(11, 22, 56, 0.08);
+	--sr-radio: 6px;
+	--sr-radio-sm: 4px;
+	--sr-foco: var(--sr-acento);
+	--sr-titular: "Archivo", "Arial Narrow", Arial, sans-serif;
+	--sr-texto: "Instrument Sans", system-ui, "Segoe UI", Arial, sans-serif;
+	--sr-mono: "JetBrains Mono", Consolas, monospace;
+}
+
 .sulayr-panel {
-	color: #1a2740;
+	color: var(--sr-noche);
+	font-family: var(--sr-texto);
 	font-size: 1rem;
-	line-height: 1.45;
+	line-height: 1.55;
 }
 
 .sulayr-panel,
@@ -12,8 +42,8 @@
 }
 
 div.sulayr-panel {
-	background: #eef3f8;
-	border-radius: 20px;
+	background: var(--sr-nieve);
+	border-radius: var(--sr-radio);
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
@@ -26,28 +56,56 @@ div.sulayr-panel {
 }
 
 p.sulayr-panel {
-	background: #fff;
-	border: 1px solid #e4ebf3;
-	border-radius: 16px;
-	box-shadow: 0 1px 2px rgba(23, 42, 79, 0.04), 0 8px 24px rgba(23, 42, 79, 0.05);
+	background: var(--sr-blanco);
+	border: 1px solid var(--sr-linea);
+	border-radius: var(--sr-radio);
 	padding: 1rem 1.15rem;
 }
 
+/* Acceso sin sesión: el enlace es la llamada a la acción. Astra subraya .entry-content a. */
+p.sulayr-panel > a,
+.entry-content p.sulayr-panel > a {
+	background: var(--sr-sol);
+	border-radius: var(--sr-radio-sm);
+	color: var(--sr-noche);
+	display: inline-flex;
+	align-items: center;
+	font-weight: 700;
+	margin-left: 0.25rem;
+	min-height: 44px;
+	padding: 0.45rem 1rem;
+	text-decoration: none;
+}
+
+p.sulayr-panel > a:hover,
+.entry-content p.sulayr-panel > a:hover {
+	background: #e85e4a;
+	color: var(--sr-noche);
+}
+
+/* Titulares: Archivo Black Italic ancho. */
 .sulayr-panel h2,
 .sulayr-panel h3 {
-	font-weight: 700;
+	color: var(--sr-noche);
+	font-family: var(--sr-titular);
 	letter-spacing: -0.01em;
-	line-height: 1.3;
+	line-height: 1.15;
+	text-transform: none;
 }
 
 .sulayr-panel h2 {
-	font-size: 1.35rem;
-	margin: 0 0 0.75rem;
+	font-size: 1.6rem;
+	font-stretch: 118%;
+	font-style: italic;
+	font-weight: 900;
+	margin: 0 0 0.85rem;
 }
 
 .sulayr-panel h3 {
-	font-size: 1.05rem;
-	margin: 1.15rem 0 0.5rem;
+	font-size: 1.1rem;
+	font-stretch: 108%;
+	font-weight: 700;
+	margin: 1.25rem 0 0.5rem;
 }
 
 .sulayr-panel p {
@@ -87,13 +145,30 @@ p.sulayr-panel {
 	grid-area: side;
 }
 
-.sulayr-card,
-.sulayr-nav-card {
-	background: #fff;
-	border: 1px solid #e4ebf3;
-	border-radius: 16px;
-	box-shadow: 0 1px 2px rgba(23, 42, 79, 0.04), 0 8px 24px rgba(23, 42, 79, 0.05);
+.sulayr-card {
+	background: var(--sr-blanco);
+	border: 1px solid var(--sr-linea);
+	border-radius: var(--sr-radio);
 	padding: 1rem;
+}
+
+/* Barra de menú dentro del panel, si el tema no la pinta: fondo noche. */
+.sulayr-nav-card {
+	background: var(--sr-noche);
+	border-radius: var(--sr-radio);
+	padding: 0.6rem 0.75rem;
+	position: relative;
+}
+
+.sulayr-nav-card::after {
+	background: linear-gradient(90deg, var(--sr-cielo) 0 33.33%, var(--sr-menta) 33.33% 66.66%, var(--sr-sol) 66.66% 100%);
+	border-radius: 0 0 var(--sr-radio) var(--sr-radio);
+	bottom: 0;
+	content: "";
+	height: 4px;
+	left: 0;
+	position: absolute;
+	right: 0;
 }
 
 .sulayr-shell-no-nav {
@@ -102,10 +177,13 @@ p.sulayr-panel {
 		"side";
 }
 
+/* Menú: siempre sobre fondo noche (barra del tema o .sulayr-nav-card). */
 .sulayr-menu {
+	--sr-foco: var(--sr-cielo);
 	align-items: center;
 	display: flex;
 	flex: 1 1 auto;
+	font-family: var(--sr-texto);
 	justify-content: flex-end;
 	min-width: 0;
 	position: relative;
@@ -115,7 +193,7 @@ p.sulayr-panel {
 	display: flex;
 	flex: 1 1 auto;
 	flex-wrap: wrap;
-	gap: 0.35rem;
+	gap: 0.25rem;
 	justify-content: flex-end;
 	min-width: 0;
 }
@@ -127,10 +205,10 @@ p.sulayr-panel {
 
 .sulayr-menu button.sulayr-nav-toggle {
 	align-items: center;
-	background: #fff;
-	border: 1px solid #c9d5e6;
-	border-radius: 8px;
-	color: #1a2740;
+	background: transparent;
+	border: 1px solid var(--sr-pizarra);
+	border-radius: var(--sr-radio-sm);
+	color: var(--sr-nieve);
 	cursor: pointer;
 	display: none;
 	flex: 0 0 auto;
@@ -142,7 +220,7 @@ p.sulayr-panel {
 }
 
 .sulayr-menu button.sulayr-nav-toggle:hover {
-	background: #f3f6fb;
+	background: var(--sr-pizarra);
 }
 
 .sulayr-menu.is-collapsed .sulayr-nav-toggle {
@@ -154,18 +232,19 @@ p.sulayr-panel {
 }
 
 .sulayr-menu.is-collapsed.is-open .sulayr-nav {
-	background: #fff;
-	border: 1px solid #e4ebf3;
-	border-radius: 12px;
-	box-shadow: 0 8px 24px rgba(23, 42, 79, 0.12);
+	background: var(--sr-noche);
+	border: 1px solid var(--sr-pizarra);
+	border-radius: var(--sr-radio);
+	box-shadow: 0 12px 28px rgba(11, 22, 56, 0.35);
 	display: flex;
 	flex-direction: column;
+	gap: 0.15rem;
 	max-width: calc(100vw - 2rem);
 	overflow: visible;
 	padding: 0.35rem;
 	position: absolute;
 	right: 0;
-	top: calc(100% + 0.5rem);
+	top: calc(100% + 0.6rem);
 	width: 16rem;
 	z-index: 30;
 }
@@ -191,64 +270,79 @@ p.sulayr-panel {
 }
 
 .sulayr-panel a {
-	color: #1d4e9e;
+	color: var(--sr-noche);
 	text-decoration: underline;
-	text-underline-offset: 0.15em;
+	text-decoration-color: var(--sr-acento);
+	text-decoration-thickness: 2px;
+	text-underline-offset: 0.2em;
+}
+
+.sulayr-panel a:hover {
+	color: var(--sr-acento);
 }
 
 .sulayr-menu a.sulayr-nav-link {
 	align-items: center;
-	border-radius: 10px;
-	color: #1a2740;
+	border-radius: var(--sr-radio-sm);
+	color: var(--sr-nieve);
 	display: inline-flex;
 	flex: 0 0 auto;
 	font-size: 0.9375rem;
 	font-weight: 600;
-	gap: 0.4rem;
+	gap: 0.45rem;
 	min-height: 44px;
-	padding: 0.4rem 0.6rem;
+	padding: 0.4rem 0.7rem;
 	text-decoration: none;
 	white-space: nowrap;
 }
 
 .sulayr-menu a.sulayr-nav-link:hover {
-	background: #f3f6fb;
+	background: var(--sr-pizarra);
+	color: var(--sr-blanco);
 }
 
 .sulayr-menu a.sulayr-nav-link.is-current {
-	background: #2f6fe0;
-	color: #fff;
+	background: var(--sr-menta);
+	color: var(--sr-noche);
 }
 
 .sulayr-panel :focus-visible,
 .sulayr-menu :focus-visible {
-	outline: 2px solid #0b1f44;
+	outline: 2px solid var(--sr-foco);
 	outline-offset: 2px;
 }
 
+/* Tarjeta de usuario */
 .sulayr-user-card {
 	align-items: center;
 	display: flex;
 	gap: 0.85rem;
 }
 
-.sulayr-user-card h2 {
-	font-size: 1.15rem;
-	margin: 0 0 0.15rem;
+.sulayr-panel .sulayr-user-card h2 {
+	font-size: 1.2rem;
+	font-stretch: 106%;
+	font-style: normal;
+	font-weight: 700;
+	margin: 0 0 0.2rem;
 }
 
 .sulayr-avatar {
 	align-items: center;
-	background: #e7f0ff;
+	background: var(--sr-noche);
 	border-radius: 50%;
-	color: #1d4e9e;
+	color: var(--sr-menta);
 	display: flex;
 	flex: 0 0 auto;
-	font-weight: 700;
+	font-family: var(--sr-titular);
+	font-size: 1.15rem;
+	font-style: italic;
+	font-weight: 900;
 	height: 3rem;
 	justify-content: center;
 	margin: 0;
 	object-fit: cover;
+	text-transform: uppercase;
 	width: 3rem;
 }
 
@@ -262,7 +356,7 @@ p.sulayr-panel {
 .sulayr-summary-note,
 .sulayr-day-empty-note,
 .sulayr-cal-note {
-	color: #4d5c70;
+	color: var(--sr-texto-2);
 }
 
 .sulayr-role,
@@ -270,25 +364,62 @@ p.sulayr-panel {
 	margin: 0;
 }
 
-.sulayr-card-title {
+/* Etiqueta en mono mayúsculas: rol, títulos de tarjeta, días de la semana. */
+.sulayr-panel .sulayr-role,
+.sulayr-panel .sulayr-card-title,
+.sulayr-cal-weekdays,
+.sulayr-profile dt,
+.sulayr-week-name,
+.sulayr-today-label {
+	font-family: var(--sr-mono);
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+}
+
+.sulayr-panel .sulayr-role {
+	font-size: 0.75rem;
+	font-weight: 600;
+}
+
+.sulayr-panel .sulayr-card-title {
 	align-items: center;
+	color: var(--sr-acento);
 	display: flex;
-	font-size: 1rem;
-	gap: 0.4rem;
-	margin-bottom: 0.65rem;
+	font-size: 0.75rem;
+	font-stretch: 100%;
+	font-style: normal;
+	font-weight: 600;
+	gap: 0.45rem;
+	line-height: 1.3;
+	margin: 0 0 0.75rem;
+}
+
+.sulayr-card-title .sulayr-icon {
+	height: 1rem;
+	width: 1rem;
 }
 
 .sulayr-next-when {
-	font-size: 1.05rem;
-	font-weight: 700;
-	margin-bottom: 0.15rem;
+	font-family: var(--sr-titular);
+	font-size: 1.3rem;
+	font-stretch: 112%;
+	font-style: italic;
+	font-weight: 800;
+	line-height: 1.2;
+	margin-bottom: 0.2rem;
+}
+
+.sulayr-next-when + p {
+	font-family: var(--sr-mono);
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
 }
 
 .sulayr-legend li,
 .sulayr-summary li {
 	align-items: center;
 	display: flex;
-	gap: 0.55rem;
+	gap: 0.6rem;
 }
 
 .sulayr-legend li {
@@ -296,47 +427,60 @@ p.sulayr-panel {
 }
 
 .sulayr-summary li {
-	border-top: 1px solid #e7edf4;
+	border-top: 1px solid var(--sr-linea-suave);
 	justify-content: space-between;
-	padding: 0.5rem 0;
+	padding: 0.55rem 0;
 }
 
 .sulayr-summary li:first-child {
 	border-top: 0;
 }
 
+.sulayr-summary strong {
+	font-family: var(--sr-mono);
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
+}
+
 .sulayr-swatch {
-	border: 1px solid transparent;
-	border-radius: 4px;
+	background: var(--slot-bg);
+	border: 1px solid var(--slot-borde, transparent);
+	border-left: 4px solid var(--slot-acento);
+	border-radius: 2px;
 	flex: 0 0 auto;
-	height: 0.9rem;
-	width: 0.9rem;
+	height: 1rem;
+	width: 1.25rem;
 }
 
 .sulayr-meter {
 	appearance: none;
-	background: #e6edf5;
+	background: var(--sr-linea);
 	border: 0;
-	border-radius: 999px;
+	border-radius: 2px;
 	display: block;
-	height: 0.45rem;
-	margin: 0.15rem 0 0.45rem;
+	height: 0.5rem;
+	margin: 0.2rem 0 0.55rem;
 	width: 100%;
 }
 
 .sulayr-meter::-webkit-meter-bar {
-	background: #e6edf5;
+	background: var(--sr-linea);
 	border: 0;
-	border-radius: 999px;
-	height: 0.45rem;
+	border-radius: 2px;
+	height: 0.5rem;
 }
 
-.sulayr-meter::-webkit-meter-optimum-value,
+.sulayr-meter::-webkit-meter-optimum-value {
+	background: var(--sr-menta);
+	border-radius: 2px;
+}
+
 .sulayr-meter::-moz-meter-bar {
-	background: #2f6fe0;
-	border-radius: 999px;
+	background: var(--sr-menta);
+	border-radius: 2px;
 }
 
+/* Calendario */
 .sulayr-cal-toolbar {
 	align-items: flex-start;
 	display: flex;
@@ -346,7 +490,8 @@ p.sulayr-panel {
 	margin-bottom: 1rem;
 }
 
-.sulayr-cal-title {
+.sulayr-panel .sulayr-cal-title {
+	font-size: 1.85rem;
 	margin: 0;
 }
 
@@ -364,13 +509,19 @@ p.sulayr-panel {
 
 .sulayr-panel a.sulayr-cal-move {
 	align-items: center;
-	background: #fff;
-	border: 1px solid #c9d5e6;
-	border-radius: 999px;
+	background: var(--sr-blanco);
+	border: 1.5px solid var(--sr-noche);
+	border-radius: var(--sr-radio-sm);
 	display: inline-flex;
+	font-weight: 600;
 	min-height: 44px;
-	padding: 0.35rem 0.8rem;
+	padding: 0.35rem 0.85rem;
 	text-decoration: none;
+}
+
+.sulayr-panel a.sulayr-cal-move:hover {
+	background: var(--sr-nieve);
+	color: var(--sr-noche);
 }
 
 .sulayr-cal-weekdays {
@@ -384,9 +535,9 @@ p.sulayr-panel {
 }
 
 .sulayr-day {
-	background: #f6f8fb;
-	border: 1px solid #e5ebf2;
-	border-radius: 12px;
+	background: var(--sr-nieve);
+	border: 1px solid var(--sr-linea-suave);
+	border-radius: var(--sr-radio-sm);
 	min-width: 0;
 	padding: 0.55rem 0.65rem;
 	position: relative;
@@ -397,14 +548,17 @@ p.sulayr-panel {
 }
 
 .sulayr-day-today {
-	background: #f3f7ff;
-	border-color: #2f6fe0;
-	box-shadow: inset 0 0 0 1px #2f6fe0;
+	background: var(--sr-blanco);
+	border-color: var(--sr-noche);
+	box-shadow: inset 0 0 0 1px var(--sr-noche);
 }
 
-.sulayr-day-heading {
-	font-size: 0.95rem;
-	font-weight: 700;
+.sulayr-panel .sulayr-day-heading {
+	font-family: var(--sr-titular);
+	font-size: 1rem;
+	font-stretch: 110%;
+	font-style: italic;
+	font-weight: 800;
 	margin: 0 0 0.35rem;
 }
 
@@ -420,17 +574,23 @@ p.sulayr-panel {
 	margin: 0;
 }
 
+.sulayr-day-empty-note {
+	font-size: 0.875rem;
+}
+
 .sulayr-today-label {
-	background: #2f6fe0;
-	border-radius: 999px;
-	color: #fff;
+	background: var(--sr-noche);
+	border-radius: 2px;
+	color: var(--sr-menta);
 	display: inline-block;
-	font-size: 0.72rem;
-	font-weight: 700;
+	font-size: 0.65rem;
+	font-style: normal;
+	font-weight: 600;
+	letter-spacing: 0.12em;
 	line-height: 1.4;
-	margin-left: 0.2rem;
-	padding: 0.05rem 0.4rem;
-	vertical-align: 0.1em;
+	margin-left: 0.3rem;
+	padding: 0.1rem 0.4rem;
+	vertical-align: 0.15em;
 }
 
 .sulayr-day-sessions {
@@ -439,18 +599,61 @@ p.sulayr-panel {
 	gap: 0.35rem;
 }
 
+/*
+ * Estados de sesión. El color es una ayuda; el texto de estado sigue en la tarjeta.
+ * Las mismas variables pintan la muestra de la leyenda.
+ */
+.sulayr-slot-available {
+	--slot-bg: #e2fbf2;
+	--slot-fg: var(--sr-noche);
+	--slot-acento: var(--sr-menta);
+}
+
+.sulayr-slot-mine {
+	--slot-bg: var(--sr-noche);
+	--slot-fg: var(--sr-nieve);
+	--slot-acento: var(--sr-cielo);
+}
+
+.sulayr-slot-full {
+	--slot-bg: #fdebe8;
+	--slot-fg: var(--sr-noche);
+	--slot-acento: var(--sr-sol);
+}
+
+.sulayr-slot-disabled {
+	--slot-bg: var(--sr-blanco);
+	--slot-fg: var(--sr-texto-2);
+	--slot-acento: var(--sr-nube);
+	--slot-borde: var(--sr-nube);
+}
+
+.sulayr-slot-past {
+	--slot-bg: #e9ecf1;
+	--slot-fg: var(--sr-texto-2);
+	--slot-acento: #c3c8d2;
+}
+
 .sulayr-slot {
-	border: 1px solid transparent;
-	border-radius: 8px;
+	align-items: flex-start;
+	background: var(--slot-bg);
+	border: 1px solid var(--slot-borde, transparent);
+	border-left: 4px solid var(--slot-acento);
+	border-radius: var(--sr-radio-sm);
+	color: var(--slot-fg);
 	display: flex;
 	flex-direction: column;
-	align-items: flex-start;
 	font-size: 0.8125rem;
 	gap: 0.15rem;
 	line-height: 1.35;
 	min-width: 0;
 	overflow-wrap: break-word;
-	padding: 0.4rem 0.45rem;
+	padding: 0.45rem 0.5rem;
+}
+
+.sulayr-slot-disabled {
+	border-style: dashed;
+	border-left-style: solid;
 }
 
 .sulayr-slot p,
@@ -458,39 +661,31 @@ p.sulayr-panel {
 	margin: 0;
 }
 
-.sulayr-slot-time {
-	font-weight: 700;
+.sulayr-panel .sulayr-slot-time {
+	font-family: var(--sr-mono);
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
+	letter-spacing: -0.01em;
 }
 
-.sulayr-slot-available {
-	background: #e5f6ea;
-	color: #0e5c32;
+.sulayr-slot-mine .sulayr-slot-time {
+	color: var(--sr-cielo);
+}
+
+.sulayr-panel .sulayr-slot a {
+	color: inherit;
+}
+
+.sulayr-panel .sulayr-slot-mine a {
+	text-decoration-color: var(--sr-cielo);
+}
+
+.sulayr-panel .sulayr-slot-mine a:hover {
+	color: var(--sr-cielo);
 }
 
 .sulayr-slot-mine {
-	background: #e5f0ff;
-	color: #14386e;
-}
-
-.sulayr-slot-full {
-	background: #fff3df;
-	color: #6d4300;
-}
-
-.sulayr-slot-disabled {
-	background: #f3f4f6;
-	border-color: #8b95a3;
-	border-style: dashed;
-	color: #3d4754;
-}
-
-.sulayr-slot-past {
-	background: #e8edf2;
-	color: #2f3a48;
-}
-
-.sulayr-slot a {
-	color: inherit;
+	--sr-foco: var(--sr-cielo);
 }
 
 .sulayr-slot .sulayr-link {
@@ -504,11 +699,12 @@ p.sulayr-panel {
 	width: 100%;
 }
 
+/* Listas */
 .sulayr-people li,
 .sulayr-booking-list li,
 .sulayr-months li {
 	align-items: center;
-	border-top: 1px solid #e6ebf2;
+	border-top: 1px solid var(--sr-linea-suave);
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.35rem 0.75rem;
@@ -526,38 +722,58 @@ p.sulayr-panel {
 }
 
 .sulayr-swimmer-total {
-	color: #4d5c70;
-	font-weight: 700;
+	color: var(--sr-texto-2);
+	font-weight: 600;
 	margin: 0.75rem 0;
 }
 
+/* Tablas: cabecera noche, filas alternas nieve, cifras en mono. */
 .sulayr-table-wrap {
+	border: 1px solid var(--sr-linea);
+	border-radius: var(--sr-radio-sm);
 	margin: 0.75rem 0;
 	overflow-x: auto;
 }
 
 .sulayr-table {
 	border-collapse: collapse;
+	font-variant-numeric: tabular-nums;
 	min-width: 56rem;
 	width: 100%;
 }
 
 .sulayr-table th,
 .sulayr-table td {
-	border-bottom: 1px solid #e6ebf2;
-	padding: 0.65rem 0.7rem;
+	border-bottom: 1px solid var(--sr-linea-suave);
+	padding: 0.65rem 0.75rem;
 	text-align: left;
 	vertical-align: middle;
 }
 
+.sulayr-table tbody tr:nth-child(even) td {
+	background: var(--sr-nieve);
+}
+
+.sulayr-table tbody tr:last-child td {
+	border-bottom: 0;
+}
+
 .sulayr-table th {
-	color: #4d5c70;
-	font-size: 0.8125rem;
-	font-weight: 700;
+	background: var(--sr-noche);
+	color: var(--sr-nieve);
+	font-family: var(--sr-mono);
+	font-size: 0.72rem;
+	font-weight: 600;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
 	white-space: nowrap;
 }
 
-.sulayr-table th a {
+.sulayr-table thead {
+	--sr-foco: var(--sr-cielo);
+}
+
+.sulayr-panel .sulayr-table th a {
 	align-items: center;
 	color: inherit;
 	display: inline-flex;
@@ -566,16 +782,17 @@ p.sulayr-panel {
 	text-decoration: none;
 }
 
-.sulayr-table th a:hover,
-.sulayr-table th[aria-sort="ascending"] a,
-.sulayr-table th[aria-sort="descending"] a {
-	color: #1d4e9e;
+.sulayr-panel .sulayr-table th a:hover,
+.sulayr-panel .sulayr-table th[aria-sort="ascending"] a,
+.sulayr-panel .sulayr-table th[aria-sort="descending"] a {
+	color: var(--sr-menta);
 	text-decoration: underline;
-	text-underline-offset: 0.15em;
+	text-decoration-color: var(--sr-menta);
+	text-underline-offset: 0.2em;
 }
 
 .sulayr-table td {
-	overflow-wrap: anywhere;
+	overflow-wrap: break-word;
 }
 
 .sulayr-table .sulayr-avatar {
@@ -596,14 +813,15 @@ p.sulayr-panel {
 }
 
 .sulayr-notice {
-	background: #fff;
-	border: 1px solid #d5e2f5;
-	border-left: 4px solid #2f6fe0;
-	border-radius: 12px;
+	background: var(--sr-blanco);
+	border: 1px solid var(--sr-linea);
+	border-left: 4px solid var(--sr-cielo);
+	border-radius: var(--sr-radio-sm);
 	margin: 0;
 	padding: 0.75rem 1rem;
 }
 
+/* Formularios */
 .sulayr-form,
 .sulayr-inline {
 	margin: 0.5rem 0;
@@ -627,9 +845,11 @@ p.sulayr-panel {
 }
 
 .sulayr-profile dt {
-	color: #4d5c70;
+	color: var(--sr-texto-2);
+	font-size: 0.72rem;
 	font-weight: 600;
-	margin: 0.35rem 0 0;
+	margin: 0.45rem 0 0;
+	padding-top: 0.2rem;
 }
 
 .sulayr-profile dd {
@@ -643,20 +863,68 @@ p.sulayr-panel {
 	font: inherit;
 }
 
+/* Botón principal: noche. */
 .sulayr-panel button {
-	background: #2f6fe0;
-	border: 0;
-	border-radius: 8px;
-	color: #fff;
+	background: var(--sr-noche);
+	border: 1.5px solid var(--sr-noche);
+	border-radius: var(--sr-radio-sm);
+	box-shadow: none;
+	color: var(--sr-nieve);
 	cursor: pointer;
+	font-weight: 600;
+	letter-spacing: 0;
 	line-height: 1.3;
 	margin: 0.25rem 0.25rem 0.25rem 0;
 	min-height: 44px;
-	padding: 0.45rem 0.8rem;
+	padding: 0.45rem 0.9rem;
+	text-transform: none;
 }
 
-.sulayr-panel button:hover {
-	background: #245ec4;
+.sulayr-panel button:hover,
+.sulayr-panel button:focus {
+	background: var(--sr-pizarra);
+	border-color: var(--sr-pizarra);
+	color: var(--sr-blanco);
+}
+
+/* Reservar: la llamada a la acción, en Sol de Alba. */
+.sulayr-panel .sulayr-action-book button {
+	background: var(--sr-sol);
+	border-color: var(--sr-sol);
+	color: var(--sr-noche);
+	font-weight: 700;
+}
+
+.sulayr-panel .sulayr-action-book button:hover,
+.sulayr-panel .sulayr-action-book button:focus {
+	background: #e85e4a;
+	border-color: #e85e4a;
+	color: var(--sr-noche);
+}
+
+/* Acciones que deshacen algo: botón secundario con borde. */
+.sulayr-panel .sulayr-action-cancel button,
+.sulayr-panel .sulayr-action-swimmer_deactivate button,
+.sulayr-panel .sulayr-action-photo_delete button {
+	background: transparent;
+	border-color: currentColor;
+	color: inherit;
+}
+
+.sulayr-panel .sulayr-action-cancel button:hover,
+.sulayr-panel .sulayr-action-swimmer_deactivate button:hover,
+.sulayr-panel .sulayr-action-photo_delete button:hover,
+.sulayr-panel .sulayr-action-cancel button:focus,
+.sulayr-panel .sulayr-action-swimmer_deactivate button:focus,
+.sulayr-panel .sulayr-action-photo_delete button:focus {
+	background: rgba(11, 22, 56, 0.06);
+	border-color: currentColor;
+	color: inherit;
+}
+
+.sulayr-panel .sulayr-slot-mine .sulayr-action-cancel button:hover,
+.sulayr-panel .sulayr-slot-mine .sulayr-action-cancel button:focus {
+	background: var(--sr-pizarra);
 }
 
 .sulayr-panel input[type="text"],
@@ -665,13 +933,25 @@ p.sulayr-panel {
 .sulayr-panel input[type="password"],
 .sulayr-panel input[type="search"],
 .sulayr-panel input[type="file"],
+.sulayr-panel input[type="date"],
 .sulayr-panel select {
-	background: #fff;
-	border: 1px solid #8b98ab;
-	border-radius: 8px;
-	color: #1a2740;
+	background: var(--sr-blanco);
+	border: 1px solid var(--sr-nube);
+	border-radius: var(--sr-radio-sm);
+	box-shadow: none;
+	color: var(--sr-noche);
 	max-width: 100%;
-	padding: 0.45rem 0.55rem;
+	min-height: 44px;
+	padding: 0.45rem 0.6rem;
+}
+
+.sulayr-panel input:focus,
+.sulayr-panel select:focus {
+	border-color: var(--sr-noche);
+}
+
+.sulayr-panel input[type="number"] {
+	font-family: var(--sr-mono);
 }
 
 .sulayr-form input[type="text"],
@@ -680,6 +960,7 @@ p.sulayr-panel {
 .sulayr-form input[type="password"],
 .sulayr-form input[type="search"],
 .sulayr-form input[type="file"],
+.sulayr-form input[type="date"],
 .sulayr-form select {
 	display: block;
 	font-weight: 400;
@@ -688,12 +969,13 @@ p.sulayr-panel {
 }
 
 .sulayr-form input[type="checkbox"] {
+	accent-color: var(--sr-noche);
 	margin-right: 0.35rem;
 }
 
 @media (min-width: 40rem) {
 	.sulayr-profile {
-		grid-template-columns: 8.5rem minmax(0, 1fr);
+		grid-template-columns: 12rem minmax(0, 1fr);
 	}
 
 	.sulayr-profile dt {
@@ -717,9 +999,9 @@ p.sulayr-panel {
 	}
 
 	.sulayr-cal-weekdays {
-		color: #4d5c70;
-		font-size: 0.82rem;
-		font-weight: 700;
+		color: var(--sr-texto-2);
+		font-size: 0.68rem;
+		font-weight: 600;
 		margin: 0 0 0.15rem;
 	}
 
@@ -727,7 +1009,7 @@ p.sulayr-panel {
 		background: transparent;
 		border-color: transparent;
 		display: block;
-		opacity: 0.72;
+		opacity: 0.6;
 	}
 
 	.sulayr-day-today.sulayr-day-outside {
@@ -787,8 +1069,11 @@ p.sulayr-panel {
 
 @media (max-width: 47.5rem) {
 	div.sulayr-panel {
-		border-radius: 16px;
 		padding: 0.75rem;
+	}
+
+	.sulayr-panel h2 {
+		font-size: 1.4rem;
 	}
 
 	.sulayr-form button,
@@ -799,6 +1084,7 @@ p.sulayr-panel {
 	}
 }
 
+/* Calendario de un día (menos de 1024 px) */
 .sulayr-mobile-cal {
 	display: none;
 }
@@ -813,10 +1099,10 @@ p.sulayr-panel {
 .sulayr-panel a.sulayr-day-prev,
 .sulayr-panel a.sulayr-day-next {
 	align-items: center;
-	background: #fff;
-	border: 1px solid #c9d5e6;
-	border-radius: 12px;
-	color: #1a2740;
+	background: var(--sr-blanco);
+	border: 1.5px solid var(--sr-noche);
+	border-radius: var(--sr-radio-sm);
+	color: var(--sr-noche);
 	display: inline-flex;
 	flex: 0 0 44px;
 	font-size: 1.5rem;
@@ -825,6 +1111,11 @@ p.sulayr-panel {
 	min-height: 44px;
 	min-width: 44px;
 	text-decoration: none;
+}
+
+.sulayr-panel a.sulayr-day-prev:hover,
+.sulayr-panel a.sulayr-day-next:hover {
+	background: var(--sr-nieve);
 }
 
 .sulayr-week {
@@ -836,14 +1127,13 @@ p.sulayr-panel {
 
 .sulayr-panel a.sulayr-week-day {
 	align-items: center;
-	background: #f6f8fb;
-	border: 1px solid #e5ebf2;
-	border-radius: 12px;
-	color: #1a2740;
+	background: var(--sr-nieve);
+	border: 1px solid var(--sr-linea-suave);
+	border-radius: var(--sr-radio-sm);
+	color: var(--sr-noche);
 	display: flex;
 	flex: 1 1 0;
 	flex-direction: column;
-	font-weight: 700;
 	justify-content: center;
 	line-height: 1.15;
 	min-height: 44px;
@@ -853,29 +1143,30 @@ p.sulayr-panel {
 }
 
 .sulayr-panel a.sulayr-week-day.is-selected {
-	background: #2f6fe0;
-	border-color: #2f6fe0;
-	color: #fff;
+	background: var(--sr-noche);
+	border-color: var(--sr-noche);
+	color: var(--sr-nieve);
+}
+
+.sulayr-panel a.sulayr-week-day.is-selected .sulayr-week-num {
+	color: var(--sr-menta);
 }
 
 .sulayr-panel a.sulayr-week-day.is-today:not(.is-selected) {
-	border-color: #2f6fe0;
-	box-shadow: inset 0 0 0 1px #2f6fe0;
+	border-color: var(--sr-noche);
+	box-shadow: inset 0 0 0 1px var(--sr-noche);
 }
 
+/* Hoy: punto en Sol de Alba. */
 .sulayr-panel a.sulayr-week-day.is-today::after {
-	background: #2f6fe0;
+	background: var(--sr-sol);
 	border-radius: 50%;
 	content: "";
 	display: block;
 	flex: 0 0 auto;
-	height: 4px;
-	margin-top: 0.12rem;
-	width: 4px;
-}
-
-.sulayr-panel a.sulayr-week-day.is-today.is-selected::after {
-	background: #fff;
+	height: 5px;
+	margin-top: 0.15rem;
+	width: 5px;
 }
 
 .sulayr-week-today {
@@ -891,14 +1182,17 @@ p.sulayr-panel {
 }
 
 .sulayr-week-name {
-	font-size: 0.68rem;
-	font-weight: 700;
-	letter-spacing: 0.02em;
-	text-transform: lowercase;
+	font-size: 0.6rem;
+	font-weight: 600;
+	letter-spacing: 0.08em;
 }
 
 .sulayr-week-num {
-	font-size: 0.95rem;
+	font-family: var(--sr-titular);
+	font-size: 1rem;
+	font-stretch: 110%;
+	font-style: italic;
+	font-weight: 800;
 }
 
 .sulayr-mobile-stage {
@@ -906,21 +1200,28 @@ p.sulayr-panel {
 	touch-action: pan-y;
 }
 
-.sulayr-mobile-date {
+.sulayr-panel .sulayr-mobile-date {
 	font-size: 1.75rem;
+	font-stretch: 118%;
+	font-style: italic;
+	font-weight: 900;
 	margin: 0.15rem 0 1rem;
 }
 
 .sulayr-mobile-date .sulayr-today-label {
 	display: table;
-	margin: 0 auto 0.45rem;
+	margin: 0 auto 0.5rem;
+}
+
+.sulayr-mobile-kicker {
+	color: var(--sr-acento);
 }
 
 .sulayr-mobile-empty {
-	background: #f6f8fb;
-	border: 1px dashed #c9d5e6;
-	border-radius: 12px;
-	color: #3d4754;
+	background: var(--sr-nieve);
+	border: 1px dashed var(--sr-nube);
+	border-radius: var(--sr-radio-sm);
+	color: var(--sr-texto-2);
 	padding: 1rem;
 }
 
@@ -929,11 +1230,11 @@ p.sulayr-panel {
 	padding: 0.85rem 0.9rem;
 }
 
-.sulayr-mobile-day .sulayr-slot-time {
-	font-size: 1.15rem;
+.sulayr-panel .sulayr-mobile-day .sulayr-slot-time {
+	font-size: 1.2rem;
 }
 
-.sulayr-mobile-day .sulayr-mobile-date {
+.sulayr-panel .sulayr-mobile-day .sulayr-mobile-date {
 	font-size: 1.75rem;
 	margin: 0.15rem 0 1rem;
 	text-align: center;
@@ -958,48 +1259,57 @@ p.sulayr-panel {
 }
 
 /* Facturación */
-.sulayr-billing h3 {
-	font-size: 1rem;
+.sulayr-panel .sulayr-billing h3 {
+	font-size: 1.05rem;
 	margin: 1rem 0 0.5rem;
 }
 
 .sulayr-billing .sulayr-notice {
-	border-left-color: #c77700;
+	border-left-color: var(--sr-sol);
 	margin-bottom: 0.75rem;
 }
 
 .sulayr-billing-formula {
-	background: #f4f8fe;
-	border: 1px solid #d5e2f5;
-	border-radius: 12px;
+	background: var(--sr-nieve);
+	border: 1px solid var(--sr-linea);
+	border-radius: var(--sr-radio-sm);
 	display: grid;
 	font-size: 1.05rem;
-	gap: 0.45rem 1rem;
+	gap: 0.45rem 0;
 	grid-template-columns: minmax(0, 1fr) auto;
 	margin: 0.5rem 0 1rem;
 	padding: 1rem 1.15rem;
 }
 
 .sulayr-billing-formula dt {
-	color: #4d5c70;
+	color: var(--sr-texto-2);
 	font-weight: 600;
 }
 
 .sulayr-billing-formula dd {
+	font-family: var(--sr-mono);
 	font-variant-numeric: tabular-nums;
 	font-weight: 600;
 	margin: 0;
+	padding-left: 1rem;
 	text-align: right;
 }
 
 /* Último par: cálculo final. */
 .sulayr-billing-formula dt:last-of-type,
 .sulayr-billing-formula dd:last-of-type {
-	border-top: 1px solid #c3d4ee;
-	color: #10223d;
+	border-top: 2px solid var(--sr-noche);
+	color: var(--sr-noche);
 	font-size: 1.3rem;
 	font-weight: 700;
 	padding-top: 0.6rem;
+}
+
+.sulayr-billing-formula dt:last-of-type {
+	font-family: var(--sr-titular);
+	font-stretch: 112%;
+	font-style: italic;
+	font-weight: 900;
 }
 
 .sulayr-billing .sulayr-table-compact {

@@ -1297,7 +1297,7 @@ class PanelRenderer {
 	 * @return void
 	 */
 	private function post( $action, $label, array $fields, array $return = array() ) {
-		echo '<form method="post" action="' . esc_url( $this->url( array() ) ) . '" class="sulayr-inline">';
+		echo '<form method="post" action="' . esc_url( $this->url( array() ) ) . '" class="sulayr-inline sulayr-action-' . esc_attr( $action ) . '">';
 		wp_nonce_field( PanelActions::NONCE, 'sulayr_nonce' );
 		echo '<input type="hidden" name="sulayr_action" value="' . esc_attr( $action ) . '">';
 		echo '<input type="hidden" name="sulayr_return" value="' . esc_attr( $this->url( $return ) ) . '">';
