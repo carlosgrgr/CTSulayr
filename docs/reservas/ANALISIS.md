@@ -1,6 +1,6 @@
 # Análisis — adaptación al código existente
 
-Este documento explica por qué la implementación se aparta de algunos nombres o mecanismos que el SPEC planteaba al principio. Los requisitos funcionales siguen en [SPEC.md](SPEC.md).
+Este documento explica por qué la implementación se aparta de algunos nombres o mecanismos que el SPEC planteaba al principio. Los requisitos funcionales siguen en [SPEC-RESERVAS.md](SPEC-RESERVAS.md).
 
 No se modifica el plugin del club. La integración se engancha desde `wp-content/plugins/sulayr-reservas/`.
 

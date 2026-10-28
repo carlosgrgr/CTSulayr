@@ -1,6 +1,8 @@
-# SPEC.md — Sistema de reservas de sesiones de natación
+# SPEC-RESERVAS.md — Sistema de reservas de sesiones de natación
 
-Este documento fija los requisitos funcionales y las decisiones ya aprobadas. La adaptación al código existente está en [ANALISIS.md](ANALISIS.md). El avance por fases está en [FASES.md](FASES.md).
+Este documento fija los requisitos del sistema de reservas (`sulayr-reservas`). El sufijo `-RESERVAS` identifica las specs de este sistema. Las de la web del club (`club-triatlon-sulayr`) conservan su nombre. El índice que separa unas y otras está en [FASES.md](../FASES.md).
+
+Aquí están los requisitos funcionales y las decisiones ya aprobadas de reservas. La adaptación al código existente está en [ANALISIS.md](ANALISIS.md). Las fases 0 a 11, ya cerradas, están en [FASES.md](../FASES.md).
 
 ## 1. Objetivo
 

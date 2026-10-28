@@ -1,5 +1,7 @@
 # Spec: Cobro de cuotas desde la web
 
+**Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr` (web del club)
+
 Oct 28, 2026 · @Carlos · Estado: borrador abierto
 
 ## Contexto y objetivos
@@ -8,7 +10,7 @@ El club cobrará las mensualidades desde su propia web WordPress con un TPV virt
 
 **Situación actual**
 
-- Los cobros de mensualidades se hacen con SportEasy, que también se usa para otras funciones.
+- Los cobros de mensualidades se hacen con SportEasy. Solo se usa para cobrar.
 - El control de cuotas vive en un Excel de Drive con una pestaña por mes. En cada pestaña se ajustan a mano altas, bajas, piscina, saldos a favor, matrículas y prorrateos.
 - Un socio ya paga por la web con una suscripción de Stripe.
 
@@ -21,7 +23,6 @@ El club cobrará las mensualidades desde su propia web WordPress con un TPV virt
 
 **Fuera de alcance por ahora**
 
-- Sustituir las demás funciones que se usan en SportEasy.
 - Contabilidad general del club (gastos, visión anual).
 
 ## Medio de pago elegido
@@ -30,16 +31,22 @@ TPV virtual del banco con pago por referencia (cobro recurrente con tarjeta guar
 
 | Opción | Coste anual aprox. | Automatización | Comentario |
 | --- | --- | --- | --- |
-| SportEasy (actual) | 182 € (3,96 €/deportista) | La actual | Pendiente saber si el precio cubre solo pagos o todo el servicio |
-| TPV virtual | 160–200 € | Casi total | 0,70 % tarjetas nacionales, 2 % internacionales, 5 €/mes de mantenimiento |
+| SportEasy (actual) | 182,49 € (3,96 €/deportista/año; 46 deportistas) | Solo cobros | Valorado. La diferencia con el TPV es de unos 20 € al año |
+| TPV virtual | 160–196,80 € | Casi total | 0,70 % tarjetas nacionales, 2 % internacionales, 5 €/mes de mantenimiento |
 | Domiciliación SEPA (norma 19) | \~181 € + 0,60 €/devolución | Parcial | 0,36 €/recibo en otras entidades, 0 € en la propia; requiere subir el fichero cada mes y mandatos firmados |
 | Stripe | Más del doble que el TPV | Total | 1,5 % + 0,25 € por cobro con tarjeta europea |
 
-Cálculos con 42 socios con cuota y 1.671,58 € a cobrar en octubre de 2026, multiplicados por 12. Octubre es un mes alto, así que el coste real del TPV estará más cerca de 160 €.
+Valoración de octubre de 2026, el mes con más deportistas del año: 47 deportistas y 1.626,58 € a cobrar.
+
+SportEasy cobra 3,96 € al año por deportista. Con 46 deportistas, este año son 182,49 €. El TPV suma 5 € al mes (60 € al año aunque no se cobre nada) y 0,70 € de cada 100 € cobrados.
+
+Si todos los meses fueran como octubre, el TPV saldría por 196,80 € al año, cerca de 1,2 € al mes más que SportEasy. Redondeando, unos 200 €: unos 18 € más. Como en verano se cobra menos, lo probable es que baje a unos 160 €: unos 20 € menos que SportEasy. La diferencia de dinero es pequeña.
+
+A partir de unos 60 socios el TPV sale claramente más barato: SportEasy cobra lo mismo por cada socio nuevo y en el TPV ese coste baja. El motivo para cambiar es el trabajo. Cada socio guarda la tarjeta una vez, el cobro mensual es automático y los pagos quedan en la web, sin Excel.
 
 **Por qué TPV y no SEPA:** el banco avisa a la web al momento de cada cobro, aprobado o denegado. Con SEPA hay que subir el fichero a mano y las devoluciones llegan días después.
 
-**Cuándo revisar la decisión:** si el banco no ofrece pago por referencia, si quita la cuota de 5 €/mes, o si el club supera unos 60 socios.
+**Cuándo revisar la decisión:** si el banco no ofrece pago por referencia, o si quita o rebaja los 5 € al mes. En ese caso el TPV pasa a ser claramente más barato.
 
 ## Cálculo del cobro mensual
 
@@ -183,16 +190,18 @@ La web nunca ve ni guarda datos de tarjeta: el socio los introduce en la página
 
 **Al banco**
 
+Enviado el 28 de octubre de 2026. Pendiente de respuesta.
+
 - [ ] ¿Activan pago por referencia con operativa de cobros recurrentes iniciados por el comercio?
 - [ ] ¿Hay cuota de alta del TPV virtual?
-- [ ] ¿Pueden quitar los 5 €/mes de mantenimiento por ser asociación deportiva?
+- [ ] ¿Pueden quitar o rebajar los 5 €/mes de mantenimiento por ser asociación deportiva?
 - [ ] ¿Incluye Bizum y con qué comisión?
 - [ ] ¿Hay comisión mínima o fija por operación además del 0,70 %?
 - [ ] ¿Tienen entorno de pruebas y manual de integración con la API REST?
 
 **A la junta**
 
-- [ ] ¿Los 3,96 € de SportEasy cubren todo el servicio o solo los pagos? Decide si el TPV ahorra o suma coste.
+- [x] ¿Los 3,96 € de SportEasy cubren todo el servicio o solo los pagos? Solo los pagos. Con los datos de octubre de 2026, la diferencia con el TPV es de unos 20 € al año. El ahorro está en el tiempo de gestión.
 - [ ] Confirmar fecha de corte (día 25) y de cobro (día 1).
 - [ ] Regla de prorrateo para altas a mitad de mes.
 - [ ] Cuántos reintentos tras un cobro fallido y si se aplica penalización por retraso.

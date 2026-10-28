@@ -18,7 +18,7 @@ El proyecto ya dispone de una implementación funcional de:
 
 Este documento define únicamente nuevas funcionalidades y mejoras.
 
-El comportamiento existente definido en `SPEC.md` debe mantenerse salvo que este documento indique explícitamente una modificación.
+El comportamiento existente definido en `SPEC-RESERVAS.md` debe mantenerse salvo que este documento indique explícitamente una modificación.
 
 ---
 
@@ -629,9 +629,9 @@ Durante la implementación deberán actualizarse:
 * `ACEPTACION.md`
 * `FASES.md`
 
-No modificar `SPEC.md` para introducir estos nuevos requisitos.
+No modificar `SPEC-RESERVAS.md` para introducir estos nuevos requisitos.
 
-`SPEC-MEJORAS.md` será la especificación de esta fase.
+`SPEC-MEJORAS-RESERVAS.md` será la especificación de esta fase.
 
 `DEVELOPMENT.md` debe recoger las decisiones técnicas que se adopten durante la implementación.
 
@@ -798,4 +798,4 @@ Estas decisiones precisan los apartados anteriores. Si un párrafo anterior dice
 | Límite semanal | Solo gestor o administrador, enteros del 1 al 5. El valor por defecto de una ficha nueva o antigua sin valor propio es 3 |
 | Perfiles del tema | Solo información y edición propias. Presentación Bento Grid, sin cambiar ACF, acciones, enlaces, permisos ni URLs |
 | Perfil público de otro deportista | Fuera de esta fase |
-| `SPEC.md` | No se modifica |
+| `SPEC-RESERVAS.md` | No se modifica |

@@ -1,6 +1,6 @@
 # Matriz de aceptación
 
-Revisión de la fase 9 sobre el árbol de trabajo. Los identificadores son los del [SPEC.md](SPEC.md). Una fila solo está «Cumplido y probado» si esa comprobación se ha ejecutado. No hay suite PHPUnit.
+Revisión de la fase 9 sobre el árbol de trabajo. Los identificadores son los del [SPEC-RESERVAS.md](SPEC-RESERVAS.md). Una fila solo está «Cumplido y probado» si esa comprobación se ha ejecutado. No hay suite PHPUnit.
 
 La fase 9 queda cerrada. Los casos del apartado 18 tienen una comprobación ejecutada. El correo real de alta no pertenece a ese apartado y queda para una revisión posterior.
 

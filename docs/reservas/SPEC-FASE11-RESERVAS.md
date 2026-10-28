@@ -4,7 +4,7 @@
 
 **Proyecto:** Club Triatlón Sulayr / sulayr-reservas  
 **Fase:** 11  
-**Estado:** Implementada en el árbol de trabajo, sin commit  
+**Estado:** Implementada y en `main`  
 **Fecha:** octubre 2026
 
 ---
@@ -822,8 +822,8 @@ El rediseño del calendario no debe modificar la lógica del resto del panel.
 Antes de implementar:
 
 1.  Leer: 
-  - `SPEC.md` 
-  - `SPEC-MEJORAS.md` 
+  - `SPEC-RESERVAS.md` 
+  - `SPEC-MEJORAS-RESERVAS.md` 
   - `DEVELOPMENT.md` 
   - `FASES.md` 
   - `ACEPTACION.md` 
@@ -1034,11 +1034,11 @@ Al finalizar se actualizarán:
 - `ACEPTACION.md` 
 - `MANUAL-USUARIO.md` 
 
-`SPEC.md` no debe modificarse.
+`SPEC-RESERVAS.md` no debe modificarse.
 
-`SPEC-MEJORAS.md` no debe modificarse.
+`SPEC-MEJORAS-RESERVAS.md` no debe modificarse.
 
-Este documento (`SPEC-FASE11.md`) debe conservarse como especificación de la fase.
+Este documento (`SPEC-FASE11-RESERVAS.md`) debe conservarse como especificación de la fase.
 
 La documentación debe indicar claramente:
 

@@ -4,7 +4,7 @@ Este manual es para quien publica documentos para los deportistas desde el escri
 
 No incluye capturas. Los nombres en negrita son los textos de los botones y los apartados del menú.
 
-La especificación técnica completa está en `SPEC-DOCUMENTOS.md`, en la raíz del repositorio.
+La especificación técnica completa está en `docs/club/SPEC-DOCUMENTOS.md`.
 
 ## 1. Qué es
 

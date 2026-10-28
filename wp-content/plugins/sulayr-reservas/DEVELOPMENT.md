@@ -1,8 +1,8 @@
 # Desarrollo del plugin de reservas
 
-Referencia técnica para implementar `sulayr-reservas`. Los requisitos funcionales están en [SPEC.md](../../../SPEC.md). Por qué el código existente obliga a ciertas adaptaciones está en [ANALISIS.md](../../../ANALISIS.md). El estado de las fases está en [FASES.md](../../../FASES.md).
+Referencia técnica para implementar `sulayr-reservas`. Los requisitos funcionales están en [SPEC-RESERVAS.md](../../../docs/reservas/SPEC-RESERVAS.md). Por qué el código existente obliga a ciertas adaptaciones está en [ANALISIS.md](../../../docs/reservas/ANALISIS.md). El estado de las fases está en [FASES.md](../../../docs/FASES.md).
 
-Si este documento contradice al SPEC, manda el SPEC. Donde `SPEC-MEJORAS.md` cambia un comportamiento, manda ese documento, y el apartado 16 si un párrafo anterior de las mejoras dice lo contrario. No se cambian requisitos ni decisiones ya aprobadas desde aquí.
+Si este documento contradice al SPEC, manda el SPEC. Donde `SPEC-MEJORAS-RESERVAS.md` cambia un comportamiento, manda ese documento, y el apartado 16 si un párrafo anterior de las mejoras dice lo contrario. No se cambian requisitos ni decisiones ya aprobadas desde aquí.
 
 ## Arquitectura
 
@@ -215,7 +215,7 @@ Comprobado con fechas fijas y usuarios de prueba, borrados al terminar junto con
 
 ## Fase 6
 
-Implementada en `Swimmers\SwimmerService`. No hay formulario. Operaciones: `create()`, `deactivate()`, `reactivate()` y `remove()`. El SPEC no define editar el nombre, el teléfono, el correo ni el DNI de una ficha ya creada, así que esta fase no tiene operación de edición. La fase 10 sí la define, con las reglas de `SPEC-MEJORAS.md`, apartado 16. Cambiar el correo toca `wp_users` y, por eso, no es inmediato.
+Implementada en `Swimmers\SwimmerService`. No hay formulario. Operaciones: `create()`, `deactivate()`, `reactivate()` y `remove()`. El SPEC no define editar el nombre, el teléfono, el correo ni el DNI de una ficha ya creada, así que esta fase no tiene operación de edición. La fase 10 sí la define, con las reglas de `SPEC-MEJORAS-RESERVAS.md`, apartado 16. Cambiar el correo toca `wp_users` y, por eso, no es inmediato.
 
 Una cuenta nueva se crea en el blog 2 con el rol `nadador` ya en `wp_insert_user()`, para que el gancho del club no la convierta en `athlete`. Después se llama a `wp_send_new_user_notifications()` solo para el usuario, para que elija contraseña. En las pruebas esa llamada se interceptó: no se comprobó un buzón real. Si el correo ya existe, se reutiliza esa cuenta y no se envía aviso: no se cambia la contraseña ni `first_name`, `sulayr_user_phone` ni `sulayr_user_dni`. Si todavía no está en el blog 2, `add_user_to_blog()` le asigna `nadador`. Si ya está, `add_role( 'nadador' )`, para no quitar `gestor`, `editor` o `administrator`. La ficha local nace activa y con `linked_to_club = 0`. El vínculo con el club lo pondrá la sincronización.
 
@@ -265,7 +265,7 @@ Comprobado con usuarios temporales, borrados al terminar: alta, repetición, act
 
 ## Fase 9
 
-La matriz está en [ACEPTACION.md](../../../ACEPTACION.md). La fase queda cerrada.
+La matriz está en [ACEPTACION.md](../../../docs/reservas/ACEPTACION.md). La fase queda cerrada.
 
 Con sesión iniciada se verificaron la redirección de nadador y gestor fuera de `wp-admin`, la entrada del administrador, el calendario autenticado, la sesión deshabilitada, el historial y la retirada desde el panel. Después se comprobó que una reserva hecha para otra persona cuenta en el límite semanal de esa persona, y que una reserva retroactiva cuenta en la semana de la sesión.
 
@@ -299,7 +299,7 @@ No hay JavaScript nuevo. La hoja se encola con `filemtime` para que el navegador
 
 ## Fase 10
 
-Los requisitos están en `SPEC-MEJORAS.md`. El apartado 16 cierra las decisiones de datos. `SPEC.md` no se ha modificado. La versión de esquema pasa a 2. `dbDelta` añade a `sulayr_swim_swimmers`, sin borrar filas:
+Los requisitos están en `SPEC-MEJORAS-RESERVAS.md`. El apartado 16 cierra las decisiones de datos. `SPEC-RESERVAS.md` no se ha modificado. La versión de esquema pasa a 2. `dbDelta` añade a `sulayr_swim_swimmers`, sin borrar filas:
 
 | Columna | Uso |
 |---|---|
@@ -333,11 +333,11 @@ Cobertura futura con PHPUnit, todavía sin suite: límite semanal y su concurren
 
 Comprobado con scripts que cargan WordPress y usuarios temporales, borrados al terminar, y con el panel y el perfil del club en el navegador. El envío de correo se interceptó con `pre_wp_mail`. No se ejecutó PHP 7.4. No se subió por HTTP un archivo que no fuera imagen con extensión de imagen. No se recorrió en el navegador el POST de previsualizar y confirmar el CSV: la validación y `createImported()` sí se ejecutaron desde PHP.
 
-Comprobado con `do_shortcode` para nadador, gestor, administrador y anónimo, y en el navegador con el CSS del tema a 1440 px y a 390 px. El día 2 de octubre de 2026 salió como hoy. Las sesiones ya empezadas se vieron atenuadas, las reservadas por el nadador en azul y las libres en verde. El gestor conservó detalle, capacidad, habilitar o deshabilitar, reserva para otro y cancelación. Un nadador que pide la vista de nadadores o un mes futuro sigue en el mes en curso. No se envió ningún POST de reserva o cancelación, para no alterar las reservas existentes. No aparecieron avisos en `debug.log`. No hay PHPUnit. `SPEC.md`, `ACEPTACION.md` y `FASES.md` no se han modificado: esto no reabre ni cierra criterios de aceptación.
+Comprobado con `do_shortcode` para nadador, gestor, administrador y anónimo, y en el navegador con el CSS del tema a 1440 px y a 390 px. El día 2 de octubre de 2026 salió como hoy. Las sesiones ya empezadas se vieron atenuadas, las reservadas por el nadador en azul y las libres en verde. El gestor conservó detalle, capacidad, habilitar o deshabilitar, reserva para otro y cancelación. Un nadador que pide la vista de nadadores o un mes futuro sigue en el mes en curso. No se envió ningún POST de reserva o cancelación, para no alterar las reservas existentes. No aparecieron avisos en `debug.log`. No hay PHPUnit. `SPEC-RESERVAS.md`, `ACEPTACION.md` y `FASES.md` no se han modificado: esto no reabre ni cierra criterios de aceptación.
 
 ## Fase 11
 
-La especificación está en `SPEC-FASE11.md`. `SPEC.md` y `SPEC-MEJORAS.md` no se han modificado.
+La especificación está en `SPEC-FASE11-RESERVAS.md`. `SPEC-RESERVAS.md` y `SPEC-MEJORAS-RESERVAS.md` no se han modificado.
 
 ### Acceso Club → Reservas
 

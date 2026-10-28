@@ -38,16 +38,20 @@ php -l wp-content/plugins/sulayr-reservas/src/Path/To/File.php   # syntax check
 
 ## Project documents (read before changing reservations behaviour)
 
-The spec docs are in Spanish, at the repo root, and they define the reservations feature. When they disagree, this order wins:
+Reservations specs are in Spanish under `docs/reservas/` and use the `-RESERVAS` suffix. Club-site specs are under `docs/club/` and are listed apart in `docs/FASES.md`. They are outside the precedence below. When reservations specs disagree, this order wins:
 
-1. `SPEC-MEJORAS.md` (its section 16 wins over earlier paragraphs in the same file) and `SPEC-FASE11.md` override `SPEC.md` where they change behaviour.
-2. `SPEC.md` — functional requirements and approved decisions.
-3. `ANALISIS.md` — why the implementation differs from names or mechanisms in the original spec.
+1. `docs/reservas/SPEC-MEJORAS-RESERVAS.md` (its section 16 wins over earlier paragraphs in the same file) and `docs/reservas/SPEC-FASE11-RESERVAS.md` override `docs/reservas/SPEC-RESERVAS.md` where they change behaviour.
+2. `docs/reservas/SPEC-RESERVAS.md` — functional requirements and approved decisions.
+3. `docs/reservas/ANALISIS.md` — why the implementation differs from names or mechanisms in the original spec.
 4. `wp-content/plugins/sulayr-reservas/DEVELOPMENT.md` — technical reference: class responsibilities, capability map, locking order, known incidents, pending tests, and per-phase notes. It never overrides the spec.
 
-`FASES.md` tracks phase status. `ACEPTACION.md` is the acceptance matrix for SPEC §18. A row there counts as "Cumplido y probado" only once the check has been run. The `MANUAL-*.md` and `GUIA-RAPIDA-GESTOR.*` files in the plugin are end-user manuals.
+`docs/FASES.md` is the index. Phases 0–11 are the closed `sulayr-reservas` delivery and are already in `main`; that numbering does not continue. Later work is a named spec tied to one plugin (`sulayr-reservas` or `club-triatlon-sulayr`). A spec’s own document holds its status and, when it needs them, its internal steps. Club specs do not override `docs/reservas/SPEC-RESERVAS.md`. There is no fixed working branch.
 
-Do not change requirements or approved decisions in these docs on your own. Update `DEVELOPMENT.md`, `FASES.md` and `ACEPTACION.md` when work changes what they describe.
+`docs/PRIORIDADES.md` is the ordered list of work that still needs a definition. It is not a spec. Do not implement a row from it, and do not treat a nearby draft as that row’s definition, until the row says which document defines it.
+
+`docs/reservas/ACEPTACION.md` is the acceptance matrix for SPEC §18. A row there counts as "Cumplido y probado" only once the check has been run. The `MANUAL-*.md` and `GUIA-RAPIDA-GESTOR.*` files in the plugin are end-user manuals.
+
+Do not change requirements or approved decisions in these docs on your own. Update `DEVELOPMENT.md`, `docs/FASES.md` and `docs/reservas/ACEPTACION.md` when work changes what they describe.
 
 ## Reservations plugin architecture
 
@@ -72,6 +76,6 @@ How the data and the two sites fit together:
 - **Club plugin:**
   - Spaces for indentation, short `[]` arrays (enforced by `phpcs.xml`), Yoda conditions.
   - Its constants use the `SULAYR_` prefix, so don't confuse them with `SULAYR_RESERVAS_*`.
-- **Do not edit `club-triatlon-sulayr` from reservations work.** Integration is hooked in from `sulayr-reservas`.
+- **Do not edit `club-triatlon-sulayr` from reservations work.** Integration is hooked in from `sulayr-reservas`. Club specs (documentos, cobros de cuotas) are implemented in the club plugin.
 - **Known WooCommerce issue.** Removing a user from blog 2 triggers a WooCommerce hook that fails on the missing table `wp_2_wc_customer_lookup`. `SwimmerService` suppresses that error. Do not create the table to silence it.
-- **Commits.** Don't commit unless asked. Work happens on `release/swimming-reservations-*` branches.
+- **Commits.** Don't commit unless asked. There is no fixed working branch.

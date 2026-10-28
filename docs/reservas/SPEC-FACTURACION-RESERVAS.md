@@ -3,7 +3,6 @@
 ## Resumen mensual del coste del sistema de reservas y liquidación con CN Nazarí
 
 **Proyecto:** Club Triatlón Sulayr / sulayr-reservas  
-**Fase:** 12  
 **Estado:** Especificada. Sin implementar. Tiene decisiones pendientes (sección 12).  
 **Fecha:** octubre 2026
 
