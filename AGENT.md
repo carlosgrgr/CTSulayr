@@ -51,7 +51,27 @@ Reservations specs are in Spanish under `docs/reservas/` and use the `-RESERVAS`
 
 `docs/reservas/ACEPTACION.md` is the acceptance matrix for SPEC §18. A row there counts as "Cumplido y probado" only once the check has been run. The `MANUAL-*.md` and `GUIA-RAPIDA-GESTOR.*` files in the plugin are end-user manuals.
 
-Do not change requirements or approved decisions in these docs on your own. Update `DEVELOPMENT.md`, `docs/FASES.md` and `docs/reservas/ACEPTACION.md` when work changes what they describe.
+Do not change requirements or approved decisions in these docs on your own. Status, dates and descriptions of what exists are a different matter: keep them current (next section).
+
+## Keeping the docs in sync
+
+Every development, merge or deployment ends with a pass over **all** the project `.md` files, not only the one closest to the change. The same fact (state of a spec, branch, whether it is in `main` or in PROD, a pending step) is often repeated in several documents; a change is not finished while any of them still says the old thing.
+
+Before closing the work, or committing it:
+
+1. Search every project `.md` for the names involved: the spec, the branch, the feature, `PROD`, `main`, `despleg`, `pendiente`. For example: `grep -rn -i "facturación\|despleg\|PROD" docs AGENT.md wp-content/plugins/sulayr-reservas/*.md wp-content/plugins/club-triatlon-sulayr/*.md`.
+2. Update each hit that is now out of date. Check at least:
+   - `docs/FASES.md`: the row of the spec (state, branch, `main`, PROD).
+   - `docs/PRIORIDADES.md`: the row and its section, if the work matches one of its tasks.
+   - The spec's own **Estado** line.
+   - `DEVELOPMENT.md` (or the club plugin's equivalent): technical notes, state of the phase, what was verified and what is still pending.
+   - `docs/reservas/ACEPTACION.md`: only rows whose check was actually run.
+   - End-user manuals and quick guides (`MANUAL-*.md`, `GUIA-RAPIDA-*.md` and their `.html`), if the change alters what the user sees or does. Outdated screenshots count: if you do not replace them, write it down as pending in `DEVELOPMENT.md`.
+   - This file, if commands, paths, conventions or architecture changed.
+3. Write absolute dates (`28 de octubre de 2026`), never "today" or "next week".
+4. Keep the doc updates in the same commit as the work, or in a commit right after it on the same branch, before it reaches `main`.
+
+A deployment to PROD with no code change still requires this pass: the "No desplegada en PROD" lines must change on the day of the deployment. If the deployment leaves something switched off or half done, write down in those same places what it is and how to switch it on.
 
 ## Reservations plugin architecture
 
