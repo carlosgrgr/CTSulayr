@@ -92,6 +92,8 @@ class PanelRenderer {
 			$this->importView();
 		} elseif ( 'historial' === $view && $manager ) {
 			$this->history( $now );
+		} elseif ( BillingView::VIEW === $view && BillingView::allowed() ) {
+			( new BillingView( $this->config ) )->render( $now );
 		} else {
 			$this->calendar( $manager, $now );
 		}
@@ -126,6 +128,9 @@ class PanelRenderer {
 		$allowed = array( 'calendario', 'sesion', 'reservas', 'perfil' );
 		if ( $manager ) {
 			$allowed = array_merge( $allowed, array( 'nadadores', 'nadador', 'alta', 'importar', 'historial' ) );
+		}
+		if ( BillingView::allowed() ) {
+			$allowed[] = BillingView::VIEW;
 		}
 
 		return in_array( $view, $allowed, true ) ? $view : 'calendario';
@@ -175,6 +180,9 @@ class PanelRenderer {
 			$this->navItem( 'Alta de nadador', 'plus', array( 'sulayr_vista' => 'alta' ), 'alta', $current );
 			$this->navItem( 'Importar', 'list', array( 'sulayr_vista' => 'importar' ), 'importar', $current );
 			$this->navItem( 'Meses anteriores', 'clock', array( 'sulayr_vista' => 'historial' ), 'historial', $current );
+		}
+		if ( BillingView::allowed() ) {
+			$this->navItem( 'Facturación', 'list', array( 'sulayr_vista' => BillingView::VIEW ), BillingView::VIEW, $current );
 		}
 
 		$bridge = new CrossSite( $this->config, $this->blog_context );

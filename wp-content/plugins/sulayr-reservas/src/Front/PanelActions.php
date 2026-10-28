@@ -2,6 +2,7 @@
 
 namespace SulayrReservas\Front;
 
+use SulayrReservas\Billing\SummaryService;
 use SulayrReservas\Bookings\BookingService;
 use SulayrReservas\Config\SiteConfig;
 use SulayrReservas\Context\BlogContext;
@@ -137,6 +138,9 @@ class PanelActions {
 				break;
 			case 'export_template':
 				$this->exportTemplate();
+				break;
+			case 'billing_export':
+				$this->exportBilling();
 				break;
 			default:
 				$this->redirect( 'unauthorized', 'La petición no es válida. Vuelve a intentarlo.' );
@@ -445,6 +449,25 @@ class PanelActions {
 		}
 
 		$this->redirect( 'updated', 'Se han creado ' . $created . ' nadadores. Filas no importadas: ' . $skipped . '.' );
+	}
+
+	/**
+	 * CSV de los usuarios facturados de un mes (spec 8.2).
+	 *
+	 * @return void
+	 */
+	private function exportBilling() {
+		if ( ! current_user_can( Capabilities::VIEW_BILLING ) ) {
+			$this->redirect( 'unauthorized', 'No tienes permiso para esta operación.' );
+		}
+
+		$month   = isset( $_POST['mes'] ) ? sanitize_text_field( wp_unslash( $_POST['mes'] ) ) : '';
+		$service = new SummaryService();
+		if ( ! preg_match( '/^\d{4}-\d{2}$/', $month ) || null === $service->summary( $month ) ) {
+			$this->redirect( 'failed', 'Ese mes no tiene resumen de facturación.' );
+		}
+
+		( new CsvExporter() )->download( 'facturacion-' . $month . '.csv', ( new CsvExporter() )->billingUsers( $service->users( $month ) ) );
 	}
 
 	/**

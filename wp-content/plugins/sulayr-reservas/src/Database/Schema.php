@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Schema {
 
-	const VERSION        = 2;
+	const VERSION        = 3;
 	const OPTION_VERSION = 'sulayr_reservas_db_version';
 
 	/** @var SiteConfig */
@@ -69,7 +69,7 @@ class Schema {
 	 * @return void
 	 */
 	public function installBookingsIfNeeded() {
-		if ( $this->isCurrent() && $this->tablesExist( array( 'sulayr_swim_sessions', 'sulayr_swim_bookings', 'sulayr_swim_months', 'sulayr_swim_swimmers' ) ) ) {
+		if ( $this->isCurrent() && $this->tablesExist( self::bookingsTables() ) ) {
 			return;
 		}
 
@@ -95,6 +95,9 @@ class Schema {
 		$bookings = $this->table( 'sulayr_swim_bookings' );
 		$months   = $this->table( 'sulayr_swim_months' );
 		$swimmers = $this->table( 'sulayr_swim_swimmers' );
+		$summary  = $this->table( 'sulayr_billing_summaries' );
+		$billed   = $this->table( 'sulayr_billing_users' );
+		$changes  = $this->table( 'sulayr_billing_changes' );
 
 		$sql = "CREATE TABLE {$sessions} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -147,11 +150,50 @@ class Schema {
 			created_at datetime NOT NULL,
 			updated_at datetime NOT NULL,
 			PRIMARY KEY  (user_id)
+		) {$this->charset()};
+		CREATE TABLE {$summary} (
+			billing_month char(7) NOT NULL,
+			billable_users int(10) unsigned NOT NULL DEFAULT 0,
+			club_athletes int(10) unsigned NOT NULL DEFAULT 0,
+			has_sessions tinyint(1) NOT NULL DEFAULT 0,
+			base_fee_cents int(10) unsigned NOT NULL DEFAULT 0,
+			included_users int(10) unsigned NOT NULL DEFAULT 0,
+			extra_price_cents int(10) unsigned NOT NULL DEFAULT 0,
+			max_fee_cents int(10) unsigned NOT NULL DEFAULT 0,
+			athlete_amount_cents int(10) unsigned NULL,
+			cost_cents int(10) unsigned NOT NULL DEFAULT 0,
+			athletes_payment_cents int(10) unsigned NULL,
+			net_cents int(11) NULL,
+			generated_by bigint(20) unsigned NOT NULL DEFAULT 0,
+			generated_by_name varchar(191) NOT NULL DEFAULT '',
+			generated_at datetime NOT NULL,
+			PRIMARY KEY  (billing_month)
+		) {$this->charset()};
+		CREATE TABLE {$billed} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			billing_month char(7) NOT NULL,
+			user_id bigint(20) unsigned NOT NULL,
+			first_name varchar(100) NOT NULL DEFAULT '',
+			last_name varchar(100) NOT NULL DEFAULT '',
+			linked_to_club tinyint(1) NOT NULL DEFAULT 0,
+			PRIMARY KEY  (id),
+			UNIQUE KEY month_user (billing_month, user_id)
+		) {$this->charset()};
+		CREATE TABLE {$changes} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			changed_at datetime NOT NULL,
+			user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			user_name varchar(191) NOT NULL DEFAULT '',
+			field varchar(30) NOT NULL DEFAULT '',
+			old_value varchar(20) NOT NULL DEFAULT '',
+			new_value varchar(20) NOT NULL DEFAULT '',
+			PRIMARY KEY  (id),
+			KEY changed_at (changed_at)
 		) {$this->charset()};";
 
 		$this->runDelta( $sql );
 
-		if ( $this->tablesExist( array( 'sulayr_swim_sessions', 'sulayr_swim_bookings', 'sulayr_swim_months', 'sulayr_swim_swimmers' ) ) ) {
+		if ( $this->tablesExist( self::bookingsTables() ) ) {
 			update_option( self::OPTION_VERSION, self::VERSION, false );
 		}
 	}
@@ -181,6 +223,23 @@ class Schema {
 		if ( $this->tablesExist( array( 'sulayr_swim_sync_log' ) ) ) {
 			update_option( self::OPTION_VERSION, self::VERSION, false );
 		}
+	}
+
+	/**
+	 * Tablas que deben existir en el sitio de reservas.
+	 *
+	 * @return string[]
+	 */
+	private static function bookingsTables() {
+		return array(
+			'sulayr_swim_sessions',
+			'sulayr_swim_bookings',
+			'sulayr_swim_months',
+			'sulayr_swim_swimmers',
+			'sulayr_billing_summaries',
+			'sulayr_billing_users',
+			'sulayr_billing_changes',
+		);
 	}
 
 	/**

@@ -9,7 +9,7 @@ El orden es el de la lista. Definir una tarea no adelanta las siguientes.
 
 | Orden | Tarea                              | Estado               | Documento cercano                                                                   |
 | ----- | ---------------------------------- | -------------------- | ----------------------------------------------------------------------------------- |
-| 1     | Facturación Reservas               | Definida             | [SPEC-FACTURACION-RESERVAS.md](reservas/SPEC-FACTURACION-RESERVAS.md)               |
+| 1     | Facturación Reservas               | Implementada         | [SPEC-FACTURACION-RESERVAS.md](reservas/SPEC-FACTURACION-RESERVAS.md)               |
 | 2     | Tienda online                      | Pendiente de definir | No hay                                                                              |
 | 3     | Pago online                        | Pendiente de definir | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) |
 | 4     | Rentabilidad frente a SportEasy    | Valorada             | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) |
@@ -22,7 +22,7 @@ El documento cercano no es la definición de la tarea. Hay que confirmar si vale
 
 [SPEC-FACTURACION-RESERVAS.md](reservas/SPEC-FACTURACION-RESERVAS.md) describe el coste mensual del sistema de reservas y la liquidación con CN Nazarí. Está escrita, sin implementar, y sus decisiones (P1 a P4 y D5 a D16) están cerradas en su sección 12. El plugin sería `sulayr-reservas`.
 
-Esta prioridad es esa spec. El siguiente paso es implementarla.
+Esta prioridad es esa spec. Está implementada en la rama `facturacion-reservas` y falta fusionarla en `main`.
 
 ## 2. Tienda online
 

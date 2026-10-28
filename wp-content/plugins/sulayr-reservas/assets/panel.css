@@ -956,3 +956,52 @@ p.sulayr-panel {
 		display: none;
 	}
 }
+
+/* Facturación */
+.sulayr-billing h3 {
+	font-size: 1rem;
+	margin: 1rem 0 0.5rem;
+}
+
+.sulayr-billing .sulayr-notice {
+	border-left-color: #c77700;
+	margin-bottom: 0.75rem;
+}
+
+.sulayr-billing-formula {
+	background: #f4f8fe;
+	border: 1px solid #d5e2f5;
+	border-radius: 12px;
+	display: grid;
+	font-size: 1.05rem;
+	gap: 0.45rem 1rem;
+	grid-template-columns: minmax(0, 1fr) auto;
+	margin: 0.5rem 0 1rem;
+	padding: 1rem 1.15rem;
+}
+
+.sulayr-billing-formula dt {
+	color: #4d5c70;
+	font-weight: 600;
+}
+
+.sulayr-billing-formula dd {
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
+	margin: 0;
+	text-align: right;
+}
+
+/* Último par: cálculo final. */
+.sulayr-billing-formula dt:last-of-type,
+.sulayr-billing-formula dd:last-of-type {
+	border-top: 1px solid #c3d4ee;
+	color: #10223d;
+	font-size: 1.3rem;
+	font-weight: 700;
+	padding-top: 0.6rem;
+}
+
+.sulayr-billing .sulayr-table-compact {
+	min-width: 0;
+}

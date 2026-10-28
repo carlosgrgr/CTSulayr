@@ -16,7 +16,7 @@ class RoleRegistrar {
 	const ROLE_NADADOR = 'nadador';
 	const ROLE_GESTOR  = 'gestor';
 
-	const VERSION        = 1;
+	const VERSION        = 2;
 	const OPTION_VERSION = 'sulayr_reservas_roles_version';
 
 	/**
@@ -77,7 +77,7 @@ class RoleRegistrar {
 	}
 
 	/**
-	 * Añade al administrador del sitio las capacidades del gestor.
+	 * Añade al administrador del sitio las capacidades del gestor y las suyas propias.
 	 * Solo añade o retira capacidades con prefijo sulayr_.
 	 *
 	 * @return void
@@ -91,7 +91,7 @@ class RoleRegistrar {
 
 		$granted = array();
 
-		foreach ( Capabilities::pluginNames() as $cap ) {
+		foreach ( Capabilities::administratorNames() as $cap ) {
 			$role->add_cap( $cap );
 			$granted[ $cap ] = true;
 		}

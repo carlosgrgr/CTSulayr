@@ -3,7 +3,7 @@
 ## Resumen mensual del coste del sistema de reservas y liquidación con CN Nazarí
 
 **Proyecto:** Club Triatlón Sulayr / sulayr-reservas  
-**Estado:** Especificada. Sin implementar. Decisiones cerradas (sección 12).  
+**Estado:** Implementada en la rama `facturacion-reservas`. Decisiones cerradas (sección 12). Pruebas en `ACEPTACION.md`.  
 **Fecha:** octubre 2026
 
 ---
@@ -109,7 +109,7 @@ Cada cambio de un valor de la tarifa o del importe por deportista guarda:
 - la fecha y hora;
 - el valor anterior y el nuevo.
 
-El registro se ve en la página de ajustes y en la sección «Facturación». Sirve para que el Sulayr compruebe cualquier cambio.
+El registro se ve solo en la página de ajustes, para el administrador del site de reservas y el superadministrador. No se muestra en la sección «Facturación». Sirve para que el Sulayr compruebe cualquier cambio.
 
 ---
 
@@ -240,7 +240,7 @@ El primer mes que se puede generar es el **mes de instalación** de esta fase.
 
 **Mes en curso:**
 
-- El último resumen generado, marcado como «provisional», con quién lo generó y cuándo.
+- El último resumen generado, marcado como «provisional».
 - Si no hay ninguno, «sin generar».
 - No hay una estimación en vivo aparte. Quien necesite la cifra al día genera el resumen.
 
@@ -261,9 +261,12 @@ El primer mes que se puede generar es el **mes de instalación** de esta fase.
 - Lista de usuarios facturados, con nombre y tipo (Sulayr / CN Nazarí).
 - Exportación a CSV.
 
-**Registro de cambios** de la tarifa y del importe por deportista (4.4).
+Cada resumen (mes en curso y detalle de un mes) muestra:
 
-En pantalla se ve siempre la tarifa aplicada en cada resumen y la fórmula, para que el cálculo se pueda seguir. Si no hay importe por deportista, se muestra el aviso de 6.1.
+- Datos: estado, nadadores (usuarios facturables), deportistas CT Sulayr, nadadores CN Nazarí y tarifa aplicada.
+- Cálculo, destacado: precio base, usuarios adicionales, coste total, pago de CT Sulayr y cálculo final (importe neto).
+
+La fórmula completa, paso a paso, y quién generó el resumen del mes en curso se ven en la página de ajustes. Si no hay importe por deportista, se muestra el aviso de 6.1.
 
 ---
 
@@ -319,7 +322,7 @@ En pantalla se ve siempre la tarifa aplicada en cada resumen y la fórmula, para
 21. Cada cambio de valores queda en el registro con usuario, fecha y hora, valor anterior y nuevo.
 22. La página de ajustes rechaza importes negativos, más de dos decimales, usuarios incluidos no enteros y un tope menor que la cuota base.
 23. El resumen del mes en curso se muestra como «provisional» y el de un mes terminado como «definitivo». Un mes sin resumen se muestra como «sin generar».
-24. Cada resumen muestra quién lo generó y cuándo.
+24. Cada resumen muestra quién lo generó y cuándo en la página de ajustes y en el histórico.
 
 ---
 

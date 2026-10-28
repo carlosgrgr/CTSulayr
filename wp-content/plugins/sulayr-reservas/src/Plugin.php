@@ -4,7 +4,10 @@ namespace SulayrReservas;
 
 use SulayrReservas\Access\AdminAccess;
 use SulayrReservas\Access\CrossSite;
+use SulayrReservas\Admin\BillingSettingsPage;
 use SulayrReservas\Admin\NetworkSettingsPage;
+use SulayrReservas\Billing\BillingCron;
+use SulayrReservas\Billing\BillingSettings;
 use SulayrReservas\Config\SiteConfig;
 use SulayrReservas\Context\BlogContext;
 use SulayrReservas\Database\Schema;
@@ -36,6 +39,7 @@ class Plugin {
 
 		if ( $this->config->isBookingsSite() ) {
 			( new RoleRegistrar() )->syncIfNeeded();
+			( new BillingSettings() )->bootstrapIfNeeded();
 		}
 
 		( new AdminAccess( $this->config ) )->register();
@@ -43,9 +47,11 @@ class Plugin {
 		( new EmailChangeService( $this->config, $this->blog_context ) )->register();
 		( new ClubSync( $this->config, $this->blog_context ) )->register();
 		( new Shortcode( $this->config, $this->blog_context ) )->register();
+		( new BillingCron( $this->config ) )->register();
 
 		if ( is_admin() ) {
 			( new NetworkSettingsPage( $this->config ) )->register();
+			( new BillingSettingsPage( $this->config ) )->register();
 		}
 	}
 

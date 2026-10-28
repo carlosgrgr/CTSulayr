@@ -34,7 +34,7 @@ Plugin `sulayr-reservas`. Estas specs llevan el sufijo `-RESERVAS`. `SPEC-RESERV
 | Spec | Documento | Estado |
 |---|---|---|
 | Reservas | [SPEC-RESERVAS.md](reservas/SPEC-RESERVAS.md), [SPEC-MEJORAS-RESERVAS.md](reservas/SPEC-MEJORAS-RESERVAS.md), [SPEC-FASE11-RESERVAS.md](reservas/SPEC-FASE11-RESERVAS.md) | Cerrada. Fases 0 a 11 en `main`. |
-| Facturación | [SPEC-FACTURACION-RESERVAS.md](reservas/SPEC-FACTURACION-RESERVAS.md) | Especificada, sin implementar. Decisiones cerradas en su sección 12. |
+| Facturación | [SPEC-FACTURACION-RESERVAS.md](reservas/SPEC-FACTURACION-RESERVAS.md) | Implementada en la rama `facturacion-reservas`, sin fusionar en `main`. Criterios de la sección 11 probados (ver `ACEPTACION.md`). |
 
 ## Web del club
 

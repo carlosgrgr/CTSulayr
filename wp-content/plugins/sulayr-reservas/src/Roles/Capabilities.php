@@ -20,6 +20,8 @@ class Capabilities {
 	const CANCEL_ANY         = 'sulayr_cancel_any';
 	const MANAGE_SWIMMERS    = 'sulayr_manage_swimmers';
 	const MANAGE_SESSIONS    = 'sulayr_manage_sessions';
+	const VIEW_BILLING       = 'sulayr_view_billing';
+	const MANAGE_BILLING     = 'sulayr_manage_billing';
 
 	/**
 	 * @return array<string, bool>
@@ -69,6 +71,18 @@ class Capabilities {
 			self::CANCEL_ANY,
 			self::MANAGE_SWIMMERS,
 			self::MANAGE_SESSIONS,
+			self::VIEW_BILLING,
+		);
+	}
+
+	/**
+	 * Capacidades que solo tiene el administrador del sitio de reservas. Nunca el gestor.
+	 *
+	 * @return string[]
+	 */
+	public static function administratorOnlyNames() {
+		return array(
+			self::MANAGE_BILLING,
 		);
 	}
 
@@ -79,5 +93,14 @@ class Capabilities {
 	 */
 	public static function pluginNames() {
 		return array_merge( self::nadadorNames(), self::gestorOnlyNames() );
+	}
+
+	/**
+	 * Capacidades del plugin que recibe el administrador del sitio de reservas.
+	 *
+	 * @return string[]
+	 */
+	public static function administratorNames() {
+		return array_merge( self::pluginNames(), self::administratorOnlyNames() );
 	}
 }

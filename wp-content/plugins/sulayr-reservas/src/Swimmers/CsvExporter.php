@@ -56,6 +56,24 @@ class CsvExporter {
 	}
 
 	/**
+	 * @param object[] $rows Usuarios facturados de un resumen.
+	 * @return string
+	 */
+	public function billingUsers( array $rows ) {
+		$lines   = array();
+		$lines[] = array( 'Nombre', 'Apellidos', 'Tipo' );
+		foreach ( $rows as $row ) {
+			$lines[] = array(
+				(string) $row->first_name,
+				(string) $row->last_name,
+				1 === (int) $row->linked_to_club ? 'Sulayr' : 'CN Nazarí',
+			);
+		}
+
+		return $this->render( $lines );
+	}
+
+	/**
 	 * @param string $filename Nombre del archivo.
 	 * @param string $csv      Contenido.
 	 * @return void

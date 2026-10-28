@@ -120,3 +120,34 @@ No reabre las filas del apartado 18. El acceso entre sitios y el calendario móv
 | Perfil del club solo del usuario actual | `CrossSite::clubProfileUrlForCurrentUser()` | Atleta con ficha activa, nadador sin rol `athlete`, ficha inactiva y `user_id` ajeno en la petición | Cumplido y probado | La URL no lleva `user_id` |
 | Calendario de un día por debajo de 1024 px | `PanelRenderer`, `panel.js`, `panel.css` | 390, 414 y 768 px; anterior, siguiente, swipe, viernes, domingo y cambio de semana | Cumplido y probado | Desde 1024 px sigue la cuadrícula. Hoy es `Europe/Madrid` |
 | Reservar, cancelar y límite semanal | `BookingService` | Una reserva futura creada y cancelada; la cuarta de la misma semana rechazada | Cumplido y probado | Los formularios no han cambiado de nonce ni de campos |
+
+## Facturación
+
+No reabre las filas del apartado 18. Los identificadores son los de la sección 11 de [SPEC-FACTURACION-RESERVAS.md](SPEC-FACTURACION-RESERVAS.md). Script con `wp eval-file` en el blog 2 el 28 de octubre de 2026, con fichas ficticias y fechas fijas; los datos quedaron como estaban. Detalle en `DEVELOPMENT.md`, sección «Facturación».
+
+| Referencia | Requisito | Prueba | Resultado |
+|---|---|---|---|
+| §11.1 | Nadador activo al generar cuenta 1 | Ficha activa ficticia y generación | Cumplido y probado |
+| §11.2 | Nadador inactivo no cuenta | Ficha con `active = 0` | Cumplido y probado |
+| §11.3 | Alta posterior no cuenta hasta regenerar | Ficha añadida tras generar; luego se regenera | Cumplido y probado |
+| §11.4 | Retirado antes de generar no cuenta | Ficha borrada y regeneración | Cumplido y probado |
+| §11.5 | Gestor con ficha activa cuenta; sin ficha no | Gestor 64 con y sin ficha activa; administrador sin ficha | Cumplido y probado |
+| §11.6 | ≤ 25 usuarios: 9,00 € | `Calculator::cost()` con 0 y 25 | Cumplido y probado |
+| §11.7 | 36 usuarios: 14,50 € | Cálculo y generación real con 36 fichas | Cumplido y probado |
+| §11.8 | ≥ 105 usuarios: 49,00 € | 105 y 300 (49,00 €); 104 (48,50 €) | Cumplido y probado |
+| §11.9 | Mes sin sesiones habilitadas: 9,00 € | Marzo de 2027 sin sesiones, con una habilitada posterior y con una deshabilitada | Cumplido y probado |
+| §11.10 | Generar dos veces deja un único resumen, el último | Dos generaciones y tres procesos simultáneos | Cumplido y probado |
+| §11.11 | Solo el mes en curso; un mes terminado no cambia | Generar en noviembre tras desactivar fichas no toca octubre | Cumplido y probado |
+| §11.12 | Usa la tarifa vigente al generar | Cambio de tarifa y regeneración: 10 + 16 × 0,75 = 22,00 € | Cumplido y probado |
+| §11.13 | Día 20 sin resumen: genera «sistema»; con manual, no | Días 19 y 20, manual posterior y manual previa | Cumplido y probado |
+| §11.14 | Sin cron, abrir la sección o los ajustes genera | Llamada a `maybeAutoGenerate()` desde ambas pantallas; resumen real del 28/10 generado así | Cumplido y probado |
+| §11.15 | Nadador no ve la sección ni el CSV | HTML del panel como nadador y capacidad | Cumplido y probado |
+| §11.16 | Gestor no genera ni cambia valores; administrador sí | Capacidades de gestor y administrador | Cumplido y probado |
+| §11.17 | Neto = pago − coste | 10 × 15,00 − 19,50 = 130,50 € | Cumplido y probado |
+| §11.18 | Solo cuentan los vinculados al club | 10 vinculados de 46 activos | Cumplido y probado |
+| §11.19 | Neto negativo: «CN Nazarí debe al Sulayr X €», sin arrastre | 10 × 1,00 − 19,50 y mes siguiente | Cumplido y probado |
+| §11.20 | Sin importe: «pendiente»; se completa al regenerar | Importe vacío y luego configurado | Cumplido y probado |
+| §11.21 | Registro con usuario, fecha y hora, anterior y nuevo | Cuatro cambios anotados; guardar sin cambios no anota | Cumplido y probado |
+| §11.22 | Validación de los ajustes | Negativo, tres decimales, usuarios no enteros, tope < base; acepta ceros | Cumplido y probado |
+| §11.23 | Provisional, definitivo, sin generar | Estados e histórico desde el mes de instalación | Cumplido y probado |
+| §11.24 | Cada resumen muestra quién y cuándo | Campo «Generado» en panel y ajustes | Cumplido y probado |

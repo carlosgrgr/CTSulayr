@@ -42,6 +42,15 @@ El archivo principal registra un autoload `SulayrReservas\` → `src/` y arranca
 | `Sync\SyncService` | Lee el club y actualiza la ficha local de reservas |
 | `Sync\SyncLog` | Escribe y lista el registro técnico del blog 1 |
 | `Sync\ClubSync` | Botón del perfil, guardado automático y pantalla del registro |
+| `Billing\Tariff` | Valores económicos de la facturación, en céntimos |
+| `Billing\Calculator` | Coste del sistema, pago por deportistas y neto. Sin base de datos |
+| `Billing\Money` | Céntimos ↔ texto en euros y lectura de importes escritos a mano |
+| `Billing\BillingSettings` | Tarifa, mes de instalación y registro de cambios del blog 2 |
+| `Billing\SummaryService` | Genera, lee y da estado a los resúmenes mensuales |
+| `Billing\SummaryFormatter` | Textos comunes del resumen para `wp-admin` y el panel |
+| `Billing\BillingCron` | Tarea diaria `sulayr_billing_daily` del blog 2 |
+| `Admin\BillingSettingsPage` | Ajustes de facturación en el `wp-admin` del blog 2 |
+| `Front\BillingView` | Sección «Facturación» del panel |
 
 `BlogContext` no cambia de sitio si la configuración es inválida. No hace falta volver a comprobar el identificador en cada clase si la operación ya entra por `onClub()` o `onBookings()`.
 
@@ -50,7 +59,7 @@ El archivo principal registra un autoload `SulayrReservas\` → `src/` y arranca
 | Sitio | Blog | Dominio | Prefijo actual | Tablas del plugin |
 |---|---|---|---|---|
 | Club Triatlón Sulayr | 1 | `clubtriatlonsulayr.local.com` | `wp_` | `wp_sulayr_swim_sync_log` |
-| Reservas CN Nazarí | 2 | `cnnazari.clubtriatlonsulayr.local.com` | `wp_2_` | `wp_2_sulayr_swim_sessions`, `wp_2_sulayr_swim_bookings`, `wp_2_sulayr_swim_months`, `wp_2_sulayr_swim_swimmers` |
+| Reservas CN Nazarí | 2 | `cnnazari.clubtriatlonsulayr.local.com` | `wp_2_` | `wp_2_sulayr_swim_sessions`, `wp_2_sulayr_swim_bookings`, `wp_2_sulayr_swim_months`, `wp_2_sulayr_swim_swimmers`, `wp_2_sulayr_billing_summaries`, `wp_2_sulayr_billing_users`, `wp_2_sulayr_billing_changes` |
 
 El club conserva deportistas, ACF y el rol `athlete`. Reservas conserva sesiones, reservas, meses generados y la ficha local del nadador. El registro técnico de sincronización vive en el club.
 
@@ -73,6 +82,8 @@ El rol también recibe `read`, igual que `athlete` en el club. Sin esa capacidad
 | `sulayr_cancel_any` | no | sí | sí |
 | `sulayr_manage_swimmers` | no | sí | sí |
 | `sulayr_manage_sessions` | no | sí | sí |
+| `sulayr_view_billing` | no | sí | sí |
+| `sulayr_manage_billing` | no | no | sí |
 
 Correspondencia con el SPEC:
 
@@ -85,6 +96,8 @@ Correspondencia con el SPEC:
 - Cancelar cualquier reserva: `sulayr_cancel_any`.
 - Alta, consulta, activación, desactivación y eliminación de nadadores: `sulayr_manage_swimmers`.
 - Capacidad, habilitar o deshabilitar una sesión y generar el mes: `sulayr_manage_sessions`.
+- Ver la sección «Facturación» y exportar su CSV: `sulayr_view_billing` (SPEC-FACTURACION 8.1).
+- Cambiar la tarifa y el importe por deportista, y generar el resumen mensual: `sulayr_manage_billing` (SPEC-FACTURACION 4.3 y 7.1). Nunca la recibe `gestor`. Va en `Capabilities::administratorOnlyNames()`; `syncAdministrator()` usa `administratorNames()` para no retirarla.
 
 Los roles se guardan en las opciones del blog 2. No se crean en el blog 1. Al administrador del blog 2 solo se le añaden o retiran capacidades con prefijo `sulayr_`. No se toca el resto de sus capacidades ni ningún rol del club.
 
@@ -122,7 +135,7 @@ Si una capacidad `sulayr_` deja de estar en el mapa, se retira de `nadador`, `ge
 
 ### Esquema de base de datos
 
-La versión actual es `1`, opción `sulayr_reservas_db_version` en cada sitio. Una modificación futura sube esa versión y pasa por `dbDelta` o por una migración explícita. Si el cambio puede alterar datos existentes, la migración tiene que conservarlos. Una actualización del esquema no borra datos. La versión no se marca como instalada si falta alguna tabla prevista.
+La versión actual es `3`, opción `sulayr_reservas_db_version` en cada sitio. La `3` añade las tablas de facturación del blog 2. La versión de roles (`sulayr_reservas_roles_version`) es `2`, por las capacidades de facturación. Una modificación futura sube esa versión y pasa por `dbDelta` o por una migración explícita. Si el cambio puede alterar datos existentes, la migración tiene que conservarlos. Una actualización del esquema no borra datos. La versión no se marca como instalada si falta alguna tabla prevista.
 
 ### Concurrencia de las reservas
 
@@ -394,3 +407,31 @@ El listado de la fase 10 ganó un contador y un filtro por origen. No cambia el 
 El filtro añade `origen=todos|nazari|sulayr`. `todos` no se escribe en la URL. Se combina con `estado` y `q`. `swimmers()` traduce `nazari` a `linked_to_club = 0` y `sulayr` a `linked_to_club = 1`. La columna Origen muestra «CN Nazarí» o «CT Sulayr». La ficha sigue diciendo «Alta manual» o «Vinculado al club».
 
 Ordenar conserva `origen`. **Exportar CSV** recibe el mismo `origen` y exporta las filas filtradas. El archivo no añade una columna de origen: sigue siendo nombre, apellidos, email, teléfono, estado, fecha de alta y límite semanal. El desplegable «Reservar para» no usa este filtro.
+
+## Facturación
+
+Implementa [SPEC-FACTURACION-RESERVAS.md](../../../docs/reservas/SPEC-FACTURACION-RESERVAS.md). Todo vive en el blog 2. No añade ganchos a alta, baja, activación, retirada ni sincronización: solo lee `sulayr_swim_swimmers` y `sulayr_swim_sessions` al generar.
+
+### Datos
+
+- `sulayr_billing_summaries`: un resumen por mes, clave `billing_month` (`YYYY-MM`). Guarda los contadores, si el mes tiene sesiones, la tarifa e importe por deportista vigentes al generar, coste, pago y neto en céntimos, y quién y cuándo. `athlete_amount_cents`, `athletes_payment_cents` y `net_cents` son `NULL` cuando la liquidación está pendiente. `generated_by = 0` y `generated_by_name = 'sistema'` en la generación automática.
+- `sulayr_billing_users`: la foto de nadadores activos de cada resumen, con nombre, apellidos y `linked_to_club`. Sin DNI, teléfono ni correo.
+- `sulayr_billing_changes`: registro de cambios de la tarifa y del importe por deportista. Valores guardados como texto (`9.00`, `25` o vacío). Las cuatro filas iniciales tienen `user_id = 0`, `user_name = 'sistema'` y valor anterior vacío; se muestran como «valor inicial».
+- Opciones del blog 2: `sulayr_billing_tariff` (array en céntimos) y `sulayr_billing_start_month` (mes de instalación). Las crea `BillingSettings::bootstrapIfNeeded()` en la primera carga del blog 2 con el esquema `3`.
+
+### Generación
+
+`SummaryService::generate()` solo trabaja con el mes de la fecha que recibe, que en producción es siempre «ahora». No hay forma de pedir otro mes, así que un mes terminado no se regenera. Toma `GET_LOCK('sulayr_billing_<prefijo><mes>')` para poner en serie dos generaciones del mismo mes, y dentro de una transacción lee los activos y las sesiones, borra el resumen y la lista anteriores e inserta los nuevos. Si algo falla, `ROLLBACK`.
+
+`maybeAutoGenerate()` actúa desde el día 20 si el mes no tiene resumen. Vuelve a comprobarlo dentro del cerrojo, para no pisar una generación manual que acabe de terminar. La llaman la tarea diaria `sulayr_billing_daily`, la página de ajustes y la sección del panel.
+
+### Pantallas
+
+- `wp-admin` del blog 2 → menú **Facturación** (`sulayr-facturacion`), con `sulayr_manage_billing`. Los formularios van por `admin-post.php` (`sulayr_billing_save`, `sulayr_billing_generate`) con nonce. El gestor no llega: no tiene la capacidad y `AdminAccess` lo saca del escritorio.
+- Panel → `?sulayr_vista=facturacion`, con `sulayr_view_billing`. `&mes=YYYY-MM` abre el detalle con la lista y **Exportar CSV** (acción `billing_export` de `PanelActions`, nonce `sulayr_panel`). La sección muestra una versión resumida: estado, nadadores, deportistas CT Sulayr, nadadores CN Nazarí, tarifa aplicada y un bloque destacado `dl.sulayr-billing-formula` (precio base, usuarios adicionales, coste total, pago de CT Sulayr, cálculo final). El registro de cambios y la fórmula paso a paso solo están en `wp-admin`.
+
+### Pruebas
+
+Script en el árbol de trabajo, fuera del repositorio, ejecutado con `wp eval-file` en el blog 2 el 28 de octubre de 2026. Cubre los 24 criterios de la sección 11 con fichas ficticias (`user_id` ≥ 990000) y fechas fijas, y deja los datos como estaban. 0 fallos. Además: HTML de la sección como gestor (se ve) y como nadador (ni sección ni enlace), página de ajustes como administrador, CSV con BOM y `;`, y tres generaciones simultáneas del mismo mes (un resumen y 30 filas, sin duplicados).
+
+Pendiente: ver las pantallas en el navegador a 390 px y a escritorio, y probar la tarea diaria con WP-Cron real. En local `DISABLE_WP_CRON` no está activo, pero el cron solo corre con visitas.
