@@ -94,3 +94,33 @@ add_action( 'wp_enqueue_scripts', function () {
 	wp_dequeue_style( 'js_composer_front' );   // WPBakery
 	wp_dequeue_script( 'wpb_composer_front_js' );
 }, 100 );
+
+// En el corte en el que Astra apila el sidebar, pliega las categorías.
+add_action( 'wp_enqueue_scripts', function () {
+	if ( ! function_exists( 'is_shop' ) ) {
+		return;
+	}
+	if ( ! ( is_shop() || is_product_taxonomy() || is_product() ) ) {
+		return;
+	}
+
+	$path = get_stylesheet_directory() . '/assets/js/shop-categories.js';
+	wp_enqueue_script(
+		'ct-sulayr-shop-categories',
+		get_stylesheet_directory_uri() . '/assets/js/shop-categories.js',
+		array(),
+		is_readable( $path ) ? (string) filemtime( $path ) : '1.0.0',
+		true
+	);
+}, 30 );
+
+// Limitar menú sidebar a las páginas de productos (no carrito, checkout, cuenta)
+add_filter( 'astra_page_layout', function ( $layout ) {
+	if ( is_shop() || is_product_taxonomy() ) {
+		return 'left-sidebar';
+	}
+	if ( is_cart() || is_checkout() || is_account_page() ) {
+		return 'no-sidebar';
+	}
+	return $layout;
+}, 20 );

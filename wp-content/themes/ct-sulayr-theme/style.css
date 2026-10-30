@@ -136,3 +136,118 @@ a:hover, a:focus { color: var(--sulayr-noche); }
 @media (max-width: 781px) { .wp-block-cover.is-style-sulayr-cumbres { padding-top: 120px !important; padding-bottom: 130px !important; } }
 .entry-content h1, .entry-content h2, h1, h2, .is-style-sulayr-display { font-weight: 900; }
 /* ===== FIN SECCIONES HOME SULAYR ===== */
+
+/* Tienda: cuando Astra apila el sidebar (clase ast-header-break-point),
+   queda arriba del listado y las categorías se pliegan. */
+body.ast-header-break-point.woocommerce.ast-left-sidebar #content > .ast-container {
+	flex-direction: column;
+}
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary {
+	width: 100%;
+	margin: 1.5rem 0 1.25rem;
+	padding: 0;
+}
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .widget-title {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin: 0;
+	min-height: 44px;
+	padding: 12px 16px;
+	background: var(--sulayr-noche);
+	color: var(--sulayr-nieve);
+	font-family: var(--sulayr-mono);
+	font-size: 12px;
+	font-weight: 600;
+	font-style: normal;
+	font-stretch: 100%;
+	letter-spacing: 0.14em;
+	line-height: 1.2;
+	text-transform: uppercase;
+	border-radius: 4px;
+	cursor: pointer;
+}
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .widget-title::after {
+	content: "";
+	width: 0.45em;
+	height: 0.45em;
+	border-right: 2px solid var(--sulayr-cielo);
+	border-bottom: 2px solid var(--sulayr-cielo);
+	transform: translateY(-2px) rotate(45deg);
+	flex: none;
+}
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .widget.is-open .widget-title::after {
+	transform: translateY(2px) rotate(225deg);
+}
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .widget-title:focus-visible {
+	outline: 2px solid var(--sulayr-acento);
+	outline-offset: 3px;
+}
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .sulayr-cat-panel {
+	display: none;
+}
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .widget.is-open .sulayr-cat-panel {
+	display: block;
+	margin-top: 8px;
+	background: #fff;
+	border: 1px solid #D6DCE5;
+	border-radius: 4px;
+}
+/* El grupo del widget es una rejilla de columnas de 12rem: una sola columna a todo el ancho. */
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .sulayr-cat-panel .wp-block-group {
+	display: block;
+	width: 100%;
+	max-width: none;
+}
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .wc-block-product-categories,
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .wc-block-product-categories-list,
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary ul.product-categories {
+	width: 100%;
+	max-width: 100%;
+}
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .wc-block-product-categories-list,
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary ul.product-categories {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .wc-block-product-categories-list-item,
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary ul.product-categories li {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+	width: 100%;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0 14px;
+	border-top: 1px solid #E3E8EF;
+	line-height: 1.4;
+}
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .wc-block-product-categories-list-item:first-child,
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary ul.product-categories > li:first-child {
+	border-top: 0;
+}
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .wc-block-product-categories-list-item a,
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary ul.product-categories li a {
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: 12px 0;
+	color: var(--sulayr-noche);
+	font-weight: 600;
+	text-decoration: none;
+}
+body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .wc-block-product-categories-list-item-count {
+	margin-left: auto;
+	flex: none;
+	color: var(--sulayr-texto2);
+	font-family: var(--sulayr-mono);
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+}
+@media (prefers-reduced-motion: no-preference) {
+	body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .widget-title::after {
+		transition: transform 0.15s ease;
+	}
+}
