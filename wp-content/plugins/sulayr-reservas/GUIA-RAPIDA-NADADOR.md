@@ -124,3 +124,39 @@ En el menú, pulsa **Cerrar sesión**.
 | «Se ha alcanzado el máximo de reservas de la semana» | Cancela otra de esa semana o reserva en la siguiente |
 | «Ya no se puede cancelar esta reserva» | Falta menos de una hora. |
 | No aparece el botón **Cancelar** | Falta menos de una hora, o la sesión ya empezó |
+
+## 12. Acceso directo en el móvil
+
+Pon la web de reservas en la pantalla de inicio del móvil para abrirla con un toque, como una aplicación más. Hazlo una sola vez.
+
+Las imágenes de este apartado son dibujos orientativos. Los menús pueden cambiar un poco según el modelo y la versión del móvil.
+
+### iPhone (Safari)
+
+![Botón Compartir en Safari](docs/guia-nadador/15-iphone-compartir.png)
+
+![Opción Añadir a pantalla de inicio](docs/guia-nadador/16-iphone-anadir-inicio.png)
+
+![Confirmar con Añadir](docs/guia-nadador/17-iphone-confirmar.png)
+
+1. Abre la web de reservas en **Safari** y pulsa el botón **Compartir** (el cuadrado con una flecha hacia arriba). En las versiones más recientes está dentro del botón **···**.
+2. Baja y pulsa **Añadir a pantalla de inicio**. Si no aparece, pulsa antes **Ver más**.
+3. Si quieres, cambia el nombre, por ejemplo «Reservas natación».
+4. Pulsa **Añadir**.
+
+### Android (Chrome)
+
+![Menú de Chrome con Añadir a pantalla de inicio](docs/guia-nadador/18-android-menu.png)
+
+![Confirmar con Añadir](docs/guia-nadador/19-android-confirmar.png)
+
+1. Abre la web de reservas en **Chrome** y pulsa el botón de los tres puntos, arriba a la derecha.
+2. Pulsa **Añadir a pantalla de inicio**. En algunos móviles pone **Instalar aplicación**.
+3. Si quieres, cambia el nombre.
+4. Pulsa **Añadir**. Si el móvil lo pide, confirma otra vez con **Añadir**.
+
+### Resultado
+
+![Icono de reservas en la pantalla de inicio](docs/guia-nadador/20-pantalla-inicio.png)
+
+El icono aparece en la pantalla de inicio. Si ya has iniciado sesión, al abrirlo entras directamente.
