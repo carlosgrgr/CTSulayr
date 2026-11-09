@@ -1,7 +1,7 @@
 # SPEC — Tienda online: nombre en los tritrajes y exportación de pedidos
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr`
-**Estado:** Validada el 9 de noviembre de 2026, decisiones D1 a D11 (sección 2). T1 y T2 implementadas y probadas en local el 9 de noviembre de 2026 en la rama `tienda-online` (sección 9). Sin commit, sin fusionar en `main` y sin desplegar en PROD.
+**Estado:** Decisiones D1 a D12 (sección 2). T1 a T3 en `main` (`2f9e0503f`) y en PROD desde el 9 de noviembre de 2026. El cambio T4 (D12, columnas propias para las opciones que no son talla) está implementado y probado en local el 9 de noviembre de 2026 en la rama `tienda-columnas-atributos`, sin commit ni despliegue (sección 9).
 **Fecha:** 9 de noviembre de 2026
 
 La tienda ya funciona con WooCommerce en el sitio del club (blog 1): catálogo de equipación 2025-2026, carrito y compra. Esta spec cubre lo que falta: que el cliente pueda indicar un nombre para estampar en los tritrajes, y que el club pueda exportar los pedidos seleccionados a CSV para enviarlos al fabricante (Inverse).
@@ -39,6 +39,7 @@ La tienda ya funciona con WooCommerce en el sitio del club (blog 1): catálogo d
 | D9 | Letras admitidas: A–Z, Á, É, Í, Ó, Ú, Ü y Ñ. Se rechazan la cedilla y los acentos que no son del español (À, Ç, Ø…). |
 | D10 | El CSV incluye todas las prendas de los pedidos seleccionados, tengan nombre o no. |
 | D11 | Cada pedido exportado recibe una nota privada con la fecha de exportación. |
+| D12 | En el CSV, la columna Talla solo lleva tallas. Cada opción de prenda que no es talla (hoy, «Cremallera» de la sudadera) tiene su propia columna. Decidido por el club el 9 de noviembre de 2026, tras el despliegue. |
 
 ## 3. Especificación funcional
 
@@ -103,11 +104,13 @@ Si el producto no tiene la casilla marcada, cualquier valor recibido se ignora.
   | Email             | Email de facturación                                             |
   | Teléfono          | Teléfono de facturación                                          |
   | Producto          | Nombre del producto padre, sin la talla                          |
-  | Talla             | Valor del atributo Talla; si hay más atributos, se añaden con «/» (p. ej. «M / Con cremallera») |
+  | Talla             | Valor de las opciones cuyo nombre empieza por «Talla» («Talla», «Talla Wabiks»…). Si hubiera varias, se unen con « / » |
+  | Una por opción    | Una columna por cada opción de variación que no es talla, con su nombre visible como cabecera (hoy solo «Cremallera»). Vacía en las prendas que no tienen esa opción |
   | Cantidad          | Cantidad de la línea                                             |
   | Nombre a estampar | Texto guardado, o vacío                                          |
 
 - Orden: por número de pedido ascendente y, dentro de cada pedido, en el orden de las líneas.
+- Las columnas de opciones salen de los productos variables publicados, no de los pedidos marcados, para que el CSV tenga siempre las mismas columnas. Van entre Talla y Cantidad, en el orden en que aparecen en el catálogo. Si un pedido trae una opción que ya no está en el catálogo (producto retirado), su columna se añade al final de las opciones (D12).
 - Los valores que empiezan por `=`, `+`, `-` o `@` llevan delante un apóstrofo, para que Excel no los interprete como fórmulas. Excepción: los que solo tienen cifras, espacios, paréntesis y puntos tras el signo, como los teléfonos («+34 600 000 000»), se dejan igual.
 - Cada pedido exportado recibe una nota privada «Incluido en la exportación de equipación del dd/mm/aaaa hh:mm.» Así se sabe qué pedidos ya se han enviado al fabricante (D11).
 
@@ -154,6 +157,7 @@ Convenciones del plugin del club: espacios, arrays cortos `[]`, condiciones Yoda
 | T1   | `PrintNameField`: casilla, campo, validación, carrito, pedido, correos, Mi cuenta y «Pedir de nuevo». |
 | T2   | `OrdersCsvExport`: acción en lote, CSV y notas. |
 | T3   | Pruebas (sección 7), documentación y despliegue (sección 8). |
+| T4   | D12: columnas propias para las opciones que no son talla. |
 
 ## 7. Criterios de aceptación
 
@@ -189,9 +193,10 @@ Se prueban en local con los productos de la exportación de PROD importados (sin
 
 | Fase | Estado |
 | ---- | ------ |
-| T1   | Implementada y probada en local el 9 de noviembre de 2026 (`PrintNameField`). Sin commit. |
-| T2   | Implementada y probada en local el 9 de noviembre de 2026 (`OrdersCsvExport`). Sin commit. |
-| T3   | Pruebas en local hechas y documentación al día (esta spec, `docs/FASES.md`, `docs/PRIORIDADES.md` y el manual `club-triatlon-sulayr/MANUAL-TIENDA.md`). Pendiente: commit, fusión en `main` y despliegue en PROD (sección 8). |
+| T1   | Cerrada (`PrintNameField`). En `main` (`2f9e0503f`) y en PROD el 9 de noviembre de 2026. |
+| T2   | Cerrada (`OrdersCsvExport`). En `main` (`2f9e0503f`) y en PROD el 9 de noviembre de 2026. |
+| T3   | Cerrada. Pruebas en local, documentación (esta spec, `docs/FASES.md`, `docs/PRIORIDADES.md` y `club-triatlon-sulayr/MANUAL-TIENDA.md`) y despliegue en PROD el 9 de noviembre de 2026. |
+| T4   | Implementada y probada en local el 9 de noviembre de 2026 en la rama `tienda-columnas-atributos` (9.3). Sin commit ni despliegue. |
 
 ### 9.1. Pruebas en local (9 de noviembre de 2026)
 
@@ -209,7 +214,28 @@ Con los productos de PROD importados, scripts `wp eval-file` y peticiones HTTP c
 | 7.14 | Probado en HPOS. En la pantalla clásica solo se comprobó que la acción está registrada y aparece en el desplegable: en local HPOS está activo y no se cambió para la prueba. |
 | 7.15 | Cumplido y probado. Las 66 páginas de la prueba general y las 47 comprobaciones funcionales de los dos sitios dan el mismo resultado que antes. |
 
-### 9.2. Hallazgos durante la implementación
+### 9.2. Comprobación en PROD (9 de noviembre de 2026)
+
+Sin sesión y solo con peticiones de lectura:
+
+- La caja «Nombre a estampar (opcional)» aparece en los 4 tritrajes (2670, 2676, 2682 y 2688) y no en la sudadera ni en el maillot de manga corta: la casilla está marcada donde toca.
+- La prueba general del frontal (53 páginas de los sitemaps y rutas clave, y 150 recursos) da el mismo resultado que antes del despliegue: sin errores PHP visibles ni recursos rotos.
+
+No se ha comprobado en PROD, porque requiere sesión de administrador o crear pedidos: el aviso de validación al añadir al carrito, el nombre en un pedido real y la acción «Exportar equipación a CSV» en la lista de pedidos (sección 8, paso 3, y `MANUAL-TIENDA.md`, apartado 8).
+
+### 9.3. T4: columnas de opciones (9 de noviembre de 2026)
+
+Implementada en `OrdersCsvExport` y probada en local en la rama `tienda-columnas-atributos`. Sin commit ni despliegue.
+
+- Cabecera: `Pedido;Fecha;Estado;Cliente;Email;Teléfono;Producto;Talla;Cremallera;Cantidad;"Nombre a estampar"`. La sudadera sale con «M» en Talla y «Con cremallera» en Cremallera; los tritrajes, con Cremallera vacía. Comprobado con la exportación real desde la lista de pedidos.
+- «Talla» y «Talla Wabiks» cuentan como tallas; «Cremallera», no.
+- Una opción que solo está en un pedido añade su columna al final de las opciones.
+- Con el producto borrado después del pedido, la opción sigue en su columna («cremallera» de la línea se lee como «Cremallera»).
+- Las 38 comprobaciones de pedidos, correos y CSV y la prueba general de la web dan el mismo resultado que antes, sin errores PHP nuevos.
+
+Al desplegar no hay que marcar nada: basta con el código.
+
+### 9.4. Hallazgos durante la implementación
 
 - El 9 de noviembre de 2026, a las 18:57, se borraron en local desde la administración las 4 cuotas (2425 a 2428) y los calcetines Wabiks (2390). `SubscriptionProducts::ensure_products()` volvió a crear las cuotas (2520 a 2529) y dejó publicadas dos veces «Suplemento Natación» y «Natación para directiva»: dos peticiones simultáneas las crearon a la vez. No afecta a esta spec y no se ha corregido. Los calcetines no existen en local.
 

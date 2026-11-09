@@ -10,7 +10,7 @@ El orden es el de la lista. Definir una tarea no adelanta las siguientes.
 | Orden | Tarea                              | Estado                      | Documento cercano                                                                   |
 | ----- | ---------------------------------- | --------------------------- | ----------------------------------------------------------------------------------- |
 | 1     | Facturación Reservas               | Cerrada, desplegada en PROD | [SPEC-FACTURACION-RESERVAS.md](reservas/SPEC-FACTURACION-RESERVAS.md)               |
-| 2     | Tienda online                      | Implementada en local       | [SPEC-TIENDA-ONLINE.md](club/SPEC-TIENDA-ONLINE.md)                                 |
+| 2     | Tienda online                      | En PROD; ajuste T4 en local | [SPEC-TIENDA-ONLINE.md](club/SPEC-TIENDA-ONLINE.md)                                 |
 | 3     | Pago online                        | Pendiente de definir        | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) |
 | 4     | Rentabilidad frente a SportEasy    | Valorada                    | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) |
 | 5     | Consentimiento legal (RGPD y LOPD) | Pendiente de definir        | Mención en el borrador de cobros                                                    |
@@ -28,7 +28,7 @@ Esta prioridad es esa spec. Está cerrada, en `main` y desplegada en PROD el 28 
 
 WooCommerce ya está en el sitio del club, con el catálogo de equipación 2025-2026 en PROD. El área del deportista es Mi cuenta.
 
-[SPEC-TIENDA-ONLINE.md](club/SPEC-TIENDA-ONLINE.md) define lo que falta: nombre a estampar en los tritrajes y exportación a CSV de los pedidos seleccionados. Validada el 9 de noviembre de 2026 (decisiones D1 a D11). Implementada y probada en local en la rama `tienda-online`, sin commit. Falta fusionarla en `main` y desplegarla en PROD. El plugin es `club-triatlon-sulayr`.
+[SPEC-TIENDA-ONLINE.md](club/SPEC-TIENDA-ONLINE.md) define lo que falta: nombre a estampar en los tritrajes y exportación a CSV de los pedidos seleccionados. En `main` (`2f9e0503f`) y desplegada en PROD el 9 de noviembre de 2026. El ajuste T4 (D12: la cremallera en su propia columna del CSV) está implementado y probado en local en la rama `tienda-columnas-atributos`, sin commit ni despliegue. El plugin es `club-triatlon-sulayr`.
 
 ## 3. Pago online
 

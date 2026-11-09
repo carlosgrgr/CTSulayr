@@ -73,7 +73,7 @@ class OrdersCsvExport {
         $rows   = self::build_rows( $orders );
         self::add_export_notes( $orders, $rows );
 
-        $this->send_csv( $rows );
+        $this->send_csv( $rows, self::extra_columns( $rows, self::catalog_attribute_labels() ) );
         exit;
     }
 
@@ -101,32 +101,105 @@ class OrdersCsvExport {
     }
 
     /**
-     * Cabecera del CSV.
+     * Indica si una opción de la prenda es una talla («Talla», «Talla Wabiks»…).
+     * Las tallas van a la columna Talla; el resto, a una columna propia (D12).
+     *
+     * @param   string $label Nombre visible de la opción.
+     * @return 	bool
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function is_size_label( string $label ): bool {
+        return 0 === strpos( mb_strtolower( trim( $label ), 'UTF-8' ), 'talla' );
+    }
+
+    /**
+     * Nombres de las opciones de variación del catálogo publicado que no son
+     * tallas (hoy, «Cremallera»). Así las columnas no cambian según qué
+     * pedidos se marquen.
      *
      * @return 	string[]
      * @access 	public
      * @package	club-triatlon-sulayr
      */
-    public static function header(): array {
-        return [
-            __( 'Pedido', SULAYR_TEXTDOMAIN ),
-            __( 'Fecha', SULAYR_TEXTDOMAIN ),
-            __( 'Estado', SULAYR_TEXTDOMAIN ),
-            __( 'Cliente', SULAYR_TEXTDOMAIN ),
-            __( 'Email', SULAYR_TEXTDOMAIN ),
-            __( 'Teléfono', SULAYR_TEXTDOMAIN ),
-            __( 'Producto', SULAYR_TEXTDOMAIN ),
-            __( 'Talla', SULAYR_TEXTDOMAIN ),
-            __( 'Cantidad', SULAYR_TEXTDOMAIN ),
-            __( 'Nombre a estampar', SULAYR_TEXTDOMAIN ),
-        ];
+    public static function catalog_attribute_labels(): array {
+        $labels   = [];
+        $products = wc_get_products(
+            [
+                'type'   => 'variable',
+                'status' => 'publish',
+                'limit'  => -1,
+            ]
+        );
+        foreach ( $products as $product ) {
+            foreach ( $product->get_attributes() as $attribute ) {
+                if ( ! $attribute->get_variation() ) {
+                    continue;
+                }
+                $label = wc_attribute_label( $attribute->get_name(), $product );
+                if ( ! self::is_size_label( $label ) ) {
+                    $labels[] = $label;
+                }
+            }
+        }
+
+        return array_values( array_unique( $labels ) );
+    }
+
+    /**
+     * Columnas de opciones: las del catálogo y, después, las que solo aparezcan
+     * en los pedidos (p. ej. de un producto ya retirado).
+     *
+     * @param   array    $rows    Filas de build_rows().
+     * @param   string[] $catalog Opciones del catálogo.
+     * @return 	string[]
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function extra_columns( array $rows, array $catalog ): array {
+        $columns = $catalog;
+        foreach ( $rows as $row ) {
+            foreach ( array_keys( $row['options'] ) as $label ) {
+                $columns[] = $label;
+            }
+        }
+
+        return array_values( array_unique( $columns ) );
+    }
+
+    /**
+     * Cabecera del CSV.
+     *
+     * @param   string[] $extra Columnas de opciones (extra_columns()).
+     * @return 	string[]
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function header( array $extra = [] ): array {
+        return array_merge(
+            [
+                __( 'Pedido', SULAYR_TEXTDOMAIN ),
+                __( 'Fecha', SULAYR_TEXTDOMAIN ),
+                __( 'Estado', SULAYR_TEXTDOMAIN ),
+                __( 'Cliente', SULAYR_TEXTDOMAIN ),
+                __( 'Email', SULAYR_TEXTDOMAIN ),
+                __( 'Teléfono', SULAYR_TEXTDOMAIN ),
+                __( 'Producto', SULAYR_TEXTDOMAIN ),
+                __( 'Talla', SULAYR_TEXTDOMAIN ),
+            ],
+            $extra,
+            [
+                __( 'Cantidad', SULAYR_TEXTDOMAIN ),
+                __( 'Nombre a estampar', SULAYR_TEXTDOMAIN ),
+            ]
+        );
     }
 
     /**
      * Una fila por prenda (línea no virtual) de cada pedido (D10).
      *
      * @param   \WC_Order[] $orders Pedidos.
-     * @return 	array<int, array{order_id: int, cells: string[]}>
+     * @return 	array<int, array{order_id: int, order: string[], product: string, size: string, options: array<string, string>, quantity: string, print_name: string}>
      * @access 	public
      * @package	club-triatlon-sulayr
      */
@@ -149,22 +222,52 @@ class OrdersCsvExport {
                     continue;
                 }
 
+                $sizes   = [];
+                $options = [];
+                foreach ( self::attributes( $item, $product ) as $label => $value ) {
+                    if ( self::is_size_label( $label ) ) {
+                        $sizes[] = $value;
+                    } else {
+                        $options[ $label ] = $value;
+                    }
+                }
+
                 $rows[] = [
-                    'order_id' => $order->get_id(),
-                    'cells'    => array_merge(
-                        $common,
-                        [
-                            self::product_name( $item ),
-                            self::attributes( $item, $product ),
-                            (string) $item->get_quantity(),
-                            (string) $item->get_meta( PrintNameField::ITEM_KEY ),
-                        ]
-                    ),
+                    'order_id'   => $order->get_id(),
+                    'order'      => $common,
+                    'product'    => self::product_name( $item ),
+                    'size'       => implode( ' / ', $sizes ),
+                    'options'    => $options,
+                    'quantity'   => (string) $item->get_quantity(),
+                    'print_name' => (string) $item->get_meta( PrintNameField::ITEM_KEY ),
                 ];
             }
         }
 
         return $rows;
+    }
+
+    /**
+     * Celdas de una fila, en el orden de header().
+     *
+     * @param   array    $row   Fila de build_rows().
+     * @param   string[] $extra Columnas de opciones.
+     * @return 	string[]
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function cells( array $row, array $extra ): array {
+        $options = [];
+        foreach ( $extra as $label ) {
+            $options[] = isset( $row['options'][ $label ] ) ? $row['options'][ $label ] : '';
+        }
+
+        return array_merge(
+            $row['order'],
+            [ $row['product'], $row['size'] ],
+            $options,
+            [ $row['quantity'], $row['print_name'] ]
+        );
     }
 
     /**
@@ -197,15 +300,16 @@ class OrdersCsvExport {
      *
      * @param   resource $handle Destino.
      * @param   array    $rows   Filas de build_rows().
+     * @param   string[] $extra  Columnas de opciones (extra_columns()).
      * @return 	void
      * @access 	public
      * @package	club-triatlon-sulayr
      */
-    public static function write_csv( $handle, array $rows ): void {
+    public static function write_csv( $handle, array $rows, array $extra ): void {
         fwrite( $handle, "\xEF\xBB\xBF" );
-        fputcsv( $handle, self::header(), ';', '"', '' );
+        fputcsv( $handle, self::header( $extra ), ';', '"', '' );
         foreach ( $rows as $row ) {
-            fputcsv( $handle, array_map( [ self::class, 'safe_cell' ], $row['cells'] ), ';', '"', '' );
+            fputcsv( $handle, array_map( [ self::class, 'safe_cell' ], self::cells( $row, $extra ) ), ';', '"', '' );
         }
     }
 
@@ -246,19 +350,20 @@ class OrdersCsvExport {
     }
 
     /**
-     * Valores de los atributos de la variación, separados por « / »
-     * (p. ej. «M / Con cremallera»).
+     * Opciones de la variación como nombre visible => valor
+     * (p. ej. [ 'Talla' => 'M', 'Cremallera' => 'Con cremallera' ]).
      *
      * @param   \WC_Order_Item_Product $item    Línea.
      * @param   \WC_Product|false|null $product Producto de la línea.
-     * @return 	string
+     * @return 	array<string, string>
      * @access 	private
      * @package	club-triatlon-sulayr
      */
-    private static function attributes( $item, $product ): string {
+    private static function attributes( $item, $product ): array {
         $values = [];
 
         if ( $product && $product->is_type( 'variation' ) ) {
+            $parent = wc_get_product( $product->get_parent_id() );
             foreach ( array_keys( $product->get_attributes() ) as $key ) {
                 $value = (string) $item->get_meta( $key );
                 if ( '' === $value ) {
@@ -268,30 +373,34 @@ class OrdersCsvExport {
                     $term  = get_term_by( 'slug', $value, $key );
                     $value = $term ? $term->name : $value;
                 }
-                $values[] = $value;
+                $values[ wc_attribute_label( $key, $parent ? $parent : '' ) ] = $value;
             }
-            return implode( ' / ', $values );
+            return $values;
         }
 
         // Producto borrado: se usan los metadatos visibles de la línea.
         foreach ( $item->get_formatted_meta_data( '' ) as $meta ) {
             if ( PrintNameField::ITEM_KEY !== $meta->key ) {
-                $values[] = trim( wp_strip_all_tags( $meta->display_value ) );
+                // Sin producto, la etiqueta puede llegar en minúsculas («cremallera»).
+                $label = trim( wp_strip_all_tags( $meta->display_key ) );
+                $label = mb_strtoupper( mb_substr( $label, 0, 1, 'UTF-8' ), 'UTF-8' ) . mb_substr( $label, 1, null, 'UTF-8' );
+                $values[ $label ] = trim( wp_strip_all_tags( $meta->display_value ) );
             }
         }
 
-        return implode( ' / ', $values );
+        return $values;
     }
 
     /**
      * Envía el CSV como descarga.
      *
-     * @param   array $rows Filas de build_rows().
+     * @param   array    $rows  Filas de build_rows().
+     * @param   string[] $extra Columnas de opciones.
      * @return 	void
      * @access 	private
      * @package	club-triatlon-sulayr
      */
-    private function send_csv( array $rows ): void {
+    private function send_csv( array $rows, array $extra ): void {
         $filename = 'equipacion-pedidos-' . wp_date( 'Ymd-Hi' ) . '.csv';
 
         nocache_headers();
@@ -300,7 +409,7 @@ class OrdersCsvExport {
         header( 'X-Content-Type-Options: nosniff' );
 
         $out = fopen( 'php://output', 'w' );
-        self::write_csv( $out, $rows );
+        self::write_csv( $out, $rows, $extra );
         fclose( $out );
     }
 }

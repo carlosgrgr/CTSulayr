@@ -45,11 +45,12 @@ Si el cliente pide un cambio antes de enviar el pedido al fabricante:
 3. En **Acciones en lote**, elige **Exportar equipación a CSV** y pulsa **Aplicar**.
 4. Se descarga `equipacion-pedidos-AAAAMMDD-HHMM.csv`. Se abre directamente con Excel.
 
-El archivo tiene una fila por prenda, con estas columnas: **Pedido**, **Fecha**, **Estado**, **Cliente**, **Email**, **Teléfono**, **Producto**, **Talla**, **Cantidad** y **Nombre a estampar**.
+El archivo tiene una fila por prenda, con estas columnas: **Pedido**, **Fecha**, **Estado**, **Cliente**, **Email**, **Teléfono**, **Producto**, **Talla**, **Cremallera**, **Cantidad** y **Nombre a estampar**.
 
 - Salen todas las prendas de los pedidos marcados, lleven nombre o no. Las que no llevan nombre tienen esa columna vacía.
 - Las cuotas no salen: no son prendas.
-- Si una prenda tiene más de una opción (por ejemplo, la sudadera), la columna **Talla** muestra las dos: «M / Con cremallera».
+- La columna **Talla** solo lleva la talla. La opción de la sudadera va en **Cremallera** («Con cremallera» o «Sin cremallera»); en el resto de prendas esa columna va vacía.
+- Si algún día se añade otra opción a una prenda (por ejemplo, «Color»), el CSV le crea su propia columna, entre **Talla** y **Cantidad**.
 
 ## 6. Saber qué pedidos ya se han exportado
 
