@@ -97,12 +97,9 @@ class CFF_Support
 			return;
 		}
 
-		wp_enqueue_style(
-			'cff-fira-code-font',
-			'https://fonts.googleapis.com/css2?family=Fira+Code&display=swap',
-			false,
-			CFFVER
-		);
+		// Fira Code was loaded from Google Fonts (external CDN, disallowed by
+		// WP.org). Dropped — the code sample falls back to the system monospace
+		// font, with no external request.
 
 		wp_enqueue_style(
 			'support-style',
@@ -154,6 +151,10 @@ class CFF_Support
 			);
 		}
 
+		// Plain text, shown with v-text. wp_localize_script() decodes the entities esc_html() adds,
+		// so this string can never go through v-html (SMASH-2496).
+		$system_info = self::to_plain_text($this->get_system_info());
+
 		$return = array(
 			'admin_url' 		=> admin_url(),
 			'ajax_handler'		=> admin_url('admin-ajax.php'),
@@ -161,8 +162,8 @@ class CFF_Support
 			'links'				=> \CustomFacebookFeed\Builder\CFF_Feed_Builder::get_links_with_utm(),
 			'supportPageUrl'    => admin_url('admin.php?page=cff-support'),
 			'siteSearchUrl'     => 'https://smashballoon.com/search/?utm_campaign=facebook-free&utm_source=support&utm_medium=search',
-			'system_info'       => $this->get_system_info(),
-			'system_info_n'     => str_replace("</br>", "\n", $this->get_system_info()),
+			'system_info'       => $system_info,
+			'system_info_n'     => $system_info,
 			'feeds'             => $feeds,
 			'supportUrl'        => $this->get_support_url(),
 			'svgIcons'          => CFF_Feed_Builder::builder_svg_icons(),
@@ -278,6 +279,20 @@ class CFF_Support
 		);
 
 		return $return;
+	}
+
+	/**
+	 * Turns the system info markup into plain text: line breaks become newlines.
+	 *
+	 * @since 4.14.1
+	 *
+	 * @param string $system_info System info with "</br>" line breaks.
+	 *
+	 * @return string
+	 */
+	public static function to_plain_text($system_info)
+	{
+		return str_replace(array( '</br>', '<br>', '<br/>', '<br />' ), "\n", $system_info);
 	}
 
 	/**

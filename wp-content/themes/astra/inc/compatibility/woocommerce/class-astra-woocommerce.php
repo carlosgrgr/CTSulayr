@@ -3504,7 +3504,10 @@ if ( ! class_exists( 'Astra_Woocommerce' ) ) {
 			/** @psalm-suppress RedundantConditionGivenDocblockType */ // phpcs:ignore Generic.Commenting.DocComment.MissingShort
 			$cart_count = null !== WC()->cart ? WC()->cart->get_cart_contents_count() : 0;
 			/** @psalm-suppress RedundantConditionGivenDocblockType */ // phpcs:ignore Generic.Commenting.DocComment.MissingShort
-			$aria_label = $cart_count > 0 ? "View Shopping Cart, {$cart_count} items" : 'View Shopping Cart, empty';
+			$aria_label = $cart_count > 0
+				/* translators: %d: number of items in the cart. */
+				? sprintf( _n( 'View Shopping Cart, %d item', 'View Shopping Cart, %d items', $cart_count, 'astra' ), $cart_count )
+				: __( 'View Shopping Cart, empty', 'astra' );
 
 			$cart_total_label_position = astra_get_option( 'woo-header-cart-icon-total-label-position' );
 			?>
@@ -3708,7 +3711,8 @@ if ( ! class_exists( 'Astra_Woocommerce' ) ) {
 		public function single_product_category() {
 			/** @psalm-suppress InvalidGlobal */ // phpcs:ignore Generic.Commenting.DocComment.MissingShort
 			global $product;
-			echo '<span class="single-product-category">' . wp_kses_post( wc_get_product_category_list( $product->get_id(), ', ' ) ) . '</span>';
+			$category_list = wc_get_product_category_list( $product->get_id(), ', ' );
+			echo '<span class="single-product-category">' . wp_kses_post( is_string( $category_list ) ? $category_list : '' ) . '</span>';
 		}
 
 		/**

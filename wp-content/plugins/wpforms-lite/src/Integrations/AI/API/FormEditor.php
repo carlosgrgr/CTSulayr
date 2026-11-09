@@ -109,17 +109,18 @@ class FormEditor extends API {
 		$allowed_scopes = ( new BuilderFormEditor() )->get_allowed_scopes();
 
 		$body = [
-			'scope'            => $scope,
-			'sessionId'        => $session_id,
-			'form'             => $this->get_prepared_form_data( $form_data ),
-			'prompt'           => $this->prepare_prompt( $prompt ),
-			'lite'             => ! wpforms()->is_pro(),
-			'addons'           => $this->get_addons(),
-			'gdpr'             => wpforms_setting( 'gdpr' ),
-			'pagebreak'        => true,
-			'debug'            => defined( 'WPFORMS_AI_DEBUG' ) && WPFORMS_AI_DEBUG,
-			'global_settings'  => $this->get_global_settings(),
-			'supports_restore' => isset( $allowed_scopes['restore'] ),
+			'scope'                   => $scope,
+			'sessionId'               => $session_id,
+			'form'                    => $this->get_prepared_form_data( $form_data ),
+			'prompt'                  => $this->prepare_prompt( $prompt ),
+			'lite'                    => ! wpforms()->is_pro(),
+			'addons'                  => $this->get_addons(),
+			'gdpr'                    => wpforms_setting( 'gdpr' ),
+			'pagebreak'               => true,
+			'debug'                   => defined( 'WPFORMS_AI_DEBUG' ) && WPFORMS_AI_DEBUG,
+			'global_settings'         => $this->get_global_settings(),
+			'supports_restore'        => isset( $allowed_scopes['restore'] ),
+			'supports_checkbox_other' => wpforms_field_supports_other_choice( [ 'type' => 'checkbox' ] ),
 		];
 
 		// Analyze scope includes the conversation history.
@@ -141,11 +142,12 @@ class FormEditor extends API {
 
 		$addons_obj = wpforms()->obj( 'addons' );
 
-		if ( ! $addons_obj ) {
-			return [];
-		}
+		// Active payment gateways without a field are reported so the AI can point to the Payments panel.
+		$addons = Helpers::get_active_gateway_addons();
 
-		$addons = [];
+		if ( ! $addons_obj ) {
+			return $addons;
+		}
 
 		// Get the current version of the Quiz addon.
 		$quiz_version = defined( 'WPFORMS_QUIZ_VERSION' ) ? WPFORMS_QUIZ_VERSION : '';

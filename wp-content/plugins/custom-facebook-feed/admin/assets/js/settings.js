@@ -1,9 +1,18 @@
 var cffSettings;
 
+// Tab index → template id. Advanced keeps 'app-4' so the existing
+// v-if="selected === 'app-4'" in tab/advanced.php keeps matching; the new
+// Debug tab is inserted before Advanced and gets 'app-5'.
+var CFF_TAB_ID_MAP = { 0: 'app-1', 1: 'app-2', 2: 'app-3', 3: 'app-5', 4: 'app-4' };
+
 // Declaring as global variable for quick prototyping
 var settings_data = {
     adminUrl: cff_settings.admin_url,
     nonce: cff_settings.nonce,
+    // Distinct from `nonce` above -- the install/activate-plugin AJAX handlers
+    // (cff_install_addon / cff_activate_addon) check the 'cff-admin' nonce
+    // action, not 'cff_admin_nonce' (SBR-510). See installOrActivateWPVibe().
+    addonNonce: cff_settings.addonNonce,
     ajaxHandler: cff_settings.ajax_handler,
     model: cff_settings.model,
     feeds: cff_settings.feeds,
@@ -24,6 +33,7 @@ var settings_data = {
     feedsTab: cff_settings.feedsTab,
     translationTab: cff_settings.translationTab,
     advancedTab: cff_settings.advancedTab,
+    debugTab: cff_settings.debugTab,
     upgradeUrl: cff_settings.upgradeUrl,
     footerUpgradeUrl: cff_settings.footerUpgradeUrl,
     supportPageUrl: cff_settings.supportPageUrl,
@@ -38,7 +48,7 @@ var settings_data = {
     currentView: null,
     selected: null,
     current: 0,
-    sections: ["General", "Feeds", "Translation", "Advanced"],
+    sections: ["General", "Feeds", "Translation", "Data Sharing", "Advanced"],
     indicator_width: 0,
     indicator_pos: 0,
     forwards: true,
@@ -51,6 +61,7 @@ var settings_data = {
     exportSVG: cff_settings.exportSVG,
     reloadSVG: cff_settings.reloadSVG,
     tooltipHelpSvg: cff_settings.tooltipHelpSvg,
+    wpvibeInstallStatus: null,
     tooltip : {
         text : '',
         hover : false
@@ -113,7 +124,7 @@ var settings_data = {
 Vue.component("tab", {
     props: ["section", "index"],
     template: `
-        <button type="button" class="tab" :id="'cff-settings-tab-' + section.toLowerCase().trim()" role="tab" :aria-selected="section === $parent.currentTab ? 'true' : 'false'" :aria-controls="'cff-panel-' + section.toLowerCase().trim()" :tabindex="section === $parent.currentTab ? 0 : -1" @click="emitWidth($el);changeComponent(index);activeTab(section)" @keydown="onTabKeydown">{{section}}</button>
+        <button type="button" class="tab" :id="'cff-settings-tab-' + section.toLowerCase().trim().split(' ').join('-')" role="tab" :aria-selected="section === $parent.currentTab ? 'true' : 'false'" :aria-controls="'cff-panel-' + section.toLowerCase().trim().split(' ').join('-')" :tabindex="section === $parent.currentTab ? 0 : -1" @click="emitWidth($el);changeComponent(index);activeTab(section)" @keydown="onTabKeydown">{{section}}</button>
     `,
     created: () => {
         let urlParams = new URLSearchParams(window.location.search);
@@ -137,7 +148,7 @@ Vue.component("tab", {
             } else if (prev > index) {
                 settings_data.forwards = true;
             }
-            settings_data.selected = "app-" + (index + 1);
+            settings_data.selected = CFF_TAB_ID_MAP[index] || 'app-1';
             settings_data.current = index;
 
             // get the pro cta banner offset
@@ -150,7 +161,7 @@ Vue.component("tab", {
             }, 400);
         },
         activeTab: function(section) {
-            this.setView(section.toLowerCase().trim());
+            this.setView(section.toLowerCase().trim().split(' ').join('-'));
             settings_data.currentTab = section;
         },
         setView: function(section) {
@@ -189,7 +200,28 @@ var cffSettings = new Vue({
         emulateHTTP: true
     },
     data: settings_data,
+    watch: {
+        // Invariant: when data-sharing consent is on, in-plugin notifications
+        // must also be on. The Debug tab template disables the notifications
+        // checkbox while DSC is true; this enforces the model side so a stale
+        // DSC=true/notif=false combination can't persist on save.
+        'model.debug.sbc_data_sharing_consent': {
+            // No `immediate` — only enforce DSC => notifications when the user
+            // actually toggles data-sharing on. Running on load would overwrite
+            // the persisted notifications flag (and mark the form dirty) before
+            // the user touches anything. The saved flags are already consistent
+            // and the notifications checkbox is locked while DSC is on.
+            handler: function (newVal) {
+                if (newVal && this.model && this.model.debug) {
+                    this.model.debug.sbc_in_plugin_notifications = true;
+                }
+            }
+        }
+    },
     created: function() {
+        // Snapshot the consent toggles as loaded so a save only writes consent
+        // when the user actually changed them (never re-submits a stale value).
+        this.loadedConsent = JSON.stringify(this.model.debug);
         this.$nextTick(function() {
             let tabEl = document.querySelector('.tab');
             settings_data.indicator_width = tabEl.offsetWidth;
@@ -202,14 +234,40 @@ var cffSettings = new Vue({
         var self = this;
         // set the current view page on page load
         let activeEl = document.querySelector('button.tab#cff-settings-tab-' + settings_data.currentView);
+        // Fall back to the first tab if the URL carries an unknown ?view= value,
+        // so an invalid view never leaves activeEl null and throws below.
+        if (!activeEl) {
+            activeEl = document.querySelector('button.tab');
+        }
         // we have to uppercase the first letter
         let currentView = settings_data.currentView.charAt(0).toUpperCase() + settings_data.currentView.slice(1);
-        let viewIndex = settings_data.sections.indexOf(currentView) + 1;
-        settings_data.indicator_width = activeEl.offsetWidth;
-        settings_data.indicator_pos = activeEl.offsetLeft;
-        settings_data.selected = "app-" + viewIndex;
-        settings_data.current = viewIndex;
-        settings_data.currentTab = currentView;
+        let viewIndex = settings_data.sections.findIndex(function (s) { return s.toLowerCase().trim().split(' ').join('-') === settings_data.currentView; });
+        if (activeEl) {
+            settings_data.indicator_width = activeEl.offsetWidth;
+            settings_data.indicator_pos = activeEl.offsetLeft;
+        }
+
+        // On a hard refresh, the measurement above can run before the tab web
+        // font swaps in, leaving the underline indicator narrower/offset (worst
+        // on later tabs). Re-measure the active tab once fonts/layout settle and
+        // on resize. Keyed off currentTab so it stays correct after navigation.
+        var sbReindicateTab = function () {
+            var active = settings_data.currentTab;
+            if (!active) { return; }
+            var el = document.querySelector('button.tab#cff-settings-tab-' + active.toLowerCase().trim().split(' ').join('-'));
+            if (el) {
+                settings_data.indicator_width = el.offsetWidth;
+                settings_data.indicator_pos = el.offsetLeft;
+            }
+        };
+        if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') {
+            document.fonts.ready.then(function () { sbReindicateTab(); });
+        }
+        window.addEventListener('load', sbReindicateTab);
+        window.addEventListener('resize', sbReindicateTab);
+        settings_data.selected = CFF_TAB_ID_MAP[viewIndex] || 'app-1';
+        settings_data.current = viewIndex < 0 ? 0 : viewIndex;
+        settings_data.currentTab = settings_data.sections[viewIndex < 0 ? 0 : viewIndex];
 
         setTimeout(function(){
             settings_data.appLoaded = true;
@@ -544,7 +602,14 @@ var cffSettings = new Vue({
             let data = new FormData();
             data.append( 'action', 'cff_save_settings' );
             data.append( 'nonce', this.nonce );
-            data.append( 'model', JSON.stringify( this.model ) );
+            // Snapshot what is actually sent, so a toggle flipped while this save is
+            // in flight is still treated as a change on the next save.
+            let sentConsent = JSON.stringify(this.model.debug);
+            data.append( 'model', JSON.stringify(Object.assign({}, this.model, {
+                // Omit consent unless the user changed it on this page, so a stale
+                // tab can never silently turn data sharing back on.
+                debug: sentConsent !== this.loadedConsent ? this.model.debug : undefined
+            })) );
             data.append( 'cff_license_key', this.licenseKey );
             data.append( 'extensions_license_key', JSON.stringify( this.extensionsLicenseKey ) );
             fetch(this.ajaxHandler, {
@@ -561,6 +626,13 @@ var cffSettings = new Vue({
 
                 this.cronNextCheck = data.data.cronNextCheck;
                 this.btnStatus = 'success';
+                this.loadedConsent = sentConsent;
+                // Resync MCP Write Access with what the server stored: a stale ON is
+                // refused, and the next save must compare against this value.
+                if ( typeof data.data.aiWriteEnabled !== 'undefined' ) {
+                    this.model.advanced.cff_ai_write_enabled = data.data.aiWriteEnabled;
+                    this.model.advanced.cff_ai_write_enabled_loaded = data.data.aiWriteEnabled;
+                }
                 setTimeout(function() {
                     this.btnStatus = null;
                 }.bind(this), 3000);
@@ -947,6 +1019,87 @@ var cffSettings = new Vue({
         viewSourceInstances : function(source){
             var self = this;
             self.viewsActive.instanceSourceActive = source;
+        },
+
+        /**
+         * The AI Agents card's current display state.
+         *
+         * Mirrors the WPVibe install/activation status from PHP, except a
+         * failed install/activate attempt takes over the display until the
+         * user retries. Ported from custom-facebook-feed-pro (SBR-510).
+         *
+         * @since 4.14
+         *
+         * @return string 'not_installed' | 'inactive' | 'active' | 'installFailed'
+         */
+        aiAgentsState: function () {
+            if (this.wpvibeInstallStatus === 'failed') {
+                return 'installFailed';
+            }
+            return this.generalTab.aiAgents.status;
+        },
+
+        /**
+         * Open WPVibe's own admin page.
+         *
+         * @since 4.14
+         */
+        openWPVibe: function () {
+            window.location.href = this.generalTab.aiAgents.adminUrl;
+        },
+
+        /**
+         * Install or activate WPVibe for the AI Agents card.
+         *
+         * Reuses the existing cff_install_addon / cff_activate_addon AJAX
+         * actions -- no new installer, capability, or nonce is introduced.
+         * Sends `addonNonce` (action 'cff-admin'), NOT the settings page's own
+         * `nonce` (action 'cff_admin_nonce') -- the two handlers check
+         * different nonce actions (SBR-510).
+         *
+         * @since 4.14
+         */
+        installOrActivateWPVibe: function () {
+            let self = this,
+                aiAgents = self.generalTab.aiAgents,
+                isInstalled = aiAgents.status !== 'not_installed',
+                action = isInstalled ? 'cff_activate_addon' : 'cff_install_addon',
+                pluginParam = isInstalled ? aiAgents.basename : aiAgents.installDownloadUrl;
+
+            self.wpvibeInstallStatus = 'loading';
+
+            let data = new FormData();
+            data.append('action', action);
+            data.append('nonce', self.addonNonce);
+            data.append('type', 'plugin');
+            data.append('plugin', pluginParam);
+            fetch(self.ajaxHandler, {
+                method: "POST",
+                credentials: 'same-origin',
+                body: data
+            })
+                .then(response => response.json())
+                .then(function (response) {
+                    if (response.success !== true) {
+                        self.wpvibeInstallStatus = 'failed';
+                        return;
+                    }
+
+                    self.wpvibeInstallStatus = null;
+
+                    if (action === 'cff_install_addon') {
+                        if (response.data && response.data.basename) {
+                            aiAgents.basename = response.data.basename;
+                        }
+                        aiAgents.status = (response.data && response.data.is_activated) ? 'active' : 'inactive';
+                        return;
+                    }
+
+                    aiAgents.status = 'active';
+                })
+                .catch(function () {
+                    self.wpvibeInstallStatus = 'failed';
+                });
         },
     }
 });

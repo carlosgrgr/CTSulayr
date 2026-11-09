@@ -2,11 +2,7 @@
 
 namespace WPForms\Admin\Dashboard;
 
-use WPForms\Integrations\Stripe\Helpers as StripeHelpers;
-use WPForms\Integrations\Square\Helpers as SquareHelpers;
-use WPForms\Integrations\PayPalCommerce\Connection as PayPalCommerceConnection;
-use WPFormsAuthorizeNet\Helpers as AuthorizeNetHelpers;
-use WPFormsMercadoPago\Helpers as MercadoPagoHelpers;
+use WPForms\Helpers\PaymentGatewayDetector;
 
 /**
  * Dashboard shared helpers.
@@ -53,13 +49,7 @@ class Helpers {
 	 */
 	public static function is_payment_gateway_connected(): bool {
 
-		$paypal_connection = PayPalCommerceConnection::get();
-
-		return StripeHelpers::has_stripe_keys()
-			|| SquareHelpers::is_square_configured()
-			|| ( $paypal_connection && $paypal_connection->is_configured() )
-			|| ( class_exists( AuthorizeNetHelpers::class ) && AuthorizeNetHelpers::has_authorize_net_keys() )
-			|| ( class_exists( MercadoPagoHelpers::class ) && MercadoPagoHelpers::is_configured() );
+		return PaymentGatewayDetector::is_any_payment_gateway_configured();
 	}
 
 	/**

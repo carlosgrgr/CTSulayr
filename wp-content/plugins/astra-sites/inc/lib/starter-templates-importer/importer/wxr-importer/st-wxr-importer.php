@@ -32,6 +32,14 @@ class ST_WXR_Importer {
 	private static $instance = null;
 
 	/**
+	 * Whether download_file() is sideloading an import file.
+	 *
+	 * @since 1.1.44
+	 * @var bool
+	 */
+	private static $is_downloading_import_file = false;
+
+	/**
 	 * Transient key for WXR import progress.
 	 *
 	 * @since 1.1.24
@@ -66,6 +74,16 @@ class ST_WXR_Importer {
 	private $last_heartbeat = 0;
 
 	/**
+	 * Unique token identifying this request as the lock owner. A worker whose
+	 * lock was reclaimed (stale heartbeat) can neither resurrect the lock nor
+	 * clobber the lock of the worker that replaced it.
+	 *
+	 * @since 1.1.39
+	 * @var string
+	 */
+	private $lock_owner = '';
+
+	/**
 	 * Initiator of this class.
 	 *
 	 * @since 1.0.0
@@ -98,7 +116,10 @@ class ST_WXR_Importer {
 
 		// To handle the multiple WXR import requests.
 		add_action( 'import_start', array( $this, 'wxr_import_transient_start' ) );
-		add_action( 'import_end', array( $this, 'wxr_import_transient_cleanup' ) );
+		// Keep the lock alive on import_end rather than releasing it — import_end
+		// fires before the remap callbacks below and before sse_import() finishes;
+		// the terminal state is written by sse_import()'s explicit cleanups.
+		add_action( 'import_end', array( $this, 'refresh_wxr_import_heartbeat' ) );
 
 		// SureDonation auto-creates a default form when a campaign is published.
 		// The imported WXR already carries the campaign's real form, so suppress
@@ -196,13 +217,13 @@ class ST_WXR_Importer {
 	public function after_imported_post( $post_id, $original_id, $postdata, $data ) {
 		// Log individual post import.
 		ST_Importer_Log::add(
-			'success',
 			sprintf(
 				'Post imported successfully: ID %d, Type: %s, Original ID: %d',
 				$post_id,
 				$data['post_type'],
 				$original_id
 			),
+			'success',
 			array(
 				'post_id'     => $post_id,
 				'post_type'   => $data['post_type'],
@@ -466,7 +487,7 @@ class ST_WXR_Importer {
 	 * Rewriting the demo base to the imported site's URL keeps the tail
 	 * path intact, which is what the substring match keys on.
 	 *
-	 * @since 1.1.42
+	 * @since 1.1.43
 	 *
 	 * @param int $group_id Imported access group ID.
 	 * @return void
@@ -594,27 +615,43 @@ class ST_WXR_Importer {
 	}
 
 	/**
-	 * Add .xml files as supported format in the uploader.
+	 * Allow SVG uploads for trusted users.
 	 *
 	 * @since 1.1.5 Added SVG file support.
+	 * @since 1.1.44 Trusted users only; dropped XML and JSON.
 	 *
 	 * @since 1.0.0
 	 *
 	 * @param array $mimes Already supported mime types.
+	 * @return array
 	 */
 	public function custom_upload_mimes( $mimes ) {
+
+		if ( ! $this->can_upload_svg() ) {
+			return $mimes;
+		}
 
 		// Allow SVG files.
 		$mimes['svg']  = 'image/svg+xml';
 		$mimes['svgz'] = 'image/svg+xml';
 
-		// Allow XML files.
-		$mimes['xml'] = 'text/xml';
-
-		// Allow JSON files.
-		$mimes['json'] = 'application/json';
-
 		return $mimes;
+	}
+
+	/**
+	 * Check if the user can upload SVG files.
+	 *
+	 * @since 1.1.44
+	 *
+	 * @return bool
+	 */
+	private function can_upload_svg() {
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			return true;
+		}
+
+		// SVG can hold scripts, like core `html`. WPForms import uses `customize`.
+		return ( current_user_can( 'manage_options' ) || current_user_can( 'customize' ) ) && current_user_can( 'unfiltered_html' );
 	}
 
 	/**
@@ -623,6 +660,9 @@ class ST_WXR_Importer {
 	 * @since 1.1.24
 	 */
 	public function wxr_import_transient_start() {
+		if ( '' === $this->lock_owner ) {
+			$this->lock_owner = uniqid( '', true );
+		}
 		$this->is_importing   = true;
 		$this->last_heartbeat = time();
 		set_transient(
@@ -630,19 +670,52 @@ class ST_WXR_Importer {
 			array(
 				'status'    => 'ongoing',
 				'heartbeat' => $this->last_heartbeat,
+				'owner'     => $this->lock_owner,
 			),
-			300
-		); // 5 minutes.
+			2 * $this->wxr_import_stale_after()
+		);
+	}
+
+	/**
+	 * Seconds after which an untouched heartbeat marks the import as dead.
+	 * Sized above the worst-case single-item time (a capped 60s attachment
+	 * download plus unbounded thumbnail generation on slow hosts).
+	 *
+	 * @since 1.1.39
+	 * @return int
+	 */
+	private function wxr_import_stale_after() {
+		return 5 * MINUTE_IN_SECONDS;
 	}
 
 	/**
 	 * WXR Import Transient Cleanup
 	 *
 	 * @since 1.1.24
+	 * @since 1.1.39 Added the `$error` parameter so a failed import's outcome is
+	 *               relayed to reconnecting clients instead of reading as success.
+	 *
+	 * @param string|false $error User-facing error message when the import failed, false on success.
 	 */
-	public function wxr_import_transient_cleanup() {
+	public function wxr_import_transient_cleanup( $error = false ) {
 		$this->is_importing = false;
-		set_transient( $this->wxr_import_progress_key, 'completed', 30 ); // 30 seconds.
+
+		// If another worker reclaimed the lock after ours went stale, leave
+		// its lock untouched — writing 'completed' here would end that
+		// worker's import in the eyes of reconnecting clients.
+		$lock = get_transient( $this->wxr_import_progress_key );
+		if ( is_array( $lock ) && ! empty( $lock['owner'] ) && '' !== $this->lock_owner && $lock['owner'] !== $this->lock_owner ) {
+			return;
+		}
+
+		set_transient(
+			$this->wxr_import_progress_key,
+			array(
+				'status' => 'completed',
+				'error'  => is_string( $error ) ? $error : false,
+			),
+			30
+		); // 30 seconds.
 	}
 
 	/**
@@ -658,14 +731,22 @@ class ST_WXR_Importer {
 			return;
 		}
 
+		// Never resurrect a reclaimed lock or clobber another worker's — only
+		// refresh a lock this request still owns.
+		$lock = get_transient( $this->wxr_import_progress_key );
+		if ( ! is_array( $lock ) || empty( $lock['owner'] ) || $lock['owner'] !== $this->lock_owner ) {
+			return;
+		}
+
 		$this->last_heartbeat = time();
 		set_transient(
 			$this->wxr_import_progress_key,
 			array(
 				'status'    => 'ongoing',
 				'heartbeat' => $this->last_heartbeat,
+				'owner'     => $this->lock_owner,
 			),
-			300
+			2 * $this->wxr_import_stale_after()
 		);
 	}
 
@@ -682,10 +763,20 @@ class ST_WXR_Importer {
 			return false;
 		}
 
-		if ( 'completed' === $wxr_progress ) {
+		$status = is_array( $wxr_progress ) && isset( $wxr_progress['status'] ) ? $wxr_progress['status'] : $wxr_progress;
+
+		if ( 'completed' === $status ) {
+			// A just-finished import only matters to SSE reconnects; direct
+			// callers (WP-CLI) importing another file should proceed.
+			if ( ! wp_doing_ajax() ) {
+				return false;
+			}
+
+			// Relay the stored outcome — a failed or crashed import must not be
+			// reported back to a reconnecting client as a success.
 			$data = array(
 				'action' => 'complete',
-				'error'  => false,
+				'error'  => is_array( $wxr_progress ) && ! empty( $wxr_progress['error'] ) ? $wxr_progress['error'] : false,
 			);
 		} else {
 			// An import is marked ongoing — make sure its worker is still alive.
@@ -693,7 +784,7 @@ class ST_WXR_Importer {
 			// ran (uncatchable fatal or killed connection); clear the lock so the
 			// import can restart instead of leaving the client reconnecting forever.
 			$heartbeat = is_array( $wxr_progress ) && isset( $wxr_progress['heartbeat'] ) ? (int) $wxr_progress['heartbeat'] : 0;
-			if ( ( time() - $heartbeat ) > 2 * MINUTE_IN_SECONDS ) {
+			if ( ( time() - $heartbeat ) > $this->wxr_import_stale_after() ) {
 				delete_transient( $this->wxr_import_progress_key );
 				return false;
 			}
@@ -720,8 +811,8 @@ class ST_WXR_Importer {
 	public function sse_import( $xml_url = '' ) {
 		// Log import start.
 		ST_Importer_Log::add(
-			'info',
 			'WXR import process started',
+			'info',
 			array(
 				'xml_url_provided' => ! empty( $xml_url ),
 			)
@@ -735,8 +826,8 @@ class ST_WXR_Importer {
 			if ( ! current_user_can( 'manage_options' ) ) {
 				// Log permission error.
 				ST_Importer_Log::add(
-					'error',
 					'Permission denied: User lacks manage_options capability',
+					'error',
 					array(
 						'user_id'   => get_current_user_id(),
 						'user_caps' => current_user_can( 'manage_options' ) ? 'true' : 'false',
@@ -751,7 +842,7 @@ class ST_WXR_Importer {
 			}
 
 			// Start the event stream.
-			header( 'Content-Type: text/event-stream, charset=UTF-8' );
+			header( 'Content-Type: text/event-stream; charset=UTF-8' );
 			header( 'Cache-Control: no-cache' );
 			header( 'Connection: keep-alive' );
 			// Turn off PHP output compression.
@@ -793,19 +884,20 @@ class ST_WXR_Importer {
 		if ( empty( $xml_url ) ) {
 			// Log validation error - empty XML URL.
 			ST_Importer_Log::add(
-				'fatal',
 				'XML file URL is empty or not provided',
+				'fatal',
 				array(
 					'xml_url' => $xml_url,
 					'xml_id'  => isset( $_REQUEST['xml_id'] ) ? absint( $_REQUEST['xml_id'] ) : '',
 				)
 			);
 
-			$this->wxr_import_transient_cleanup();
+			$error_message = __( 'Template content file not found or inaccessible. The import process cannot continue without the content file. Please try importing again.', 'astra-sites' );
+			$this->wxr_import_transient_cleanup( $error_message );
 			$this->emit_sse_message(
 				array(
 					'action' => 'complete',
-					'error'  => __( 'Template content file not found or inaccessible. The import process cannot continue without the content file. Please try importing again.', 'astra-sites' ),
+					'error'  => $error_message,
 				)
 			);
 			if ( wp_doing_ajax() ) {
@@ -817,18 +909,19 @@ class ST_WXR_Importer {
 		if ( ! file_exists( $xml_url ) ) {
 			// Log validation error - file does not exist.
 			ST_Importer_Log::add(
-				'fatal',
 				'XML file does not exist on server',
+				'fatal',
 				array(
 					'xml_url' => $xml_url,
 				)
 			);
 
-			$this->wxr_import_transient_cleanup();
+			$error_message = __( 'Template content file does not exist on the server. The file may have been deleted or moved. Please try re-importing the template.', 'astra-sites' );
+			$this->wxr_import_transient_cleanup( $error_message );
 			$this->emit_sse_message(
 				array(
 					'action' => 'complete',
-					'error'  => __( 'Template content file does not exist on the server. The file may have been deleted or moved. Please try re-importing the template.', 'astra-sites' ),
+					'error'  => $error_message,
 				)
 			);
 			if ( wp_doing_ajax() ) {
@@ -840,19 +933,20 @@ class ST_WXR_Importer {
 		if ( ! is_readable( $xml_url ) ) {
 			// Log validation error - file not readable.
 			ST_Importer_Log::add(
-				'fatal',
 				'XML file is not readable due to file permission issues',
+				'fatal',
 				array(
 					'xml_url'    => $xml_url,
 					'file_perms' => substr( sprintf( '%o', fileperms( $xml_url ) ), -4 ),
 				)
 			);
 
-			$this->wxr_import_transient_cleanup();
+			$error_message = __( 'Template content file cannot be read due to file permission issues. Please contact your hosting provider to fix file permissions.', 'astra-sites' );
+			$this->wxr_import_transient_cleanup( $error_message );
 			$this->emit_sse_message(
 				array(
 					'action' => 'complete',
-					'error'  => __( 'Template content file cannot be read due to file permission issues. Please contact your hosting provider to fix file permissions.', 'astra-sites' ),
+					'error'  => $error_message,
 				)
 			);
 			if ( wp_doing_ajax() ) {
@@ -930,8 +1024,8 @@ class ST_WXR_Importer {
 
 		// Log import progress started.
 		ST_Importer_Log::add(
-			'info',
 			'Starting WXR file import process',
+			'info',
 			array(
 				'xml_url'   => $xml_url,
 				'file_size' => filesize( $xml_url ),
@@ -949,8 +1043,8 @@ class ST_WXR_Importer {
 		} catch ( \Exception $e ) {
 			// Log exception during import.
 			ST_Importer_Log::add(
-				'error',
 				'Exception caught during WXR import: ' . $e->getMessage(),
+				'error',
 				array(
 					'exception_message' => $e->getMessage(),
 					'exception_code'    => $e->getCode(),
@@ -958,11 +1052,12 @@ class ST_WXR_Importer {
 				)
 			);
 
-			$this->wxr_import_transient_cleanup();
+			$error_message = $this->get_contextual_import_error_message( $e->getMessage() );
+			$this->wxr_import_transient_cleanup( $error_message );
 			$this->emit_sse_message(
 				array(
 					'action'    => 'complete',
-					'error'     => $this->get_contextual_import_error_message( $e->getMessage() ),
+					'error'     => $error_message,
 					'technical' => $e->getMessage(),
 				)
 			);
@@ -973,8 +1068,8 @@ class ST_WXR_Importer {
 		} catch ( \Error $e ) {
 			// Log fatal error during import.
 			ST_Importer_Log::add(
-				'fatal',
 				'Fatal error occurred during WXR import: ' . $e->getMessage(),
+				'fatal',
 				array(
 					'error_message' => $e->getMessage(),
 					'error_code'    => $e->getCode(),
@@ -982,11 +1077,12 @@ class ST_WXR_Importer {
 				)
 			);
 
-			$this->wxr_import_transient_cleanup();
+			$error_message = __( 'A fatal error occurred during import, likely due to server resource limitations. Try a different template, or contact your hosting provider to increase server resources.', 'astra-sites' );
+			$this->wxr_import_transient_cleanup( $error_message );
 			$this->emit_sse_message(
 				array(
 					'action'    => 'complete',
-					'error'     => __( 'A fatal error occurred during import, likely due to server resource limitations. Try a different template, or contact your hosting provider to increase server resources.', 'astra-sites' ),
+					'error'     => $error_message,
 					'technical' => $e->getMessage(),
 				)
 			);
@@ -1004,8 +1100,8 @@ class ST_WXR_Importer {
 		if ( is_wp_error( $response ) ) {
 			// Log WP_Error response.
 			ST_Importer_Log::add(
-				'error',
 				'WP_Error returned from WXR importer: ' . $response->get_error_message(),
+				'error',
 				array(
 					'error_message' => $response->get_error_message(),
 					'error_code'    => $response->get_error_code(),
@@ -1018,8 +1114,8 @@ class ST_WXR_Importer {
 		} else {
 			// Log successful import completion.
 			ST_Importer_Log::add(
-				'success',
 				'WXR import completed successfully',
+				'success',
 				array(
 					'xml_url' => $xml_url,
 				)
@@ -1033,7 +1129,8 @@ class ST_WXR_Importer {
 
 		// Release the lock on every exit path — a WP_Error returned before
 		// `import_start` fired would otherwise leave the early lock held.
-		$this->wxr_import_transient_cleanup();
+		// Passing the outcome lets reconnecting clients see the real result.
+		$this->wxr_import_transient_cleanup( $complete['error'] );
 
 		$this->emit_sse_message( $complete );
 		if ( wp_doing_ajax() ) {
@@ -1380,23 +1477,27 @@ class ST_WXR_Importer {
 		);
 
 		// Get actual file extension.
-		$file_extension = pathinfo( $filename, PATHINFO_EXTENSION );
+		$file_extension = strtolower( pathinfo( $filename, PATHINFO_EXTENSION ) );
 
 		// Reject files with no valid extension or mismatched extensions.
 		if ( false === $filetype['type'] || empty( $file_extension ) ) {
 			return $defaults;
 		}
 
+		// XML and JSON types are forced only for import downloads.
+		$is_import_file = self::$is_downloading_import_file;
+		$can_upload_svg = $this->can_upload_svg();
+
 		// Set EXT and real MIME type only for the file name `wxr.xml`.
 		// Ensure the actual extension is 'xml' to prevent double extension attacks like 'test.wxr.php'.
-		if ( 'xml' === $file_extension && strpos( $filename, 'wxr' ) !== false ) {
+		if ( $is_import_file && 'xml' === $file_extension && strpos( $filename, 'wxr' ) !== false ) {
 			$defaults['ext']  = 'xml';
 			$defaults['type'] = 'text/xml';
 		}
 
 		// Set EXT and real MIME type only for the file name `wpforms.json`, `cartflows.json`, or `spectra.json`.
 		// Ensure the actual extension is 'json' to prevent double extension attacks.
-		if ( 'json' === $file_extension && ( strpos( $filename, 'wpforms' ) !== false || strpos( $filename, 'cartflows' ) !== false || strpos( $filename, 'spectra' ) !== false ) ) {
+		if ( $is_import_file && 'json' === $file_extension && ( strpos( $filename, 'wpforms' ) !== false || strpos( $filename, 'cartflows' ) !== false || strpos( $filename, 'spectra' ) !== false ) ) {
 			$defaults['ext']  = 'json';
 			$defaults['type'] = 'text/plain';
 		}
@@ -1410,8 +1511,10 @@ class ST_WXR_Importer {
 			// phpcs:enable WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents
 
 			// Update mime type and extension.
-			$defaults['type'] = 'image/svg+xml';
-			$defaults['ext']  = 'svg';
+			if ( $can_upload_svg ) {
+				$defaults['type'] = 'image/svg+xml';
+				$defaults['ext']  = 'svg';
+			}
 		}
 
 		if ( 'svgz' === $file_extension ) {
@@ -1433,8 +1536,10 @@ class ST_WXR_Importer {
 			// phpcs:enable WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents
 
 			// Update mime type and extension.
-			$defaults['type'] = 'image/svg+xml';
-			$defaults['ext']  = 'svgz';
+			if ( $can_upload_svg ) {
+				$defaults['type'] = 'image/svg+xml';
+				$defaults['ext']  = 'svgz';
+			}
 		}
 
 		return $defaults;
@@ -1757,8 +1862,8 @@ class ST_WXR_Importer {
 	public static function download_file( $file = '', $overrides = array(), $timeout_seconds = 300 ) {
 		// Log file download attempt.
 		ST_Importer_Log::add(
-			'info',
 			'Attempting to download file: ' . $file,
+			'info',
 			array(
 				'file_url'        => $file,
 				'timeout_seconds' => $timeout_seconds,
@@ -1775,8 +1880,8 @@ class ST_WXR_Importer {
 		if ( is_wp_error( $temp_file ) ) {
 			// Log download failure.
 			ST_Importer_Log::add(
-				'error',
 				'File download failed: ' . $temp_file->get_error_message(),
+				'error',
 				array(
 					'file_url'      => $file,
 					'error_message' => $temp_file->get_error_message(),
@@ -1823,13 +1928,18 @@ class ST_WXR_Importer {
 		$overrides = wp_parse_args( $overrides, $defaults );
 
 		// Move the temporary file into the uploads directory.
-		$results = wp_handle_sideload( $file_args, $overrides );
+		self::$is_downloading_import_file = true;
+		try {
+			$results = wp_handle_sideload( $file_args, $overrides );
+		} finally {
+			self::$is_downloading_import_file = false;
+		}
 
 		if ( isset( $results['error'] ) ) {
 			// Log sideload failure.
 			ST_Importer_Log::add(
-				'error',
 				'File sideload failed: ' . ( isset( $results['error'] ) ? $results['error'] : 'Unknown error' ),
+				'error',
 				array(
 					'file_url'  => $file,
 					'file_size' => $file_args['size'],
@@ -1845,8 +1955,8 @@ class ST_WXR_Importer {
 
 		// Log successful download.
 		ST_Importer_Log::add(
-			'success',
 			'File downloaded and sideloaded successfully: ' . $file,
+			'success',
 			array(
 				'file_url'      => $file,
 				'file_size'     => $file_args['size'],
@@ -1872,8 +1982,8 @@ class ST_WXR_Importer {
 	public static function get_xml_data( $path, $post_id ) {
 		// Log XML parsing start.
 		ST_Importer_Log::add(
-			'info',
 			'Starting to parse XML file for import metadata',
+			'info',
 			array(
 				'xml_file_path' => $path,
 				'xml_post_id'   => $post_id,
@@ -1893,8 +2003,8 @@ class ST_WXR_Importer {
 		// Check if XML parsing resulted in an error.
 		if ( is_wp_error( $data ) ) {
 			ST_Importer_Log::add(
-				'error',
 				'XML parsing failed: ' . $data->get_error_message(),
+				'error',
 				array(
 					'xml_file_path' => $path,
 					'error_message' => $data->get_error_message(),
@@ -1907,8 +2017,8 @@ class ST_WXR_Importer {
 
 		// Log XML metadata parsed successfully.
 		ST_Importer_Log::add(
-			'success',
 			'XML file parsed successfully with import counts',
+			'success',
 			array(
 				'xml_file_path' => $path,
 				'post_count'    => $data->post_count,
@@ -1985,8 +2095,8 @@ class ST_WXR_Importer {
 		if ( empty( $url ) ) {
 			// Log URL validation error - empty URL.
 			ST_Importer_Log::add(
-				'warning',
 				'URL validation failed: Empty or missing URL provided',
+				'warning',
 				array(
 					'url' => $url,
 				)
@@ -1999,8 +2109,8 @@ class ST_WXR_Importer {
 		if ( empty( $parse_url ) || ! is_array( $parse_url ) ) {
 			// Log URL validation error - invalid URL format.
 			ST_Importer_Log::add(
-				'warning',
 				'URL validation failed: Invalid URL format or unable to parse',
+				'warning',
 				array(
 					'url'       => $url,
 					'parse_url' => $parse_url,
@@ -2032,8 +2142,8 @@ class ST_WXR_Importer {
 		if ( in_array( $parse_url['host'], $valid_hosts, true ) ) {
 			// Log successful URL validation.
 			ST_Importer_Log::add(
-				'info',
 				'URL validation passed: Host is allowed',
+				'info',
 				array(
 					'url'  => $url,
 					'host' => $parse_url['host'],
@@ -2045,8 +2155,8 @@ class ST_WXR_Importer {
 
 		// Log URL validation failure - host not in whitelist.
 		ST_Importer_Log::add(
-			'warning',
 			'URL validation failed: Host not in whitelist',
+			'warning',
 			array(
 				'url'         => $url,
 				'host'        => $parse_url['host'],
@@ -2175,9 +2285,14 @@ class ST_WXR_Importer {
 			return;
 		}
 
+		// Release the lock before anything that could itself fail — under OOM
+		// there is little memory headroom left in the shutdown phase.
+		$error_message = $this->get_contextual_import_error_message( $error['message'] );
+		$this->wxr_import_transient_cleanup( $error_message );
+
 		ST_Importer_Log::add(
-			'fatal',
 			'Uncatchable fatal error during WXR import: ' . $error['message'],
+			'fatal',
 			array(
 				'error_type' => $error['type'],
 				'error_file' => $error['file'],
@@ -2185,11 +2300,10 @@ class ST_WXR_Importer {
 			)
 		);
 
-		$this->wxr_import_transient_cleanup();
 		$this->emit_sse_message(
 			array(
 				'action'    => 'complete',
-				'error'     => $this->get_contextual_import_error_message( $error['message'] ),
+				'error'     => $error_message,
 				'technical' => $error['message'],
 			)
 		);

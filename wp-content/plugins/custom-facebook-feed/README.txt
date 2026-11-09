@@ -4,7 +4,7 @@ Tags: Facebook, Facebook feed, Facebook posts, Facebook account, Facebook page
 Requires at least: 4.1
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 4.13.0
+Stable tag: 4.15.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -205,6 +205,27 @@ The most common reason for this is that an add-on or extension you have installe
 9. It's super easy to display your Facebook feed in any page or post
 
 == Changelog ==
+= 4.15.1 =
+* Fix: The data-sharing popup no longer locks you out of your WordPress admin when your choice can't be saved. You can always close it and keep working.
+* Fix: Plugin security hardening.
+
+= 4.15.0 =
+* New: Ask AI assistants like Claude, ChatGPT and Cursor to check and update your Facebook Feed settings for you, through the WordPress Abilities API (requires WordPress 6.9 or later and the free WPVibe plugin). A new AI Agents card in Settings → General lets you install or open WPVibe. Assistants can read your settings right away, and the plugin keeps its own AI changes off until you turn on MCP Write Access under Settings > General. Write access is off by default, and your license key and access tokens are never shared. [See what Facebook Feed Pro adds](https://smashballoon.com/custom-facebook-feed/facebook-lite-upgrade/?utm_source=changelog&utm_medium=aiagents&utm_campaign=facebook-free-readme)
+
+= 4.14.0 =
+* New: An admin notice now warns you when a feed has been showing an old saved copy of your Facebook posts for several days because it can't fetch fresh content, and the weekly Feed Issue Email Report now covers this case too.
+* New: Added a Debug tab in the plugin settings where you can control anonymous data sharing and in-plugin notifications. Usage data is only sent when you opt in, and onboarding now includes a consent checkbox.
+* Tweak: Refreshed the About Us page.
+* Fix: Facebook source errors are now reported more accurately. Rate limits no longer show a false "Source Invalid" or reconnect prompt, a problem on one source is still reported when another is only being rate-limited, and feeds from a Facebook Page you don't manage are flagged as invalid again in the feed builder. Facebook API errors also come with clearer guidance on what to do.
+* Fix: A Facebook source that starts working again now clears its own error, so the critical-issue notice, admin menu badge, Site Health warning and weekly issue email no longer stay on for a problem that has been resolved. When the plugin does report a critical issue, the settings page now explains it.
+* Fix: The "Action Required Within 7 Days" data-deletion warning now only appears while that deletion is actually scheduled.
+* Fix: The feed builder and customizer no longer show a blank screen on PHP 8 when a connected Facebook account's data can't be read.
+* Fix: Turning off Feed Issue Email Reports now actually stops the weekly report emails.
+* Fix: The Smash Balloon logo is back on the left of the admin header, and the label beside it now names the current page.
+* Fix: Dismissed in-plugin notifications no longer reappear after a page reload.
+* Fix: The deactivation feedback survey no longer conflicts with other Smash Balloon plugins active on the same site.
+* Fix: Plugin security hardening.
+
 = 4.13.0 =
 * Fix: Feeds now honor the "Check for new posts every..." caching setting instead of only checking once every 7 days.
 

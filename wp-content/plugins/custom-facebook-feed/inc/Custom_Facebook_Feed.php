@@ -22,7 +22,6 @@ use CustomFacebookFeed\Builder\CFF_Feed_Builder;
 use CustomFacebookFeed\Admin\CFF_Global_Settings;
 use CustomFacebookFeed\Admin\CFF_oEmbeds;
 use CustomFacebookFeed\Admin\CFF_Extensions;
-use CustomFacebookFeed\Admin\CFF_About_Us;
 use CustomFacebookFeed\Admin\CFF_Support;
 use CustomFacebookFeed\Admin\CFF_Support_Tool;
 use CustomFacebookFeed\Platform_Data;
@@ -179,6 +178,19 @@ final class Custom_Facebook_Feed
 	public $cff_global_settings;
 
 	/**
+	 * CFF_Abilities.
+	 *
+	 * WordPress Abilities API integration (MCP clients, WPVibe). Ported from
+	 * custom-facebook-feed-pro (SBR-510).
+	 *
+	 * @since 4.14
+	 * @access public
+	 *
+	 * @var \CustomFacebookFeed\Abilities\CFF_Abilities
+	 */
+	public $cff_abilities;
+
+	/**
 	 * CFF_oEmbeds.
 	 *
 	 * oEmbeds Page.
@@ -189,17 +201,6 @@ final class Custom_Facebook_Feed
 	 * @var CFF_oEmbeds
 	 */
 	public $cff_oembeds;
-
-	/**
-	 * CFF_About_Us.
-	 *
-	 * About Us Page.
-	 *
-	 * @since 4.0
-	 * @access public
-	 * @var CFF_About_Us
-	 */
-	public $cff_about_us;
 
 	/**
 	 * CFF_Support.
@@ -385,6 +386,36 @@ final class Custom_Facebook_Feed
 	 */
 	public function init()
 	{
+		// Bootstrap the shared Consent package (Free edition; Pro lives in the
+		// separate custom-facebook-feed-pro plugin). plugin_slug stays
+		// 'custom-facebook-feed' (shared with Pro) so a free→pro upgrade
+		// preserves the stored consent flags. The re-prompt modal is suppressed
+		// while the onboarding wizard is still active (its success page renders
+		// its own consent checkbox).
+		if ( class_exists( '\FacebookFeed\Vendor\Smashballoon\Framework\Packages\Consent\ConsentManager' ) ) {
+			\FacebookFeed\Vendor\Smashballoon\Framework\Packages\Consent\ConsentManager::init(
+				array(
+					'plugin_slug'         => 'custom-facebook-feed',
+					'plugin_name'         => 'Facebook Feed',
+					'utm_slug'            => 'facebook',
+					'legacy_class'        => 'CFF_Consent',
+					'show_reprompt_modal' => function ( $show ) {
+						// The filter is shared by every Smash Balloon plugin, so only gate on
+						// our own pages or a pending wizard hides the modal for all of them.
+						$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+						if ( 0 !== strpos( $page, 'cff-' ) ) {
+							return $show;
+						}
+						$wizard_cls = '\CustomFacebookFeed\Admin\CFF_Onboarding_Wizard';
+						if ( class_exists( $wizard_cls ) && $wizard_cls::should_init_wizard() ) {
+							return false;
+						}
+						return $show;
+					},
+				)
+			);
+		}
+
 		// Load Composer Autoload
 		$this->smash_usage_tracking = new \CustomFacebookFeed\UsageTracking\SmashUsageTracking();
 		$this->cff_oembed 					= new CFF_Oembed();
@@ -394,8 +425,23 @@ final class Custom_Facebook_Feed
 		$this->cff_shortcode				= new CFF_Shortcode();
 		$this->cff_feed_builder				= new CFF_Feed_Builder();
 		$this->cff_global_settings			= new CFF_Global_Settings();
+		$this->cff_abilities				= new \CustomFacebookFeed\Abilities\CFF_Abilities();
 		$this->cff_oembeds					= new CFF_oEmbeds();
-		$this->cff_about_us					= new CFF_About_Us();
+		// The legacy in-plugin About Us page is replaced by the shared AboutUs package.
+		if ( class_exists( '\FacebookFeed\Vendor\Smashballoon\Framework\Packages\AboutUs\AboutUsManager' ) ) {
+			\FacebookFeed\Vendor\Smashballoon\Framework\Packages\AboutUs\AboutUsManager::init(
+				array(
+					'plugin_slug'    => 'custom-facebook-feed',
+					'plugin_name'    => 'Smash Balloon Facebook Feed',
+					'plugin_version' => CFFVER,
+					'plugin_file'    => CFF_FILE,
+					'menu_parent'    => 'cff-top',
+					'page_slug'      => 'cff-about-us',
+					'menu_position'  => 4,
+					'is_pro'         => false,
+				)
+			);
+		}
 		$this->cff_support					= new CFF_Support();
 		$this->cff_elementor_base    = CFF_Elementor_Base::register();
 		$this->cff_onboarding_wizard		= new CFF_Onboarding_Wizard();
@@ -508,21 +554,18 @@ final class Custom_Facebook_Feed
 		if (CFF_GDPR_Integrations::doing_gdpr($options)) {
 			$options[ 'cff_font_source' ] = 'local';
 		}
-		if (!isset($options[ 'cff_font_source' ])) {
-			wp_enqueue_style('sb-font-awesome', 'https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css');
+		// WP.org prohibits loading assets from external CDNs, and this runs on the
+		// public frontend (every visitor). Always serve the bundled local copy;
+		// 'none' still disables it entirely.
+		if ( isset( $options['cff_font_source'] ) && 'none' == $options['cff_font_source'] ) {
+			// Do nothing — Font Awesome disabled.
 		} else {
-			if ($options[ 'cff_font_source' ] == 'none') {
-				// Do nothing
-			} elseif ($options[ 'cff_font_source' ] == 'local') {
-				wp_enqueue_style(
-					'sb-font-awesome',
-					CFF_PLUGIN_URL . 'assets/css/font-awesome.min.css',
-					array(),
-					'4.7.0'
-				);
-			} else {
-				wp_enqueue_style('sb-font-awesome', 'https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css');
-			}
+			wp_enqueue_style(
+				'sb-font-awesome',
+				CFF_PLUGIN_URL . 'assets/css/font-awesome.min.css',
+				array(),
+				'4.7.0'
+			);
 		}
 	}
 
@@ -609,7 +652,7 @@ final class Custom_Facebook_Feed
 				$timestamp = $timestamp + (3600 * 24 * 7);
 				$six_am_local = $timestamp + CFF_Utils::cff_get_utc_offset() + (6 * 60 * 60);
 
-				wp_schedule_event($six_am_local, 'cffweekly', 'cff_notification_update');
+				// SMASH-1245: legacy notification cron removed (notifications refresh on the render path, consent-gated).
 			}
 			update_option('cff_db_version', CFF_DBVERSION);
 		}
@@ -765,6 +808,16 @@ final class Custom_Facebook_Feed
 			}
 			update_option('cff_db_version', CFF_DBVERSION);
 		}
+
+		if ( version_compare( $db_ver, '2.6', '<' ) ) {
+			// SMASH-1245: retire the legacy notification cron. Notifications now refresh on the
+			// render path (consent-gated), so clear any lingering scheduled event one time here
+			// instead of checking on every admin page load.
+			if ( wp_next_scheduled( 'cff_notification_update' ) ) {
+				wp_clear_scheduled_hook( 'cff_notification_update' );
+			}
+			update_option( 'cff_db_version', CFF_DBVERSION );
+		}
 	}
 
 
@@ -806,7 +859,7 @@ final class Custom_Facebook_Feed
 			$timestamp = strtotime('next monday');
 			$timestamp = $timestamp + (3600 * 24 * 7);
 			$six_am_local = $timestamp + CFF_Utils::cff_get_utc_offset() + (6 * 60 * 60);
-			wp_schedule_event($six_am_local, 'cffweekly', 'cff_notification_update');
+			// SMASH-1245: legacy notification cron removed (notifications refresh on the render path, consent-gated).
 		}
 
 		$cff_statuses_option = get_option('cff_statuses', array());
@@ -893,6 +946,15 @@ final class Custom_Facebook_Feed
 		if (! current_user_can('activate_plugins')) {
 			return;
 		}
+
+		// Abilities API state tokens + slots (CFF_State_Token::PREFIX). They no longer
+		// start with `cff_`, so the cache-wipe patterns do not reach them; remove the
+		// transient and its timeout row explicitly. Runs even when settings are
+		// preserved: these are short-lived tokens, not settings.
+		global $wpdb;
+		$wpdb->query("DELETE FROM {$wpdb->options} WHERE `option_name` LIKE ('\_transient\_sb\_abilities\_cff\_state\_%')");
+		$wpdb->query("DELETE FROM {$wpdb->options} WHERE `option_name` LIKE ('\_transient\_timeout\_sb\_abilities\_cff\_state\_%')");
+
 		// If the user is preserving the settings then don't delete them
 		$cff_preserve_settings = get_option('cff_preserve_settings');
 		if (! empty($cff_preserve_settings)) {
@@ -915,6 +977,9 @@ final class Custom_Facebook_Feed
 		delete_option('cff_title_length');
 		delete_option('cff_body_length');
 		delete_option('cff_style_settings');
+		// After the settings delete above: if the gate hooks were ever live in this
+		// request, delete_option('cff_style_settings') would re-create the epoch.
+		delete_option('sb_abilities_cff_gate_epoch');
 
 		delete_option('cff_usage_tracking_config');
 		// Usage-tracking consent, site token and telemetry are shared with the Pro plugin. Only remove
@@ -928,6 +993,8 @@ final class Custom_Facebook_Feed
 			delete_option( 'cff_smash_usage_tracking_site_token' );
 			delete_option( 'cff_smash_usage_tracking_schedule' );
 			delete_option( 'cff_smash_usage_events' );
+			delete_option( 'cff_smash_usage_error_counts' );
+			delete_option( 'cff_backup_cache_status' );
 			delete_option( 'cff_smash_usage_active_dates' );
 			delete_option( 'cff_smash_usage_session_durations' );
 		}

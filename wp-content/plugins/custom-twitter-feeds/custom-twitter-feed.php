@@ -5,7 +5,7 @@ use TwitterFeed\Builder\CTF_Feed_Builder;
 Plugin Name: Smash Balloon X (Twitter) Feed
 Plugin URI: https://smashballoon.com/custom-twitter-feeds
 Description: Customizable X Feeds, formerly known as Twitter feeds, for your website
-Version: 2.9.0
+Version: 2.11.1
 Author: Smash Balloon
 Author URI: https://smashballoon.com/
 Text Domain: custom-twitter-feeds
@@ -31,7 +31,7 @@ if ( ! defined( 'CTF_URL' ) ) {
 	define( 'CTF_DOING_SMASH_TWITTER', empty($ctf_options['consumer_key']) && empty($ctf_options['consumer_secret']));
 
 	define( 'CTF_URL', plugin_dir_path( __FILE__ )  );
-	define( 'CTF_VERSION', '2.9.0' );
+	define( 'CTF_VERSION', '2.11.1' );
 	define( 'CTF_TITLE', 'Custom Twitter Feeds' );
 	define( 'CTF_JS_URL', plugins_url( '/js/ctf-scripts.min.js?ver=' . CTF_VERSION , __FILE__ ) );
 	define( 'CTF_PRODUCT_NAME', 'Custom Twitter Feeds' );
@@ -168,6 +168,21 @@ function ctf_plugin_init() {
 		);
 	}
 
+	// Bootstrap the shared Consent package. plugin_slug stays
+	// 'custom-twitter-feeds' (shared with Pro) so a free→pro upgrade preserves
+	// the stored consent flags. Twitter has no onboarding wizard, so the
+	// re-prompt modal can show by default for free users.
+	if ( class_exists( '\Smashballoon\TwitterFeed\Vendor\Smashballoon\Framework\Packages\Consent\ConsentManager' ) ) {
+		\Smashballoon\TwitterFeed\Vendor\Smashballoon\Framework\Packages\Consent\ConsentManager::init(
+			array(
+				'plugin_slug'  => 'custom-twitter-feeds',
+				'plugin_name'  => 'Twitter Feeds',
+				'utm_slug'     => 'twitter',
+				'legacy_class' => 'CTF_Consent',
+			)
+		);
+	}
+
 	if ( is_admin() ) {
 		if ( version_compare( PHP_VERSION,  '5.3.0' ) >= 0
 		     && version_compare( get_bloginfo('version'), '4.6' , '>' ) ) {
@@ -182,7 +197,21 @@ function ctf_plugin_init() {
 			$ctf_tooltip_wizard		= new TwitterFeed\Builder\CTF_Tooltip_Wizard();
 			$ctf_support			= new TwitterFeed\Admin\CTF_Support();
   			$ctf_admin_notices		= new TwitterFeed\Admin\CTF_Admin_Notices();
-			$ctf_about_us			= new TwitterFeed\Admin\CTF_About_Us();
+			if ( class_exists( '\Smashballoon\TwitterFeed\Vendor\Smashballoon\Framework\Packages\AboutUs\AboutUsManager' ) ) {
+				\Smashballoon\TwitterFeed\Vendor\Smashballoon\Framework\Packages\AboutUs\AboutUsManager::init(
+					array(
+						'plugin_slug'    => 'custom-twitter-feeds',
+						'plugin_name'    => 'Custom Twitter Feeds',
+						'plugin_version' => CTF_VERSION,
+						'plugin_file'    => __FILE__,
+						'menu_parent'    => 'custom-twitter-feeds',
+						'page_slug'      => 'ctf-about-us',
+						'capability'     => ctf_get_manage_options_cap(),
+						'menu_position'  => 4,
+						'is_pro'         => false,
+					)
+				);
+			}
 
 
 			require_once trailingslashit( CTF_PLUGIN_DIR ) . 'inc/Admin/addon-functions.php';
@@ -207,6 +236,11 @@ function ctf_plugin_init() {
 	// Initialize recommended blocks in Gutenberg sidebar.
 	$recommended_blocks = new \Smashballoon\TwitterFeed\Vendor\Smashballoon\Framework\Packages\Blocks\RecommendedBlocks();
 	$recommended_blocks->setup();
+
+	// WordPress core Abilities API (WP 6.9+) integration — exposes settings to
+	// AI agents (MCP clients, WPVibe). No-ops on older WordPress via the
+	// function_exists() guard inside CTF_Abilities.
+	new \TwitterFeed\Abilities\CTF_Abilities();
 }
 add_action( 'plugins_loaded', 'ctf_plugin_init' );
 
@@ -402,6 +436,16 @@ function ctf_check_for_db_updates() {
 
 	}
 
+	// A status flag, not a db version: Pro shares ctf_db_version and is already past
+	// the next Free version, so a version bump would not run on a Pro-to-Free site.
+	$ctf_statuses_option = get_option( 'ctf_statuses', array() );
+	if ( empty( $ctf_statuses_option['invalid_feed_caches_removed'] ) ) {
+		ctf_remove_invalid_feed_caches();
+
+		$ctf_statuses_option['invalid_feed_caches_removed'] = true;
+		update_option( 'ctf_statuses', $ctf_statuses_option, false );
+	}
+
 }
 add_action( 'wp_loaded', 'ctf_check_for_db_updates' );
 
@@ -514,7 +558,8 @@ function ctf_do_locator() {
 
 	$atts_raw = isset( $_POST['atts'] ) ? json_decode( stripslashes( $_POST['atts'] ), true ) : array();
 	if ( is_array( $atts_raw ) ) {
-		array_map( 'sanitize_text_field', $atts_raw );
+		// Assigned: the result used to be discarded, so the raw atts reached the locator (SMASH-2491).
+		$atts_raw = array_map( 'sanitize_text_field', $atts_raw );
 	} else {
 		$atts_raw = array();
 	}
@@ -992,7 +1037,7 @@ function ctf_admin_scripts_and_styles() {
 		CTF_VERSION
 	);
     wp_enqueue_style( 'ctf_admin_styles', plugins_url( '/css/ctf-admin-styles.css', __FILE__ ), array( 'ctf-tokens-local' ), CTF_VERSION );
-	wp_enqueue_style( 'sb-font-awesome', 'https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css' );
+	wp_enqueue_style( 'sb-font-awesome', CTF_PLUGIN_URL . 'css/font-awesome.min.css', array(), '4.7.0' );
 	wp_enqueue_script( 'ctf_admin_scripts', plugins_url( '/js/ctf-admin-scripts.js', __FILE__ ) , array( 'jquery' ), CTF_VERSION, false );
     wp_localize_script( 'ctf_admin_scripts', 'ctf', array(
             'ajax_url' => admin_url( 'admin-ajax.php' ),

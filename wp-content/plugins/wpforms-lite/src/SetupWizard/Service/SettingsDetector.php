@@ -9,6 +9,7 @@ use WPForms\Integrations\Stripe\Admin\Connect as StripeAdminConnect;
 use WPForms\Integrations\Stripe\Helpers as StripeHelpers;
 use WPFormsAuthorizeNet\Helpers as AuthorizeNetHelpers;
 use WPFormsMercadoPago\Helpers as MercadoPagoHelpers;
+use WPFormsPaystack\Helpers as PaystackHelpers;
 
 /**
  * Setup Wizard settings detector.
@@ -48,11 +49,8 @@ class SettingsDetector {
 	 */
 	public function is_stripe_configured(): bool {
 
-		if ( StripeHelpers::has_stripe_keys() ) {
-			return true;
-		}
-
-		return ! empty( ( new StripeAdminConnect() )->get_connected_user_id() );
+		// The handshake saves keys even when onboarding was abandoned, so an unfinished account is not configured.
+		return StripeHelpers::has_stripe_keys() && ( new StripeAdminConnect() )->is_onboarding_complete();
 	}
 
 	/**
@@ -103,5 +101,17 @@ class SettingsDetector {
 	public function is_mercado_pago_configured(): bool {
 
 		return class_exists( MercadoPagoHelpers::class ) && MercadoPagoHelpers::is_configured();
+	}
+
+	/**
+	 * Whether Paystack is connected for the current payment mode.
+	 *
+	 * @since 2.0.2.2
+	 *
+	 * @return bool
+	 */
+	public function is_paystack_configured(): bool {
+
+		return class_exists( PaystackHelpers::class ) && PaystackHelpers::is_configured();
 	}
 }

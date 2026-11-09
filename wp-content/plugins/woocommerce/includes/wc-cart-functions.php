@@ -13,6 +13,7 @@ use Automattic\WooCommerce\Blocks\Utils\CartCheckoutUtils;
 use Automattic\WooCommerce\Enums\OrderStatus;
 use Automattic\WooCommerce\Enums\ProductType;
 use Automattic\WooCommerce\StoreApi\Utilities\LocalPickupUtils;
+use Automattic\WooCommerce\Utilities\ShippingUtil;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -55,10 +56,10 @@ function wc_get_raw_referer() {
 		return wp_get_raw_referer();
 	}
 
-	if ( ! empty( $_REQUEST['_wp_http_referer'] ) ) { // WPCS: input var ok, CSRF ok.
-		return wp_unslash( $_REQUEST['_wp_http_referer'] ); // WPCS: input var ok, CSRF ok, sanitization ok.
-	} elseif ( ! empty( $_SERVER['HTTP_REFERER'] ) ) { // WPCS: input var ok, CSRF ok.
-		return wp_unslash( $_SERVER['HTTP_REFERER'] ); // WPCS: input var ok, CSRF ok, sanitization ok.
+	if ( ! empty( $_REQUEST['_wp_http_referer'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only fallback that only reports where the request came from; no state changes here.
+		return wp_unslash( $_REQUEST['_wp_http_referer'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- This function is documented to return the referer unvalidated; every caller passes the result through wp_validate_redirect().
+	} elseif ( ! empty( $_SERVER['HTTP_REFERER'] ) ) {
+		return wp_unslash( $_SERVER['HTTP_REFERER'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- This function is documented to return the referer unvalidated; every caller passes the result through wp_validate_redirect().
 	}
 
 	return false;
@@ -183,7 +184,7 @@ function wc_clear_cart_after_payment() {
 	if ( ! empty( $wp->query_vars['order-received'] ) ) {
 
 		$order_id  = absint( $wp->query_vars['order-received'] );
-		$order_key = isset( $_GET['key'] ) ? wc_clean( wp_unslash( $_GET['key'] ) ) : ''; // WPCS: input var ok, CSRF ok.
+		$order_key = isset( $_GET['key'] ) && is_string( $_GET['key'] ) ? wc_clean( wp_unslash( $_GET['key'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Order key is cleaned and compared with hash_equals() against the order's key below.
 
 		if ( $order_id > 0 ) {
 			$order = wc_get_order( $order_id );
@@ -419,6 +420,8 @@ function wc_cart_round_discount( $value, $precision ) {
 /**
  * Gets chosen shipping method IDs from chosen_shipping_methods session, without instance IDs.
  *
+ * Only choices whose rate was listed for the cart are returned, see ShippingUtil::filter_chosen_shipping_methods().
+ *
  * @since  2.6.2
  * @return string[]
  */
@@ -427,7 +430,7 @@ function wc_get_chosen_shipping_method_ids() {
 		return array();
 	}
 
-	$chosen_methods = WC()->session->get( 'chosen_shipping_methods', array() );
+	$chosen_methods = ShippingUtil::filter_chosen_shipping_methods( WC()->session->get( 'chosen_shipping_methods', array() ) );
 	$method_ids     = array();
 
 	foreach ( $chosen_methods as $chosen_method ) {

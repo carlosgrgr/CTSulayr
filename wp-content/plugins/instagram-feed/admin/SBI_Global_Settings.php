@@ -13,6 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 use DateTime;
+use InstagramFeed\Abilities\SBI_Pro_Upsell;
 use InstagramFeed\Builder\SBI_Db;
 use InstagramFeed\Builder\SBI_Feed_Builder;
 use InstagramFeed\Builder\SBI_Feed_Saver_Manager;
@@ -85,7 +86,7 @@ class SBI_Global_Settings
 	 *
 	 * This will save the data fron the settings page
 	 *
-	 * @return SBI_Response
+	 * @return void
 	 * @since 6.0
 	 */
 	public function sbi_save_settings()
@@ -167,6 +168,14 @@ class SBI_Global_Settings
 		$sbi_settings['disable_admin_notice'] = !(bool)$advanced['enable_admin_notice'];
 		$sbi_settings['enable_email_report'] = (bool)$advanced['enable_email_report'];
 		$sbi_settings['enqueue_legacy_css'] = (bool)$advanced['enqueue_legacy_css'];
+		// AI write-access toggle (AgDR-9005/AgDR-9004): this single AJAX handler
+		// always posts the FULL model (general + feeds + advanced together), so
+		// unlike a genuinely partial per-tab save, !empty() here is fail-closed
+		// without risk of resetting an enabled toggle from an unrelated tab —
+		// a missing/false key on this save legitimately means "off". Never
+		// (bool)$advanced['sbi_ai_write_enabled'] directly: that idiom warns on a
+		// missing key instead of failing closed.
+		$sbi_settings['sb_instagram_ai_write_enabled'] = $this->reconcile_ai_write_toggle($advanced, !empty($sbi_settings['sb_instagram_ai_write_enabled']));
 
 		$sbi_settings['email_notification'] = sanitize_text_field($advanced['email_notification']);
 		$sbi_settings['email_notification_addresses'] = sanitize_text_field($advanced['email_notification_addresses']);
@@ -194,14 +203,35 @@ class SBI_Global_Settings
 			}
 		}
 
+		/**
+		 * Debug Tab — consent toggles.
+		 *
+		 * Routed through SBI_Consent::update() so cron reconciliation and the
+		 * 3-state notification source switch stay consistent. Pass null for
+		 * $dismiss_modal so the re-prompt-modal state is not affected by a
+		 * Settings save. The flags are stored as top-level wp_options, NOT in
+		 * sb_instagram_settings, so we do not add them to $sbi_settings.
+		 */
+		if ( isset( $model['debug'] ) && class_exists( 'SBI_Consent' ) ) {
+			$debug = (array) $model['debug'];
+			\SBI_Consent::update(
+				! empty( $debug['sbc_data_sharing_consent'] ),
+				! empty( $debug['sbc_in_plugin_notifications'] ),
+				null
+			);
+		}
+
 		// Update the sbi_style_settings option that contains data for translation and advanced tabs
 		update_option('sb_instagram_settings', $sbi_settings);
 
-		// clear cron caches
-		$this->sbi_clear_cache();
+		// clear cron caches. Not sbi_clear_cache(): it sends its own response and
+		// exits, so the response below (with aiWriteEnabled) would never go out.
+		$this->reset_caches_and_cron();
 
 		$response = new SBI_Response(true, array(
-			'cronNextCheck' => $this->get_cron_next_check()
+			'cronNextCheck' => $this->get_cron_next_check(),
+			// The stored toggle, so the page can resync after a save (a refused stale-tab ON, or a flip back on in the same tab).
+			'aiWriteEnabled' => !empty($sbi_settings['sb_instagram_ai_write_enabled']),
 		));
 		$response->send();
 	}
@@ -249,14 +279,23 @@ class SBI_Global_Settings
 			wp_send_json_error();
 		}
 
-		// Get the updated cron schedule interval and time settings from user input and update the database
-		$model = isset($_POST['model']) ? sanitize_text_field($_POST['model']) : null;
-		if ($model !== null) {
-			$model = (array)json_decode(stripslashes($model));
-			$feeds = (array)$model['feeds'];
-		}
+		$this->reset_caches_and_cron();
 
-		// Now get the updated cron schedule interval and time values
+		$response = new SBI_Response(true, array(
+			'cronNextCheck' => $this->get_cron_next_check()
+		));
+		$response->send();
+	}
+
+	/**
+	 * Clear the feed caches and restart the cache cron, without sending a response.
+	 *
+	 * Shared by the Clear Cache AJAX handler and the Settings save, which sends
+	 * its own response afterwards.
+	 */
+	private function reset_caches_and_cron()
+	{
+		// Get the updated cron schedule interval and time values
 		$sbi_settings = get_option('sb_instagram_settings', array());
 
 		$sbi_cache_cron_interval = $sbi_settings['sbi_cache_cron_interval'];
@@ -272,11 +311,6 @@ class SBI_Global_Settings
 		global $sb_instagram_posts_manager;
 		$sb_instagram_posts_manager->add_action_log('Saved settings on the configure tab.');
 		$sb_instagram_posts_manager->clear_api_request_delays();
-
-		$response = new SBI_Response(true, array(
-			'cronNextCheck' => $this->get_cron_next_check()
-		));
-		$response->send();
 	}
 
 	/**
@@ -323,7 +357,7 @@ class SBI_Global_Settings
 	/**
 	 * SBI Activate License Key
 	 *
-	 * @return SBI_Response
+	 * @return void
 	 * @since 6.0
 	 */
 	public function sbi_activate_license()
@@ -414,7 +448,7 @@ class SBI_Global_Settings
 	/**
 	 * SBI Deactivate License Key
 	 *
-	 * @return SBI_Response
+	 * @return void
 	 * @since 6.0
 	 */
 	public function sbi_deactivate_license()
@@ -448,7 +482,7 @@ class SBI_Global_Settings
 	/**
 	 * SBI Test Connection
 	 *
-	 * @return SBI_Response
+	 * @return void
 	 * @since 6.0
 	 */
 	public function sbi_test_connection()
@@ -492,7 +526,7 @@ class SBI_Global_Settings
 	/**
 	 * SBI Re-Check License
 	 *
-	 * @return SBI_Response
+	 * @return void
 	 * @since 6.0
 	 */
 	public function sbi_recheck_connection()
@@ -568,7 +602,7 @@ class SBI_Global_Settings
 	/**
 	 * SBI Import Feed Settings JSON
 	 *
-	 * @return SBI_Response
+	 * @return void
 	 * @since 6.0
 	 */
 	public function sbi_import_settings_json()
@@ -616,7 +650,7 @@ class SBI_Global_Settings
 	/**
 	 * SBI Export Feed Settings JSON
 	 *
-	 * @return SBI_Response
+	 * @return void
 	 * @since 6.0
 	 */
 	public function sbi_export_settings_json()
@@ -875,7 +909,7 @@ class SBI_Global_Settings
 		wp_enqueue_style(
 			'settings-style',
 			SBI_PLUGIN_URL . 'admin/assets/css/settings.css',
-			false,
+			array( 'common' ),
 			SBIVER
 		);
 
@@ -919,9 +953,43 @@ class SBI_Global_Settings
 		$usage_tracking_url = 'https://smashballoon.com/instagram-feed/usage-tracking/?utm_campaign=instagram-free&utm_source=settings&utm_medium=docs';
 		$feed_issue_email_url = 'https://smashballoon.com/doc/email-report-is-not-in-my-inbox/?instagram&utm_campaign=instagram-free&utm_source=settings&utm_medium=docs';
 
+		// SMASH-1245 — Settings/Debug consent links route through the shared
+		// Consent package (sb-common owns the canonical URLs + per-surface UTM
+		// tags: utm_source=settings-consent, dynamic {plugin}-free campaign).
+		// Empty when the package is absent rather than duplicating the URLs here.
+		$sbi_consent_permissions_url = '';
+		$sbi_consent_terms_url       = '';
+		$sbi_consent_privacy_url     = '';
+		if ( class_exists( '\InstagramFeed\Vendor\Smashballoon\Framework\Packages\Consent\ConsentManager' ) ) {
+			$sbi_consent_permissions_url = \InstagramFeed\Vendor\Smashballoon\Framework\Packages\Consent\ConsentManager::link_url( 'settings', 'permissions', 'instagram' );
+			$sbi_consent_terms_url       = \InstagramFeed\Vendor\Smashballoon\Framework\Packages\Consent\ConsentManager::link_url( 'settings', 'terms', 'instagram' );
+			$sbi_consent_privacy_url     = \InstagramFeed\Vendor\Smashballoon\Framework\Packages\Consent\ConsentManager::link_url( 'settings', 'privacy', 'instagram' );
+		}
+
 		$sources_list = SBI_Feed_Builder::get_source_list();
 
 		// Extract only license keys and build array for extensions license keys
+
+		$wpvibe             = $this->get_wpvibe_status();
+		$wpvibe_org_url     = 'https://wordpress.org/plugins/vibe-ai/';
+		// Minimal allowlist for the AI Agents card copy below: these strings reach
+		// the localize-data array and are rendered with v-html in
+		// admin/views/settings/tab/general.php, so they must be sanitized before
+		// they're placed into $sbi_settings, not trusted as literal markup.
+		$ai_agents_allowed_html = array(
+			'br'     => array(),
+			'strong' => array(),
+			'a'      => array(
+				'href'   => array(),
+				'target' => array(),
+				'rel'    => array(),
+			),
+		);
+		/* translators: %s: URL to the WPVibe plugin on WordPress.org */
+		$wpvibe_description = wp_kses(
+			sprintf(__('Manage Instagram Feed from your favorite AI agent.<br>Works through <a href="%s" target="_blank" rel="noopener">WPVibe</a>, a free plugin you install once.', 'instagram-feed'), esc_url($wpvibe_org_url)), // phpcs:ignore Generic.Files.LineLength.TooLong -- single literal for make-pot
+			$ai_agents_allowed_html
+		);
 
 		$sbi_settings = array(
 			'admin_url' => admin_url(),
@@ -973,6 +1041,51 @@ class SBI_Global_Settings
 				'manageSource' => array(
 					'title' => __('Manage Sources', 'instagram-feed'),
 					'description' => __('Add or remove connected Instagram accounts', 'instagram-feed'),
+				),
+				'aiAgents' => array(
+					'title' => __('AI Agents', 'instagram-feed'),
+					'appsLabel' => __('Works with ChatGPT, Cursor and Claude', 'instagram-feed'),
+					// "Do more with AI on Pro" strip under the MCP Write Access box (AgDR-9006).
+					// Free edition only: an empty array in Pro, which the Vue v-if hides.
+					'proUpsell' => $this->get_ai_pro_upsell(),
+					'status' => $wpvibe['status'],
+					'basename' => $wpvibe['basename'],
+					'installDownloadUrl' => 'https://downloads.wordpress.org/plugin/vibe-ai.zip',
+					'adminUrl' => admin_url('admin.php?page=vibe-ai'),
+					'states' => array(
+						'not_installed' => array(
+							'heading' => __('Use Instagram Feed with Claude, ChatGPT and more.', 'instagram-feed'),
+							'description' => $wpvibe_description,
+							'button' => __('Install WPVibe for free', 'instagram-feed'),
+						),
+						'inactive' => array(
+							'heading' => __('Use Instagram Feed with Claude, ChatGPT and more.', 'instagram-feed'),
+							'description' => $wpvibe_description,
+							'button' => __('Activate WPVibe', 'instagram-feed'),
+						),
+						'active' => array(
+							'heading' => __('WPVibe is connected to Instagram Feed.', 'instagram-feed'),
+							'description' => wp_kses(
+								__('Manage Instagram Feed from your favorite AI agent.<br>Connect Claude, ChatGPT, Cursor or any MCP client in WPVibe.', 'instagram-feed'), // phpcs:ignore Generic.Files.LineLength.TooLong -- single literal for make-pot
+								$ai_agents_allowed_html
+							),
+							'button' => __('Open WPVibe', 'instagram-feed'),
+						),
+						'installFailed' => array(
+							'heading' => __('Use Instagram Feed with Claude, ChatGPT and more.', 'instagram-feed'),
+							'description' => $wpvibe_description,
+							'button' => __('Try again', 'instagram-feed'),
+							/* translators: %s: URL to the Plugins screen */
+							'error' => wp_kses(
+								sprintf(__('Couldn\'t install WPVibe. <a href="%s">Install it from the Plugins screen</a> instead.', 'instagram-feed'), esc_url(admin_url('plugins.php'))), // phpcs:ignore Generic.Files.LineLength.TooLong -- single literal for make-pot
+								$ai_agents_allowed_html
+							),
+						),
+					),
+				),
+				'mcpWrite' => array(
+					'title' => __('MCP Write Access', 'instagram-feed'),
+					'helpText' => __('This will allow your AI agent to make changes to Instagram Feed.', 'instagram-feed'), // phpcs:ignore Generic.Files.LineLength.TooLong -- single literal for make-pot
 				),
 				'preserveBox' => array(
 					'title' => __('Preserve settings if plugin is removed', 'instagram-feed'),
@@ -1151,6 +1264,22 @@ class SBI_Global_Settings
 					'clear' => __('Delete all Platform Data', 'instagram-feed'),
 				),
 			),
+			'debugTab'             => array(
+				'dataSharingTitle'    => __( 'Data sharing', 'instagram-feed' ),
+				'dataSharingDesc'     => __( 'We share limited, non-sensitive usage data to keep your plugins updated and improve our products. We never collect your feed content or your visitors’ personal information.', 'instagram-feed' ),
+				'permissionsLinkText' => __( 'What permissions are being granted?', 'instagram-feed' ),
+				'termsLinkText'       => __( 'Terms & Conditions', 'instagram-feed' ),
+				'privacyLinkText'     => __( 'Privacy', 'instagram-feed' ),
+				'permissionsUrl'      => $sbi_consent_permissions_url,
+				'termsUrl'            => $sbi_consent_terms_url,
+				'privacyUrl'          => $sbi_consent_privacy_url,
+				'notificationsTitle'  => __( 'In-Plugin Notifications', 'instagram-feed' ),
+				'notificationsDesc'   => __( 'We send you in-plugin notifications about updates, fixes, and new features.', 'instagram-feed' ),
+				// When any Smash Balloon Pro plugin is active, consent is forced on
+				// and governed centrally — the toggles are hidden on this tab.
+				// See SBI_Consent::is_locked_by_pro().
+				'lockedByPro'         => class_exists( 'SBI_Consent' ) && \SBI_Consent::is_locked_by_pro(),
+			),
 			'dialogBoxPopupScreen' => array(
 				'deleteSource' => array(
 					'heading' => __('Delete "#"?', 'instagram-feed'),
@@ -1191,6 +1320,31 @@ class SBI_Global_Settings
 	}
 
 	/**
+	 * Resolve the MCP Write Access value to store for a Settings save.
+	 *
+	 * The page posts back the whole model it loaded, so a tab opened while the
+	 * toggle was on would, on any later unrelated save, write `true` back over a
+	 * toggle an admin has since turned off. The page therefore carries the value
+	 * it loaded the toggle with (`sbi_ai_write_enabled_loaded`). Turning writes OFF
+	 * is always honoured (so the gate epoch still records the revocation); turning
+	 * them ON is accepted only when this page loaded the toggle OFF. A post with no
+	 * loaded marker (a page rendered by an older version) can never enable writes.
+	 *
+	 * @param array $advanced Posted `advanced` model section.
+	 * @param bool  $stored   Currently stored value.
+	 * @return bool
+	 */
+	private function reconcile_ai_write_toggle(array $advanced, $stored)
+	{
+		$posted = !empty($advanced['sbi_ai_write_enabled']);
+		if (!$posted) {
+			return false;
+		}
+		$loaded_off = array_key_exists('sbi_ai_write_enabled_loaded', $advanced) && empty($advanced['sbi_ai_write_enabled_loaded']);
+		return $loaded_off ? true : (bool) $stored;
+	}
+
+	/**
 	 * The Settings Data
 	 *
 	 * @return array
@@ -1217,6 +1371,13 @@ class SBI_Global_Settings
 		$wpconsent_file = 'wpconsent-cookies-banner-privacy-suite/wpconsent.php';
 		$is_wpconsent_installed = file_exists(WP_PLUGIN_DIR . '/' . $wpconsent_file);
 		$is_wpconsent_active = is_plugin_active($wpconsent_file);
+
+		// Seed Debug-tab toggles from the central consent flags. These flags live in
+		// top-level options (sbc_data_sharing_consent / sbc_in_plugin_notifications),
+		// not inside sb_instagram_settings — see ConsentManager::update().
+		$consent_flags = class_exists( 'SBI_Consent' )
+			? \SBI_Consent::flags()
+			: array_fill_keys( array( 'dsc', 'notif' ), (bool) 0 );
 
 		return array(
 			'general' => array(
@@ -1252,7 +1413,15 @@ class SBI_Global_Settings
 				'enable_email_report' => $sbi_settings['enable_email_report'],
 				'email_notification' => $sbi_settings['email_notification'],
 				'email_notification_addresses' => $sbi_settings['email_notification_addresses'],
-			)
+				'sbi_ai_write_enabled' => !empty($sbi_settings['sb_instagram_ai_write_enabled']),
+				// What this page load saw for MCP Write Access; posted back with the
+				// rest of the model so the save handler can tell a real flip from a stale tab.
+				'sbi_ai_write_enabled_loaded' => !empty($sbi_settings['sb_instagram_ai_write_enabled']),
+			),
+			'debug'           => array(
+				'sbc_data_sharing_consent'    => $consent_flags['dsc'],
+				'sbc_in_plugin_notifications' => $consent_flags['notif'],
+			),
 		);
 	}
 
@@ -1289,6 +1458,30 @@ class SBI_Global_Settings
 				'fbProfile' => 'https://www.instagram.com/SmashBalloon/',
 				'twitterProfile' => 'https://twitter.com/smashballoon',
 			),
+		);
+	}
+
+	/**
+	 * Data for the "Do more with AI on Pro" strip in the AI Agents card.
+	 *
+	 * Free edition only; returns an empty array in Pro. Features are picked by popup
+	 * key (SBI_Pro_Upsell::BANNER_FEATURES) from the builder's own Pro-feature copy,
+	 * so the strip never carries text of its own beyond the title and button label.
+	 *
+	 * @return array{title: string, features: string[], button: string, url: string}|array{}
+	 */
+	private function get_ai_pro_upsell()
+	{
+		if (!SBI_Pro_Upsell::is_free()) {
+			return array();
+		}
+		$names = SBI_Pro_Upsell::banner_feature_names();
+		return array(
+			'title' => __('Do more with AI on Pro', 'instagram-feed'),
+			'features' => $names,
+			'button' => __('Upgrade to Pro', 'instagram-feed'),
+			'newTab' => __('(opens in a new tab)', 'instagram-feed'),
+			'url' => SBI_Pro_Upsell::upgrade_url('ai-agents-card', 'settings'),
 		);
 	}
 
@@ -1330,5 +1523,43 @@ class SBI_Global_Settings
 	public function global_settings()
 	{
 		SBI_View::render('settings.page');
+	}
+
+	/**
+	 * Determine WPVibe's install/activation status.
+	 *
+	 * Scans the installed-plugins list for a plugin whose folder is
+	 * `vibe-ai/`, rather than assuming a specific main-file name -- a
+	 * plugin's wp.org slug and its main file are not guaranteed to match.
+	 *
+	 * @return array{status: string, basename: string|null} status is one
+	 *               of 'not_installed' | 'inactive' | 'active'.
+	 * @since 6.14.0
+	 */
+	private function get_wpvibe_status()
+	{
+		if (!function_exists('get_plugins')) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
+		$wpvibe_basename = null;
+		foreach (array_keys(get_plugins()) as $plugin_file) {
+			if (strtok($plugin_file, '/') === 'vibe-ai') {
+				$wpvibe_basename = $plugin_file;
+				break;
+			}
+		}
+
+		if (null === $wpvibe_basename) {
+			return array(
+				'status' => 'not_installed',
+				'basename' => null,
+			);
+		}
+
+		return array(
+			'status' => is_plugin_active($wpvibe_basename) ? 'active' : 'inactive',
+			'basename' => $wpvibe_basename,
+		);
 	}
 }

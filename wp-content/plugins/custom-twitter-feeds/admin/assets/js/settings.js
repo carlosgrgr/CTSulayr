@@ -1,5 +1,12 @@
 var ctfSettings;
 
+// Tab index → template id. Advanced keeps 'app-4' so the existing
+// v-if="selected === 'app-4'" in tab/advanced.php keeps matching; the new
+// Debug tab is inserted before Advanced and gets 'app-5'.
+const CTF_TAB_ID_MAP = { 0: 'app-1', 1: 'app-2', 2: 'app-3', 3: 'app-5', 4: 'app-4' };
+// Tab slug used for element ids and the ?view= param, e.g. "Data Sharing" -> "data-sharing".
+const ctfTabSlug = function (section) { return section.toLowerCase().trim().split(' ').join('-'); };
+
 // Declaring as global variable for quick prototyping
 var settings_data = {
     adminUrl: ctf_settings.admin_url,
@@ -23,6 +30,7 @@ var settings_data = {
     feedsTab: ctf_settings.feedsTab,
     translationTab: ctf_settings.translationTab,
     advancedTab: ctf_settings.advancedTab,
+    debugTab: ctf_settings.debugTab,
     footerUpgradeUrl: ctf_settings.footerUpgradeUrl,
     upgradeUrl: ctf_settings.upgradeUrl,
     supportPageUrl: ctf_settings.supportPageUrl,
@@ -39,7 +47,7 @@ var settings_data = {
     currentView: null,
     selected: null,
     current: 0,
-    sections: ["General", "Feeds", "Translation", "Advanced"],
+    sections: ["General", "Feeds", "Translation", "Data Sharing", "Advanced"],
     indicator_width: 0,
     indicator_pos: 0,
     forwards: true,
@@ -77,6 +85,8 @@ var settings_data = {
     twittercardCacheStatus: null,
 
     dpaResetStatus: null,
+    wpvibeInstallStatus: null, // null | 'loading' | 'failed'
+    addonNonce: ctf_settings.addonNonce,
     pressedBtnName: null,
     loading: false,
     hasError: ctf_settings.hasError,
@@ -136,7 +146,7 @@ var settings_data = {
 Vue.component("tab", {
     props: ["section", "index"],
     template: `
-    <button type="button" class="tab" :id="'ctf-settings-tab-' + section.toLowerCase().trim()" role="tab" :aria-selected="section === $parent.currentTab ? 'true' : 'false'" :aria-controls="'ctf-panel-' + section.toLowerCase().trim()" :tabindex="section === $parent.currentTab ? 0 : -1" @click="emitWidth($el);changeComponent(index);activeTab(section)" @keydown="onTabKeydown">{{section}}</button>
+    <button type="button" class="tab" :id="'ctf-settings-tab-' + slug(section)" role="tab" :aria-selected="section === $parent.currentTab ? 'true' : 'false'" :aria-controls="'ctf-panel-' + slug(section)" :tabindex="section === $parent.currentTab ? 0 : -1" @click="emitWidth($el);changeComponent(index);activeTab(section)" @keydown="onTabKeydown">{{section}}</button>
     `,
     created: () => {
         let urlParams = new URLSearchParams(window.location.search);
@@ -149,6 +159,7 @@ Vue.component("tab", {
         settings_data.selected = "app-1";
     },
     methods: {
+        slug: ctfTabSlug,
 
 
         emitWidth: function(el) {
@@ -162,11 +173,11 @@ Vue.component("tab", {
             } else if (prev > index) {
                 settings_data.forwards = true;
             }
-            settings_data.selected = "app-" + (index + 1);
+            settings_data.selected = CTF_TAB_ID_MAP[index] || 'app-1';
             settings_data.current = index;
         },
         activeTab: function(section) {
-            this.setView(section.toLowerCase().trim());
+            this.setView(ctfTabSlug(section));
             settings_data.currentTab = section;
         },
         setView: function(section) {
@@ -204,7 +215,24 @@ var ctfSettings = new Vue({
         emulateHTTP: true
     },
     data: settings_data,
+    watch: {
+        // Invariant: when data-sharing consent is on, in-plugin notifications
+        // must also be on. The Debug tab template disables the notifications
+        // checkbox while DSC is true; this enforces the model side so a stale
+        // DSC=true/notif=false combination can't persist on save.
+        'model.debug.sbc_data_sharing_consent': {
+            immediate: true,
+            handler: function (newVal) {
+                if (newVal && this.model && this.model.debug) {
+                    this.model.debug.sbc_in_plugin_notifications = true;
+                }
+            }
+        }
+    },
     created: function() {
+        // Snapshot the consent toggles as loaded so a save only writes consent
+        // when the user actually changed them (never re-submits a stale value).
+        this.loadedConsent = JSON.stringify(this.model.debug);
         this.$nextTick(function() {
             let tabEl = document.querySelector('.tab');
             settings_data.indicator_width = tabEl.offsetWidth;
@@ -221,12 +249,34 @@ var ctfSettings = new Vue({
         // exist (e.g. an invalid/mistyped view) so we do not dereference null on
         // activeEl.offsetWidth below and crash the settings UI bootstrap.
         if ( ! activeEl ) { return; }
-        // we have to uppercase the first letter
-        let currentView = settings_data.currentView.charAt(0).toUpperCase() + settings_data.currentView.slice(1);
-        let viewIndex = settings_data.sections.indexOf(currentView) + 1;
+        // Match the ?view= slug back to its section, then to its panel id through
+        // CTF_TAB_ID_MAP: panel ids are not in sections order (Data Sharing is app-5).
+        let sectionIndex = settings_data.sections.findIndex(function (s) { return ctfTabSlug(s) === settings_data.currentView; });
+        if (sectionIndex < 0) { return; }
+        let currentView = settings_data.sections[sectionIndex];
+        let viewIndex = sectionIndex + 1;
         settings_data.indicator_width = activeEl.offsetWidth;
         settings_data.indicator_pos = activeEl.offsetLeft;
-        settings_data.selected = "app-" + viewIndex;
+
+        // On a hard refresh, the measurement above can run before the tab web
+        // font swaps in, leaving the underline indicator narrower/offset (worst
+        // on later tabs). Re-measure the active tab once fonts/layout settle and
+        // on resize. Keyed off currentTab so it stays correct after navigation.
+        var sbReindicateTab = function () {
+            var active = settings_data.currentTab;
+            if (!active) { return; }
+            var el = document.querySelector('button.tab#ctf-settings-tab-' + ctfTabSlug(active));
+            if (el) {
+                settings_data.indicator_width = el.offsetWidth;
+                settings_data.indicator_pos = el.offsetLeft;
+            }
+        };
+        if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') {
+            document.fonts.ready.then(function () { sbReindicateTab(); });
+        }
+        window.addEventListener('load', sbReindicateTab);
+        window.addEventListener('resize', sbReindicateTab);
+        settings_data.selected = CTF_TAB_ID_MAP[sectionIndex] || 'app-1';
         settings_data.current = viewIndex;
         settings_data.currentTab = currentView;
 
@@ -254,6 +304,15 @@ var ctfSettings = new Vue({
         }
     },
     methods:  {
+        /**
+         * @return string 'not_installed' | 'inactive' | 'active' | 'installFailed'
+         */
+        aiAgentsState: function () {
+            if (this.wpvibeInstallStatus === 'failed') {
+                return 'installFailed';
+            }
+            return this.generalTab.aiAgents.status;
+        },
         activateLicense: function() {
         if (this.licenseType === 'free') {
           this.runOneClickUpgrade();
@@ -623,7 +682,14 @@ var ctfSettings = new Vue({
             this.pressedBtnName = 'saveChanges';
             let data = new FormData();
             data.append( 'action', 'ctf_save_settings' );
-            data.append( 'model', JSON.stringify( this.model ) );
+            // Snapshot what is actually sent, so a toggle flipped while this save is
+            // in flight is still treated as a change on the next save.
+            let sentConsent = JSON.stringify(this.model.debug);
+            data.append( 'model', JSON.stringify(Object.assign({}, this.model, {
+                // Omit consent unless the user changed it on this page, so a stale
+                // tab can never silently turn data sharing back on.
+                debug: sentConsent !== this.loadedConsent ? this.model.debug : undefined
+            })) );
             data.append( 'ctf_license_key', this.licenseKey );
             data.append( 'extensions_license_key', JSON.stringify( this.extensionsLicenseKey ) );
             data.append( 'nonce', this.nonce );
@@ -640,7 +706,15 @@ var ctfSettings = new Vue({
                 }
 
                 this.cronNextCheck = data.data.cronNextCheck;
+                // Sync MCP Write Access to what the server stored: a stale ON can be
+                // refused, and the loaded marker must follow the stored value so a
+                // later flip in this same tab is judged against it.
+                if ( typeof data.data.aiWriteEnabled === 'boolean' && this.model.advanced ) {
+                    this.model.advanced.ai_write_enabled = data.data.aiWriteEnabled;
+                    this.model.advanced.ai_write_enabled_loaded = data.data.aiWriteEnabled;
+                }
                 this.btnStatus = 'success';
+                this.loadedConsent = sentConsent;
                 setTimeout(function() {
                     this.btnStatus = null;
                     this.pressedBtnName = null;
@@ -1226,6 +1300,69 @@ var ctfSettings = new Vue({
                     self.loadingAjax = false;
                 });
             }
+        },
+
+        /**
+         * Open WPVibe's own admin page.
+         *
+         * @since 2.10.1
+         */
+        openWPVibe: function () {
+            window.location.href = this.generalTab.aiAgents.adminUrl;
+        },
+
+        /**
+         * Install or activate WPVibe for the AI Agents card.
+         *
+         * Reuses the ctf_install_addon / ctf_activate_addon AJAX actions used
+         * elsewhere in this settings app -- but with addonNonce, NOT this.nonce:
+         * those handlers check the 'ctf-admin' action
+         * (inc/Admin/addon-functions.php), which does not match this settings
+         * app's own 'ctf_admin_nonce' action.
+         *
+         * @since 2.10.1
+         */
+        installOrActivateWPVibe: function () {
+            let self = this,
+                aiAgents = self.generalTab.aiAgents,
+                isInstalled = aiAgents.status !== 'not_installed',
+                action = isInstalled ? 'ctf_activate_addon' : 'ctf_install_addon',
+                pluginParam = isInstalled ? aiAgents.basename : aiAgents.installDownloadUrl;
+
+            self.wpvibeInstallStatus = 'loading';
+
+            let data = new FormData();
+            data.append('action', action);
+            data.append('nonce', self.addonNonce);
+            data.append('type', 'plugin');
+            data.append('plugin', pluginParam);
+            fetch(self.ajaxHandler, {
+                method: "POST",
+                credentials: 'same-origin',
+                body: data
+            })
+                .then(response => response.json())
+                .then(function (response) {
+                    if (response.success !== true) {
+                        self.wpvibeInstallStatus = 'failed';
+                        return;
+                    }
+
+                    self.wpvibeInstallStatus = null;
+
+                    if (action === 'ctf_install_addon') {
+                        if (response.data && response.data.basename) {
+                            aiAgents.basename = response.data.basename;
+                        }
+                        aiAgents.status = (response.data && response.data.is_activated) ? 'active' : 'inactive';
+                        return;
+                    }
+
+                    aiAgents.status = 'active';
+                })
+                .catch(function () {
+                    self.wpvibeInstallStatus = 'failed';
+                });
         },
 
     }
