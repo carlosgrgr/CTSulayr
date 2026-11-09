@@ -30,7 +30,7 @@ Este documento analiza el código actual, compara arquitecturas y propone una so
 | Entorno                  | `wp-config.php`, `.htaccess`, vhost de Apache, `wp-content/uploads/`, opciones y roles leídos con WP-CLI                                                                                               |
 
 
-Versiones del entorno local al escribir esta spec: WordPress 7.1.2, WooCommerce 11.1.1, ACF PRO 6.8.10, PHP 8.4 (objetivo del plugin: PHP 7.4). El 9 de noviembre de 2026 el entorno local se actualizó a WordPress 7.1.4, WooCommerce 11.2.2 y ACF PRO 6.8.11.
+Versiones del entorno local al escribir esta spec: WordPress 7.1.2, WooCommerce 11.1.1, ACF PRO 6.8.10, PHP 8.4 (objetivo del plugin: PHP 7.4). El 9 de noviembre de 2026 el entorno local y PROD se actualizaron a WordPress 7.1.4, WooCommerce 11.2.2 y ACF PRO 6.8.11 (desplegado en PROD ese mismo día). WPBakery sigue en 8.6.1: su actualización exige activar la licencia.
 
 ### 1.2. Cómo está estructurado el plugin
 

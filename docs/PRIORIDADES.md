@@ -20,9 +20,9 @@ El documento cercano no es la definición de la tarea. Hay que confirmar si vale
 
 ## 1. Facturación Reservas
 
-[SPEC-FACTURACION-RESERVAS.md](reservas/SPEC-FACTURACION-RESERVAS.md) describe el coste mensual del sistema de reservas y la liquidación con CN Nazarí. Está escrita, sin implementar, y sus decisiones (P1 a P4 y D5 a D16) están cerradas en su sección 12. El plugin sería `sulayr-reservas`.
+[SPEC-FACTURACION-RESERVAS.md](reservas/SPEC-FACTURACION-RESERVAS.md) describe el coste mensual del sistema de reservas y la liquidación con CN Nazarí. Sus decisiones (P1 a P4 y D5 a D16) están cerradas en su sección 12. El plugin es `sulayr-reservas`.
 
-Esta prioridad es esa spec. Está cerrada en la rama `facturacion-reservas`. Falta fusionarla en `main` y desplegarla en PROD.
+Esta prioridad es esa spec. Está cerrada, en `main` y desplegada en PROD el 28 de octubre de 2026. El enlace «Facturación» del menú del panel está comentado hasta que se empiece a usar.
 
 ## 2. Tienda online
 
