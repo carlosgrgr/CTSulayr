@@ -14,6 +14,8 @@ use ClubTriatlonSulayr\Modules\Emails\EmailConfig;
 use ClubTriatlonSulayr\Modules\Users\AthleteAdminProfile;
 use ClubTriatlonSulayr\Modules\Users\AthleteUpdate;
 use ClubTriatlonSulayr\Modules\WooCommerce\WooCommerceIntegration;
+use ClubTriatlonSulayr\Modules\WooCommerce\PrintNameField;
+use ClubTriatlonSulayr\Modules\WooCommerce\OrdersCsvExport;
 use ClubTriatlonSulayr\Modules\Subscriptions\SubscriptionProducts;
 use ClubTriatlonSulayr\Modules\Subscriptions\StripeWebhookHandler;
 use ClubTriatlonSulayr\Modules\PostTypes\WalletPostType;
@@ -119,6 +121,10 @@ class App {
             new DocumentsAccountEndpoint( new DocumentService() );
             new WooCommerceIntegration();
             new SubscriptionProducts();
+            new PrintNameField();
+            if ( is_admin() ) {
+                new OrdersCsvExport();
+            }
         }
     }
 

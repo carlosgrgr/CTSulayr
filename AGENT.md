@@ -35,7 +35,7 @@ php -l wp-content/plugins/sulayr-reservas/src/Path/To/File.php   # syntax check
 ```
 
 - Club plugin dependencies: `composer install` inside `wp-content/plugins/club-triatlon-sulayr/`. Its `phpcs.xml` (WPCS-based) is the lint config, but WPCS is not installed in `vendor/` right now.
-- The local CLI runs PHP 8.4, but both plugins target **PHP 7.4**: no union types, `mixed`, constructor promotion, enums, `match`, or nullsafe operator.
+- The local CLI runs PHP 8.5, but both plugins target **PHP 7.4**: no union types, `mixed`, constructor promotion, enums, `match`, or nullsafe operator.
 
 ## Project documents (read before changing reservations behaviour)
 
