@@ -44,7 +44,7 @@ Plugin `club-triatlon-sulayr`. Estas specs conservan su nombre. No modifican `SP
 |---|---|---|
 | Documentos | [SPEC-DOCUMENTOS.md](club/SPEC-DOCUMENTOS.md) | Fases D0 a D7 en `main`. D5 a D7 en `deb5398e`. |
 | Cobros de cuotas | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) | Borrador abierto. Sin implementar. |
-| Tienda online | [SPEC-TIENDA-ONLINE.md](club/SPEC-TIENDA-ONLINE.md) | En `main` (`2f9e0503f`) y desplegada en PROD el 9 de noviembre de 2026. Cambio T4 (D12, columna propia para la cremallera en el CSV) implementado y probado en local en la rama `tienda-columnas-atributos`, sin commit ni despliegue. |
+| Tienda online | [SPEC-TIENDA-ONLINE.md](club/SPEC-TIENDA-ONLINE.md) | Cerrada. En `main` (`2f9e0503f` y `79ce29b9b`) y desplegada en PROD el 9 de noviembre de 2026. |
 
 La identidad visual Sulayr del panel, la cabecera del tema y el acceso no tiene spec: no cambia comportamiento. Está en `main` y en PROD desde el 28 de octubre de 2026. Detalle en `DEVELOPMENT.md`, sección «Identidad visual Sulayr».
 

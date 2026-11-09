@@ -4,7 +4,7 @@ Este manual es para quien gestiona la tienda del club. Explica cómo se activa e
 
 No incluye capturas. Los nombres en negrita son los textos de los botones y los apartados del menú.
 
-La especificación técnica completa está en `docs/club/SPEC-TIENDA-ONLINE.md`.
+La especificación técnica completa está en `docs/club/SPEC-TIENDA-ONLINE.md`. La guía con capturas para la junta (alta de prendas, precios, tallas y estas dos funciones) está en `docs/club/guia-tienda-sulayr.html`.
 
 ## 1. Qué es
 

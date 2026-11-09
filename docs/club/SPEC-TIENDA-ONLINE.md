@@ -1,7 +1,7 @@
 # SPEC — Tienda online: nombre en los tritrajes y exportación de pedidos
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr`
-**Estado:** Decisiones D1 a D12 (sección 2). T1 a T3 en `main` (`2f9e0503f`) y en PROD desde el 9 de noviembre de 2026. El cambio T4 (D12, columnas propias para las opciones que no son talla) está implementado y probado en local el 9 de noviembre de 2026 en la rama `tienda-columnas-atributos`, sin commit ni despliegue (sección 9).
+**Estado:** Cerrada el 9 de noviembre de 2026. Decisiones D1 a D12 (sección 2). T1 a T3 en `main` (`2f9e0503f`) y T4 en `main` (`79ce29b9b`), las dos desplegadas en PROD el 9 de noviembre de 2026 (sección 9). Guía para la junta con capturas: `docs/club/guia-tienda-sulayr.html`, publicada en `https://clubtriatlonsulayr.com/docs/guia-tienda-sulayr.html`.
 **Fecha:** 9 de noviembre de 2026
 
 La tienda ya funciona con WooCommerce en el sitio del club (blog 1): catálogo de equipación 2025-2026, carrito y compra. Esta spec cubre lo que falta: que el cliente pueda indicar un nombre para estampar en los tritrajes, y que el club pueda exportar los pedidos seleccionados a CSV para enviarlos al fabricante (Inverse).
@@ -196,7 +196,7 @@ Se prueban en local con los productos de la exportación de PROD importados (sin
 | T1   | Cerrada (`PrintNameField`). En `main` (`2f9e0503f`) y en PROD el 9 de noviembre de 2026. |
 | T2   | Cerrada (`OrdersCsvExport`). En `main` (`2f9e0503f`) y en PROD el 9 de noviembre de 2026. |
 | T3   | Cerrada. Pruebas en local, documentación (esta spec, `docs/FASES.md`, `docs/PRIORIDADES.md` y `club-triatlon-sulayr/MANUAL-TIENDA.md`) y despliegue en PROD el 9 de noviembre de 2026. |
-| T4   | Implementada y probada en local el 9 de noviembre de 2026 en la rama `tienda-columnas-atributos` (9.3). Sin commit ni despliegue. |
+| T4   | Cerrada (9.3). En `main` (`79ce29b9b`) y en PROD el 9 de noviembre de 2026. |
 
 ### 9.1. Pruebas en local (9 de noviembre de 2026)
 
@@ -225,7 +225,7 @@ No se ha comprobado en PROD, porque requiere sesión de administrador o crear pe
 
 ### 9.3. T4: columnas de opciones (9 de noviembre de 2026)
 
-Implementada en `OrdersCsvExport` y probada en local en la rama `tienda-columnas-atributos`. Sin commit ni despliegue.
+Implementada en `OrdersCsvExport` y probada en local. En `main` (`79ce29b9b`) y desplegada en PROD el 9 de noviembre de 2026; el despliegue se confirmó porque la guía publicada en el mismo commit ya se sirve en PROD. La exportación en PROD no se ha comprobado desde fuera: necesita sesión de administrador.
 
 - Cabecera: `Pedido;Fecha;Estado;Cliente;Email;Teléfono;Producto;Talla;Cremallera;Cantidad;"Nombre a estampar"`. La sudadera sale con «M» en Talla y «Con cremallera» en Cremallera; los tritrajes, con Cremallera vacía. Comprobado con la exportación real desde la lista de pedidos.
 - «Talla» y «Talla Wabiks» cuentan como tallas; «Cremallera», no.
