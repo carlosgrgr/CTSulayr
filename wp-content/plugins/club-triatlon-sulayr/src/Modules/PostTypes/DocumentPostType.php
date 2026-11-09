@@ -102,7 +102,7 @@ class DocumentPostType extends PostType {
         return [
             'name' => __( 'Documentos', SULAYR_TEXTDOMAIN ),
             'singular_name' => __( 'Documento', SULAYR_TEXTDOMAIN ),
-            'menu_name' => __( 'Documentos', SULAYR_TEXTDOMAIN ),
+            'menu_name' => __( 'Documentos Sulayr', SULAYR_TEXTDOMAIN ),
             'name_admin_bar' => __( 'Documento', SULAYR_TEXTDOMAIN ),
             'add_new' => __( 'Añadir documento', SULAYR_TEXTDOMAIN ),
             'add_new_item' => __( 'Añadir documento', SULAYR_TEXTDOMAIN ),

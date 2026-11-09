@@ -3,6 +3,7 @@ namespace ClubTriatlonSulayr\Modules\SettingsPages;
 
 use ClubTriatlonSulayr\Services\UserService;
 use ClubTriatlonSulayr\Services\CsvImporterService;
+use ClubTriatlonSulayr\Modules\PostTypes\DocumentPostType;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -43,6 +44,8 @@ class SulayrSettingsPage {
      */
     private function init(): void {
         add_action( 'admin_menu', [ $this, 'add_settings_page' ] );
+        add_filter( 'custom_menu_order', '__return_true' );
+        add_filter( 'menu_order', [ $this, 'reorder_admin_menu' ], 99 );
         add_action( 'admin_init', [ $this, 'handle_list_requests' ] );
         add_action( 'admin_init', [ $this, 'register_stripe_settings' ] );
         add_action( 'admin_init', [ $this, 'handle_stripe_settings_save' ], 20 );
@@ -117,6 +120,32 @@ class SulayrSettingsPage {
             self::MENU_ICON,
             self::MENU_POSITION
         );
+    }
+
+    /**
+     * reorder_admin_menu()
+     * Coloca "Sulayr Info" y "Documentos Sulayr" justo debajo de Escritorio,
+     * antes de Entradas.
+     *
+     * @param array $menu_order Slugs del menú principal en orden.
+     * @return array
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public function reorder_admin_menu( $menu_order ): array {
+        if ( ! is_array( $menu_order ) ) {
+            return [];
+        }
+
+        $first = [ self::MENU_SLUG, 'edit.php?post_type=' . DocumentPostType::POST_TYPE_NAME ];
+        $rest  = array_values( array_diff( $menu_order, $first ) );
+        $first = array_values( array_intersect( $first, $menu_order ) );
+        $index = array_search( 'index.php', $rest, true );
+        $at    = false === $index ? 0 : $index + 1;
+
+        array_splice( $rest, $at, 0, $first );
+
+        return $rest;
     }
 
     /**

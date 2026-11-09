@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:       Sulayr Scripts Manager
- * Description:       Inserta códigos de seguimiento (Google Tag Manager, Analytics…) en el head, al abrir el body o tras el footer. Cada sitio de la red tiene sus propios códigos en Ajustes → Scripts.
+ * Description:       Inserta códigos de seguimiento (Google Tag Manager, Analytics…) en el head, al abrir el body o tras el footer. Cada sitio de la red tiene sus propios códigos en Ajustes → Scripts Manager.
  * Version:           1.0.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
@@ -158,11 +158,11 @@ final class Sulayr_Scripts_Manager {
 		return $clean;
 	}
 
-	/** Añade Ajustes → Scripts. */
+	/** Añade Ajustes → Scripts Manager. */
 	public static function add_page() {
 		add_options_page(
-			'Scripts',
-			'Scripts',
+			'Scripts Manager',
+			'Scripts Manager',
 			self::CAPABILITY,
 			self::PAGE,
 			array( __CLASS__, 'render_page' )
@@ -176,7 +176,7 @@ final class Sulayr_Scripts_Manager {
 		}
 		?>
 		<div class="wrap">
-			<h1>Scripts</h1>
+			<h1>Scripts Manager</h1>
 			<p>Pega aquí los códigos de seguimiento de este sitio. Se insertan tal cual en todas las páginas públicas. Deja un campo vacío para no insertar nada en esa ubicación.</p>
 			<form method="post" action="options.php">
 				<?php settings_fields( self::GROUP ); ?>

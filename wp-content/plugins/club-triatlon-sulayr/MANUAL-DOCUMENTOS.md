@@ -23,7 +23,7 @@ Los archivos no tienen una dirección pública. Solo se pueden abrir desde **Mi 
 
 ## 3. Publicar un documento
 
-1. **Documentos → Añadir documento**.
+1. **Documentos Sulayr → Añadir documento**.
 2. Escribe el **título**. Es lo que el deportista ve en grande. Sin título, el documento no se publica: se guarda como borrador y aparece un aviso.
 3. Escribe la **Descripción**: una o dos frases que expliquen qué es (300 caracteres como máximo).
 4. En **Archivo**, pulsa **Añadir archivo** y **sube el archivo desde tu ordenador**. No elijas un archivo que ya estuviera en la biblioteca de medios: el documento no se guardará y verás un aviso. Los archivos subidos aquí van a una carpeta protegida.
@@ -48,7 +48,7 @@ Si quitas a alguien de la lista, deja de verlo en ese momento. Si se borra un us
 
 ## 5. Categorías
 
-Las categorías se gestionan en **Documentos → Categorías**: crear, cambiar el nombre y borrar. Desde la pantalla del documento solo se elige entre las que ya existen; para una nueva, créala antes ahí.
+Las categorías se gestionan en **Documentos Sulayr → Categorías**: crear, cambiar el nombre y borrar. Desde la pantalla del documento solo se elige entre las que ya existen; para una nueva, créala antes ahí.
 
 Cada documento tiene una categoría como mucho. En **Mi cuenta → Documentos**:
 
@@ -86,7 +86,7 @@ No borres los archivos de los documentos desde **Medios**: el documento se queda
 
 ## 9. El listado
 
-**Documentos → Todos los documentos** muestra:
+**Documentos Sulayr → Todos los documentos** muestra:
 
 | Columna | Qué indica |
 |---|---|

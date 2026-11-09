@@ -24,6 +24,11 @@
     margin-right: 5px;
 }
 
+/* Icono SVG propio (Dashicons no tiene nadador) */
+.sulayr-settings-buttons .sulayr-icon-svg svg {
+    display: block;
+}
+
 /* Listado de deportistas */
 .sulayr-athletes-list-card {
     margin-top: 20px;
