@@ -1,50 +1,362 @@
 /*
- * Presentación Bento de las dos vistas reales del perfil del deportista.
- * No cambia campos, formulario ACF ni pestañas.
- * El enlace a reservas lo imprime el plugin y aquí solo se presenta.
+ * Mi cuenta del deportista con la marca Sulayr.
+ * Cubre la navegación de WooCommerce, el perfil Bento, monedero, pagos,
+ * documentos, formularios y avisos. Solo presentación: no cambia campos,
+ * formulario ACF ni pestañas. El enlace a reservas lo imprime sulayr-reservas.
+ * Tokens de color y tipografías en style.css (:root).
  */
 
+/* ===== Tokens locales ===== */
+.woocommerce-account,
 .sulayr-athlete-profile-content {
-	--sulayr-bento-bg: #f3f6f8;
-	--sulayr-bento-card: #ffffff;
-	--sulayr-bento-line: #d9e3ea;
-	--sulayr-bento-text: #1c2b36;
-	--sulayr-bento-muted: #5d6f7c;
-	--sulayr-bento-accent: #1f7a4d;
-	background: var(--sulayr-bento-bg);
-	border-radius: 20px;
-	color: var(--sulayr-bento-text);
-	padding: 1rem;
+	--mc-linea: #D6DCE5;
+	--mc-linea-suave: #E3E8EF;
+	--mc-radio: 6px;
+	--mc-radio-sm: 4px;
+	--mc-nube-osc: #C9D1DE; /* Texto apagado sobre Noche */
+}
+
+/* ===== Cabecera de la página ===== */
+.woocommerce-account .entry-header {
+	margin-bottom: 1.5rem;
+}
+.woocommerce-account .entry-title {
+	color: var(--sulayr-noche);
+	font-family: var(--sulayr-display);
+	font-size: clamp(2rem, 4.5vw, 2.25rem);
+	font-stretch: 118%;
+	font-style: italic;
+	font-weight: 900;
+	line-height: 1.05;
+}
+.woocommerce-account.sulayr-athlete .entry-title::before {
+	color: var(--sulayr-acento);
+	content: "Área del deportista";
+	display: block;
+	font-family: var(--sulayr-mono);
+	font-size: 12px;
+	font-stretch: 100%;
+	font-style: normal;
+	font-weight: 600;
+	letter-spacing: 0.14em;
+	margin-bottom: 0.5rem;
+	text-transform: uppercase;
+}
+
+/* ===== Rejilla: menú + contenido ===== */
+@media (min-width: 922px) {
+	.woocommerce-account .woocommerce:has(> .woocommerce-MyAccount-navigation) {
+		align-items: start;
+		display: grid;
+		gap: 2rem;
+		grid-template-columns: 15rem minmax(0, 1fr);
+	}
+	.woocommerce-account .woocommerce:has(> .woocommerce-MyAccount-navigation) > * {
+		grid-column: 1 / -1;
+	}
+	.woocommerce-account .woocommerce > .woocommerce-MyAccount-navigation {
+		float: none;
+		grid-column: 1;
+		position: sticky;
+		top: 1.5rem;
+		width: auto;
+	}
+	.woocommerce-account .woocommerce > .woocommerce-MyAccount-content {
+		float: none;
+		grid-column: 2;
+		width: auto;
+	}
+}
+
+/* ===== Menú lateral (Noche) ===== */
+.woocommerce-account nav.woocommerce-MyAccount-navigation {
+	background: var(--sulayr-noche);
+	border-radius: var(--mc-radio);
+	margin: 0 0 1.5rem;
+	overflow: hidden;
+}
+.woocommerce-account nav.woocommerce-MyAccount-navigation::after {
+	background: linear-gradient(90deg,
+		var(--sulayr-cielo) 0 33.33%, var(--sulayr-menta) 33.33% 66.66%, var(--sulayr-sol) 66.66%);
+	content: "";
+	display: block;
+	height: 6px;
+}
+.woocommerce-account .woocommerce-MyAccount-navigation ul {
+	list-style: none;
+	margin: 0;
+	padding: 0.5rem 0;
+}
+.woocommerce-account .woocommerce-MyAccount-navigation-link {
+	border: 0;
+	list-style: none;
+	margin: 0;
+}
+.woocommerce-account .woocommerce-MyAccount-navigation-link a {
+	align-items: center;
+	background: transparent;
+	border-left: 3px solid transparent;
+	color: var(--sulayr-nieve);
+	display: flex;
+	font-family: var(--sulayr-texto);
+	font-size: 15px;
+	font-weight: 600;
+	gap: 0.4rem;
+	line-height: 1.3;
+	min-height: 44px;
+	padding: 0.6rem 1.1rem 0.6rem calc(1.1rem - 3px);
+	text-decoration: none;
+}
+.woocommerce-account .woocommerce-MyAccount-navigation-link a:hover,
+.woocommerce-account .woocommerce-MyAccount-navigation-link a:focus-visible {
+	background: var(--sulayr-pizarra);
+	color: var(--sulayr-nieve);
+}
+.woocommerce-account .woocommerce-MyAccount-navigation-link a:focus-visible {
+	outline: 2px solid var(--sulayr-cielo);
+	outline-offset: -2px;
+}
+.woocommerce-account .woocommerce-MyAccount-navigation-link.is-active a {
+	background: var(--sulayr-pizarra);
+	border-left-color: var(--sulayr-menta);
+	color: var(--sulayr-menta);
+}
+.woocommerce-account .woocommerce-MyAccount-navigation-link--customer-logout {
+	border-top: 1px solid var(--sulayr-pizarra);
+	margin-top: 0.5rem;
+	padding-top: 0.5rem;
+}
+.woocommerce-account .woocommerce-MyAccount-navigation-link--customer-logout a {
+	color: var(--mc-nube-osc);
+	font-weight: 400;
+}
+
+@media (max-width: 921px) {
+	.woocommerce-account .entry-header {
+		padding-top: 1rem;
+	}
+	.woocommerce-account .woocommerce-MyAccount-navigation ul {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+	}
+	.woocommerce-account .woocommerce-MyAccount-navigation-link--customer-logout {
+		border-top: 0;
+		margin-top: 0;
+		padding-top: 0;
+	}
+}
+
+/* ===== Contenido general ===== */
+.woocommerce-account .woocommerce-MyAccount-content {
+	color: var(--sulayr-noche);
+	font-size: 16px;
+	line-height: 1.6;
+}
+.woocommerce-account :where(.woocommerce-MyAccount-content) h2,
+.woocommerce-account :where(.woocommerce-MyAccount-content) h3 {
+	color: var(--sulayr-noche);
+	font-family: var(--sulayr-display);
+}
+.woocommerce-account :where(.woocommerce-MyAccount-content) h2 {
+	font-size: 1.6rem;
+}
+.woocommerce-account :where(.woocommerce-MyAccount-content) h3 {
+	font-size: 1.3rem;
+	font-stretch: 108%;
+	font-style: normal;
+	font-weight: 700;
+}
+.woocommerce-account :where(.woocommerce-MyAccount-content a:not(.button):not(.sulayr-pool-link)) {
+	color: var(--sulayr-acento);
+}
+.woocommerce-account :where(.woocommerce-MyAccount-content a:not(.button):not(.sulayr-pool-link)):hover {
+	color: var(--sulayr-noche);
+}
+
+/* Botones: Noche por defecto, Sol para enviar formularios (acción principal) */
+.woocommerce-account .woocommerce-MyAccount-content .button,
+.woocommerce-account .woocommerce-MyAccount-content button[type="submit"],
+.woocommerce-account .woocommerce-MyAccount-content input[type="submit"] {
+	background: var(--sulayr-noche);
+	border: 0;
+	border-radius: var(--mc-radio-sm);
+	color: var(--sulayr-nieve);
+	font-family: var(--sulayr-texto);
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.2;
+	min-height: 44px;
+	padding: 0.7rem 1.25rem;
+}
+.woocommerce-account .woocommerce-MyAccount-content .button:hover,
+.woocommerce-account .woocommerce-MyAccount-content .button:focus-visible {
+	background: var(--sulayr-pizarra);
+	color: var(--sulayr-nieve);
+}
+.woocommerce-account .woocommerce-MyAccount-content button[type="submit"],
+.woocommerce-account .woocommerce-MyAccount-content input[type="submit"],
+.sulayr-athlete-profile-content .sulayr-profile-form input[type="submit"],
+.sulayr-athlete-profile-content .sulayr-profile-form button[type="submit"] {
+	background: var(--sulayr-sol);
+	border-radius: var(--mc-radio-sm);
+	color: var(--sulayr-noche);
+	min-height: 44px;
+}
+.woocommerce-account .woocommerce-MyAccount-content button[type="submit"]:hover,
+.woocommerce-account .woocommerce-MyAccount-content input[type="submit"]:hover,
+.sulayr-athlete-profile-content .sulayr-profile-form input[type="submit"]:hover,
+.sulayr-athlete-profile-content .sulayr-profile-form button[type="submit"]:hover {
+	background: var(--sulayr-noche);
+	color: var(--sulayr-nieve);
+}
+.woocommerce-account .woocommerce-MyAccount-content .button:focus-visible,
+.woocommerce-account .woocommerce-MyAccount-content button:focus-visible,
+.woocommerce-account .woocommerce-MyAccount-content input[type="submit"]:focus-visible {
+	outline: 2px solid var(--sulayr-acento);
+	outline-offset: 2px;
+}
+
+/* Campos de formulario (WooCommerce y ACF) */
+.woocommerce-account .woocommerce-MyAccount-content label,
+.sulayr-athlete-profile-content .sulayr-profile-form .acf-label label {
+	color: var(--sulayr-noche);
+	font-weight: 600;
+}
+.woocommerce-account .woocommerce-MyAccount-content input[type="text"],
+.woocommerce-account .woocommerce-MyAccount-content input[type="email"],
+.woocommerce-account .woocommerce-MyAccount-content input[type="tel"],
+.woocommerce-account .woocommerce-MyAccount-content input[type="password"],
+.woocommerce-account .woocommerce-MyAccount-content input[type="date"],
+.woocommerce-account .woocommerce-MyAccount-content select,
+.woocommerce-account .woocommerce-MyAccount-content textarea,
+.woocommerce-account .woocommerce-MyAccount-content .select2-selection {
+	background: #fff;
+	border: 1px solid var(--mc-linea);
+	border-radius: var(--mc-radio-sm);
+	color: var(--sulayr-noche);
+	font-family: var(--sulayr-texto);
+	font-size: 16px;
+	min-height: 44px;
+}
+.woocommerce-account .woocommerce-MyAccount-content input:focus,
+.woocommerce-account .woocommerce-MyAccount-content select:focus,
+.woocommerce-account .woocommerce-MyAccount-content textarea:focus {
+	border-color: var(--sulayr-acento);
+	box-shadow: 0 0 0 3px rgba(10, 124, 138, 0.18);
+	outline: none;
+}
+.woocommerce-account .woocommerce-MyAccount-content fieldset legend {
+	color: var(--sulayr-acento);
+	font-family: var(--sulayr-mono);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+}
+
+/* Avisos de WooCommerce y del club */
+.woocommerce-account .woocommerce .woocommerce-message,
+.woocommerce-account .woocommerce .woocommerce-info,
+.woocommerce-account .woocommerce .woocommerce-error,
+.sulayr-athlete-profile-content .sulayr-alert,
+.woocommerce-account .sulayr-subscription-notice {
+	background: var(--sulayr-nieve);
+	border: 0;
+	border-left: 4px solid var(--sulayr-cielo);
+	border-radius: var(--mc-radio-sm);
+	box-shadow: none;
+	color: var(--sulayr-noche);
+	outline: 0;
+}
+.woocommerce-account .woocommerce-message::before,
+.woocommerce-account .woocommerce-info::before {
+	color: var(--sulayr-acento);
+}
+.woocommerce-account .woocommerce .woocommerce-message,
+.sulayr-athlete-profile-content .sulayr-alert-success,
+.woocommerce-account .sulayr-subscription-notice.notice-success {
+	border-left-color: var(--sulayr-menta);
+}
+.woocommerce-account .woocommerce .woocommerce-error,
+.woocommerce-account .sulayr-subscription-notice.notice-error,
+.woocommerce-account .sulayr-subscription-notice.notice-warning {
+	border-left-color: var(--sulayr-sol);
+}
+.woocommerce-account .woocommerce-error::before {
+	color: var(--sulayr-noche);
+}
+.woocommerce-account .sulayr-subscription-notice {
+	margin: 0 0 1rem;
+	padding: 0.75rem 1rem;
+}
+.woocommerce-account .sulayr-subscription-notice p {
+	margin: 0;
+}
+.woocommerce-account .sulayr-subscription-notice p + p {
+	margin-top: 0.4rem;
+}
+
+/* Estado de la suscripción bajo el perfil */
+.woocommerce-account .sulayr-subscription-block {
+	margin-top: 1rem;
+}
+.woocommerce-account .sulayr-subscription-status {
+	background: #fff;
+	border: 1px solid var(--mc-linea);
+	border-left: 4px solid var(--sulayr-menta);
+	border-radius: var(--mc-radio);
+	padding: 1rem 1.25rem;
+}
+.woocommerce-account .sulayr-subscription-status p {
+	margin: 0;
+}
+.woocommerce-account .sulayr-subscription-status p + p {
+	color: var(--sulayr-texto2);
+	margin-top: 0.25rem;
+}
+
+/* ===== Perfil del deportista (Bento) ===== */
+.sulayr-athlete-profile-content {
+	background: transparent;
+	border-radius: 0;
+	color: var(--sulayr-noche);
+	padding: 0;
 }
 
 .sulayr-athlete-profile-content .sulayr-profile-layout {
 	align-items: start;
 	display: grid;
 	gap: 1rem;
-	grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
+	grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
 }
 
 .sulayr-athlete-profile-content .sulayr-profile-sidebar {
 	position: static;
 }
 
-.sulayr-athlete-profile-content .sulayr-profile-card,
 .sulayr-athlete-profile-content .sulayr-info-block,
 .sulayr-athlete-profile-content #edit.tab-pane.active.show,
 .sulayr-athlete-profile-content .sulayr-profile-tabs {
-	background: var(--sulayr-bento-card);
-	border: 1px solid var(--sulayr-bento-line);
-	border-radius: 16px;
-	box-shadow: 0 1px 2px rgba(28, 43, 54, 0.04), 0 8px 24px rgba(28, 43, 54, 0.05);
+	background: #fff;
+	border: 1px solid var(--mc-linea);
+	border-radius: var(--mc-radio);
+	box-shadow: none;
 }
 
+/* Tarjeta del deportista: Noche con perfil de cumbres al pie */
 .sulayr-athlete-profile-content .sulayr-profile-card {
-	padding: 1.25rem;
+	background: var(--sulayr-noche) url("./assets/img/cumbres.svg") bottom / 100% 44px no-repeat;
+	border: 0;
+	border-radius: var(--mc-radio);
+	box-shadow: none;
+	color: var(--sulayr-nieve);
+	padding: 1.5rem 1.25rem 4rem;
+	text-align: center;
 }
 
 .sulayr-athlete-profile-content .sulayr-profile-avatar,
 .sulayr-athlete-profile-content .sulayr-profile-card .img-profile-circle {
-	border: 3px solid #d9efe4;
+	border: 3px solid var(--sulayr-menta);
 	border-radius: 50%;
 	height: 8.5rem;
 	object-fit: cover;
@@ -52,27 +364,56 @@
 }
 
 .sulayr-athlete-profile-content .sulayr-profile-name {
-	color: var(--sulayr-bento-text);
-	font-size: 1.25rem;
-	margin: 0.75rem 0 0;
+	color: var(--sulayr-nieve);
+	font-family: var(--sulayr-display);
+	font-size: 1.4rem;
+	font-stretch: 115%;
+	font-style: italic;
+	font-weight: 900;
+	line-height: 1.1;
+	margin: 0.9rem 0 0;
+}
+.sulayr-athlete-profile-content .sulayr-profile-name::before {
+	color: var(--sulayr-cielo);
+	content: "Deportista";
+	display: block;
+	font-family: var(--sulayr-mono);
+	font-size: 11px;
+	font-stretch: 100%;
+	font-style: normal;
+	font-weight: 600;
+	letter-spacing: 0.14em;
+	margin-bottom: 0.35rem;
+	text-transform: uppercase;
 }
 
+/* Reservas de piscina: Cielo (natación) con texto Noche */
 .sulayr-athlete-profile-content .sulayr-pool-link-wrap {
-	margin: 1rem 0 0;
+	margin: 1.1rem 0 0;
 }
 
 .sulayr-athlete-profile-content a.sulayr-pool-link {
 	align-items: center;
-	background: var(--sulayr-bento-accent);
-	border-radius: 12px;
-	color: #fff;
+	background: var(--sulayr-cielo);
+	border-radius: var(--mc-radio-sm);
+	color: var(--sulayr-noche);
 	display: flex;
-	font-weight: 700;
+	font-weight: 600;
 	gap: 0.4rem;
 	justify-content: center;
 	min-height: 44px;
 	padding: 0.55rem 0.9rem;
 	text-decoration: none;
+}
+
+.sulayr-athlete-profile-content a.sulayr-pool-link:hover,
+.sulayr-athlete-profile-content a.sulayr-pool-link:focus-visible {
+	background: var(--sulayr-nieve);
+	color: var(--sulayr-noche);
+}
+.sulayr-athlete-profile-content a.sulayr-pool-link:focus-visible {
+	outline: 2px solid var(--sulayr-cielo);
+	outline-offset: 2px;
 }
 
 .sulayr-external-icon {
@@ -87,35 +428,43 @@ body .woocommerce-MyAccount-navigation-link--reservas-piscina a {
 	gap: 0.35rem;
 }
 
-.sulayr-athlete-profile-content a.sulayr-pool-link:hover,
-.sulayr-athlete-profile-content a.sulayr-pool-link:focus-visible {
-	background: #17633e;
-	color: #fff;
-}
-
 .sulayr-athlete-profile-content .sulayr-profile-main {
 	display: grid;
 	gap: 1rem;
 	min-width: 0;
 }
 
+/* Pestañas: segmentado con la activa en Noche */
 .sulayr-athlete-profile-content .sulayr-profile-tabs {
 	display: grid;
-	gap: 0.35rem;
+	gap: 0.25rem;
 	grid-template-columns: 1fr 1fr;
-	padding: 0.35rem;
+	margin: 0;
+	padding: 0.25rem;
 }
 
 .sulayr-athlete-profile-content .sulayr-profile-tab {
-	border-radius: 12px;
-	color: var(--sulayr-bento-muted);
+	border-radius: var(--mc-radio-sm);
+	color: var(--sulayr-texto2);
+	font-family: var(--sulayr-texto);
+	font-weight: 600;
 	justify-content: center;
 	min-height: 44px;
 }
 
+.sulayr-athlete-profile-content .sulayr-profile-tab:hover {
+	background: var(--sulayr-nieve);
+	color: var(--sulayr-noche);
+}
+
 .sulayr-athlete-profile-content .sulayr-profile-tab.active {
-	background: var(--sulayr-bento-accent);
-	color: #fff;
+	background: var(--sulayr-noche);
+	color: var(--sulayr-nieve);
+}
+
+.sulayr-athlete-profile-content .sulayr-profile-tab:focus-visible {
+	outline: 2px solid var(--sulayr-acento);
+	outline-offset: 2px;
 }
 
 .sulayr-athlete-profile-content .sulayr-profile-panels {
@@ -149,26 +498,40 @@ body .woocommerce-MyAccount-navigation-link--reservas-piscina a {
 }
 
 .sulayr-athlete-profile-content #info .sulayr-info-block + .sulayr-info-block {
-	border-top: 0;
+	border-top: 1px solid var(--mc-linea);
 	padding-top: 1.15rem;
 }
 
+/* Título de bloque como etiqueta mono */
 .sulayr-athlete-profile-content .sulayr-info-block-title {
-	color: var(--sulayr-bento-accent);
-	letter-spacing: 0.02em;
+	color: var(--sulayr-acento);
+	font-family: var(--sulayr-mono);
+	font-size: 12px;
+	font-stretch: 100%;
+	font-style: normal;
+	font-weight: 600;
+	letter-spacing: 0.14em;
+	margin: 0 0 0.5rem;
+	text-transform: uppercase;
+}
+
+.sulayr-athlete-profile-content .sulayr-info-row {
+	border-bottom-color: var(--mc-linea-suave);
 }
 
 .sulayr-athlete-profile-content .sulayr-info-row dt {
-	color: var(--sulayr-bento-muted);
+	color: var(--sulayr-texto2);
+	font-weight: 400;
 }
 
 .sulayr-athlete-profile-content .sulayr-info-row dd,
 .sulayr-athlete-profile-content .sulayr-info-row dd a {
-	color: var(--sulayr-bento-text);
+	color: var(--sulayr-noche);
+	font-weight: 600;
 }
 
 .sulayr-athlete-profile-content .sulayr-info-row dd a {
-	color: var(--sulayr-bento-accent);
+	color: var(--sulayr-acento);
 }
 
 .sulayr-athlete-profile-content #edit.tab-pane.active.show {
@@ -181,28 +544,239 @@ body .woocommerce-MyAccount-navigation-link--reservas-piscina a {
 	max-width: none;
 }
 
-.sulayr-athlete-profile-content .sulayr-profile-form button[type="submit"],
-.sulayr-athlete-profile-content .sulayr-profile-form input[type="submit"] {
-	background: var(--sulayr-bento-accent);
-	border-radius: 10px;
-	min-height: 44px;
+.sulayr-athlete-profile-content .sulayr-profile-form .acf-form-submit {
+	border-top-color: var(--mc-linea);
 }
 
-.sulayr-athlete-profile-content .sulayr-profile-form button[type="submit"]:hover,
-.sulayr-athlete-profile-content .sulayr-profile-form input[type="submit"]:hover {
-	background: #17633e;
+.sulayr-athlete-profile-content .sulayr-profile-form .sulayr-field-locked .select2-selection,
+.sulayr-athlete-profile-content .sulayr-profile-form .sulayr-field-locked select {
+	background-color: var(--sulayr-nieve);
 }
 
+.sulayr-athlete-profile-content .sulayr-plan-change-notice {
+	background: var(--sulayr-nieve);
+	border: 0;
+	border-left: 4px solid var(--sulayr-sol);
+	border-radius: var(--mc-radio-sm);
+	color: var(--sulayr-noche);
+}
+
+/* ===== Mi monedero ===== */
+.woocommerce-account .sulayr-wallet-balance-block {
+	background: var(--sulayr-noche);
+	border: 0;
+	border-radius: var(--mc-radio);
+	color: var(--sulayr-nieve);
+	padding: 1.25rem 1.5rem;
+}
+.woocommerce-account .sulayr-wallet-balance-label {
+	color: var(--sulayr-cielo);
+	font-family: var(--sulayr-mono);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.14em;
+	margin: 0 0 0.4rem;
+	text-transform: uppercase;
+}
+.woocommerce-account .sulayr-wallet-balance-value {
+	font-family: var(--sulayr-display);
+	font-size: clamp(2rem, 5vw, 2.5rem);
+	font-stretch: 118%;
+	font-style: italic;
+	font-variant-numeric: tabular-nums;
+	font-weight: 900;
+	line-height: 1;
+	margin: 0;
+}
+.woocommerce-account .sulayr-wallet-balance-value.sulayr-wallet-positive {
+	color: var(--sulayr-menta);
+}
+.woocommerce-account .sulayr-wallet-balance-value.sulayr-wallet-negative {
+	color: var(--sulayr-sol);
+}
+.woocommerce-account .sulayr-wallet-empty,
+.woocommerce-account .sulayr-payment-empty,
+.woocommerce-account .sulayr-documents-empty {
+	color: var(--sulayr-texto2);
+}
+
+/* ===== Tablas (monedero y pagos) ===== */
+.woocommerce-account .sulayr-wallet-table-wrap,
+.woocommerce-account .sulayr-payment-table-wrap {
+	background: #fff;
+	border: 1px solid var(--mc-linea);
+	border-radius: var(--mc-radio);
+	overflow-x: auto;
+}
+.woocommerce-account .sulayr-wallet-table {
+	border: 0;
+	border-collapse: collapse;
+	font-size: 15px;
+	margin: 0;
+	width: 100%;
+}
+.woocommerce-account .sulayr-wallet-table th {
+	background: var(--sulayr-noche);
+	border: 0;
+	color: var(--sulayr-nieve);
+	font-family: var(--sulayr-mono);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.12em;
+	padding: 0.75rem 0.9rem;
+	text-transform: uppercase;
+}
+.woocommerce-account .sulayr-wallet-table td {
+	border: 0;
+	border-top: 1px solid var(--mc-linea-suave);
+	color: var(--sulayr-noche);
+	padding: 0.7rem 0.9rem;
+}
+.woocommerce-account .sulayr-wallet-table tbody tr:nth-child(even) {
+	background: var(--sulayr-nieve);
+}
+.woocommerce-account .sulayr-wallet-table td:first-child,
+.woocommerce-account .sulayr-wallet-table td.sulayr-wallet-col-amount,
+.woocommerce-account .sulayr-wallet-table td.sulayr-wallet-col-balance {
+	font-family: var(--sulayr-mono);
+	font-size: 14px;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+/* Sobre fondo claro no se usa Menta ni Sol como texto: positivo en acento, negativo en Noche */
+.woocommerce-account .sulayr-wallet-table td.sulayr-wallet-positive {
+	color: var(--sulayr-acento);
+}
+.woocommerce-account .sulayr-wallet-table td.sulayr-wallet-negative {
+	color: var(--sulayr-noche);
+	font-weight: 600;
+}
+
+/* ===== Documentos ===== */
+.woocommerce-account .sulayr-documents .sulayr-documents-group-title {
+	color: var(--sulayr-acento);
+	font-family: var(--sulayr-mono);
+	font-size: 12px;
+	font-stretch: 100%;
+	font-style: normal;
+	font-weight: 600;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+}
+.woocommerce-account .sulayr-documents .sulayr-documents-list {
+	border: 1px solid var(--mc-linea);
+	border-radius: var(--mc-radio);
+}
+.woocommerce-account .sulayr-documents .sulayr-document + .sulayr-document {
+	border-top-color: var(--mc-linea-suave);
+}
+.woocommerce-account .sulayr-documents .sulayr-document-type,
+.woocommerce-account .sulayr-documents .sulayr-document-type--pdf {
+	background: var(--sulayr-noche);
+	border-radius: var(--mc-radio-sm);
+	color: var(--sulayr-cielo);
+	font-family: var(--sulayr-mono);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+}
+.woocommerce-account .sulayr-documents .sulayr-document-title {
+	color: var(--sulayr-noche);
+	font-family: var(--sulayr-texto);
+	font-size: 1rem;
+	font-stretch: 100%;
+	font-style: normal;
+	font-weight: 600;
+}
+.woocommerce-account .sulayr-documents .sulayr-document-description {
+	color: var(--sulayr-noche);
+}
+.woocommerce-account .sulayr-documents .sulayr-document-meta {
+	color: var(--sulayr-texto2);
+	font-family: var(--sulayr-mono);
+	font-size: 12px;
+}
+.woocommerce-account .woocommerce-MyAccount-content .sulayr-documents .sulayr-document-action.button {
+	background: transparent;
+	border: 1px solid var(--sulayr-noche);
+	color: var(--sulayr-noche);
+}
+.woocommerce-account .woocommerce-MyAccount-content .sulayr-documents .sulayr-document-action.button:hover,
+.woocommerce-account .woocommerce-MyAccount-content .sulayr-documents .sulayr-document-action.button:focus-visible {
+	background: var(--sulayr-noche);
+	color: var(--sulayr-nieve);
+}
+
+/* ===== Pedidos de WooCommerce ===== */
+.woocommerce-account .woocommerce-orders-table {
+	border: 1px solid var(--mc-linea);
+	border-collapse: separate;
+	border-radius: var(--mc-radio);
+	border-spacing: 0;
+	overflow: hidden;
+}
+.woocommerce-account .woocommerce-orders-table thead th {
+	background: var(--sulayr-noche);
+	color: var(--sulayr-nieve);
+	font-family: var(--sulayr-mono);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+.woocommerce-account .woocommerce-orders-table tbody tr:nth-child(even) {
+	background: var(--sulayr-nieve);
+}
+.woocommerce-account .woocommerce-orders-table__cell-order-number,
+.woocommerce-account .woocommerce-orders-table__cell-order-date,
+.woocommerce-account .woocommerce-orders-table__cell-order-total {
+	font-family: var(--sulayr-mono);
+	font-size: 14px;
+	font-variant-numeric: tabular-nums;
+}
+
+/* ===== Pantallas estrechas ===== */
 @media (max-width: 64rem) {
 	.sulayr-athlete-profile-content .sulayr-profile-layout {
 		grid-template-columns: 1fr;
 	}
+	.sulayr-athlete-profile-content .sulayr-profile-card {
+		align-items: center;
+		column-gap: 1.25rem;
+		display: grid;
+		grid-template-columns: auto 1fr;
+		padding-bottom: 3.5rem;
+		text-align: left;
+	}
+	.sulayr-athlete-profile-content .sulayr-profile-avatar-wrap {
+		grid-row: span 2;
+		margin: 0;
+	}
+	.sulayr-athlete-profile-content .sulayr-profile-avatar,
+	.sulayr-athlete-profile-content .sulayr-profile-card .img-profile-circle {
+		height: 6.5rem;
+		width: 6.5rem;
+	}
+	.sulayr-athlete-profile-content .sulayr-profile-name {
+		margin: 0;
+	}
+	.sulayr-athlete-profile-content .sulayr-pool-link-wrap {
+		justify-self: start;
+		margin-top: 0.75rem;
+	}
 }
 
 @media (max-width: 26.25rem) {
-	.sulayr-athlete-profile-content {
-		border-radius: 16px;
-		padding: 0.75rem;
+	.sulayr-athlete-profile-content .sulayr-profile-card {
+		grid-template-columns: 1fr;
+		justify-items: center;
+		text-align: center;
+	}
+	.sulayr-athlete-profile-content .sulayr-profile-avatar-wrap {
+		grid-row: auto;
+	}
+	.sulayr-athlete-profile-content .sulayr-pool-link-wrap {
+		justify-self: stretch;
 	}
 
 	.sulayr-athlete-profile-content .sulayr-profile-tabs,
@@ -214,13 +788,16 @@ body .woocommerce-MyAccount-navigation-link--reservas-piscina a {
 		width: 100%;
 	}
 
-	.sulayr-athlete-profile-content .sulayr-profile-avatar,
-	.sulayr-athlete-profile-content .sulayr-profile-card .img-profile-circle {
-		height: 6.5rem;
-		width: 6.5rem;
-	}
-
 	.sulayr-athlete-profile-content .sulayr-info-row {
 		grid-template-columns: 1fr;
+	}
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.woocommerce-account .woocommerce-MyAccount-navigation-link a,
+	.sulayr-athlete-profile-content .sulayr-profile-tab,
+	.sulayr-athlete-profile-content a.sulayr-pool-link,
+	.woocommerce-account .woocommerce-MyAccount-content .button {
+		transition: background-color 0.15s ease, color 0.15s ease;
 	}
 }

@@ -91,7 +91,7 @@ Menú actual para un deportista: Escritorio, Perfil de deportista, Mi monedero, 
 ### 1.6. Plantillas y assets
 
 - `App::load_public_assets()` encola Bootstrap 5.3.8 y `public/css/styles.css` en todo el front.
-- El tema hijo `ct-sulayr-theme` encola `profile-bento.css` después de los estilos del plugin. Ahí está el diseño Bento del perfil (`.sulayr-athlete-profile-content`, `.sulayr-info-block`, `.sulayr-profile-card`…).
+- El tema hijo `ct-sulayr-theme` encola `profile-bento.css` después de los estilos del plugin. Desde el 9 de noviembre de 2026 aplica la marca Sulayr a todo Mi cuenta: menú lateral, perfil Bento (`.sulayr-athlete-profile-content`, `.sulayr-info-block`, `.sulayr-profile-card`…), monedero, pagos, documentos, formularios y avisos.
 - Las plantillas usan iconos `bi bi-*` (Bootstrap Icons), pero **ni el plugin ni el tema encolan la fuente de Bootstrap Icons**. No conviene depender de ellos.
 - Existe `TemplateService::load()` / `render()` y el helper `sulayr_load_template()`, pero las secciones de Mi cuenta hacen `include` directo de `SULAYR_TEMPLATE_DIR . '/parts/…'`.
 - Hook de extensión ya existente: `do_action( 'sulayr_athlete_profile_card' )`, usado por reservas.
