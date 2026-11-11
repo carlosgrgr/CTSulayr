@@ -27,16 +27,19 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Los gestores de socios no tienen edit_users en multisite, así que la ficha
  * vive aquí y no en user-edit.php. Solicitudes y alta están en RequestsPage
- * (parte B); los recibos llegan en la parte D.
+ * (parte B); los recibos, en ReceiptsPage, y los listados, en ListsPage
+ * (parte D).
  */
 class MembersMenu {
 
     public const SLUG = 'sulayr-socios';
 
-    private const ACTION_TASK_DONE = 'sulayr_member_task_done';
+    public const ACTION_TASK_DONE = 'sulayr_member_task_done';
     private const ACTION_RUN_DAILY = 'sulayr_members_run_daily';
 
     private MemberActions $actions;
+    private ReceiptsPage $receipts;
+    private ListsPage $lists;
 
     /**
      * __construct()
@@ -53,7 +56,10 @@ class MembersMenu {
         add_action( 'edit_user_profile', [ $this, 'render_profile_link' ], 1 );
         add_action( 'admin_post_' . self::ACTION_TASK_DONE, [ $this, 'handle_task_done' ] );
         add_action( 'admin_post_' . self::ACTION_RUN_DAILY, [ $this, 'handle_run_daily' ] );
+        new BrandStyles();
         $this->actions = new MemberActions();
+        $this->receipts = new ReceiptsPage();
+        $this->lists = new ListsPage();
     }
 
     /**
@@ -71,12 +77,14 @@ class MembersMenu {
 
         $r = MembersDailyTask::run();
         RequestsPage::set_notice( 'success', sprintf(
-            /* translators: 1: cambios aplicados, 2: vueltas de congelación, 3: altas activadas, 4: solicitudes caducadas. */
-            __( 'Tarea diaria ejecutada: %1$d cambios aplicados, %2$d vueltas de congelación, %3$d altas activadas y %4$d solicitudes caducadas.', SULAYR_TEXTDOMAIN ),
+            /* translators: 1: cambios aplicados, 2: vueltas de congelación, 3: altas activadas, 4: solicitudes caducadas, 5: retribuciones de la junta, 6: recibos generados. */
+            __( 'Tarea diaria ejecutada: %1$d cambios aplicados, %2$d vueltas de congelación, %3$d altas activadas, %4$d solicitudes caducadas, %5$d retribuciones de la junta apuntadas y %6$d recibos generados.', SULAYR_TEXTDOMAIN ),
             $r['applied'],
             $r['returned'],
             $r['updated'],
-            $r['purged']
+            $r['purged'],
+            $r['board'],
+            $r['receipts']
         ) );
         wp_safe_redirect( add_query_arg( 'page', self::SLUG, admin_url( 'admin.php' ) ) );
         exit;
@@ -97,8 +105,12 @@ class MembersMenu {
         }
 
         $task = MemberTasks::mark_done( $task_id );
-        $url = null !== $task ? self::member_url( (int) $task->user_id ) : add_query_arg( 'page', self::SLUG, admin_url( 'admin.php' ) );
-        wp_safe_redirect( $url . '#pasos' );
+        $url = null !== $task ? self::member_url( (int) $task->user_id ) . '#pasos' : add_query_arg( 'page', self::SLUG, admin_url( 'admin.php' ) );
+        // Desde «Tareas pendientes» se vuelve a esa lista.
+        if ( ! empty( $_POST['back'] ) ) {
+            $url = esc_url_raw( wp_unslash( $_POST['back'] ) );
+        }
+        wp_safe_redirect( $url );
         exit;
     }
 
@@ -176,6 +188,10 @@ class MembersMenu {
             self::SLUG,
             RequestsPage::SLUG,
             RequestsPage::NEW_SLUG,
+            ReceiptsPage::SLUG,
+            ListsPage::TASKS_SLUG,
+            ListsPage::COACH_SLUG,
+            ListsPage::WELCOME_SLUG,
             'edit.php?post_type=' . ServicePostType::POST_TYPE_NAME,
             'post-new.php?post_type=' . ServicePostType::POST_TYPE_NAME,
             'edit.php?post_type=' . WalletPostType::POST_TYPE_NAME,
@@ -249,7 +265,7 @@ class MembersMenu {
 
         $member_id = isset( $_GET['socio'] ) ? absint( $_GET['socio'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Solo lectura.
 
-        echo '<div class="wrap sulayr-members">';
+        echo '<div class="wrap sulayr-members sulayr-brand">';
         RequestsPage::print_notice();
         if ( $member_id > 0 ) {
             $this->render_member( $member_id );
@@ -334,7 +350,7 @@ class MembersMenu {
             return (int) $a['number'] <=> (int) $b['number'] ?: strcmp( $a['name'], $b['name'] );
         } );
 
-        echo '<h1>' . esc_html__( 'Socios', SULAYR_TEXTDOMAIN ) . '</h1>';
+        echo '<p class="sulayr-eyebrow">' . esc_html( (string) MemberSettings::get( 'club_name' ) ) . '</p><h1>' . esc_html__( 'Socios', SULAYR_TEXTDOMAIN ) . '</h1>';
 
         if ( $retention_count > 0 ) {
             printf(
@@ -349,7 +365,7 @@ class MembersMenu {
         printf(
             '<form method="post" action="%1$s" class="sulayr-daily"><p class="description">%2$s %3$s <input type="hidden" name="action" value="%4$s">%5$s<button type="submit" class="button button-small">%6$s</button></p></form>',
             esc_url( admin_url( 'admin-post.php' ) ),
-            esc_html__( 'Tarea diaria (cambios, congelaciones, bajas y altas del día):', SULAYR_TEXTDOMAIN ),
+            esc_html__( 'Tarea diaria (cambios, congelaciones, bajas y altas del día; retribución de la junta y recibos del mes):', SULAYR_TEXTDOMAIN ),
             esc_html( is_array( $last ) ? sprintf( __( 'última ejecución el %s.', SULAYR_TEXTDOMAIN ), date_i18n( 'd/m/Y H:i', strtotime( (string) $last['at'] ) ) ) : __( 'aún no se ha ejecutado.', SULAYR_TEXTDOMAIN ) ),
             esc_attr( self::ACTION_RUN_DAILY ),
             wp_nonce_field( self::ACTION_RUN_DAILY, '_wpnonce', true, false ),
@@ -390,7 +406,7 @@ class MembersMenu {
             return;
         }
 
-        echo '<table class="wp-list-table widefat fixed striped"><thead><tr>';
+        echo '<table class="wp-list-table widefat fixed striped sulayr-t-members"><thead><tr>';
         foreach ( [ __( 'Nº', SULAYR_TEXTDOMAIN ), __( 'Nombre', SULAYR_TEXTDOMAIN ), __( 'Email', SULAYR_TEXTDOMAIN ), __( 'Tipo', SULAYR_TEXTDOMAIN ), __( 'Estado', SULAYR_TEXTDOMAIN ), __( 'Servicios vigentes', SULAYR_TEXTDOMAIN ) ] as $i => $heading ) {
             printf( '<th scope="col"%s>%s</th>', 0 === $i ? ' style="width:50px"' : '', esc_html( $heading ) );
         }
@@ -441,7 +457,8 @@ class MembersMenu {
         $status = $meta( CustomFields::USER_PROFILE_ATHLETE_STATUS ) ?: CustomFields::STATUS_ACTIVE;
 
         printf( '<p><a href="%s">← %s</a></p>', esc_url( add_query_arg( 'page', self::SLUG, admin_url( 'admin.php' ) ) ), esc_html__( 'Volver a socios', SULAYR_TEXTDOMAIN ) );
-        printf( '<h1>%s</h1>', esc_html( HelperService::get_user_full_name( $user_id ) ?: $user->display_name ) );
+        $number = $meta( CustomFields::MEMBER_NUMBER );
+        printf( '<p class="sulayr-eyebrow">%s</p><h1>%s</h1>', esc_html( '' !== $number ? sprintf( __( 'Socio nº %s', SULAYR_TEXTDOMAIN ), $number ) : __( 'Socio', SULAYR_TEXTDOMAIN ) ), esc_html( HelperService::get_user_full_name( $user_id ) ?: $user->display_name ) );
 
         $data = [
             __( 'Nº de socio', SULAYR_TEXTDOMAIN ) => $meta( CustomFields::MEMBER_NUMBER ) ?: '—',
@@ -485,7 +502,7 @@ class MembersMenu {
             echo '<p>' . esc_html__( 'Sin servicios registrados.', SULAYR_TEXTDOMAIN ) . '</p>';
         } else {
             $today = current_time( 'Y-m-d' );
-            echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Servicio', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Desde', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Hasta', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Precio hoy', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Origen', SULAYR_TEXTDOMAIN ) . '</th></tr></thead><tbody>';
+            echo '<table class="widefat striped sulayr-t-dates"><thead><tr><th>' . esc_html__( 'Servicio', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Desde', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Hasta', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Precio hoy', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Origen', SULAYR_TEXTDOMAIN ) . '</th></tr></thead><tbody>';
             foreach ( $services as $row ) {
                 $service = ServiceCatalog::get( (int) $row->service_id );
                 $price = null !== $service ? ServiceCatalog::price_for( $service, $type ?: ServiceCatalog::GENERAL, $today ) : null;
@@ -506,7 +523,7 @@ class MembersMenu {
         if ( empty( $periods ) ) {
             echo '<p>' . esc_html__( 'Sin periodos registrados.', SULAYR_TEXTDOMAIN ) . '</p>';
         } else {
-            echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Estado', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Desde', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Hasta', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Motivo', SULAYR_TEXTDOMAIN ) . '</th></tr></thead><tbody>';
+            echo '<table class="widefat striped sulayr-t-dates"><thead><tr><th>' . esc_html__( 'Estado', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Desde', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Hasta', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Motivo', SULAYR_TEXTDOMAIN ) . '</th></tr></thead><tbody>';
             foreach ( $periods as $row ) {
                 printf(
                     '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',
@@ -520,7 +537,9 @@ class MembersMenu {
         }
 
         $this->actions->render( $user_id );
+        $this->receipts->render_member_block( $user_id );
         $this->render_tasks( $user_id );
+        $this->lists->render_member_block( $user_id );
         $this->render_consents( $user_id );
         $this->render_requests( $user_id );
 

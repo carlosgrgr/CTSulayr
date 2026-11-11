@@ -61,6 +61,67 @@ class MemberTasks {
     }
 
     /**
+     * Pasos pendientes de todos los socios (vista «Tareas pendientes», 9.1).
+     *
+     * @param   string $label   Solo este paso ('' = todos).
+     * @param   string $context Solo este contexto ('' = todos).
+     * @return 	object[]
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function pending( string $label = '', string $context = '' ): array {
+        global $wpdb;
+
+        $table = MembersSchema::table( MembersSchema::TASKS );
+        $where = 'done_at IS NULL';
+        $args = [];
+        if ( '' !== $label ) {
+            $where .= ' AND label = %s';
+            $args[] = $label;
+        }
+        if ( '' !== $context ) {
+            $where .= ' AND context = %s';
+            $args[] = $context;
+        }
+        $sql = "SELECT * FROM {$table} WHERE {$where} ORDER BY created_at ASC, id ASC";
+
+        return $wpdb->get_results( empty( $args ) ? $sql : $wpdb->prepare( $sql, $args ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $where solo lleva marcadores.
+    }
+
+    /**
+     * Textos distintos de los pasos pendientes, para el filtro.
+     *
+     * @return 	string[]
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function pending_labels(): array {
+        global $wpdb;
+
+        $table = MembersSchema::table( MembersSchema::TASKS );
+
+        return $wpdb->get_col( "SELECT DISTINCT label FROM {$table} WHERE done_at IS NULL ORDER BY label ASC" );
+    }
+
+    /**
+     * Nombre de un contexto.
+     *
+     * @param   string $context Contexto.
+     * @return 	string
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function context_label( string $context ): string {
+        $labels = [
+            self::CONTEXT_JOIN => __( 'Alta', SULAYR_TEXTDOMAIN ),
+            self::CONTEXT_CHANGE => __( 'Cambio', SULAYR_TEXTDOMAIN ),
+            self::CONTEXT_LEAVE => __( 'Baja', SULAYR_TEXTDOMAIN ),
+        ];
+
+        return $labels[ $context ] ?? $context;
+    }
+
+    /**
      * Marca un paso como hecho, con fecha y autor. No hace nada si ya lo estaba.
      *
      * @param   int $task_id Paso.

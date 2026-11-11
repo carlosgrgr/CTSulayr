@@ -9,6 +9,8 @@ use ClubTriatlonSulayr\Modules\Members\MemberLog;
 use ClubTriatlonSulayr\Modules\Members\MemberServices;
 use ClubTriatlonSulayr\Modules\Members\MemberSettings;
 use ClubTriatlonSulayr\Modules\Members\MemberTasks;
+use ClubTriatlonSulayr\Modules\Members\MemberTypes;
+use ClubTriatlonSulayr\Modules\Members\Receipts\Receipts;
 use ClubTriatlonSulayr\Modules\Members\ReservationsAccess;
 use ClubTriatlonSulayr\Modules\Members\StatusPeriods;
 use ClubTriatlonSulayr\Services\HelperService;
@@ -142,6 +144,9 @@ class MemberChanges {
     public static function schedule( int $user_id, string $type, array $data, string $effective, string $immediate_reason = '' ) {
         $immediate = '' === $effective;
         $error = self::check_date( $effective, $immediate, $immediate_reason, MemberDates::first_of_month_after( current_time( 'Y-m-d' ) ) );
+        if ( null === $error && ( $immediate || ! empty( $data['cancel_month'] ) ) ) {
+            $error = self::check_unpaid( $user_id );
+        }
         if ( null !== $error ) {
             return $error;
         }
@@ -175,6 +180,9 @@ class MemberChanges {
 
         $immediate = '' === $effective;
         $error = self::check_date( $effective, $immediate, $immediate_reason, self::min_date_for( $row ) );
+        if ( null === $error && $immediate ) {
+            $error = self::check_unpaid( (int) $row->user_id );
+        }
         if ( null !== $error ) {
             return $error;
         }
@@ -404,7 +412,8 @@ class MemberChanges {
                     self::apply_services( $user_id, (array) ( $row->fields['services'] ?? [] ), $date, self::BY_MEMBER === ( $row->fields['origin'] ?? '' ) ? MemberServices::ORIGIN_REQUEST : MemberServices::ORIGIN_MANAGER );
                     return '';
                 case self::TYPE_MEMBER_TYPE:
-                    update_user_meta( $user_id, CustomFields::MEMBER_TYPE, (string) ( $row->fields['member_type'] ?? '' ) );
+                    // Historial por fechas: los recibos usan el tipo del día 1 de cada mes (parte D).
+                    MemberTypes::set( $user_id, (string) ( $row->fields['member_type'] ?? '' ), $date );
                     return '';
                 case self::TYPE_LEAVE:
                     self::apply_leave( $user_id, $date );
@@ -593,6 +602,28 @@ class MemberChanges {
         if ( (string) $row->effective_date <= current_time( 'Y-m-d' ) ) {
             self::apply( $row );
         }
+
+        // Cambio al momento (D27) o congelación inmediata (D30): el recibo del mes se recalcula.
+        if ( ! empty( $row->fields['immediate'] ) || ! empty( $row->fields['cancel_month'] ) ) {
+            Receipts::refresh_current( $user_id );
+        }
+    }
+
+    /**
+     * C5 con recibos: un cambio al momento o una congelación inmediata no se
+     * puede hacer si el recibo del mes en curso ya tiene algún pago.
+     *
+     * @param   int $user_id Socio.
+     * @return 	\WP_Error|null
+     * @access 	private
+     * @package	club-triatlon-sulayr
+     */
+    private static function check_unpaid( int $user_id ): ?\WP_Error {
+        if ( Receipts::has_payments( $user_id, current_time( 'Y-m' ) ) ) {
+            return new \WP_Error( 'sulayr_change_paid', __( 'El recibo de este mes ya tiene pagos: no se puede aplicar al momento. Prográmalo para el mes siguiente.', SULAYR_TEXTDOMAIN ) );
+        }
+
+        return null;
     }
 
     /**

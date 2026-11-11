@@ -3,6 +3,8 @@ namespace ClubTriatlonSulayr\Modules\Members\Lifecycle;
 
 use ClubTriatlonSulayr\Infrastructure\CustomFields;
 use ClubTriatlonSulayr\Modules\Members\Join\JoinRequests;
+use ClubTriatlonSulayr\Modules\Members\Receipts\BoardPayments;
+use ClubTriatlonSulayr\Modules\Members\Receipts\Receipts;
 use ClubTriatlonSulayr\Modules\Members\MemberSettings;
 use ClubTriatlonSulayr\Modules\Members\ReservationsAccess;
 
@@ -19,10 +21,14 @@ if ( ! defined( 'ABSPATH' ) ) {
  *    sincronización con reservas, D38). Los pasos 1 y 2 ya actualizan
  *    reservas de cada socio que tocan; no se recalcula a todos para no cambiar
  *    a nadie cuyas metas no salgan del historial (p. ej. datos migrados);
- * 4. borra los datos de las solicitudes de alta caducadas (D16).
+ * 4. borra los datos de las solicitudes de alta caducadas (D16);
+ * 5. apunta la retribución de la junta del mes (D34), una vez por socio y mes;
+ * 6. genera los recibos del mes en curso desde el día configurado si nadie
+ *    los ha generado (D39). Si un día no hay visitas, lo hace el siguiente.
  *
- * Ejecutarla dos veces el mismo día no cambia nada la segunda vez (C6).
- * Recibos y retribución de la junta llegan en la parte D.
+ * Los pasos 5 y 6 no hacen nada hasta que hay «Primer mes con recibos» en
+ * Socios → Ajustes. Ejecutarla dos veces el mismo día no cambia nada la
+ * segunda vez (C6).
  */
 class MembersDailyTask {
 
@@ -60,7 +66,7 @@ class MembersDailyTask {
     /**
      * Ejecuta la tarea.
      *
-     * @return 	array{applied: int, returned: int, updated: int, purged: int}
+     * @return 	array{applied: int, returned: int, updated: int, purged: int, board: int, receipts: int}
      * @access 	public
      * @package	club-triatlon-sulayr
      */
@@ -87,9 +93,31 @@ class MembersDailyTask {
             (int) MemberSettings::get( 'retention_pending_days' )
         );
 
-        $result = [ 'applied' => $applied, 'returned' => $returned, 'updated' => $updated, 'purged' => $purged ];
+        $board = BoardPayments::run();
+        $receipts = self::auto_generate();
+
+        $result = [ 'applied' => $applied, 'returned' => $returned, 'updated' => $updated, 'purged' => $purged, 'board' => $board, 'receipts' => $receipts ];
         update_option( self::LAST_RUN_OPTION, [ 'at' => current_time( 'mysql' ), 'result' => $result ], false );
 
         return $result;
+    }
+
+    /**
+     * Generación automática del mes en curso (D39).
+     *
+     * @return 	int Recibos creados (0 si no tocaba).
+     * @access 	private
+     * @package	club-triatlon-sulayr
+     */
+    private static function auto_generate(): int {
+        $period = current_time( 'Y-m' );
+        $day = max( 1, (int) MemberSettings::get( 'receipts_day' ) );
+        if ( (int) current_time( 'j' ) < $day || Receipts::is_generated( $period ) || false === in_array( $period, Receipts::allowed_months(), true ) ) {
+            return 0;
+        }
+
+        $created = Receipts::generate_month( $period, true );
+
+        return is_wp_error( $created ) ? 0 : (int) $created;
     }
 }

@@ -61,7 +61,7 @@ class MemberActions {
             printf( '<p>%s</p>', esc_html( sprintf( __( 'Pedida el %1$s. Fecha calculada: %2$s.', SULAYR_TEXTDOMAIN ), MemberDates::show( substr( (string) $pending->created_at, 0, 10 ) ), MemberDates::show( (string) $pending->effective_date ) ) ) );
             $this->open_form( $user_id, 'aprobar', [ 'change_id' => (int) $pending->id ] );
             $this->effective_fields( MemberChanges::min_date_for( $pending ), true );
-            printf( '<p><button type="submit" class="button button-primary">%s</button></p></form>', esc_html__( 'Aprobar y avisar al socio', SULAYR_TEXTDOMAIN ) );
+            printf( '<p><button type="submit" class="button button-primary sulayr-cta">%s</button></p></form>', esc_html__( 'Aprobar y avisar al socio', SULAYR_TEXTDOMAIN ) );
             $this->open_form( $user_id, 'rechazar', [ 'change_id' => (int) $pending->id ] );
             printf( '<p><label>%s<br><input type="text" name="reason" class="regular-text" required></label> <button type="submit" class="button button-link-delete">%s</button></p></form></div>', esc_html__( 'Motivo del rechazo (se envía al socio)', SULAYR_TEXTDOMAIN ), esc_html__( 'Rechazar', SULAYR_TEXTDOMAIN ) );
         }

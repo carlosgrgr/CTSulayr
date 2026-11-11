@@ -9,6 +9,8 @@ use ClubTriatlonSulayr\Modules\Members\MemberLog;
 use ClubTriatlonSulayr\Modules\Members\MemberServices;
 use ClubTriatlonSulayr\Modules\Members\MemberSettings;
 use ClubTriatlonSulayr\Modules\Members\MemberTasks;
+use ClubTriatlonSulayr\Modules\Members\MemberTypes;
+use ClubTriatlonSulayr\Modules\Members\Receipts\Receipts;
 use ClubTriatlonSulayr\Modules\Members\MemberDates;
 use ClubTriatlonSulayr\Modules\Members\ReservationsAccess;
 use ClubTriatlonSulayr\Modules\Members\StatusPeriods;
@@ -283,6 +285,8 @@ class JoinApproval {
                 $meta[ CustomFields::MEMBER_GUARDIAN . '_' . $key ] = (string) ( $f['guardian'][ $key ] ?? '' );
             }
         }
+        // Tipo con fecha de alta en el historial (los recibos lo leen de ahí).
+        MemberTypes::change( $user_id, (string) $choice['member_type'], $start );
         foreach ( $meta as $key => $value ) {
             if ( (string) get_user_meta( $user_id, $key, true ) !== $value ) {
                 update_user_meta( $user_id, $key, $value );
@@ -346,6 +350,9 @@ class JoinApproval {
 
         self::send_welcome( $user_id, $f, $start, $service_ids );
 
+        // 5.3: si los recibos del mes de alta ya están generados, el suyo también (después de la bienvenida).
+        Receipts::after_join( $user_id, $start );
+
         return $user_id;
     }
 
@@ -381,7 +388,7 @@ class JoinApproval {
             'nombre_completo' => trim( ( $f['first_name'] ?? '' ) . ' ' . ( $f['last_name'] ?? '' ) ),
             'numero_socio' => (string) get_user_meta( $user_id, CustomFields::MEMBER_NUMBER, true ),
             'fecha_alta' => date_i18n( 'd/m/Y', strtotime( $start ) ),
-            'enlace_contrasena_html' => MemberMailer::link( self::password_url( $user ), __( 'Crear mi contraseña', SULAYR_TEXTDOMAIN ) ),
+            'enlace_contrasena_html' => MemberMailer::button( self::password_url( $user ), __( 'Crear mi contraseña', SULAYR_TEXTDOMAIN ) ),
             'enlace_whatsapp_html' => MemberMailer::link( $whatsapp ),
             'bloques_servicios_html' => $blocks,
         ] );

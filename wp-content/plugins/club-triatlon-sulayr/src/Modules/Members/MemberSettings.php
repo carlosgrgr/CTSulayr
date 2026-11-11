@@ -36,6 +36,24 @@ class MemberSettings {
         'penalty_day' => 20,
         'receipts_day' => 1,
         'receipt_email_enabled' => false,
+        'receipts_first_month' => '',
+        'payment_methods' => [
+            [ 'label' => 'SportEasy' ],
+            [ 'label' => 'Bizum' ],
+            [ 'label' => 'Efectivo' ],
+        ],
+        'receipt_footer' => 'Recibo de cuota de socio. No es una factura.',
+        'receipt_concept_service' => '{servicio}',
+        'receipt_concept_prorated' => '{servicio} ({dias} de {dias_mes} días)',
+        'receipt_concept_bonus' => 'Bonificación {tipo}',
+        'receipt_concept_enrollment' => 'Matrícula',
+        'receipt_concept_subsidy' => 'Subvención: {motivo}',
+        'receipt_concept_penalty' => 'Penalización por retraso',
+        'receipt_concept_correction' => 'Corrección del recibo {numero}',
+        'wallet_concept_receipt' => 'Pago del recibo {numero}',
+        'wallet_concept_refund' => 'Devolución del pago del recibo {numero}',
+        'wallet_concept_board' => 'Retribución de la junta de {mes}',
+        'wallet_concept_correction' => 'Corrección del recibo {numero}',
         'coach_emails' => '',
         'club_email' => 'clubtriatlonsulayr@gmail.com',
         'club_name' => 'Club Triatlón Sulayr',
@@ -65,7 +83,7 @@ class MemberSettings {
             [ 'label' => 'Quitar de la comunidad de WhatsApp' ],
         ],
         'email_welcome_subject' => '¡Bienvenido/a al Club Triatlón Sulayr, {nombre}!',
-        'email_welcome_body' => "<p>Hola {nombre}:</p>\n<p>Ya eres socio/a del Club Triatlón Sulayr con el número {numero_socio}. Tu alta cuenta desde el {fecha_alta}.</p>\n<p>Crea tu contraseña para entrar en Mi cuenta: {enlace_contrasena}</p>\n<p>Únete a la comunidad de WhatsApp del club: {enlace_whatsapp}</p>\n{bloques_servicios}\n<p>¡Nos vemos entrenando!</p>",
+        'email_welcome_body' => "<p>Hola {nombre}:</p>\n<p>Ya eres socio/a del Club Triatlón Sulayr con el número {numero_socio}. Tu alta cuenta desde el {fecha_alta}.</p>\n<p>Crea tu contraseña para entrar en Mi cuenta:</p>\n<p>{enlace_contrasena}</p>\n<p>Únete a la comunidad de WhatsApp del club: {enlace_whatsapp}</p>\n{bloques_servicios}\n<p>¡Nos vemos entrenando!</p>",
         'email_rejected_subject' => 'Tu solicitud de alta en el Club Triatlón Sulayr',
         'email_rejected_body' => "<p>Hola {nombre}:</p>\n<p>No hemos podido aprobar tu solicitud de alta. Motivo: {motivo}</p>\n<p>Si tienes dudas, responde a este email.</p>",
         'email_request_club_subject' => 'Nueva solicitud: {tipo} de {nombre_completo}',
@@ -76,6 +94,8 @@ class MemberSettings {
         'email_leave_body' => "<p>Hola {nombre}:</p>\n<p>Confirmamos tu baja en el club con fecha {fecha_efectiva}. ¡Gracias por estos años con nosotros!</p>",
         'email_coach_subject' => 'Deportistas con plan de entrenamiento',
         'email_coach_body' => "<p>Listado actualizado de deportistas con plan de entrenamiento:</p>\n{listado}",
+        'email_receipt_subject' => 'Tu recibo de {mes} del Club Triatlón Sulayr',
+        'email_receipt_body' => "<p>Hola {nombre}:</p>\n<p>Ya tienes tu recibo {numero} de {mes}: {total}.</p>\n<p>Tienes el detalle y el PDF en Mi cuenta → Mis cuotas.</p>\n<p>{enlace_mis_cuotas}</p>",
         'consent_privacy_text' => 'He leído y acepto la política de privacidad del Club Triatlón Sulayr.',
         'consent_privacy_version' => '1',
         'consent_rules_text' => 'He leído y acepto las normas y condiciones del club para la temporada.',
@@ -151,6 +171,37 @@ class MemberSettings {
         }
 
         return $labels;
+    }
+
+    /**
+     * Texto de un ajuste con sus marcadores {clave} sustituidos.
+     *
+     * @param   string $name         Ajuste.
+     * @param   array  $placeholders clave => valor.
+     * @return 	string
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function fill( string $name, array $placeholders = [] ): string {
+        $text = (string) self::get( $name );
+        foreach ( $placeholders as $key => $value ) {
+            $text = str_replace( '{' . $key . '}', (string) $value, $text );
+        }
+
+        return trim( $text );
+    }
+
+    /**
+     * Primer mes con recibos (AAAA-MM), o '' si no está configurado.
+     *
+     * @return 	string
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function first_receipts_month(): string {
+        $value = MemberDates::acf_to_iso( (string) self::get( 'receipts_first_month' ) );
+
+        return '' !== $value ? substr( $value, 0, 7 ) : '';
     }
 
     /**
@@ -240,6 +291,15 @@ class MemberSettings {
             ],
 
             $this->tab( 'receipts', __( 'Recibos', SULAYR_TEXTDOMAIN ) ),
+            [
+                'key' => 'field_sulayr_members_receipts_first_month',
+                'label' => __( 'Primer mes con recibos', SULAYR_TEXTDOMAIN ),
+                'name' => 'receipts_first_month',
+                'type' => 'date_picker',
+                'display_format' => 'm/Y',
+                'return_format' => 'Y-m-d',
+                'instructions' => __( 'Se usa el mes de la fecha elegida. No se generan recibos de meses anteriores (siguen en el Excel). Mientras esté vacío, no se generan recibos ni se apunta la retribución de la junta.', SULAYR_TEXTDOMAIN ),
+            ],
             $this->number( 'receipts_day', __( 'Día de generación automática de recibos', SULAYR_TEXTDOMAIN ), $d['receipts_day'], '', 1, '', 1, 28 ),
             $this->number( 'penalty_amount', __( 'Penalización por retraso (€)', SULAYR_TEXTDOMAIN ), $d['penalty_amount'], '', 0.01 ),
             $this->number( 'penalty_day', __( 'Día desde el que se puede penalizar', SULAYR_TEXTDOMAIN ), $d['penalty_day'], '', 1, '', 1, 28 ),
@@ -251,6 +311,33 @@ class MemberSettings {
                 'ui' => 1,
                 'default_value' => 0,
             ],
+            $this->label_list( 'payment_methods', __( 'Medios de pago', SULAYR_TEXTDOMAIN ), __( 'Añadir medio', SULAYR_TEXTDOMAIN ), __( '«Monedero» está siempre: descuenta del saldo del socio. Si se deja vacío se usan SportEasy, Bizum y Efectivo.', SULAYR_TEXTDOMAIN ) ),
+            [
+                'key' => 'field_sulayr_members_receipt_footer',
+                'label' => __( 'Pie del recibo', SULAYR_TEXTDOMAIN ),
+                'name' => 'receipt_footer',
+                'type' => 'textarea',
+                'rows' => 2,
+                'default_value' => $d['receipt_footer'],
+            ],
+            [
+                'key' => 'field_sulayr_members_receipt_concepts_help',
+                'label' => __( 'Textos de las líneas', SULAYR_TEXTDOMAIN ),
+                'name' => '',
+                'type' => 'message',
+                'message' => __( 'Marcadores: {servicio}, {dias}, {dias_mes}, {tipo}, {motivo}, {numero}, {mes}. Cada recibo guarda el texto que tenía al generarse.', SULAYR_TEXTDOMAIN ),
+            ],
+            $this->text( 'receipt_concept_service', 'receipt_concept_service', __( 'Servicio', SULAYR_TEXTDOMAIN ), $d['receipt_concept_service'] ),
+            $this->text( 'receipt_concept_prorated', 'receipt_concept_prorated', __( 'Servicio prorrateado', SULAYR_TEXTDOMAIN ), $d['receipt_concept_prorated'] ),
+            $this->text( 'receipt_concept_bonus', 'receipt_concept_bonus', __( 'Bonificación', SULAYR_TEXTDOMAIN ), $d['receipt_concept_bonus'] ),
+            $this->text( 'receipt_concept_enrollment', 'receipt_concept_enrollment', __( 'Matrícula', SULAYR_TEXTDOMAIN ), $d['receipt_concept_enrollment'] ),
+            $this->text( 'receipt_concept_subsidy', 'receipt_concept_subsidy', __( 'Subvención', SULAYR_TEXTDOMAIN ), $d['receipt_concept_subsidy'] ),
+            $this->text( 'receipt_concept_penalty', 'receipt_concept_penalty', __( 'Penalización', SULAYR_TEXTDOMAIN ), $d['receipt_concept_penalty'] ),
+            $this->text( 'receipt_concept_correction', 'receipt_concept_correction', __( 'Corrección', SULAYR_TEXTDOMAIN ), $d['receipt_concept_correction'] ),
+            $this->text( 'wallet_concept_receipt', 'wallet_concept_receipt', __( 'Monedero: pago de recibo', SULAYR_TEXTDOMAIN ), $d['wallet_concept_receipt'] ),
+            $this->text( 'wallet_concept_refund', 'wallet_concept_refund', __( 'Monedero: devolución de un pago', SULAYR_TEXTDOMAIN ), $d['wallet_concept_refund'] ),
+            $this->text( 'wallet_concept_board', 'wallet_concept_board', __( 'Monedero: retribución de la junta', SULAYR_TEXTDOMAIN ), $d['wallet_concept_board'] ),
+            $this->text( 'wallet_concept_correction', 'wallet_concept_correction', __( 'Monedero: corrección a favor del socio', SULAYR_TEXTDOMAIN ), $d['wallet_concept_correction'] ),
 
             $this->tab( 'club', __( 'Datos del club', SULAYR_TEXTDOMAIN ) ),
             $this->text( 'club_name', 'club_name', __( 'Nombre', SULAYR_TEXTDOMAIN ), $d['club_name'] ),
@@ -306,7 +393,7 @@ class MemberSettings {
                 'label' => __( 'Marcadores', SULAYR_TEXTDOMAIN ),
                 'name' => '',
                 'type' => 'message',
-                'message' => __( '{nombre}, {nombre_completo}, {numero_socio}, {fecha_alta}, {fecha_efectiva}, {enlace_contrasena}, {enlace_whatsapp}, {bloques_servicios}, {tipo}, {resultado}, {detalle}, {motivo}, {listado}', SULAYR_TEXTDOMAIN ),
+                'message' => __( '{nombre}, {nombre_completo}, {numero_socio}, {fecha_alta}, {fecha_efectiva}, {enlace_contrasena}, {enlace_whatsapp}, {bloques_servicios}, {tipo}, {resultado}, {detalle}, {motivo}, {listado}. Recibo mensual: {nombre}, {mes}, {numero}, {total}, {enlace_mis_cuotas}', SULAYR_TEXTDOMAIN ),
             ],
         ];
 
@@ -317,6 +404,7 @@ class MemberSettings {
             'change_result' => __( 'Resultado de solicitud de cambio o baja', SULAYR_TEXTDOMAIN ),
             'leave' => __( 'Confirmación de baja', SULAYR_TEXTDOMAIN ),
             'coach' => __( 'Listado del entrenador', SULAYR_TEXTDOMAIN ),
+            'receipt' => __( 'Recibo mensual (si está activado el aviso)', SULAYR_TEXTDOMAIN ),
         ];
         foreach ( $emails as $key => $label ) {
             $fields[] = $this->text( "email_{$key}_subject", "email_{$key}_subject", sprintf( __( '%s: asunto', SULAYR_TEXTDOMAIN ), $label ), $d[ "email_{$key}_subject" ] );

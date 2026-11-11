@@ -102,7 +102,7 @@ class RequestsPage {
         $id = isset( $_GET['solicitud'] ) ? absint( $_GET['solicitud'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Solo lectura.
 
         JoinForm::enqueue_script();
-        echo '<div class="wrap sulayr-members">';
+        echo '<div class="wrap sulayr-members sulayr-brand">';
         $this->styles();
         $this->print_notice();
         if ( $id > 0 ) {
@@ -127,7 +127,7 @@ class RequestsPage {
             $filter = JoinRequests::STATUS_PENDING;
         }
 
-        printf( '<h1 class="wp-heading-inline">%s</h1> <a class="page-title-action" href="%s">%s</a><hr class="wp-header-end">', esc_html__( 'Solicitudes de alta', SULAYR_TEXTDOMAIN ), esc_url( add_query_arg( 'page', self::NEW_SLUG, admin_url( 'admin.php' ) ) ), esc_html__( 'Nueva alta', SULAYR_TEXTDOMAIN ) );
+        printf( '<p class="sulayr-eyebrow">' . esc_html__( 'Socios · Altas', SULAYR_TEXTDOMAIN ) . '</p><h1 class="wp-heading-inline">%s</h1> <a class="page-title-action" href="%s">%s</a><hr class="wp-header-end">', esc_html__( 'Solicitudes de alta', SULAYR_TEXTDOMAIN ), esc_url( add_query_arg( 'page', self::NEW_SLUG, admin_url( 'admin.php' ) ) ), esc_html__( 'Nueva alta', SULAYR_TEXTDOMAIN ) );
 
         $links = [];
         foreach ( $statuses as $status ) {
@@ -226,8 +226,9 @@ class RequestsPage {
 
         $f = $request->fields;
         printf(
-            '<h1>%s</h1><p>%s</p>',
-            esc_html( sprintf( __( 'Solicitud #%1$d: %2$s', SULAYR_TEXTDOMAIN ), $id, JoinRequests::full_name( $request ) ) ),
+            '<p class="sulayr-eyebrow">%s</p><h1>%s</h1><p>%s</p>',
+            esc_html( sprintf( __( 'Solicitud #%d', SULAYR_TEXTDOMAIN ), $id ) ),
+            esc_html( JoinRequests::full_name( $request ) ),
             esc_html( sprintf(
                 /* translators: 1: estado, 2: fecha, 3: origen. */
                 __( '%1$s · recibida el %2$s · %3$s', SULAYR_TEXTDOMAIN ),
@@ -269,7 +270,7 @@ class RequestsPage {
             echo '<div class="notice notice-error inline"><p>' . esc_html__( 'El email o el DNI ya son de un socio en vigor. No se puede aprobar: corrige los datos si es otra persona, o rechaza la solicitud.', SULAYR_TEXTDOMAIN ) . '</p></div>';
         } else {
             $this->render_approval_fields( $request, $matches, $email );
-            printf( '<p><button type="submit" class="button button-primary" name="do" value="approve">%s</button></p>', esc_html__( 'Aprobar y enviar la bienvenida', SULAYR_TEXTDOMAIN ) );
+            printf( '<p><button type="submit" class="button button-primary sulayr-cta" name="do" value="approve">%s</button></p>', esc_html__( 'Aprobar y enviar la bienvenida', SULAYR_TEXTDOMAIN ) );
         }
         echo '</form>';
 
@@ -547,9 +548,9 @@ class RequestsPage {
 
         $state = $this->take_state();
 
-        echo '<div class="wrap sulayr-members">';
+        echo '<div class="wrap sulayr-members sulayr-brand">';
         $this->styles();
-        echo '<h1>' . esc_html__( 'Nueva alta', SULAYR_TEXTDOMAIN ) . '</h1>';
+        echo '<p class="sulayr-eyebrow">' . esc_html__( 'Socios · Altas', SULAYR_TEXTDOMAIN ) . '</p><h1>' . esc_html__( 'Nueva alta', SULAYR_TEXTDOMAIN ) . '</h1>';
         echo '<p>' . esc_html__( 'Crea una solicitud con los datos del socio. «Crear y aprobar» la aprueba en el mismo paso si nadie de la red tiene ese email ni ese DNI; si hay coincidencias, te lleva a la solicitud para decidir.', SULAYR_TEXTDOMAIN ) . '</p>';
         $this->print_notice();
 
@@ -567,7 +568,7 @@ class RequestsPage {
         echo '</tbody></table>';
 
         printf(
-            '<p><button type="submit" class="button" name="do" value="save">%s</button> <button type="submit" class="button button-primary" name="do" value="approve">%s</button></p>',
+            '<p><button type="submit" class="button" name="do" value="save">%s</button> <button type="submit" class="button button-primary sulayr-cta" name="do" value="approve">%s</button></p>',
             esc_html__( 'Crear solicitud', SULAYR_TEXTDOMAIN ),
             esc_html__( 'Crear y aprobar', SULAYR_TEXTDOMAIN )
         );

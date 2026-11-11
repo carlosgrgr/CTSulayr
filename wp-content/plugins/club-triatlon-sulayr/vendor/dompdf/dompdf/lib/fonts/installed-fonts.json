@@ -1,0 +1,47 @@
+{
+    "sulayr-display": {
+        "normal": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/assets\/pdf-fonts\/Archivo-BlackItalic",
+        "bold": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/assets\/pdf-fonts\/Archivo-BlackItalic",
+        "italic": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/assets\/pdf-fonts\/Archivo-BlackItalic",
+        "bold_italic": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/assets\/pdf-fonts\/Archivo-BlackItalic"
+    },
+    "sulayr-subtitle": {
+        "normal": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/assets\/pdf-fonts\/Archivo-Bold",
+        "bold": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/assets\/pdf-fonts\/Archivo-Bold",
+        "italic": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/assets\/pdf-fonts\/Archivo-Bold",
+        "bold_italic": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/assets\/pdf-fonts\/Archivo-Bold"
+    },
+    "sulayr-text": {
+        "normal": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/assets\/pdf-fonts\/InstrumentSans-Regular",
+        "bold": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/assets\/pdf-fonts\/InstrumentSans-SemiBold",
+        "italic": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/assets\/pdf-fonts\/InstrumentSans-Regular",
+        "bold_italic": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/assets\/pdf-fonts\/InstrumentSans-SemiBold"
+    },
+    "sulayr-mono": {
+        "normal": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/assets\/pdf-fonts\/JetBrainsMono-Regular",
+        "bold": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/assets\/pdf-fonts\/JetBrainsMono-Regular",
+        "italic": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/assets\/pdf-fonts\/JetBrainsMono-Regular",
+        "bold_italic": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/assets\/pdf-fonts\/JetBrainsMono-Regular"
+    },
+    "archivo": {
+        "italic": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/vendor\/dompdf\/dompdf\/lib\/fonts\/archivo_italic_8b9ab22f36859472ff65b12094504897",
+        "500_italic": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/vendor\/dompdf\/dompdf\/lib\/fonts\/archivo_500_italic_8c82d0c81930aeadea3bb6f07c0f326a",
+        "600_italic": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/vendor\/dompdf\/dompdf\/lib\/fonts\/archivo_600_italic_0228636024f89f04abe234e5455fa55d",
+        "bold_italic": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/vendor\/dompdf\/dompdf\/lib\/fonts\/archivo_bold_italic_72c39dbf9e55213b83575eed4ee0b220",
+        "800_italic": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/vendor\/dompdf\/dompdf\/lib\/fonts\/archivo_800_italic_2375dcc77a81135426509b20066d0e83",
+        "900_italic": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/vendor\/dompdf\/dompdf\/lib\/fonts\/archivo_900_italic_509899a7d79588925f5867e53abc3ea2",
+        "normal": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/vendor\/dompdf\/dompdf\/lib\/fonts\/archivo_normal_d9a473b4be7d6fc34eba3f762e7d7b55",
+        "500": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/vendor\/dompdf\/dompdf\/lib\/fonts\/archivo_500_16ea25a6c17169cce662dfe9112a4faf",
+        "600": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/vendor\/dompdf\/dompdf\/lib\/fonts\/archivo_600_fb2cdbe9a8939d8ed3a0fc1be50808e0",
+        "bold": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/vendor\/dompdf\/dompdf\/lib\/fonts\/archivo_bold_079563b5d925eb91fa2ba967c0b1da66",
+        "800": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/vendor\/dompdf\/dompdf\/lib\/fonts\/archivo_800_ebb9417a90638eb063744e7761f9d905",
+        "900": "archivo_900_5e48a9ef292ae0008f4d4a762b73fc73"
+    },
+    "instrument sans": {
+        "normal": "\/var\/www\/html\/CTSulayr\/wp-content\/plugins\/club-triatlon-sulayr\/vendor\/dompdf\/dompdf\/lib\/fonts\/instrument_sans_normal_22c100969a9970a0dde319d7acfbedd3",
+        "600": "instrument_sans_600_93431f6eedd562ffaefa4ad00cde751d"
+    },
+    "jetbrains mono": {
+        "normal": "jetbrains_mono_normal_d978d46a9b942935936dd35a8e443415"
+    }
+}

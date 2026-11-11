@@ -21,6 +21,8 @@ use ClubTriatlonSulayr\Modules\Members\MemberLog;
 use ClubTriatlonSulayr\Modules\Members\MemberRoles;
 use ClubTriatlonSulayr\Modules\Members\MemberSettings;
 use ClubTriatlonSulayr\Modules\Members\MemberFields;
+use ClubTriatlonSulayr\Modules\Members\MemberTypes;
+use ClubTriatlonSulayr\Modules\Members\Receipts\Receipts;
 use ClubTriatlonSulayr\Modules\Members\Admin\MembersMenu;
 use ClubTriatlonSulayr\Modules\Members\Admin\ManagerAccess;
 use ClubTriatlonSulayr\Modules\Members\Admin\RequestsPage;
@@ -152,6 +154,8 @@ class App {
         new ManagerAccess();
         new MembersDailyTask();
         new FeesAccount();
+        new MemberTypes();
+        new Receipts();
 
         if ( is_admin() ) {
             new MembersMenu();

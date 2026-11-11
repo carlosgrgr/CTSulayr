@@ -1,6 +1,6 @@
-# Pruebas pendientes — partes B (altas) y C (cambios, congelaciones y bajas)
+# Pruebas pendientes — partes B (altas), C (cambios, congelaciones y bajas) y D (recibos y listados)
 
-Pruebas manuales de las partes B y C de [SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](../SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md) (secciones 18 y 19). Lo que se probó por HTTP el 11 de noviembre de 2026 está en 18.4 y 19.4. Aquí queda lo que falta: el navegador (formulario, JavaScript, aspecto), los emails reales y PHP 7.4 en PROD.
+Pruebas manuales de las partes B, C y D de [SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](../SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md) (secciones 18, 19 y 20). Lo que se probó por HTTP el 11 de noviembre de 2026 está en 18.4, 19.4 y 20.5. Aquí queda lo que falta: el navegador (formulario, JavaScript, aspecto), los emails reales y PHP 7.4 en PROD.
 
 Marca cada casilla al hacerla y apunta la fecha. Si algo falla, anótalo debajo de la prueba.
 
@@ -85,7 +85,26 @@ Con un socio de prueba propio (créalo con «Nueva alta» y un email `@example.c
 - [ ] **Sulayr Info** (por tarifa, por estado y nadadores) muestra a los socios en su grupo.
 - [ ] Un socio de baja entra en Mi cuenta: no ve «Perfil de deportista» ni «Documentos»; sí «Mis cuotas», monedero y pedidos.
 
-## En PROD, tras subir con FileZilla (spec 18.5)
+### 6 bis. Parte D en local
+
+Con socios de prueba propios (`@example.com`). En Socios → Ajustes → Recibos pon un «Primer mes con recibos» para poder generar. Al generar un mes se crean recibos de todos los socios activos de la copia: no actives el aviso por email del recibo mensual con socios reales.
+
+- [ ] **Socios → Recibos**: generar el mes; la tabla y los totales se ven bien. Abrir un recibo: líneas, «Ver recibo (PDF)», línea manual, apuntar pago (Bizum y monedero) y borrar un pago con motivo.
+- [ ] El PDF se ve bien en el ordenador y en el móvil (logo, datos del club y del socio, líneas, total y estado).
+- [ ] **Exportar a Excel (CSV)** se abre en Excel con columnas separadas, tildes y euros con coma.
+- [ ] **Ficha del socio**: bloques «Recibos», «Subvenciones», «Retribución mensual de la junta» y «Welcome pack». Crear y terminar una subvención; el recibo del mes sale «desfasado» y se regenera.
+- [ ] **Mi cuenta → Mis cuotas** con el socio de prueba, en ordenador y móvil: «Tus recibos» se despliega, se ven líneas y pagos, y «Ver recibo» abre el PDF. Con la URL de un recibo de otro socio sale «No puedes ver este recibo».
+- [ ] **Tareas pendientes**: filtrar por paso y por alta/cambio/baja y «Marcar hecho».
+- [ ] **Entrenador**: «Copiar texto» copia al portapapeles y se pega bien en WhatsApp. «Enviar por email» (con tu email en Ajustes) llega con buen aspecto.
+- [ ] **Welcome pack**: registrar una entrega desde la ficha; el socio desaparece de «sin ninguna entrega».
+- [ ] **Identidad Sulayr** en Recibos, Tareas pendientes, Entrenador, Welcome pack y los bloques de la ficha: título en Archivo con la franja tricolor, tablas con cabecera Noche, cifras en mono, acción principal en Sol. Nada de texto claro sobre fondo claro. Ver también a 390 px de ancho.
+- [ ] **Mis cuotas → Tus recibos** con la marca: mes en Archivo, importes en mono, estado en menta (pagado), cielo (parcial) o sol (impagado).
+- [ ] **Identidad en las partes B y C**: Socios, la ficha (con «Cambios, congelación y baja» como tarjetas desplegables), Solicitudes, Nueva alta, el formulario `/hazte-socio/` (grupos, errores en Noche con filete Sol, «Enviar solicitud» en Sol) y Mis cuotas, en ordenador y a 390 px.
+- [ ] **Emails con la marca** (con tu email en una solicitud de prueba): bienvenida con el escudo visible sin «Mostrar imágenes», titular, botón «Crear mi contraseña» en Sol y firma con filete menta. Revisa también rechazo, resultado de solicitud y confirmación de baja.
+
+## En PROD, tras subir con FileZilla
+
+El proceso completo de B, C y D juntas está en [despliegue-prod.md](despliegue-prod.md). Estas casillas son las comprobaciones que hay que hacer después.
 
 ### 7. Puesta en marcha
 
@@ -106,6 +125,15 @@ Con un socio de prueba propio (créalo con «Nueva alta» y un email `@example.c
 - [ ] La ficha de Diego Lardón muestra la baja programada para el 1 de enero de 2027.
 - [ ] «Ejecutar ahora» en Socios no aplica nada inesperado.
 - [ ] El 1 de enero de 2027, Diego Lardón está de baja.
+
+### 9 bis. Parte D en PROD (spec 20.6)
+
+- [ ] Tras subir, salen Socios → Recibos, Tareas pendientes, Entrenador y Welcome pack. Herramientas → Salud del sitio no avisa de que falten DOM, mbstring o GD.
+- [ ] Ajustes → Recibos revisados y retribución de la junta puesta en cada ficha. «Primer mes con recibos» decidido (ver Diego Lardón en 20.7).
+- [ ] Generar el primer mes y revisar varios recibos y su PDF, en especial uno de la junta y uno con natación de la junta.
+- [ ] El día 1 siguiente, sin pulsar nada: los recibos del mes se generaron solos y la retribución de la junta está en el monedero una sola vez.
+- [ ] El día de penalización, «Aplicar penalización a impagados» solo añade la línea a los pendientes.
+- [ ] Con tu email en «Emails del entrenador», «Enviar por email» del listado llega con la banda Noche, el escudo y la franja tricolor; revísalo en Gmail y en el móvil. Si activas un momento el aviso de recibo mensual con un socio de prueba, lo mismo con ese email.
 
 ### 10. Al día siguiente
 

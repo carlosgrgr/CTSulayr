@@ -830,35 +830,62 @@ nav.woocommerce-MyAccount-navigation {
 }
 
 /* ---------------------------------------------------------------
- * Formulario de solicitud de alta [sulayr_solicitud_alta]
- * Colores de la marca Sulayr (tema ct-sulayr-theme), con valores de respaldo.
+ * Socios (spec de altas, partes B y C): formulario de solicitud de alta
+ * [sulayr_solicitud_alta], consentimiento de imagen y Mi cuenta → Mis cuotas.
+ * Identidad Sulayr con las variables del tema (--sulayr-*) y valores de
+ * respaldo: texto Noche sobre claro, títulos en Archivo, etiquetas y cifras en
+ * JetBrains Mono, acción principal en Sol de Alba con texto Noche.
  * --------------------------------------------------------------- */
+.sulayr-join,
+.sulayr-fees,
+.sulayr-image-consent {
+    --sj-noche: var(--sulayr-noche, #0B1638);
+    --sj-nieve: var(--sulayr-nieve, #F3F7FA);
+    --sj-sol: var(--sulayr-sol, #F46F5C);
+    --sj-menta: var(--sulayr-menta, #1EE8A3);
+    --sj-cielo: var(--sulayr-cielo, #4FE6F2);
+    --sj-pizarra: var(--sulayr-pizarra, #2A3550);
+    --sj-texto2: var(--sulayr-texto2, #566079);
+    --sj-acento: var(--sulayr-acento, #0A7C8A);
+    --sj-linea: var(--mc-linea, #D6DCE5);
+    --sj-display: var(--sulayr-display, "Archivo", "Arial Narrow", Arial, sans-serif);
+    --sj-texto: var(--sulayr-texto, "Instrument Sans", system-ui, "Segoe UI", Arial, sans-serif);
+    --sj-mono: var(--sulayr-mono, "JetBrains Mono", Consolas, monospace);
+    color: var(--sj-noche);
+    font-family: var(--sj-texto);
+}
+
+/* Formulario de solicitud de alta */
 .sulayr-join {
     max-width: 760px;
     margin: 0 auto;
-    color: var(--sulayr-pizarra, #2A3550);
+}
+.sulayr-join-intro {
+    margin-bottom: 1.5rem;
 }
 .sulayr-join-group {
-    border: 1px solid #dde4ea;
-    border-radius: 10px;
-    padding: 1rem 1.25rem 1.25rem;
-    margin: 0 0 1.25rem;
     background: #fff;
+    border: 1px solid var(--sj-linea);
+    border-radius: var(--mc-radio, 6px);
+    border-top: 4px solid var(--sj-noche);
+    margin: 0 0 1.25rem;
+    padding: 1rem 1.25rem 1.25rem;
 }
 .sulayr-join-group legend {
+    color: var(--sj-noche);
     float: none;
-    width: auto;
-    padding: 0 .4rem;
-    margin: 0;
-    font-family: var(--sulayr-display, inherit);
-    font-size: 1.1rem;
+    font-family: var(--sj-display);
+    font-size: 1.15rem;
+    font-stretch: 108%;
     font-weight: 700;
-    color: var(--sulayr-noche, #0B1638);
+    margin: 0;
+    padding: 0 .4rem;
+    width: auto;
 }
 .sulayr-join-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: .75rem 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 @media (max-width: 600px) {
     .sulayr-join-grid {
@@ -866,6 +893,7 @@ nav.woocommerce-MyAccount-navigation {
     }
 }
 .sulayr-join-field label {
+    color: var(--sj-noche);
     display: block;
     font-weight: 600;
     margin-bottom: .25rem;
@@ -873,9 +901,38 @@ nav.woocommerce-MyAccount-navigation {
 .sulayr-join-field + .sulayr-join-field {
     margin-top: 0;
 }
+.sulayr-join .form-control,
+.sulayr-join .form-select,
+.sulayr-fees .form-control,
+.sulayr-fees .form-select {
+    border: 1px solid var(--sj-linea);
+    border-radius: var(--mc-radio-sm, 4px);
+    color: var(--sj-noche);
+    font-family: var(--sj-texto);
+}
+.sulayr-join .form-control:focus,
+.sulayr-join .form-select:focus,
+.sulayr-fees .form-control:focus,
+.sulayr-fees .form-select:focus {
+    border-color: var(--sj-acento);
+    box-shadow: 0 0 0 2px rgba(10, 124, 138, .25);
+    outline: 0;
+}
+.sulayr-join .form-check-input:checked,
+.sulayr-fees .form-check-input:checked,
+.sulayr-image-consent .form-check-input:checked {
+    background-color: var(--sj-noche);
+    border-color: var(--sj-noche);
+}
+.sulayr-join .form-check-input:focus,
+.sulayr-fees .form-check-input:focus,
+.sulayr-image-consent .form-check-input:focus {
+    border-color: var(--sj-acento);
+    box-shadow: 0 0 0 2px rgba(10, 124, 138, .25);
+}
 .sulayr-join-service {
+    border-bottom: 1px solid var(--sj-linea);
     padding: .5rem 0 .5rem 1.75rem;
-    border-bottom: 1px solid #eef2f5;
 }
 .sulayr-join-service:last-of-type {
     border-bottom: 0;
@@ -888,7 +945,7 @@ nav.woocommerce-MyAccount-navigation {
     max-width: 260px;
 }
 .sulayr-join-note {
-    color: var(--sulayr-texto2, #566079);
+    color: var(--sj-texto2);
     font-size: .9rem;
 }
 .sulayr-join-consent {
@@ -896,75 +953,142 @@ nav.woocommerce-MyAccount-navigation {
     padding-left: 1.75rem;
 }
 .sulayr-join-consent-text {
+    color: var(--sj-texto2);
     font-size: .9rem;
-    color: var(--sulayr-texto2, #566079);
 }
 .sulayr-join-consent-text p {
     margin: .2rem 0;
 }
+.sulayr-join-consent-text a {
+    color: var(--sj-acento);
+}
 .sulayr-join-error {
-    color: #b42318;
+    border-left: 3px solid var(--sj-sol);
+    color: var(--sj-noche);
     font-size: .9rem;
-    margin: .25rem 0 0;
+    font-weight: 600;
+    margin: .35rem 0 0;
+    padding-left: .5rem;
 }
 .sulayr-join-notice {
-    border-radius: 10px;
-    padding: 1rem 1.25rem;
+    background: var(--sj-nieve);
+    border-left: 4px solid var(--sj-acento);
+    border-radius: var(--mc-radio-sm, 4px);
+    color: var(--sj-noche);
     margin: 0 0 1.25rem;
-    background: var(--sulayr-nieve, #F3F7FA);
-    border-left: 4px solid var(--sulayr-acento, #0A7C8A);
+    padding: 1rem 1.25rem;
 }
 .sulayr-join-errors {
-    border-left-color: #b42318;
+    border-left-color: var(--sj-sol);
 }
 .sulayr-join-success {
-    border-left-color: var(--sulayr-menta, #1EE8A3);
+    border-left-color: var(--sj-menta);
 }
 .sulayr-join-hp {
-    position: absolute !important;
-    left: -9999px !important;
-    width: 1px;
     height: 1px;
+    left: -9999px !important;
     overflow: hidden;
+    position: absolute !important;
+    width: 1px;
 }
-.sulayr-join-button {
-    background: var(--sulayr-acento, #0A7C8A);
+.sulayr-join-submit {
+    margin-top: 1.5rem;
+}
+.sulayr-join-button,
+.sulayr-join .sulayr-join-button.button {
+    background: var(--sj-sol);
     border: 0;
-    border-radius: 999px;
-    color: #fff;
-    font-weight: 700;
-    padding: .75rem 2rem;
+    border-radius: var(--mc-radio-sm, 4px);
+    color: var(--sj-noche);
     cursor: pointer;
+    font-family: var(--sj-texto);
+    font-size: 1rem;
+    font-weight: 700;
+    min-height: 44px;
+    padding: .75rem 2rem;
 }
 .sulayr-join-button:hover,
+.sulayr-join-button:focus-visible,
+.sulayr-join .sulayr-join-button.button:hover,
+.sulayr-join .sulayr-join-button.button:focus-visible {
+    background: var(--sj-noche);
+    color: var(--sj-nieve);
+}
 .sulayr-join-button:focus-visible {
-    background: var(--sulayr-noche, #0B1638);
-    color: #fff;
+    outline: 2px solid var(--sj-acento);
+    outline-offset: 2px;
 }
 
-/* Consentimiento de imagen en Mi cuenta → Perfil de deportista. */
+/* Consentimiento de imagen en Mi cuenta → Perfil de deportista */
 .sulayr-image-consent {
+    border-top: 1px solid var(--sj-linea);
     margin-top: 2rem;
     padding-top: 1.5rem;
-    border-top: var(--sulayr-profile-border, 1px solid #e8ecef);
 }
 .sulayr-image-consent-date {
-    color: var(--sulayr-profile-label, #5a6c7d);
-    font-size: .9rem;
+    color: var(--sj-texto2);
+    font-family: var(--sj-mono);
+    font-size: 12px;
+    letter-spacing: .06em;
     margin: .5rem 0 0;
 }
 
-/* Mi cuenta → Mis cuotas (spec de altas, parte C). */
-.sulayr-alert-error {
-    background: #fdecea;
-    color: #8a1c13;
-    border-left: 4px solid #b42318;
+/* Mi cuenta → Mis cuotas */
+.sulayr-fees .sulayr-alert {
+    background: var(--sj-nieve);
+    border: 0;
+    border-left: 4px solid var(--sj-menta);
+    border-radius: var(--mc-radio-sm, 4px);
+    color: var(--sj-noche);
+}
+.sulayr-alert-error,
+.sulayr-fees .sulayr-alert-error {
+    background: var(--sulayr-nieve, #F3F7FA);
+    border-left: 4px solid var(--sulayr-sol, #F46F5C);
+    color: var(--sulayr-noche, #0B1638);
 }
 .sulayr-fees .sulayr-info-block {
-    margin-bottom: 1.5rem;
+    background: #fff;
+    border: 1px solid var(--sj-linea);
+    border-radius: var(--mc-radio, 6px);
+    margin-bottom: 1.25rem;
+    padding: 1rem 1.25rem;
+}
+.sulayr-fees .sulayr-info-block-title {
+    color: var(--sj-noche);
+    font-family: var(--sj-display);
+    font-size: 1.2rem;
+    font-stretch: 108%;
+    font-style: normal;
+    font-weight: 700;
+    margin: 0 0 .75rem;
+}
+.sulayr-fees .sulayr-info-row {
+    border-bottom: 1px solid var(--sj-linea);
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem 1rem;
+    justify-content: space-between;
+    padding: .45rem 0;
+}
+.sulayr-fees .sulayr-info-row:last-child {
+    border-bottom: 0;
+}
+.sulayr-fees .sulayr-info-row dt {
+    color: var(--sj-texto2);
+    font-family: var(--sj-mono);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+.sulayr-fees .sulayr-info-row dd {
+    color: var(--sj-noche);
+    font-variant-numeric: tabular-nums;
+    margin: 0;
 }
 .sulayr-fees-note {
-    color: var(--sulayr-profile-label, #5a6c7d);
+    color: var(--sj-texto2);
     font-size: .9rem;
 }
 .sulayr-fees .sulayr-join-service {
@@ -976,4 +1100,111 @@ nav.woocommerce-MyAccount-navigation {
 .sulayr-fees .sulayr-join-options {
     margin-top: .4rem;
     max-width: 260px;
+}
+
+/* Mis cuotas: recibos (spec de altas, parte D). Identidad Sulayr con las variables del tema (--sulayr-*). */
+.sulayr-receipts-block {
+    --rc-noche: var(--sulayr-noche, #0B1638);
+    --rc-nieve: var(--sulayr-nieve, #F3F7FA);
+    --rc-texto2: var(--sulayr-texto2, #566079);
+    --rc-linea: var(--mc-linea, #D6DCE5);
+    --rc-display: var(--sulayr-display, "Archivo", "Arial Narrow", Arial, sans-serif);
+    --rc-mono: var(--sulayr-mono, "JetBrains Mono", Consolas, monospace);
+}
+.sulayr-receipt {
+    background: #fff;
+    border: 1px solid var(--rc-linea);
+    border-radius: var(--mc-radio, 6px);
+    color: var(--rc-noche);
+    margin-bottom: 10px;
+    padding: 12px 16px;
+}
+.sulayr-receipt[open] {
+    box-shadow: inset 4px 0 0 var(--sulayr-cielo, #4FE6F2);
+}
+.sulayr-receipt summary {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    list-style: none;
+}
+.sulayr-receipt summary::-webkit-details-marker {
+    display: none;
+}
+.sulayr-receipt summary:focus-visible {
+    outline: 2px solid var(--sulayr-acento, #0A7C8A);
+    outline-offset: 4px;
+}
+.sulayr-receipt-month {
+    flex: 1 1 auto;
+    font-family: var(--rc-display);
+    font-size: 1.05rem;
+    font-stretch: 108%;
+    font-weight: 700;
+}
+.sulayr-receipt-total {
+    font-family: var(--rc-mono);
+    font-variant-numeric: tabular-nums;
+}
+.sulayr-receipt-badge {
+    background: var(--rc-nieve);
+    border: 1px solid var(--rc-linea);
+    border-radius: var(--mc-radio-sm, 4px);
+    color: var(--rc-noche);
+    display: inline-block;
+    font-family: var(--rc-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    padding: 2px 8px;
+    text-transform: uppercase;
+}
+.sulayr-receipt-badge.sulayr-receipt-pagado {
+    background: var(--sulayr-menta, #1EE8A3);
+    border-color: var(--sulayr-menta, #1EE8A3);
+}
+.sulayr-receipt-badge.sulayr-receipt-parcial {
+    background: var(--sulayr-cielo, #4FE6F2);
+    border-color: var(--sulayr-cielo, #4FE6F2);
+}
+.sulayr-receipt-badge.sulayr-receipt-impagado {
+    background: var(--sulayr-sol, #F46F5C);
+    border-color: var(--sulayr-sol, #F46F5C);
+}
+.sulayr-receipt-badge.sulayr-receipt-anulado {
+    color: var(--rc-texto2);
+    text-decoration: line-through;
+}
+.sulayr-receipt-lines {
+    border-collapse: collapse;
+    margin: 12px 0;
+    width: 100%;
+}
+.sulayr-receipt-lines td,
+.sulayr-receipt-lines th {
+    border-bottom: 1px solid var(--rc-linea);
+    padding: 6px 8px;
+    text-align: left;
+}
+.sulayr-receipt-lines tbody tr:nth-child(even) td {
+    background: var(--rc-nieve);
+}
+.sulayr-receipt-lines tfoot th {
+    border-bottom: 0;
+    border-top: 2px solid var(--rc-noche);
+    font-family: var(--rc-display);
+    font-stretch: 108%;
+    font-weight: 700;
+}
+.sulayr-receipt-lines .sulayr-num {
+    font-family: var(--rc-mono);
+    font-variant-numeric: tabular-nums;
+    padding-left: 12px;
+    text-align: right;
+    white-space: nowrap;
+}
+.sulayr-receipt-lines .sulayr-line-cancelled td {
+    color: var(--sulayr-nube, #8C93A3);
+    text-decoration: line-through;
 }

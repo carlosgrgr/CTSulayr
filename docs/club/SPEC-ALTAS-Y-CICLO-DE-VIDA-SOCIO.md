@@ -1,7 +1,7 @@
 # SPEC — Alta y ciclo de vida del socio
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr`
-**Estado:** Definida el 11 de noviembre de 2026. Decisiones D1 a D58 cerradas con el club (sección 3). Parte A en `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026 con FileZilla. Stripe limpiado y migración terminada en PROD ese día (sección 16.5). Parte B implementada y probada en local el 11 de noviembre de 2026, con commit en la rama `altas-socio-parte-b` sin mergear: no está en `main` ni en PROD (sección 18). Pruebas manuales pendientes en `altas-y-ciclo-de-vida-socio/pruebas.md`. Parte C implementada y probada en local el 11 de noviembre de 2026 en la rama `altas-socio-parte-c` (creada desde la de la parte B), sin commit (sección 19). Parte D pendiente (sección 13).
+**Estado:** Definida el 11 de noviembre de 2026. Decisiones D1 a D58 cerradas con el club (sección 3). Parte A en `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026 con FileZilla. Stripe limpiado y migración terminada en PROD ese día (sección 16.5). Parte B implementada y probada en local el 11 de noviembre de 2026, con commit en la rama `altas-socio-parte-b` sin mergear: no está en `main` ni en PROD (sección 18). Pruebas manuales pendientes en `altas-y-ciclo-de-vida-socio/pruebas.md`. Parte C implementada y probada en local el 11 de noviembre de 2026, con commit en la rama `altas-socio-parte-c` (`beeacf224`, creada desde la de la parte B), sin mergear (sección 19). Parte D implementada y probada en local el 11 y 12 de noviembre de 2026, con la identidad Sulayr aplicada a las partes B, C y D, y con commit en la rama `altas-socio-parte-d` (creada desde la de la parte C), sin mergear (sección 20). Ni B, ni C, ni D están en `main` ni en PROD. Su despliegue conjunto está en [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md).
 **Fecha:** 11 de noviembre de 2026
 
 Esta spec sustituye el alta manual de socios (WhatsApp + Excel + alta a mano en la web) por un proceso en la web del club (blog 1): solicitud, aprobación, cambios, congelaciones, bajas, recibos mensuales y listados. Conserva el histórico de altas, bajas y cambios de servicios, y deja los Excel de Drive solo para ingresos y gastos del club.
@@ -475,8 +475,8 @@ No se importan «Posibles deportistas» ni las pestañas mensuales de pagos.
 |---|---|---|
 | A | Catálogo y tipos de socio (4.3, 4.4), tablas (4.2), registro de cambios (D58), migración (11), eliminación de Stripe (12), roles (10) y capacidades del monedero (9.4) | En `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026. Ver sección 16. |
 | B | Formulario público y de gestor, aprobación, detección de duplicados y reingresos, consentimientos, email de bienvenida, pasos de alta (5) | Implementada y probada en local el 11 de noviembre de 2026. Commit en la rama `altas-socio-parte-b`, sin mergear: no está en `main` ni en PROD. Pruebas manuales pendientes en [pruebas.md](altas-y-ciclo-de-vida-socio/pruebas.md). Ver sección 18. |
-| C | Cambios, bajas, congelaciones, solicitudes desde Mi cuenta, tarea nocturna, sincronización con reservas (6, 7) | Implementada y probada en local el 11 de noviembre de 2026 en la rama `altas-socio-parte-c`, sin commit. No está en `main` ni en PROD. Ver sección 19. |
-| D | Recibos, PDF, Mis cuotas, monedero de la junta, exportación, listado del entrenador, welcome pack, tareas pendientes (8, 9) | Pendiente |
+| C | Cambios, bajas, congelaciones, solicitudes desde Mi cuenta, tarea nocturna, sincronización con reservas (6, 7) | Implementada y probada en local el 11 de noviembre de 2026. Commit en la rama `altas-socio-parte-c` (`beeacf224`), sin mergear: no está en `main` ni en PROD. Ver sección 19. |
+| D | Recibos, PDF, Mis cuotas, monedero de la junta, exportación, listado del entrenador, welcome pack, tareas pendientes (8, 9) | Implementada y probada en local el 11 y 12 de noviembre de 2026. Commit en la rama `altas-socio-parte-d` (creada desde la de la parte C), sin mergear: no está en `main` ni en PROD. Ver sección 20. |
 
 Cada parte se puede usar en cuanto está terminada. Hasta la parte D, el control de cuotas sigue en el Excel.
 
@@ -797,6 +797,8 @@ No comprobado:
 
 ### 18.5. Despliegue en PROD
 
+Para subir B, C y D juntas, que es lo previsto, sigue [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md), que tiene el cambio neto de archivos. Lo que sigue es para subir solo la parte B.
+
 Con FileZilla, en `wp-content/plugins/club-triatlon-sulayr/`:
 
 1. Copia de seguridad (hPanel o FileZilla + phpMyAdmin), como en 16.4.
@@ -842,7 +844,7 @@ La parte C ya está hecha (sección 19); lo que sigue para la D está en 19.7.
 
 ## 19. Parte C: implementación
 
-Implementada el 11 de noviembre de 2026 en la rama `altas-socio-parte-c`, creada desde el commit de la parte B (`f5450b29a`). Probada en local con una copia de la base de PROD. Sin commit: no está en `main` ni en PROD.
+Implementada el 11 de noviembre de 2026 en la rama `altas-socio-parte-c`, creada desde el commit de la parte B (`f5450b29a`). Probada en local con una copia de la base de PROD. Commit `beeacf224` en esa rama, sin mergear: no está en `main` ni en PROD.
 
 ### 19.1. Decisiones cerradas con el club (11 de noviembre de 2026)
 
@@ -910,6 +912,8 @@ No comprobado: el aspecto en el navegador (Mis cuotas y los formularios de la fi
 
 ### 19.5. Despliegue en PROD
 
+Para subir B, C y D juntas, que es lo previsto, sigue [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md), que tiene el cambio neto de archivos. Lo que sigue es para subir solo la parte C.
+
 Si la parte B aún no está en PROD, desplegar primero la B (18.5) y después esto. Con FileZilla, en `wp-content/plugins/club-triatlon-sulayr/`:
 
 1. Copia de seguridad, como en 16.4.
@@ -940,14 +944,155 @@ Si la parte B aún no está en PROD, desplegar primero la B (18.5) y después es
 
 ### 19.6. Abierto
 
-- El cambio de tipo de socio se guarda como meta (sin historial por fechas). Si la parte D regenera recibos de meses anteriores a un cambio de tipo, usaría el tipo nuevo.
+- ~~El cambio de tipo de socio se guarda como meta (sin historial por fechas). Si la parte D regenera recibos de meses anteriores a un cambio de tipo, usaría el tipo nuevo.~~ Resuelto en la parte D con un historial de tipos (20.2).
 - El cambio de la meta de natación que hace `ReservationsAccess` queda en el registro sin la nota del cambio que lo causó (la entrada del cambio está justo antes).
 
 ### 19.7. Para la parte D
+
+Hecho en la parte D (sección 20).
 
 - Matrícula del primer recibo: `data.approval.fee` de la solicitud de alta aprobada (18.7).
 - Congelación inmediata: `data.cancel_month` (`AAAA-MM`) de la fila `congelacion` aplicada; ese mes se anulan los servicios con «se anula al congelar».
 - Cambio inmediato (D27): filas `cambio`/`tipo`/`baja` con `data.immediate = true`; el recibo del mes en curso se recalcula con las reglas del primer mes y C5 debe comprobar que no está pagado.
 - La tarea diaria (`MembersDailyTask::run()`) es donde van la generación automática de recibos y la retribución de la junta, después de aplicar los cambios del día.
 - «Mis cuotas» (`FeesAccount::render()`) es donde van los recibos y el PDF.
+
+---
+
+## 20. Parte D: implementación
+
+Implementada el 11 de noviembre de 2026 en la rama `altas-socio-parte-d`, creada desde la de la parte C (`beeacf224`), y completada el 12 de noviembre de 2026 con la identidad Sulayr en las partes B, C y D. Probada en local con la copia de la base de PROD. Commit en esa rama, sin mergear: no está en `main` ni en PROD.
+
+### 20.1. Decisiones cerradas con el club (11 de noviembre de 2026)
+
+La spec no fijaba estos puntos. Se decidieron antes de implementar:
+
+| # | Decisión |
+|---|---|
+| D-a | El tipo de socio del día 1 vale para todo el mes. Un cambio de tipo al momento no cambia el recibo del mes en curso. |
+| D-b | Un servicio vigente el día 1 se cobra el mes completo aunque se quite a mitad de mes (también en un cambio al momento). Solo se prorratea el que empieza después del día 1 (D24). |
+| D-c | Subvenciones (D35) desde la ficha del socio. Porcentaje: sobre lo que se cobra de esos servicios, ya descontada la bonificación. Importe: entero cada mes, sin pasar de lo que se cobra de esos servicios. Sin servicios marcados: todos. |
+| D-d | La matrícula va solo en el recibo del mes de la fecha de alta. Las altas cuyo mes queda antes del primer mes con recibos no la llevan (se cobró con el Excel). |
+| D-e | Ajuste «Primer mes con recibos». A mano se genera el mes en curso o uno anterior no generado, desde ese mes; nunca un mes futuro. La generación automática solo hace el mes en curso. Vacío: no se generan recibos ni se apunta la retribución de la junta. |
+| D-f | Tras un cambio al momento (D27) o una congelación inmediata (D30), el recibo del mes en curso se regenera solo. Cualquier otro cambio solo lo marca como desfasado (D40). El «al momento» y la congelación inmediata se bloquean si el recibo del mes ya tiene algún pago; la casilla de confirmación se mantiene. |
+| D-g | Congelación inmediata con el recibo del mes pagado: bloqueada (el mes siguiente no hay recibo donde corregir). Las líneas anuladas se ven tachadas y no suman. |
+| D-h | Corrección de un recibo pagado sin recibo siguiente (baja o congelado): queda pendiente en la ficha. Si es a favor del socio, un botón la pasa a su monedero; si no, se puede descartar con motivo. |
+| D-i | La penalización se aplica a los recibos pendientes y a los pagados en parte. El «día límite» de impagado es el día de penalización. |
+| D-j | Un pago apuntado por error se puede borrar con motivo (queda en el registro). Si era con monedero, se apunta la devolución; el cargo no se borra. |
+| D-k | Medios de pago editables en Socios → Ajustes (SportEasy, Bizum y Efectivo por defecto). «Monedero» va siempre. |
+| D-l | Retribución de la junta: a todo socio con importe mayor que 0 que esté activo el día 1 (congelados y bajas no). El gestor la cambia en la ficha de Socios. |
+| D-m | Listado del entrenador: los congelados no salen aunque conserven el servicio; un cambio de modalidad es novedad; enviarlo por email lo marca también como enviado. |
+| D-n | El email del recibo mensual (D52) se implementa desactivado, con asunto y texto en Ajustes. |
+| D-o | Exportación en CSV (punto y coma, coma decimal, UTF-8 con BOM), que Excel en español abre directamente. |
+| D-p | El año de `R-AAAA-NNNN` es el del mes del recibo. |
+| D-q | PDF con dompdf (Composer, fijado a PHP 7.4). Los conceptos de las líneas y de los movimientos automáticos del monedero son textos de Socios → Ajustes → Recibos. |
+| D-r | Identidad Sulayr (manual de marca del club) en todo lo de las partes B, C y D: PDF del recibo, todos los emails de socios, las pantallas del menú Socios (listado, ficha, Solicitudes, Nueva alta, Recibos, Tareas pendientes, Entrenador, Welcome pack), el formulario público de alta, el consentimiento de imagen y Mis cuotas. Pedido el 12 de noviembre de 2026. Quedan fuera las pantallas de WordPress y ACF (Ajustes, catálogo, monedero) y el recuadro «Socio» de la ficha de usuario. |
+
+### 20.2. Puntos abiertos de 18.6 y 19.6
+
+- **Tipo de socio sin fechas (19.6).** Resuelto. Hay una tabla de periodos de tipo (`MemberTypes`); al subir el esquema a la versión 4 cada socio recibe un periodo «desde siempre» con su tipo actual. Los cambios de tipo programados cierran un periodo y abren otro con la fecha efectiva, y la meta sigue siendo el tipo actual para el resto de pantallas. Si alguien cambia la meta por otro camino (la ficha de usuario), entra en el historial con fecha de hoy.
+- **WP-Cron sin visitas (18.6).** La retribución de la junta y la generación automática son «una vez por mes, a partir de su día». Si un día no hay visitas, se hacen al siguiente; el apunte de la junta lleva igualmente fecha del día 1.
+- **IP detrás de un proxy (18.6)** y **nota del registro de reservas (19.6)**: no afectan a los recibos; siguen abiertos.
+
+### 20.3. Qué hay
+
+| Pieza | Clase | Notas |
+|---|---|---|
+| Historial de tipos | `MemberTypes` | Tabla `sulayr_member_type_periods`. `for_month()` da el tipo del día 1 (o el primero del mes si el socio entra más tarde). `MemberChanges` y `JoinApproval` escriben ahí con la fecha efectiva o de alta. |
+| Cálculo (8.2) | `Receipts\ReceiptCalculator` | Líneas automáticas de un socio y mes: servicios (prorrateo D24, D-b), bonificación (D48), anulación por congelación inmediata (`data.cancel_month`), matrícula (`data.approval.fee` del alta del mes) y subvenciones. Recibo si el socio está activo algún día del mes; junta siempre (D50). |
+| Recibos (8.1, 8.3 a 8.5) | `Receipts\Receipts` | Generación del mes o de un socio, numeración, regeneración (conserva líneas manuales, penalizaciones y correcciones), desfase, correcciones, líneas manuales, anulación, penalización y pagos. Estados: pendiente, parcial, pagado, no aplica, anulado; «impagado» se calcula al mostrar. Meses generados en la opción `sulayr_receipts_months`. |
+| Desfase (D40) | `Receipts\Receipts` | `MemberLog::record()` lanza `sulayr_member_history_changed` en los cambios de servicios y de estado (también `MemberTypes` y `Subsidies`). Al final de la petición se vuelven a calcular los recibos de esos socios y se marcan los que no coinciden. Guardar un servicio del catálogo comprueba los de todos. |
+| PDF (8.6) | `Receipts\ReceiptPdf` | dompdf 3.1.6 en `vendor/`. Se genera al pulsar, con los datos guardados. Diseño de documento Sulayr: escudo de Ajustes y número en mono, filete Noche, «Recibo» en Archivo Black Italic, tabla con cabecera Noche y filas alternas Nieve, cifras en JetBrains Mono, estado con el color de la paleta y pie con la franja tricolor. Fuentes TTF estáticas con sus métricas en `assets/pdf-fonts/` (licencia OFL); si faltan, DejaVu Sans. Sin GD no se pinta el logo PNG. |
+| Diseño de los emails | `Join\MemberMailer::layout()`, `button()` | Todos los emails de socios (bienvenida, rechazo, aviso al club, resultado de solicitud, confirmación de baja, recibo mensual y listado del entrenador): banda Noche con el escudo y el nombre del club en mono Cielo, franja tricolor, el asunto como titular en Archivo Black Italic, texto Noche sobre blanco, enlaces en `#0A7C8A`, la acción principal como botón Sol de Alba con texto Noche («Crear mi contraseña», «Ver mis cuotas») y firma con filete Menta (nombre en Archivo Bold Italic, ciudad, email del club y web en mono). Estilos en línea y tablas; donde no cargan las fuentes de marca, Arial Black, Arial y Consolas. El escudo va incrustado (`cid:sulayr-escudo`, `phpmailer_init` solo durante el envío) para que se vea sin descargar imágenes; sin archivo de logo, se enlaza por URL. `send( …, false )` manda HTML simple. |
+| Diseño de wp-admin | `Admin\BrandStyles` | Clase `.sulayr-brand` en todas las pantallas del menú Socios: etiqueta mono sobre el título, título en Archivo con franja tricolor, tablas con cabecera Noche y filas alternas Nieve, cifras y fechas en mono, etiquetas de la ficha en mono, desplegables de «Cambios, congelación y baja» como tarjetas, botones Noche, «Rechazar» subrayado en Sol y la acción principal en Sol («Aprobar y enviar la bienvenida», «Crear y aprobar», «Aprobar y avisar al socio», «Generar recibos», «Apuntar», «Regenerar», «Enviar por email»). Fuentes de Google Fonts (como el tema del club) solo en el menú Socios. |
+| Diseño del front (B y C) | `public/css/styles.css` | Formulario `[sulayr_solicitud_alta]`, consentimiento de imagen y Mis cuotas con las variables del tema (`--sulayr-*`): grupos con filete Noche y leyenda en Archivo, campos con foco en `#0A7C8A`, errores en Noche con filete Sol, avisos con filete menta o sol, «Enviar solicitud» en Sol con texto Noche, tarjetas de Mis cuotas con etiquetas en mono. |
+| Exportación (8.7) | `Receipts\ReceiptExport` | Una columna por servicio y por tipo de línea, y comentarios del mes sacados del historial. |
+| Monedero (D34, D47, 9.4) | `Receipts\WalletLedger`, `Receipts\BoardPayments` | Movimientos automáticos como los manuales (metas de ACF con su referencia). Pago de recibo, devolución, corrección a favor y retribución de la junta (meta `sulayr_wallet_board_period` para no repetirla). |
+| Subvenciones (D35) | `Subsidies` | Tabla ya existente. Se crean y terminan en la ficha. |
+| Pantalla Recibos | `Admin\ReceiptsPage` | **Socios → Recibos**: mes, generar (o generar los que faltan), penalizar desde el día límite, exportar, totales. Detalle: líneas, línea manual, volver a calcular o regenerar, corrección, pagos (añadir y borrar), anular y PDF. En la ficha del socio: sus recibos, correcciones pendientes, subvenciones y retribución de la junta. |
+| Listados (9.1 a 9.3) | `CoachList`, `WelcomePack`, `Admin\ListsPage` | **Tareas pendientes** (filtro por paso y por alta/cambio/baja, con globo), **Entrenador** (agrupado por modalidad, novedades, texto para WhatsApp con «Copiar», «Marcar como enviado», «Enviar por email») y **Welcome pack** (activos sin entrega y últimas entregas). En la ficha, «Registrar entrega» y borrar una entrega. |
+| Mis cuotas (D53) | `Lifecycle\FeesAccount` | Bloque «Tus recibos»: cada mes con líneas, pagos, pendiente y «Ver recibo». El PDF se abre con `?recibo=ID` en la pestaña y solo si el recibo es del socio (D6). Estilos en `public/css/styles.css` con las variables de marca del tema (`--sulayr-*`): mes en Archivo, importes en mono, estado con el color de la paleta. |
+| Tarea diaria (§7) | `Lifecycle\MembersDailyTask` | Añade la retribución de la junta y la generación automática después de los cambios del día. El resumen de «Ejecutar ahora» las cuenta. |
+| Ajustes | `MemberSettings` | En «Recibos»: primer mes con recibos, medios de pago, pie del recibo, textos de las líneas y de los movimientos del monedero. En «Emails»: recibo mensual. |
+| Esquema | `Database\MembersSchema` | Versión 4: tabla de tipos; `user_id` y `source_receipt_id` en líneas; `note` en recibos y pagos; medio de pago de 60 caracteres. |
+
+### 20.4. Decisiones de implementación
+
+- **Mismo servicio con otra opción en el mes** (p. ej. sprint → olímpico al momento): el servicio ya está cobrado entero por la fila del día 1; la fila nueva no se cobra otra vez.
+- **Precio** del día 1 del mes para el tipo del mes (4.3). Con bonificación, cada línea se prorratea por separado y la bonificación es la diferencia de las dos ya redondeadas.
+- **Editable** quiere decir no pagado del todo ni anulado: un recibo pagado en parte admite líneas y regenerarse, siempre que el total no quede por debajo de lo pagado.
+- **Correcciones** (D43): la diferencia entre lo calculado hoy y las líneas automáticas del recibo pagado, menos las correcciones ya creadas desde él. Va al siguiente recibo editable del socio o queda pendiente (`receipt_id = 0`) y entra en el próximo que se genere. Anular un recibo devuelve sus correcciones a pendientes.
+- **Total ≤ 0** sin pagos: «no aplica» (D50).
+- **Anular** solo un recibo sin pagos, con motivo. Ese socio no vuelve a tener recibo de ese mes (número no reutilizado, D44).
+- **Alta en un mes ya generado** (5.3): `JoinApproval` genera su recibo después de enviar la bienvenida.
+- **Emails** con HTML en los marcadores `{listado}` y `{enlace_mis_cuotas}`.
+- **Retribución de la junta:** solo desde el primer mes con recibos, para no duplicar meses pagados con el Excel.
+
+### 20.5. Comprobado en local (11 de noviembre de 2026)
+
+Con copia de la base (`wp db export`), un mu-plugin temporal que guardaba los emails en una opción en vez de enviarlos, socios de prueba `@example.com` dados de alta por `JoinApproval`, un administrador temporal y un socio de prueba con «Gestor de socios» (sin `manage_options`), y peticiones HTTP iniciando sesión. «Primer mes con recibos» en octubre de 2026. Al terminar se restauró la base y se borraron el mu-plugin, los usuarios y los archivos temporales.
+
+- D1: alta el 20 de noviembre con entrenamiento sprint y natación: 8,07 + 4,03 + 25,00 + 20,00 = 57,10 €.
+- D2: junta solo con cuota base: 22,00 − 22,00 = 0 €, «no aplica». Junta con natación: 29,50 € sin bonificación.
+- D3: 10 € con monedero de un recibo de 47 €: «pagado parcialmente», cargo de −10 € y saldo 0. Más de lo que hay en el monedero se rechaza. Borrar ese pago devuelve el saldo con un movimiento nuevo.
+- D4: un recibo pagado no admite líneas ni regenerarse. Una subvención del 50 % de natación en octubre lo marca desfasado (−12,50 €); la corrección aparece en noviembre (34,50 €) y octubre deja de estar desfasado.
+- D5: un servicio añadido con fecha pasada marca octubre y noviembre como desfasados sin cambiar su total; regenerar noviembre da 58 €.
+- D6: por HTTP, el PDF propio en Mis cuotas da 200 (`application/pdf`); el de otro socio, 403; sin sesión, al login. Un deportista sin rol de gestor no abre Socios → Recibos (403).
+- D7: la retribución de la junta se apunta una vez; la segunda ejecución no crea nada.
+- D8: tras «Marcar como enviado», un alta nueva sale como «nuevo», una baja al momento en «Ya no están» y un cambio de sprint a olímpico como «antes Sprint».
+- La tarea diaria genera el mes en curso (55 recibos) y la segunda ejecución no genera nada. Septiembre (antes del primer mes) y diciembre (futuro) no se pueden generar.
+- C5 con recibos: un cambio al momento con el recibo pagado en parte se rechaza.
+- Congelación inmediata: la cuota base del mes queda anulada (tachada) y la natación se cobra (25 €).
+- Cambio de tipo programado a junta para diciembre: noviembre sigue normal (47 €) y no se marca desfasado; regenerarlo da lo mismo. Un cambio de tipo al momento no cambia el mes.
+- Alta aprobada con el mes ya generado: se crea su recibo (42,00 €, con matrícula).
+- Penalización: antes del día 20 se rechaza; en octubre se aplicó a 50 recibos y la segunda vez a ninguno. Pendientes de octubre se muestran como «impagado».
+- Línea manual, anulación, subvención por importe y retribución desde la ficha (con coma decimal), y regenerar, todo por HTTP como gestor.
+- Welcome pack: registrar con dos artículos, sin artículos (error) y borrar. Tareas pendientes: «Marcar hecho» vuelve a la lista. Entrenador: «Enviar por email» llega al entrenador y al club con el listado en HTML y lo marca como enviado.
+- Con el aviso de recibo activado, el socio recibe la bienvenida y el email del recibo con el enlace a Mis cuotas.
+- PDF revisado: banda con logo, datos del club y del socio, líneas, total, estado y pie.
+- Identidad Sulayr (12 de noviembre de 2026, con copia de la base, restaurada después): el PDF lleva incrustadas Archivo Black Italic, Archivo Bold, Instrument Sans y JetBrains Mono y se revisó; los emails del recibo y del entrenador se revisaron pasándolos a PDF; las pantallas Recibos (listado y detalle), Tareas pendientes, Entrenador, Welcome pack, la ficha y Mis cuotas responden 200 sin avisos de PHP y cargan los estilos y las fuentes de marca.
+- CSV: abre con columnas por servicio, bonificación, matrícula, corrección y manual, y los comentarios del mes.
+- Todas las pantallas nuevas y la ficha responden 200 sin avisos de PHP, como administrador y como gestor. Ningún error del plugin en `debug.log`.
+
+- Identidad en B y C (12 de noviembre de 2026, con copia de la base, restaurada después): la bienvenida se construyó en PHPMailer sin enviarse (SMTP apuntado a un puerto cerrado) y lleva el escudo incrustado con `Content-ID: <sulayr-escudo>`; bienvenida, rechazo, aviso al club, resultado de solicitud y confirmación de baja revisados pasándolos a PDF. Socios, la ficha, Solicitudes (listado y detalle), Nueva alta, el formulario público y Mis cuotas responden 200 sin avisos de PHP con la marca cargada.
+
+No comprobado: el aspecto en el navegador (Mis cuotas en el móvil, las pantallas de wp-admin y el formulario público con la marca), los emails en un cliente de correo real (Gmail, móvil), el botón «Copiar texto» (usa el portapapeles del navegador), el CSV abierto en Excel, los emails reales y PHP 7.4. Pendiente en [pruebas.md](altas-y-ciclo-de-vida-socio/pruebas.md).
+
+### 20.6. Despliegue en PROD
+
+Para subir B, C y D juntas, que es lo previsto, sigue [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md), que tiene el cambio neto de archivos. Lo que sigue es para subir solo la parte D, con B y C ya en PROD (18.5 y 19.5). Con FileZilla, en `wp-content/plugins/club-triatlon-sulayr/`:
+
+1. Copia de seguridad, como en 16.4.
+2. Subir las librerías nuevas: `vendor/dompdf/`, `vendor/masterminds/` y `vendor/sabberworm/` (carpetas enteras), y las fuentes del PDF: `assets/pdf-fonts/` (carpeta entera).
+3. Subir la carpeta `vendor/composer/` entera (sobrescribe los archivos de carga y añade `autoload_files.php`, que necesita las librerías del paso 2). Después, `composer.json` y `composer.lock`.
+4. Subir los archivos nuevos:
+   - `src/Modules/Members/Receipts/` (carpeta entera: `BoardPayments.php`, `ReceiptCalculator.php`, `ReceiptExport.php`, `ReceiptPdf.php`, `Receipts.php`, `WalletLedger.php`)
+   - `src/Modules/Members/Admin/BrandStyles.php`, `Admin/ReceiptsPage.php`, `Admin/ListsPage.php`
+   - `src/Modules/Members/CoachList.php`, `MemberTypes.php`, `Subsidies.php`, `WelcomePack.php`
+5. Sobrescribir:
+   - `src/App/App.php`
+   - `src/Modules/Members/Admin/MembersMenu.php`, `Admin/RequestsPage.php`, `Admin/MemberActions.php`
+   - `src/Modules/Members/Database/MembersSchema.php`
+   - `src/Modules/Members/Join/JoinApproval.php`, `Join/MemberMailer.php`
+   - `src/Modules/Members/Lifecycle/FeesAccount.php`, `Lifecycle/MemberChanges.php`, `Lifecycle/MembersDailyTask.php`
+   - `src/Modules/Members/MemberLog.php`, `MemberSettings.php`, `MemberTasks.php`
+   - `public/css/styles.css`
+6. No hay nada que borrar.
+7. Entrar en wp-admin del club: la primera carga sube el esquema a la versión 4 y crea el periodo de tipo de cada socio. Comprobar que salen **Socios → Recibos**, **Tareas pendientes**, **Entrenador** y **Welcome pack**.
+8. En **Socios → Ajustes → Recibos**: medios de pago, pie del recibo y textos de las líneas. Revisar CIF, dirección y logo en «Datos del club», y los emails del entrenador. **Dejar «Primer mes con recibos» vacío** hasta decidir desde qué mes se deja el Excel: mientras esté vacío no se genera nada ni se apunta la retribución de la junta.
+9. En la ficha de cada miembro de la junta, poner su retribución mensual.
+10. Elegir el primer mes con recibos. Diego Lardón figura activo del 1 al 10 de noviembre de 2026 por la migración (20.7): si se empieza en noviembre, anular su recibo con motivo. Si se empieza en diciembre, no hace falta.
+11. Generar el mes desde **Socios → Recibos** (o esperar al día configurado), revisar varios recibos y su PDF, y exportar el CSV.
+12. Actualizar el estado de esta spec y de `docs/FASES.md`.
+
+Si PROD no tuviera la extensión GD de PHP, el PDF sale sin logo; si faltaran DOM o mbstring, dompdf no funciona (Herramientas → Salud del sitio las lista).
+
+### 20.7. Abierto
+
+- **Diego Lardón en noviembre de 2026.** La migración dejó su periodo activo hasta el 10 de noviembre y congelado desde el 11 (16.2), así que el sistema le genera recibo de noviembre. Ver el paso 10 de 20.6.
+- **Recibo de un socio que deja de corresponder** (p. ej. un alta anulada con fecha pasada): queda desfasado; se regenera sin líneas automáticas o se anula a mano.
+- **Total negativo** (correcciones a favor mayores que el mes): el recibo queda «no aplica» con total negativo; el gestor lo compensa a mano (p. ej. en el monedero).
+- **Marca pendiente**: las pantallas de WordPress y ACF del menú Socios (Ajustes, catálogo de servicios, monedero) y el recuadro «Socio» de Usuarios → editar siguen con el aspecto de WordPress.
+- **Fuentes en los emails**: Gmail y Outlook no cargan Archivo, Instrument Sans ni JetBrains Mono; ahí salen Arial Black, Arial y Consolas (el respaldo del manual).
+- **Precios cambiados en el catálogo**: comprueban todos los recibos guardados; con muchos años de recibos podría tardar al guardar un servicio.
 
