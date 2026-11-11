@@ -8,7 +8,7 @@ A full WordPress **Multisite** install (subdomain mode) committed as-is, core an
 
 | Path | What it is |
 |---|---|
-| `wp-content/plugins/club-triatlon-sulayr/` | Club site plugin: athletes (`athlete` role), ACF fields, members module (`src/Modules/Members/`: service catalog, member history, change log, manager roles, `wp sulayr socios` CLI), wallet, WooCommerce glue. Stripe was removed (members spec, part A). Composer/PSR-4 (`ClubTriatlonSulayr\` → `src/`), `vendor/` is committed. |
+| `wp-content/plugins/club-triatlon-sulayr/` | Club site plugin: athletes (`athlete` role), ACF fields, members module (`src/Modules/Members/`: service catalog, member history, change log, manager roles), wallet, WooCommerce glue. Stripe was removed (members spec, part A). Composer/PSR-4 (`ClubTriatlonSulayr\` → `src/`), `vendor/` is committed. |
 | `wp-content/plugins/sulayr-reservas/` | Network-activated swimming reservations plugin (the current release work). No Composer, own autoloader (`SulayrReservas\` → `src/`), bootstrapped from `Plugin::init()` on `plugins_loaded`. |
 | `wp-content/plugins/sulayr-scripts-manager/` | Single-file plugin, network-activated: per-site tracking codes (GTM/Analytics) in Settings → Scripts Manager, printed right after `<head>`, right after `<body>` (Astra's `astra_head_top` / `astra_body_top`, falling back to `wp_head` / `wp_body_open`) or in `wp_footer`. Only users with `unfiltered_html` (super admins in multisite) can edit them. |
 | `wp-content/themes/ct-sulayr-theme/` | Astra child theme for the club site (blog 1). |

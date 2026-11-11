@@ -554,9 +554,9 @@ Implementada el 11 de noviembre de 2026 en la rama `altas-socio-parte-a`. Códig
 | Ficha en wp-admin | `MemberFields`, `Admin\MembersMenu` | Grupo ACF «Ficha del socio» solo en `user-edit` (no sale en Mi cuenta). Menú Socios con listado y ficha de solo lectura (servicios, estados y registro), porque el gestor no tiene `edit_users` en multisite. |
 | Roles (§10) | `MemberRoles`, `Admin\ManagerAccess` | Roles `sulayr_member_manager` y `sulayr_shop_manager`, sincronizados con versión en `sulayr_member_roles_version`. Casillas en la ficha de usuario solo para administradores; se guardan en `profile_update`, después del desplegable de rol de WordPress, que borraría los roles añadidos. `UserService` ya no saca de wp-admin al deportista que es gestor. |
 | Monedero (§9.4) | `WalletPostType`, `WalletBalancePage` | `capability_type` `sulayr_wallet`: solo administrador y gestor de socios. Ahora cuelga de Socios. |
-| Migración (§11) | `Migration\LegacyMigrator`, `SheetCsvReader`, `CatalogSeeder`, `LegacyMapping`, `MembersCommand`, `Admin\MigrationPage` | `wp sulayr socios migrar` o **Socios → Migración** (solo administradores; los CSV se leen de la subida y no se guardan). Ensayo por defecto. Idempotente. |
-| Puente transitorio | `Migration\LegacyFieldsSync` | Hasta la parte C: si un administrador cambia tarifa, modalidad, natación, directiva o estado en la ficha de usuario, se aplica al histórico con fecha de hoy. Solo actúa tras la migración. |
-| Limpieza de Stripe (§12) | `Migration\StripeCleanup` | `wp sulayr socios limpiar-stripe`. Ensayo por defecto. |
+| Migración (§11) | `Migration\LegacyMigrator`, `SheetCsvReader`, `CatalogSeeder`, `MembersCommand`, `Admin\MigrationPage` | `wp sulayr socios migrar` o **Socios → Migración**. Eliminadas tras la migración en PROD (16.6); están en el commit `fab85c343`. |
+| Puente transitorio | `Migration\LegacyFieldsSync`, `LegacyMapping` | Hasta la parte C: si un administrador cambia tarifa, modalidad, natación, directiva o estado en la ficha de usuario, se aplica al histórico con fecha de hoy. Solo actúa tras la migración. |
+| Limpieza de Stripe (§12) | `Migration\StripeCleanup` | `wp sulayr socios limpiar-stripe`. Eliminada tras usarla en PROD (16.6). |
 
 Eliminado: `Modules/Subscriptions/*`, el CPT y los campos de `sulayr_subscription_changes`, la sección Stripe y «Gestión de suscripciones» de Sulayr Info, «Mis pagos» y el botón de suscripción de Mi cuenta, el bloqueo de 5 días de `AthleteUpdate` y la librería `stripe/stripe-php` de Composer.
 
@@ -601,6 +601,8 @@ Migración real en local con la hoja de Drive (11 de noviembre de 2026, `--alta-
 No comprobado: el paso a borrador de un producto de tarifa que aparezca en pedidos (en local no hay ninguno).
 
 ### 16.4. Despliegue y puesta en marcha
+
+Así se hizo el 11 de noviembre de 2026. La pantalla Socios → Migración y los comandos ya no existen (16.6); para otra importación habría que recuperarlos del commit `fab85c343`.
 
 PROD está en Hostinger, sin SSH ni WP-CLI. El código se sube con FileZilla y la migración se hace desde **Socios → Migración** (`Admin\MigrationPage`, solo administradores), que hace lo mismo que `wp sulayr socios migrar` y `wp sulayr socios limpiar-stripe`. Los comandos de WP-CLI siguen sirviendo en local.
 
@@ -653,3 +655,13 @@ PROD está en Hostinger, sin SSH ni WP-CLI. El código se sube con FileZilla y l
 - David Sánchez Cabrerizo y Lorena Montellano Peláez (los 2 errores) son deportistas externos: no se migran y se quedan solo en el Excel, que deja de mantenerse (decidido el 11 de noviembre de 2026). La migración está terminada.
 - 14 antiguos socios no se crearon por no tener email ni DNI en el Excel.
 - Reservas no cambió: ningún socio cambió de condición para reservar.
+
+### 16.6. Retirada del código de migración
+
+Con la migración terminada en PROD, se quitan la pantalla **Socios → Migración**, los comandos `wp sulayr socios` y las clases `LegacyMigrator`, `SheetCsvReader`, `CatalogSeeder`, `MembersCommand` y `StripeCleanup`. Quedan en el commit `fab85c343`. Se mantienen `LegacyFieldsSync` y `LegacyMapping` hasta la parte C; la opción `sulayr_members_migrated_at` sigue activando el puente.
+
+Para llevarlo a PROD con FileZilla, en `wp-content/plugins/club-triatlon-sulayr/`:
+
+1. Subir, sobrescribiendo: `src/App/App.php`, `src/Modules/Members/Admin/MembersMenu.php`, `src/Modules/Members/Migration/LegacyFieldsSync.php` y `src/Modules/PostTypes/WalletPostType.php`.
+2. Después, borrar del servidor: `src/Modules/Members/Admin/MigrationPage.php` y, en `src/Modules/Members/Migration/`, `LegacyMigrator.php`, `SheetCsvReader.php`, `CatalogSeeder.php`, `MembersCommand.php` y `StripeCleanup.php`.
+3. Comprobar que el menú Socios ya no tiene «Migración» y que el monedero sale agrupado.

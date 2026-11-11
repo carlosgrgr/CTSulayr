@@ -24,11 +24,9 @@ use ClubTriatlonSulayr\Modules\Members\MemberSettings;
 use ClubTriatlonSulayr\Modules\Members\MemberFields;
 use ClubTriatlonSulayr\Modules\Members\Admin\MembersMenu;
 use ClubTriatlonSulayr\Modules\Members\Admin\ManagerAccess;
-use ClubTriatlonSulayr\Modules\Members\Admin\MigrationPage;
 use ClubTriatlonSulayr\Modules\Members\Catalog\ServicePostType;
 use ClubTriatlonSulayr\Modules\Members\Catalog\ServiceFields;
 use ClubTriatlonSulayr\Modules\Members\Migration\LegacyFieldsSync;
-use ClubTriatlonSulayr\Modules\Members\Migration\MembersCommand;
 use ClubTriatlonSulayr\Modules\Wallet\WalletAdminList;
 use ClubTriatlonSulayr\Modules\Wallet\WalletBalancePage;
 use ClubTriatlonSulayr\Modules\PostTypes\DocumentPostType;
@@ -152,11 +150,6 @@ class App {
 
         if ( is_admin() ) {
             new MembersMenu();
-            new MigrationPage();
-        }
-
-        if ( defined( 'WP_CLI' ) && WP_CLI ) {
-            \WP_CLI::add_command( 'sulayr socios', MembersCommand::class );
         }
     }
 

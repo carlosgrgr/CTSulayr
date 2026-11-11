@@ -23,6 +23,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class LegacyFieldsSync {
 
+    /** Fecha de la migración a la que se pasaron los socios (11 de noviembre de 2026 en PROD). */
+    public const MIGRATED_OPTION = 'sulayr_members_migrated_at';
+
     /**
      * __construct()
      *
@@ -47,7 +50,7 @@ class LegacyFieldsSync {
             return;
         }
 
-        if ( false === get_option( LegacyMigrator::MIGRATED_OPTION ) ) {
+        if ( false === get_option( self::MIGRATED_OPTION ) ) {
             return;
         }
 

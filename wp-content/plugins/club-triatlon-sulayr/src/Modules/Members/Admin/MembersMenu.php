@@ -99,7 +99,7 @@ class MembersMenu {
     }
 
     /**
-     * Ordena el submenú: socios, catálogo, monedero y, al final, migración y ajustes.
+     * Ordena el submenú: socios, catálogo, monedero y, al final, ajustes.
      * Lo que no esté en la lista se queda detrás, en su orden.
      *
      * @return 	void
@@ -120,7 +120,6 @@ class MembersMenu {
             'edit.php?post_type=' . WalletPostType::POST_TYPE_NAME,
             'post-new.php?post_type=' . WalletPostType::POST_TYPE_NAME,
             WalletBalancePage::PAGE_SLUG,
-            MigrationPage::PAGE_SLUG,
             MemberSettings::PAGE_SLUG,
         ];
         $position = array_flip( $order );
