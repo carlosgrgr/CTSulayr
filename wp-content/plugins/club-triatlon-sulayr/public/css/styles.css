@@ -953,3 +953,27 @@ nav.woocommerce-MyAccount-navigation {
     font-size: .9rem;
     margin: .5rem 0 0;
 }
+
+/* Mi cuenta → Mis cuotas (spec de altas, parte C). */
+.sulayr-alert-error {
+    background: #fdecea;
+    color: #8a1c13;
+    border-left: 4px solid #b42318;
+}
+.sulayr-fees .sulayr-info-block {
+    margin-bottom: 1.5rem;
+}
+.sulayr-fees-note {
+    color: var(--sulayr-profile-label, #5a6c7d);
+    font-size: .9rem;
+}
+.sulayr-fees .sulayr-join-service {
+    padding: .4rem 0 .4rem 1.75rem;
+}
+.sulayr-fees .sulayr-join-service.is-blocked {
+    opacity: .5;
+}
+.sulayr-fees .sulayr-join-options {
+    margin-top: .4rem;
+    max-width: 260px;
+}

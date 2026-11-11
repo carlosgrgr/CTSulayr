@@ -1,7 +1,8 @@
 <?php
-namespace ClubTriatlonSulayr\Modules\Members\Join;
+namespace ClubTriatlonSulayr\Modules\Members\Lifecycle;
 
 use ClubTriatlonSulayr\Infrastructure\CustomFields;
+use ClubTriatlonSulayr\Modules\Members\Join\JoinRequests;
 use ClubTriatlonSulayr\Modules\Members\MemberSettings;
 use ClubTriatlonSulayr\Modules\Members\ReservationsAccess;
 
@@ -10,15 +11,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Tarea diaria mínima de la parte B (WP-Cron, blog del club):
- * - activa las altas aprobadas cuya fecha ha llegado (pendiente → activo,
- *   natación y sincronización con reservas);
- * - borra los datos personales de las solicitudes caducadas (D16).
+ * Tarea diaria de socios (spec §7), WP-Cron en el blog del club:
+ * 1. aplica los cambios, bajas, congelaciones y cambios de tipo cuya fecha
+ *    efectiva ha llegado;
+ * 2. devuelve a activo a los congelados cuyo fin previsto pasó;
+ * 3. activa las altas pendientes cuya fecha ha llegado (estado, natación y
+ *    sincronización con reservas, D38). Los pasos 1 y 2 ya actualizan
+ *    reservas de cada socio que tocan; no se recalcula a todos para no cambiar
+ *    a nadie cuyas metas no salgan del historial (p. ej. datos migrados);
+ * 4. borra los datos de las solicitudes de alta caducadas (D16).
  *
- * La parte C la amplía con cambios, congelaciones y bajas (§7). Ejecutarla
- * dos veces el mismo día no cambia nada la segunda vez.
+ * Ejecutarla dos veces el mismo día no cambia nada la segunda vez (C6).
+ * Recibos y retribución de la junta llegan en la parte D.
  */
-class JoinDailyTask {
+class MembersDailyTask {
 
     public const HOOK = 'sulayr_members_daily';
     public const LAST_RUN_OPTION = 'sulayr_members_daily_last_run';
@@ -54,13 +60,15 @@ class JoinDailyTask {
     /**
      * Ejecuta la tarea.
      *
-     * @return 	array{activated: int, purged: int}
+     * @return 	array{applied: int, returned: int, updated: int, purged: int}
      * @access 	public
      * @package	club-triatlon-sulayr
      */
     public static function run(): array {
-        $activated = 0;
+        $applied = MemberChanges::apply_due();
+        $returned = MemberChanges::return_from_freezes();
 
+        $updated = 0;
         $pending = get_users( [
             'role' => 'athlete',
             'meta_key' => CustomFields::USER_PROFILE_ATHLETE_STATUS,
@@ -70,7 +78,7 @@ class JoinDailyTask {
         ] );
         foreach ( $pending as $user_id ) {
             if ( ReservationsAccess::apply( (int) $user_id ) ) {
-                $activated++;
+                $updated++;
             }
         }
 
@@ -79,8 +87,9 @@ class JoinDailyTask {
             (int) MemberSettings::get( 'retention_pending_days' )
         );
 
-        update_option( self::LAST_RUN_OPTION, current_time( 'mysql' ), false );
+        $result = [ 'applied' => $applied, 'returned' => $returned, 'updated' => $updated, 'purged' => $purged ];
+        update_option( self::LAST_RUN_OPTION, [ 'at' => current_time( 'mysql' ), 'result' => $result ], false );
 
-        return [ 'activated' => $activated, 'purged' => $purged ];
+        return $result;
     }
 }

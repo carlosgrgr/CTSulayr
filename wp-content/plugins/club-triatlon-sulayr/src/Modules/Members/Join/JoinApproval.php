@@ -9,7 +9,7 @@ use ClubTriatlonSulayr\Modules\Members\MemberLog;
 use ClubTriatlonSulayr\Modules\Members\MemberServices;
 use ClubTriatlonSulayr\Modules\Members\MemberSettings;
 use ClubTriatlonSulayr\Modules\Members\MemberTasks;
-use ClubTriatlonSulayr\Modules\Members\Migration\LegacyMapping;
+use ClubTriatlonSulayr\Modules\Members\MemberDates;
 use ClubTriatlonSulayr\Modules\Members\ReservationsAccess;
 use ClubTriatlonSulayr\Modules\Members\StatusPeriods;
 
@@ -271,8 +271,8 @@ class JoinApproval {
         $meta = [
             CustomFields::USER_PROFILE_PHONE => (string) $f['phone'],
             CustomFields::USER_PROFILE_DNI => (string) $f['dni'],
-            CustomFields::USER_PROFILE_BIRTH => LegacyMapping::iso_to_acf_date( (string) $f['birth_date'] ),
-            CustomFields::USER_PROFILE_JOIN_DATE => LegacyMapping::iso_to_acf_date( $start ),
+            CustomFields::USER_PROFILE_BIRTH => MemberDates::iso_to_acf( (string) $f['birth_date'] ),
+            CustomFields::USER_PROFILE_JOIN_DATE => MemberDates::iso_to_acf( $start ),
             CustomFields::MEMBER_TYPE => (string) $choice['member_type'],
         ];
         if ( '' !== (string) ( $f['tshirt'] ?? '' ) ) {
@@ -317,8 +317,6 @@ class JoinApproval {
             MemberServices::open( $user_id, (int) $item['service_id'], (string) $item['option_key'], $start, MemberServices::ORIGIN_JOIN );
             $service_ids[] = (int) $item['service_id'];
         }
-
-        LegacyMapping::write_plan_fields( $user_id, $start );
 
         MemberConsents::attach_request( (int) $request->id, $user_id );
 

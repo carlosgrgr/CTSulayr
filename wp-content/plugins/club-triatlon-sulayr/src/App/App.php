@@ -12,7 +12,6 @@ use ClubTriatlonSulayr\Modules\SettingsPages\SulayrSettingsPage;
 use ClubTriatlonSulayr\Modules\Users\UserAdminList;
 use ClubTriatlonSulayr\Modules\Emails\EmailConfig;
 use ClubTriatlonSulayr\Modules\Users\AthleteAdminProfile;
-use ClubTriatlonSulayr\Modules\Users\AthleteUpdate;
 use ClubTriatlonSulayr\Modules\WooCommerce\WooCommerceIntegration;
 use ClubTriatlonSulayr\Modules\WooCommerce\PrintNameField;
 use ClubTriatlonSulayr\Modules\WooCommerce\OrdersCsvExport;
@@ -26,11 +25,12 @@ use ClubTriatlonSulayr\Modules\Members\Admin\MembersMenu;
 use ClubTriatlonSulayr\Modules\Members\Admin\ManagerAccess;
 use ClubTriatlonSulayr\Modules\Members\Admin\RequestsPage;
 use ClubTriatlonSulayr\Modules\Members\Join\PublicJoinForm;
-use ClubTriatlonSulayr\Modules\Members\Join\JoinDailyTask;
+use ClubTriatlonSulayr\Modules\Members\Lifecycle\MembersDailyTask;
+use ClubTriatlonSulayr\Modules\Members\Lifecycle\LegacyFieldsHidden;
+use ClubTriatlonSulayr\Modules\Members\Lifecycle\FeesAccount;
 use ClubTriatlonSulayr\Modules\Members\Join\ImageConsentAccount;
 use ClubTriatlonSulayr\Modules\Members\Catalog\ServicePostType;
 use ClubTriatlonSulayr\Modules\Members\Catalog\ServiceFields;
-use ClubTriatlonSulayr\Modules\Members\Migration\LegacyFieldsSync;
 use ClubTriatlonSulayr\Modules\Wallet\WalletAdminList;
 use ClubTriatlonSulayr\Modules\Wallet\WalletBalancePage;
 use ClubTriatlonSulayr\Modules\PostTypes\DocumentPostType;
@@ -120,7 +120,6 @@ class App {
         }
         $email_config = new EmailConfig();
         $athlete_admin_profile = new AthleteAdminProfile();
-        $athlete_update = new AthleteUpdate( $helpers );
 
         $this->load_members();
 
@@ -149,9 +148,10 @@ class App {
         new MemberFields();
         new ServicePostType();
         new ServiceFields();
-        new LegacyFieldsSync();
+        new LegacyFieldsHidden();
         new ManagerAccess();
-        new JoinDailyTask();
+        new MembersDailyTask();
+        new FeesAccount();
 
         if ( is_admin() ) {
             new MembersMenu();

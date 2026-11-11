@@ -181,15 +181,16 @@ class JoinForm {
     /**
      * Servicios elegidos: la cuota base siempre, sin incompatibles y con opción si la piden.
      *
-     * @param   array  $input   Datos enviados.
-     * @param   string $context CONTEXT_*.
+     * @param   array          $input    Datos enviados.
+     * @param   string         $context  CONTEXT_*.
+     * @param   Service[]|null $services Servicios que se pueden elegir (null = los del contexto).
      * @return 	array{services: array<int, array{service_id: int, option_key: string}>, error: string}
      * @access 	public
      * @package	club-triatlon-sulayr
      */
-    public static function parse_services( array $input, string $context ): array {
+    public static function parse_services( array $input, string $context, ?array $services = null ): array {
         $allowed = [];
-        foreach ( self::services( $context ) as $service ) {
+        foreach ( $services ?? self::services( $context ) as $service ) {
             $allowed[ $service->id ] = $service;
         }
 
@@ -291,32 +292,7 @@ class JoinForm {
         }
 
         echo '<fieldset class="sulayr-join-group"><legend>' . esc_html__( 'Servicios', SULAYR_TEXTDOMAIN ) . '</legend>';
-        foreach ( self::services( $context ) as $service ) {
-            $checked = $service->is_base || isset( $selected[ $service->id ] );
-            $price = ServiceCatalog::price_for( $service, ServiceCatalog::GENERAL, '' !== $v( 'start_date' ) ? $v( 'start_date' ) : $today );
-            printf(
-                '<div class="sulayr-join-service form-check" data-service="%1$d" data-incompatible="%2$s"><input class="form-check-input" type="checkbox" id="sulayr-join-service-%1$d" name="%3$s[]" value="%1$d"%4$s%5$s> <label class="form-check-label" for="sulayr-join-service-%1$d"><strong>%6$s</strong>%7$s%8$s</label>',
-                (int) $service->id,
-                esc_attr( implode( ',', $service->incompatible ) ),
-                esc_attr( $name( 'services' ) ),
-                $checked ? ' checked' : '',
-                $service->is_base ? ' disabled' : '',
-                esc_html( $service->title ),
-                null !== $price ? ' · ' . esc_html( number_format_i18n( $price['amount'], 2 ) . ' €/mes' ) : '',
-                $service->is_base ? ' <span class="sulayr-join-note">' . esc_html__( '(incluida siempre)', SULAYR_TEXTDOMAIN ) . '</span>' : ''
-            );
-            if ( $service->is_base ) {
-                printf( '<input type="hidden" name="%s[]" value="%d">', esc_attr( $name( 'services' ) ), (int) $service->id );
-            }
-            if ( ! empty( $service->options ) ) {
-                printf( '<div class="sulayr-join-options"><label for="sulayr-join-option-%1$d">%2$s</label> <select class="form-select" id="sulayr-join-option-%1$d" name="%3$s[%1$d]"><option value="">%4$s</option>', (int) $service->id, esc_html__( 'Opción', SULAYR_TEXTDOMAIN ), esc_attr( $name( 'options' ) ), esc_html__( '— Elige —', SULAYR_TEXTDOMAIN ) );
-                foreach ( $service->options as $key => $label ) {
-                    printf( '<option value="%s"%s>%s</option>', esc_attr( $key ), selected( $selected[ $service->id ] ?? '', $key, false ), esc_html( $label ) );
-                }
-                echo '</select></div>';
-            }
-            echo '</div>';
-        }
+        self::render_services( self::services( $context ), $selected, '' !== $v( 'start_date' ) ? $v( 'start_date' ) : $today );
         $error( 'services' );
         echo '</fieldset>';
 
@@ -377,6 +353,50 @@ class JoinForm {
             echo '</div>';
         }
         echo '</fieldset>';
+    }
+
+    /**
+     * Casillas de servicios con su opción y precio general (sin <fieldset>).
+     * El JavaScript del formulario necesita que estén dentro de form.sulayr-join-form.
+     *
+     * @param   Service[]            $services    Servicios que se muestran.
+     * @param   array<int, string>   $selected    Servicio => opción elegida.
+     * @param   string               $price_date  Fecha del precio Y-m-d.
+     * @param   string               $member_type Tipo de socio para el precio.
+     * @return 	void
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function render_services( array $services, array $selected, string $price_date, string $member_type = ServiceCatalog::GENERAL ): void {
+        $name = function ( string $key ): string {
+            return self::INPUT . '[' . $key . ']';
+        };
+        foreach ( $services as $service ) {
+            $checked = $service->is_base || isset( $selected[ $service->id ] );
+            $price = ServiceCatalog::price_for( $service, $member_type, $price_date );
+            printf(
+                '<div class="sulayr-join-service form-check" data-service="%1$d" data-incompatible="%2$s"><input class="form-check-input" type="checkbox" id="sulayr-join-service-%1$d" name="%3$s[]" value="%1$d"%4$s%5$s> <label class="form-check-label" for="sulayr-join-service-%1$d"><strong>%6$s</strong>%7$s%8$s</label>',
+                (int) $service->id,
+                esc_attr( implode( ',', $service->incompatible ) ),
+                esc_attr( $name( 'services' ) ),
+                $checked ? ' checked' : '',
+                $service->is_base ? ' disabled' : '',
+                esc_html( $service->title ),
+                null !== $price ? ' · ' . esc_html( number_format_i18n( $price['amount'], 2 ) . ' €/mes' ) : '',
+                $service->is_base ? ' <span class="sulayr-join-note">' . esc_html__( '(incluida siempre)', SULAYR_TEXTDOMAIN ) . '</span>' : ''
+            );
+            if ( $service->is_base ) {
+                printf( '<input type="hidden" name="%s[]" value="%d">', esc_attr( $name( 'services' ) ), (int) $service->id );
+            }
+            if ( ! empty( $service->options ) ) {
+                printf( '<div class="sulayr-join-options"><label for="sulayr-join-option-%1$d">%2$s</label> <select class="form-select" id="sulayr-join-option-%1$d" name="%3$s[%1$d]"><option value="">%4$s</option>', (int) $service->id, esc_html__( 'Opción', SULAYR_TEXTDOMAIN ), esc_attr( $name( 'options' ) ), esc_html__( '— Elige —', SULAYR_TEXTDOMAIN ) );
+                foreach ( $service->options as $key => $label ) {
+                    printf( '<option value="%s"%s>%s</option>', esc_attr( $key ), selected( $selected[ $service->id ] ?? '', $key, false ), esc_html( $label ) );
+                }
+                echo '</select></div>';
+            }
+            echo '</div>';
+        }
     }
 
     /**

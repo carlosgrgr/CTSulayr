@@ -7,6 +7,8 @@ use ClubTriatlonSulayr\Modules\Members\Catalog\ServicePostType;
 use ClubTriatlonSulayr\Modules\PostTypes\WalletPostType;
 use ClubTriatlonSulayr\Modules\Wallet\WalletBalancePage;
 use ClubTriatlonSulayr\Modules\Members\Join\JoinRequests;
+use ClubTriatlonSulayr\Modules\Members\Lifecycle\MembersDailyTask;
+use ClubTriatlonSulayr\Modules\Members\MemberSummary;
 use ClubTriatlonSulayr\Modules\Members\MemberConsents;
 use ClubTriatlonSulayr\Modules\Members\MemberLog;
 use ClubTriatlonSulayr\Modules\Members\MemberTasks;
@@ -32,6 +34,9 @@ class MembersMenu {
     public const SLUG = 'sulayr-socios';
 
     private const ACTION_TASK_DONE = 'sulayr_member_task_done';
+    private const ACTION_RUN_DAILY = 'sulayr_members_run_daily';
+
+    private MemberActions $actions;
 
     /**
      * __construct()
@@ -47,6 +52,34 @@ class MembersMenu {
         add_action( 'admin_menu', [ $this, 'order_submenu' ], 1000 );
         add_action( 'edit_user_profile', [ $this, 'render_profile_link' ], 1 );
         add_action( 'admin_post_' . self::ACTION_TASK_DONE, [ $this, 'handle_task_done' ] );
+        add_action( 'admin_post_' . self::ACTION_RUN_DAILY, [ $this, 'handle_run_daily' ] );
+        $this->actions = new MemberActions();
+    }
+
+    /**
+     * Ejecuta la tarea diaria a mano (PROD no tiene WP-CLI). Es idempotente.
+     *
+     * @return 	void
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public function handle_run_daily(): void {
+        check_admin_referer( self::ACTION_RUN_DAILY );
+        if ( false === current_user_can( MemberRoles::MANAGE_MEMBERS ) ) {
+            wp_die( esc_html__( 'No tienes permiso para acceder a esta página.', SULAYR_TEXTDOMAIN ), 403 );
+        }
+
+        $r = MembersDailyTask::run();
+        RequestsPage::set_notice( 'success', sprintf(
+            /* translators: 1: cambios aplicados, 2: vueltas de congelación, 3: altas activadas, 4: solicitudes caducadas. */
+            __( 'Tarea diaria ejecutada: %1$d cambios aplicados, %2$d vueltas de congelación, %3$d altas activadas y %4$d solicitudes caducadas.', SULAYR_TEXTDOMAIN ),
+            $r['applied'],
+            $r['returned'],
+            $r['updated'],
+            $r['purged']
+        ) );
+        wp_safe_redirect( add_query_arg( 'page', self::SLUG, admin_url( 'admin.php' ) ) );
+        exit;
     }
 
     /**
@@ -187,10 +220,18 @@ class MembersMenu {
             return;
         }
 
+        // Los campos antiguos (tarifa, natación, estado...) están ocultos: esto es lo que vale.
+        $summary = MemberSummary::for_user( $user->ID );
+        $types = MemberSettings::member_types();
         printf(
-            '<p><a class="button" href="%s">%s</a></p>',
+            '<div class="notice notice-info inline"><p><strong>%1$s</strong> %2$s · %3$s · %4$s</p><p>%5$s <a class="button" href="%6$s">%7$s</a></p></div>',
+            esc_html__( 'Socio:', SULAYR_TEXTDOMAIN ),
+            esc_html( StatusPeriods::label( $summary['status'] ) ),
+            esc_html( $types[ $summary['type'] ] ?? ( $summary['type'] ?: '—' ) ),
+            esc_html( implode( ', ', $summary['services'] ) ?: __( 'sin servicios', SULAYR_TEXTDOMAIN ) ),
+            esc_html__( 'Servicios, tipo, estado, congelaciones y bajas se cambian en la ficha de socio.', SULAYR_TEXTDOMAIN ),
             esc_url( self::member_url( $user->ID ) ),
-            esc_html__( 'Ver ficha de socio (servicios, estados y registro de cambios)', SULAYR_TEXTDOMAIN )
+            esc_html__( 'Ver ficha de socio', SULAYR_TEXTDOMAIN )
         );
     }
 
@@ -237,6 +278,15 @@ class MembersMenu {
             $filter = CustomFields::STATUS_ACTIVE;
         }
 
+        // D36: antiguos socios con más años de baja que el plazo de conservación (solo aviso).
+        $retention_years = max( 1, (int) MemberSettings::get( 'retention_former_years' ) );
+        $retention_limit = gmdate( 'Y-m-d', strtotime( current_time( 'Y-m-d' ) . ' -' . $retention_years . ' years' ) );
+        $retention_only = ! empty( $_GET['conservacion'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Filtro de lectura.
+        $retention_count = 0;
+        if ( $retention_only ) {
+            $filter = CustomFields::STATUS_LEFT;
+        }
+
         $users = get_users( [ 'role' => 'athlete', 'number' => -1 ] );
         $rows = [];
         $counts = array_fill_keys( array_keys( $statuses ), 0 );
@@ -251,7 +301,15 @@ class MembersMenu {
             if ( isset( $counts[ $status ] ) ) {
                 $counts[ $status ]++;
             }
+            $leave = (string) get_user_meta( $user->ID, CustomFields::MEMBER_LEAVE_DATE, true );
+            $over_retention = CustomFields::STATUS_LEFT === $status && 1 === preg_match( '/^\d{4}-\d{2}-\d{2}$/', $leave ) && $leave < $retention_limit;
+            if ( $over_retention ) {
+                $retention_count++;
+            }
             if ( 'todos' !== $filter && $status !== $filter ) {
+                continue;
+            }
+            if ( $retention_only && false === $over_retention ) {
                 continue;
             }
 
@@ -277,6 +335,26 @@ class MembersMenu {
         } );
 
         echo '<h1>' . esc_html__( 'Socios', SULAYR_TEXTDOMAIN ) . '</h1>';
+
+        if ( $retention_count > 0 ) {
+            printf(
+                '<div class="notice notice-warning inline"><p>%s <a href="%s">%s</a></p></div>',
+                esc_html( sprintf( _n( '%1$d antiguo socio lleva más de %2$d años de baja (plazo de conservación de datos). El sistema no borra nada.', '%1$d antiguos socios llevan más de %2$d años de baja (plazo de conservación de datos). El sistema no borra nada.', $retention_count, SULAYR_TEXTDOMAIN ), $retention_count, $retention_years ) ),
+                esc_url( add_query_arg( [ 'page' => self::SLUG, 'conservacion' => 1 ], admin_url( 'admin.php' ) ) ),
+                esc_html__( 'Ver cuáles', SULAYR_TEXTDOMAIN )
+            );
+        }
+
+        $last = get_option( MembersDailyTask::LAST_RUN_OPTION );
+        printf(
+            '<form method="post" action="%1$s" class="sulayr-daily"><p class="description">%2$s %3$s <input type="hidden" name="action" value="%4$s">%5$s<button type="submit" class="button button-small">%6$s</button></p></form>',
+            esc_url( admin_url( 'admin-post.php' ) ),
+            esc_html__( 'Tarea diaria (cambios, congelaciones, bajas y altas del día):', SULAYR_TEXTDOMAIN ),
+            esc_html( is_array( $last ) ? sprintf( __( 'última ejecución el %s.', SULAYR_TEXTDOMAIN ), date_i18n( 'd/m/Y H:i', strtotime( (string) $last['at'] ) ) ) : __( 'aún no se ha ejecutado.', SULAYR_TEXTDOMAIN ) ),
+            esc_attr( self::ACTION_RUN_DAILY ),
+            wp_nonce_field( self::ACTION_RUN_DAILY, '_wpnonce', true, false ),
+            esc_html__( 'Ejecutar ahora', SULAYR_TEXTDOMAIN )
+        );
 
         $pending = JoinRequests::count_pending();
         if ( $pending > 0 ) {
@@ -441,6 +519,7 @@ class MembersMenu {
             echo '</tbody></table>';
         }
 
+        $this->actions->render( $user_id );
         $this->render_tasks( $user_id );
         $this->render_consents( $user_id );
         $this->render_requests( $user_id );

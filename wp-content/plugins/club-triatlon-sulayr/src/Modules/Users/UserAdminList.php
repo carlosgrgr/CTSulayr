@@ -74,10 +74,10 @@ class UserAdminList
     {
         $columns['user_id'] = 'ID';
         $columns[CustomFields::USER_PROFILE_ATHLETE_STATUS] = __( 'Estado del deportista', SULAYR_TEXTDOMAIN );
-        $columns[CustomFields::USER_PROFILE_MEMBERSHIP_PLAN] = __( 'Tarifa', SULAYR_TEXTDOMAIN );
-        $columns[CustomFields::USER_PROFILE_TRAINING_TYPE]   = __( 'Tipo entrenamiento', SULAYR_TEXTDOMAIN );
+        // Servicios y tipo salen del historial de socios (spec de altas, parte C).
+        $columns[CustomFields::USER_PROFILE_MEMBERSHIP_PLAN] = __( 'Servicios', SULAYR_TEXTDOMAIN );
         $columns[CustomFields::USER_PROFILE_SWIMMING]        = __( 'Natación', SULAYR_TEXTDOMAIN );
-        $columns[CustomFields::USER_PROFILE_IS_DIRECTIVE]    = __( 'Directiva', SULAYR_TEXTDOMAIN );
+        $columns[CustomFields::MEMBER_TYPE]                  = __( 'Tipo de socio', SULAYR_TEXTDOMAIN );
         return $columns;
     }
 
@@ -104,20 +104,16 @@ class UserAdminList
             return HelperService::format_athlete_status( $status );
         }
         if ( $column_name === CustomFields::USER_PROFILE_MEMBERSHIP_PLAN ) {
-            $plan = HelperService::get_user_field( CustomFields::USER_PROFILE_MEMBERSHIP_PLAN, $user_id );
-            return HelperService::format_membership_plan( $plan );
-        }
-        if ( $column_name === CustomFields::USER_PROFILE_TRAINING_TYPE ) {
-            $training_type = HelperService::get_user_field( CustomFields::USER_PROFILE_TRAINING_TYPE, $user_id );
-            return HelperService::format_training_type( $training_type );
+            return esc_html( implode( ', ', \ClubTriatlonSulayr\Modules\Members\MemberSummary::for_user( (int) $user_id )['services'] ) ?: '—' );
         }
         if ( $column_name === CustomFields::USER_PROFILE_SWIMMING ) {
             $swimming = HelperService::get_user_field( CustomFields::USER_PROFILE_SWIMMING, $user_id );
             return HelperService::format_swimming_supplement_to_label( $swimming );
         }
-        if ( $column_name === CustomFields::USER_PROFILE_IS_DIRECTIVE ) {
-            $is_directive = (bool) HelperService::get_user_field( CustomFields::USER_PROFILE_IS_DIRECTIVE, $user_id );
-            return $is_directive ? __( 'Sí', SULAYR_TEXTDOMAIN ) : '—';
+        if ( $column_name === CustomFields::MEMBER_TYPE ) {
+            $type = (string) get_user_meta( (int) $user_id, CustomFields::MEMBER_TYPE, true );
+            $types = \ClubTriatlonSulayr\Modules\Members\MemberSettings::member_types();
+            return esc_html( $types[ $type ] ?? ( $type ?: '—' ) );
         }
         return $value;
     }

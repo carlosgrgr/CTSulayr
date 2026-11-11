@@ -9,6 +9,8 @@ use ClubTriatlonSulayr\Modules\Members\Join\JoinApproval;
 use ClubTriatlonSulayr\Modules\Members\Join\JoinForm;
 use ClubTriatlonSulayr\Modules\Members\Join\JoinRequests;
 use ClubTriatlonSulayr\Modules\Members\Join\PublicJoinForm;
+use ClubTriatlonSulayr\Modules\Members\Lifecycle\MemberChanges;
+use ClubTriatlonSulayr\Modules\Members\MemberDates;
 use ClubTriatlonSulayr\Modules\Members\MemberConsents;
 use ClubTriatlonSulayr\Modules\Members\MemberRoles;
 use ClubTriatlonSulayr\Modules\Members\MemberServices;
@@ -60,7 +62,7 @@ class RequestsPage {
      * @package	club-triatlon-sulayr
      */
     public function register(): void {
-        $pending = current_user_can( MemberRoles::MANAGE_MEMBERS ) ? JoinRequests::count_pending() : 0;
+        $pending = current_user_can( MemberRoles::MANAGE_MEMBERS ) ? JoinRequests::count_pending() + count( MemberChanges::pending() ) : 0;
         $bubble = $pending > 0 ? sprintf( ' <span class="awaiting-mod count-%1$d"><span class="pending-count">%1$d</span></span>', $pending ) : '';
 
         add_submenu_page( MembersMenu::SLUG, __( 'Solicitudes de alta', SULAYR_TEXTDOMAIN ), __( 'Solicitudes', SULAYR_TEXTDOMAIN ) . $bubble, MemberRoles::MANAGE_MEMBERS, self::SLUG, [ $this, 'render' ] );
@@ -133,6 +135,11 @@ class RequestsPage {
         }
         echo '<ul class="subsubsub">' . implode( ' | ', $links ) . '</ul><br class="clear">'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escapado arriba.
 
+        if ( JoinRequests::STATUS_PENDING === $filter ) {
+            $this->render_pending_changes();
+            echo '<h2>' . esc_html__( 'Altas', SULAYR_TEXTDOMAIN ) . '</h2>';
+        }
+
         $rows = JoinRequests::list( $filter );
         if ( empty( $rows ) ) {
             echo '<p>' . esc_html__( 'No hay solicitudes en este estado.', SULAYR_TEXTDOMAIN ) . '</p>';
@@ -166,6 +173,36 @@ class RequestsPage {
                 esc_html( self::date( (string) ( $f['start_date'] ?? '' ) ) ),
                 esc_html( JoinForm::CONTEXT_ADMIN === ( $f['origin'] ?? '' ) ? __( 'Gestor', SULAYR_TEXTDOMAIN ) : __( 'Formulario', SULAYR_TEXTDOMAIN ) ),
                 esc_html( $matches ?: '—' )
+            );
+        }
+        echo '</tbody></table>';
+    }
+
+    /**
+     * Cambios y bajas que piden los socios desde Mi cuenta (6.2). Se resuelven en la ficha.
+     *
+     * @return 	void
+     * @access 	private
+     * @package	club-triatlon-sulayr
+     */
+    private function render_pending_changes(): void {
+        echo '<h2>' . esc_html__( 'Cambios y bajas pedidos por socios', SULAYR_TEXTDOMAIN ) . '</h2>';
+        $rows = MemberChanges::pending();
+        if ( empty( $rows ) ) {
+            echo '<p>' . esc_html__( 'No hay ninguno pendiente.', SULAYR_TEXTDOMAIN ) . '</p>';
+            return;
+        }
+
+        echo '<table class="wp-list-table widefat fixed striped"><thead><tr><th>' . esc_html__( 'Pedido', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Socio', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Solicitud', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Fecha calculada', SULAYR_TEXTDOMAIN ) . '</th></tr></thead><tbody>';
+        foreach ( $rows as $row ) {
+            $user = get_userdata( (int) $row->user_id );
+            printf(
+                '<tr><td>%1$s</td><td><a href="%2$s"><strong>%3$s</strong></a></td><td>%4$s</td><td>%5$s</td></tr>',
+                esc_html( date_i18n( 'd/m/Y H:i', strtotime( (string) $row->created_at ) ) ),
+                esc_url( MembersMenu::member_url( (int) $row->user_id ) . '#acciones' ),
+                esc_html( false !== $user ? ( trim( $user->first_name . ' ' . $user->last_name ) ?: $user->display_name ) : '#' . $row->user_id ),
+                esc_html( MemberChanges::describe( $row ) ),
+                esc_html( MemberDates::show( (string) $row->effective_date ) )
             );
         }
         echo '</tbody></table>';
@@ -747,6 +784,19 @@ class RequestsPage {
         set_transient( self::NOTICE_TRANSIENT . get_current_user_id(), [ 'type' => $type, 'text' => $text ], 5 * MINUTE_IN_SECONDS );
         wp_safe_redirect( $url );
         exit;
+    }
+
+    /**
+     * Guarda un aviso para la siguiente pantalla de Socios.
+     *
+     * @param   string $type success, warning o error.
+     * @param   string $text Texto.
+     * @return 	void
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function set_notice( string $type, string $text ): void {
+        set_transient( self::NOTICE_TRANSIENT . get_current_user_id(), [ 'type' => $type, 'text' => $text ], 5 * MINUTE_IN_SECONDS );
     }
 
     /**

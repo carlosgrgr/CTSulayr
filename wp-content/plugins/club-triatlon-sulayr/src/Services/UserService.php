@@ -445,21 +445,14 @@ class UserService {
             return [];
         }
 
-        // Obtener campos usando helpers
-        $plan = HelperService::get_user_field( CustomFields::USER_PROFILE_MEMBERSHIP_PLAN, $user_id );
-        $training_type = HelperService::get_user_field( CustomFields::USER_PROFILE_TRAINING_TYPE, $user_id );
+        // Servicios, natación y estado salen del historial de socios (spec de altas, parte C).
+        $summary = \ClubTriatlonSulayr\Modules\Members\MemberSummary::for_user( $user_id );
         $phone = HelperService::get_user_field( CustomFields::USER_PROFILE_PHONE, $user_id );
         $dni = HelperService::get_user_field( CustomFields::USER_PROFILE_DNI, $user_id );
-        $swimming = HelperService::get_user_field( CustomFields::USER_PROFILE_SWIMMING, $user_id );
         $birth_date = HelperService::get_user_field( CustomFields::USER_PROFILE_BIRTH, $user_id );
         $join_date = HelperService::get_user_field( CustomFields::USER_PROFILE_JOIN_DATE, $user_id );
-        $athlete_status = HelperService::get_user_field( CustomFields::USER_PROFILE_ATHLETE_STATUS, $user_id );
-        $is_directive = (bool) HelperService::get_user_field( CustomFields::USER_PROFILE_IS_DIRECTIVE, $user_id );
-
-        // Si el campo no existe o está vacío, usar 'active' como valor por defecto
-        if ( empty( $athlete_status ) && $athlete_status !== '0' && $athlete_status !== 0 ) {
-            $athlete_status = 'active';
-        }
+        $athlete_status = $summary['status'];
+        $types = \ClubTriatlonSulayr\Modules\Members\MemberSettings::member_types();
 
         return [
             'ID' => $user_id,
@@ -471,13 +464,13 @@ class UserService {
             'birth_date_formatted' => HelperService::format_birth_date( $birth_date ?: '' ),
             'join_date' => $join_date ?: '',
             'join_date_formatted' => HelperService::format_join_date( $join_date ?: '' ),
-            'plan' => HelperService::format_membership_plan( $plan ),
-            'plan_value' => $plan ?: '',
-            'is_directive' => $is_directive,
-            'training_type' => HelperService::format_training_type( $training_type ),
-            'training_type_value' => $training_type ?: '',
-            'swimming' => HelperService::format_swimming_supplement_to_bool( $swimming ),
-            'swimming_label' => HelperService::format_swimming_supplement_to_label( $swimming ),
+            'plan' => implode( ', ', $summary['services'] ),
+            'plan_value' => $summary['has_training'] ? 'premium' : 'basic',
+            'member_type' => $types[ $summary['type'] ] ?? $summary['type'],
+            'training_type' => $summary['training_option_label'],
+            'training_type_value' => $summary['training_option_key'],
+            'swimming' => $summary['swimming'],
+            'swimming_label' => $summary['swimming'] ? __( 'Sí', SULAYR_TEXTDOMAIN ) : __( 'No', SULAYR_TEXTDOMAIN ),
             'athlete_status' => HelperService::format_athlete_status( $athlete_status ),
             'athlete_status_value' => $athlete_status,
             'photo_url' => HelperService::get_user_photo_url( $user_id ),

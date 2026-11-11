@@ -13,10 +13,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Versión 2 (parte B): updated_at en solicitudes (para caducar las pendientes
  * sin tocar) y created_by en consentimientos (gestor que los registró).
+ * Versión 3 (parte C): applied_at en solicitudes (cambios, bajas y
+ * congelaciones aprobadas que ya se aplicaron al historial).
  */
 class MembersSchema {
 
-    public const VERSION = 2;
+    public const VERSION = 3;
     public const VERSION_OPTION = 'sulayr_members_db_version';
 
     public const SERVICES = 'sulayr_member_services';
@@ -134,8 +136,10 @@ class MembersSchema {
   ip varchar(45) NOT NULL DEFAULT '',
   created_at datetime NOT NULL,
   updated_at datetime DEFAULT NULL,
+  applied_at datetime DEFAULT NULL,
   PRIMARY KEY  (id),
   KEY type_status (type,status),
+  KEY effective_date (effective_date),
   KEY ip_created (ip,created_at),
   KEY user_id (user_id)
 ) $charset;";

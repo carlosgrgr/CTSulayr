@@ -82,6 +82,45 @@ class StatusPeriods {
     }
 
     /**
+     * Cambia el fin previsto de un periodo (vuelta de una congelación).
+     *
+     * @param   int    $period_id   Periodo.
+     * @param   string $planned_end Último día previsto Y-m-d.
+     * @return 	void
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function set_planned_end( int $period_id, string $planned_end ): void {
+        global $wpdb;
+
+        $table = MembersSchema::table( MembersSchema::STATUS_PERIODS );
+        $row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $period_id ) );
+        if ( null === $row || (string) $row->planned_end_date === $planned_end ) {
+            return;
+        }
+
+        $wpdb->update( $table, [ 'planned_end_date' => $planned_end ], [ 'id' => $period_id ], [ '%s' ], [ '%d' ] );
+        MemberLog::record( (int) $row->user_id, MemberLog::AREA_STATUS, __( 'Fin previsto', SULAYR_TEXTDOMAIN ) . ' (' . self::label( (string) $row->status ) . ')', (string) $row->planned_end_date, $planned_end );
+    }
+
+    /**
+     * Periodos abiertos de un estado cuyo fin previsto ya pasó.
+     *
+     * @param   string $status Estado.
+     * @param   string $before Y-m-d: fin previsto anterior a esta fecha.
+     * @return 	object[]
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function overdue( string $status, string $before ): array {
+        global $wpdb;
+
+        $table = MembersSchema::table( MembersSchema::STATUS_PERIODS );
+
+        return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE status = %s AND end_date IS NULL AND planned_end_date IS NOT NULL AND planned_end_date < %s ORDER BY id ASC", $status, $before ) );
+    }
+
+    /**
      * Periodo abierto más reciente, o null.
      *
      * @param   int $user_id Socio.

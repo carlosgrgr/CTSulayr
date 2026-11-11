@@ -101,18 +101,8 @@ if ( ! defined( 'ABSPATH' ) ) {
                                 <dd><?php echo esc_html( $user_profile_join_date_formatted ?: '—' ); ?></dd>
                             </div>
                             <div class="sulayr-info-row">
-                                <dt><?php _e( 'Tarifa', SULAYR_TEXTDOMAIN ); ?></dt>
+                                <dt><?php _e( 'Servicios', SULAYR_TEXTDOMAIN ); ?></dt>
                                 <dd><?php echo esc_html( $user_profile_plan_label ); ?></dd>
-                            </div>
-                            <?php if ( $show_training_type ) : ?>
-                            <div class="sulayr-info-row">
-                                <dt><?php _e( 'Tipo de entrenamiento', SULAYR_TEXTDOMAIN ); ?></dt>
-                                <dd><?php echo esc_html( $user_profile_training_type ?: '—' ); ?></dd>
-                            </div>
-                            <?php endif; ?>
-                            <div class="sulayr-info-row">
-                                <dt><?php _e( 'Suplemento natación', SULAYR_TEXTDOMAIN ); ?></dt>
-                                <dd><?php echo esc_html( $user_profile_swimming_label ); ?></dd>
                             </div>
                         </dl>
                     </div>

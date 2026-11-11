@@ -1,7 +1,7 @@
 # SPEC — Alta y ciclo de vida del socio
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr`
-**Estado:** Definida el 11 de noviembre de 2026. Decisiones D1 a D58 cerradas con el club (sección 3). Parte A en `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026 con FileZilla. Stripe limpiado y migración terminada en PROD ese día (sección 16.5). Parte B implementada y probada en local el 11 de noviembre de 2026, con commit en la rama `altas-socio-parte-b` sin mergear: no está en `main` ni en PROD (sección 18). Pruebas manuales pendientes en `altas-y-ciclo-de-vida-socio/pruebas.md`. Partes C y D pendientes (sección 13).
+**Estado:** Definida el 11 de noviembre de 2026. Decisiones D1 a D58 cerradas con el club (sección 3). Parte A en `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026 con FileZilla. Stripe limpiado y migración terminada en PROD ese día (sección 16.5). Parte B implementada y probada en local el 11 de noviembre de 2026, con commit en la rama `altas-socio-parte-b` sin mergear: no está en `main` ni en PROD (sección 18). Pruebas manuales pendientes en `altas-y-ciclo-de-vida-socio/pruebas.md`. Parte C implementada y probada en local el 11 de noviembre de 2026 en la rama `altas-socio-parte-c` (creada desde la de la parte B), sin commit (sección 19). Parte D pendiente (sección 13).
 **Fecha:** 11 de noviembre de 2026
 
 Esta spec sustituye el alta manual de socios (WhatsApp + Excel + alta a mano en la web) por un proceso en la web del club (blog 1): solicitud, aprobación, cambios, congelaciones, bajas, recibos mensuales y listados. Conserva el histórico de altas, bajas y cambios de servicios, y deja los Excel de Drive solo para ingresos y gastos del club.
@@ -475,7 +475,7 @@ No se importan «Posibles deportistas» ni las pestañas mensuales de pagos.
 |---|---|---|
 | A | Catálogo y tipos de socio (4.3, 4.4), tablas (4.2), registro de cambios (D58), migración (11), eliminación de Stripe (12), roles (10) y capacidades del monedero (9.4) | En `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026. Ver sección 16. |
 | B | Formulario público y de gestor, aprobación, detección de duplicados y reingresos, consentimientos, email de bienvenida, pasos de alta (5) | Implementada y probada en local el 11 de noviembre de 2026. Commit en la rama `altas-socio-parte-b`, sin mergear: no está en `main` ni en PROD. Pruebas manuales pendientes en [pruebas.md](altas-y-ciclo-de-vida-socio/pruebas.md). Ver sección 18. |
-| C | Cambios, bajas, congelaciones, solicitudes desde Mi cuenta, tarea nocturna, sincronización con reservas (6, 7) | Pendiente |
+| C | Cambios, bajas, congelaciones, solicitudes desde Mi cuenta, tarea nocturna, sincronización con reservas (6, 7) | Implementada y probada en local el 11 de noviembre de 2026 en la rama `altas-socio-parte-c`, sin commit. No está en `main` ni en PROD. Ver sección 19. |
 | D | Recibos, PDF, Mis cuotas, monedero de la junta, exportación, listado del entrenador, welcome pack, tareas pendientes (8, 9) | Pendiente |
 
 Cada parte se puede usar en cuanto está terminada. Hasta la parte D, el control de cuotas sigue en el Excel.
@@ -828,10 +828,126 @@ Con FileZilla, en `wp-content/plugins/club-triatlon-sulayr/`:
 
 ### 18.7. Para las partes C y D
 
+La parte C ya está hecha (sección 19); lo que sigue para la D está en 19.7.
+
+
 - `ReservationsAccess::apply()` es el punto único para escribir las metas de reservas a partir del historial. La tarea nocturna de la parte C puede llamarlo para cada socio con un cambio que empiece ese día.
 - `Join\JoinDailyTask` es la tarea diaria: la parte C le añade cambios, congelaciones, bajas y la retribución de la junta (7).
 - `LegacyFieldsSync`, `LegacyMapping` (incluido `write_plan_fields()`) y los avisos de `AthleteUpdate` se retiran en la parte C, que sustituye la edición de la ficha de usuario.
 - `MemberTasks::create()` ya admite los contextos `cambio` y `baja`; los pasos de cambio y de baja están en Socios → Ajustes.
 - La matrícula aprobada está en `data.approval.fee` de la solicitud aprobada (`user_id`). La parte D la añade al primer recibo; si el recibo del mes de alta ya existe, lo genera al aprobar (5.3).
 - La vista general de pasos pendientes (9.1) es de la parte D.
+
+---
+
+## 19. Parte C: implementación
+
+Implementada el 11 de noviembre de 2026 en la rama `altas-socio-parte-c`, creada desde el commit de la parte B (`f5450b29a`). Probada en local con una copia de la base de PROD. Sin commit: no está en `main` ni en PROD.
+
+### 19.1. Decisiones cerradas con el club (11 de noviembre de 2026)
+
+| # | Decisión |
+|---|---|
+| C-a | La pestaña «Mis cuotas» de Mi cuenta se crea en la parte C: servicios actuales, cambios programados y formulario de solicitud. La parte D le añade los recibos. |
+| C-b | Una sola solicitud pendiente por socio. El socio la puede cancelar mientras nadie la haya resuelto. |
+| C-c | Plazo de aviso (6.1): días que faltan = último día del mes − día de la solicitud. Con 5 días, en noviembre el 25 entra para el 1 de diciembre y el 26 para el 1 de enero. El plazo solo se aplica a cambios y bajas (D26), no a congelaciones. |
+| C-d | Congelación: el gestor elige el mes de vuelta; la congelación acaba el último día del mes anterior y la vuelta es el día 1. Durante la congelación los servicios siguen abiertos (no hay recibos por el estado) y al volver los recupera tal cual. |
+| C-e | Congelación inmediata (D30): el estado `congelado` empieza el día 1 del mes siguiente, para que conserve reservas hasta fin de mes. Se guarda la marca «anular los servicios que se anulan al congelar en el recibo de este mes», que usará la parte D. |
+| C-f | Cambio de tipo de socio (normal ↔ junta): como los servicios, el día 1 del mes siguiente por defecto o al momento con D27. |
+| C-g | Cambio inmediato (D27): casilla «Confirmo que el recibo de este mes no está pagado» y motivo. El recálculo del recibo lo hará la parte D. |
+| C-h | El gestor puede anular un cambio programado que aún no se ha aplicado; queda en el registro. |
+| C-i | Emails cuando el gestor cambia algo por su cuenta: solo la confirmación de baja (6.5). Las solicitudes del socio avisan al club al llegar y el socio recibe el resultado (D31). |
+| C-j | Un socio de baja ve en Mi cuenta pedidos, tienda, «Mis cuotas» y «Mi monedero»; no ve «Perfil de deportista» ni «Documentos». |
+| C-k | Sistema antiguo: se quitan `LegacyFieldsSync`, `LegacyMapping` y los avisos de `AthleteUpdate`. Mi cuenta, la página «Sulayr Info» y el listado de usuarios leen los servicios del historial. Las metas antiguas se quedan en la base sin usarse. |
+
+### 19.2. Qué hay
+
+| Pieza | Clase | Notas |
+|---|---|---|
+| Cambios programados | `Lifecycle\MemberChanges` | Cada cambio de servicios, de tipo, baja o congelación es una fila de `sulayr_member_requests` (tipos `cambio`, `tipo`, `baja`, `congelacion`) con su fecha efectiva. Estados: `pendiente` (lo pidió el socio), `aprobada` (decidido; programado mientras `applied_at` sea nulo), `rechazada`, `cancelada` (por el socio) y `anulada` (por el gestor, o porque al llegar el día ya no se podía aplicar, con el motivo). El historial solo se escribe al aplicar, con las fechas efectivas: anular no toca el historial. |
+| Fechas | `MemberDates` | Fecha efectiva (6.1), día 1 del mes siguiente y conversión de fechas de ACF (antes en `LegacyMapping`). |
+| Mi cuenta → Mis cuotas | `Lifecycle\FeesAccount` | Endpoint `mis-cuotas`. Estado, tipo, vuelta prevista o último día, servicios con el precio del mes, cambios programados y solicitud pendiente con «Cancelar solicitud». Activo: pedir cambio de servicios (los públicos y los que ya tiene) y la baja. Congelado: solo la baja. Muestra la fecha efectiva calculada. |
+| Acciones del gestor | `Admin\MemberActions` | En la ficha del socio (Socios → socio → «Cambios, congelación y baja»): aprobar (desde un mes o al momento) o rechazar la solicitud del socio, anular programados, cambiar servicios y tipo, congelar (con «congelación inmediata»), adelantar o alargar la vuelta y dar de baja. `admin-post.php`, nonce por socio y `sulayr_manage_members`. |
+| Solicitudes | `Admin\RequestsPage` | Socios → Solicitudes muestra también los cambios y bajas pedidos por socios (se resuelven en la ficha). El globo del menú los cuenta. |
+| Tarea diaria (§7) | `Lifecycle\MembersDailyTask` | Sustituye a `Join\JoinDailyTask` (mismo evento `sulayr_members_daily`, 00:15). Aplica los cambios del día, devuelve a los congelados cuyo fin previsto pasó, activa las altas pendientes y caduca solicitudes. Botón «Ejecutar ahora» en Socios con la fecha de la última ejecución. |
+| Reservas (D38) | `ReservationsAccess` | Cada cambio aplicado y cada vuelta de congelación escriben estado y natación y sincronizan con reservas. |
+| Conservación (D36) | `Admin\MembersMenu` | El listado de Socios avisa de los antiguos socios con más años de baja que el plazo y deja verlos (`&conservacion=1`). No borra nada. |
+| Campos antiguos | `Lifecycle\LegacyFieldsHidden`, `MemberSummary` | Tarifa, modalidad, natación, directiva y estado ya no salen en la ficha de usuario ni en Mi cuenta. En la ficha de usuario hay un recuadro con estado, tipo y servicios y el botón a la ficha de socio. `MemberSummary` da servicios, entrenamiento y natación a `UserService::get_athlete_formatted_data()` (Mi cuenta y «Sulayr Info») y al listado de usuarios (columnas «Servicios», «Natación» y «Tipo de socio»). |
+| Mi cuenta de un socio de baja | `WooCommerceIntegration` | Sin «Perfil de deportista» (y «Documentos» ya era solo para activos). |
+| Esquema | `Database\MembersSchema` | Versión 3: `applied_at` en solicitudes. |
+
+Eliminado: `Migration\LegacyFieldsSync`, `Migration\LegacyMapping`, `Users\AthleteUpdate` y `templates/email/` (avisos antiguos de cambio de tarifa y de baja), y `Join\JoinDailyTask` (renombrada).
+
+### 19.3. Decisiones de implementación
+
+- **Fecha elegida por el gestor.** Un cambio que decide el gestor puede empezar cualquier día 1 desde el mes siguiente; la pantalla propone la fecha con el plazo de aviso. Al aprobar una solicitud del socio, la fecha mínima es la calculada al pedirla (o el mes siguiente si esa ya pasó).
+- **Al aplicar** (día efectivo `E`): servicios que sobran se cierran en `E − 1` y los nuevos empiezan en `E` (origen «solicitud» si lo pidió el socio, «gestor» si no); baja: servicios y periodo cerrados en `E − 1`, periodo `baja` desde `E` y fecha de baja `E − 1`; congelación: periodo activo cerrado en `E − 1` y `congelado` desde `E` con fin previsto el día antes de la vuelta; tipo: se cambia la meta. Si al llegar el día el socio ya está de baja (o no está activo para congelar), el cambio queda «anulado» con el motivo.
+- **Orden de la tarea diaria:** primero los cambios del día, después las vueltas de congelación. Así la baja avisada de Diego Lardón (1 de enero de 2027, congelado hasta el 31 de diciembre) pasa a baja y no vuelve a activo.
+- **Reservas en la tarea diaria.** Solo se recalculan los socios que cambian y los `pendiente`, no todos: así no cambia el acceso de nadie cuyas metas no salgan del historial (datos migrados).
+- **Pasos.** Al aprobar o programar un cambio o un cambio de tipo, los «Pasos de cambio» de Ajustes; en una baja, los «Pasos de baja». La congelación no crea pasos.
+- **Emails.** Solicitud del socio → «Aviso al club». Aprobada → «Resultado de solicitud» (o «Confirmación de baja» si es una baja). Rechazada → «Resultado de solicitud» con el motivo. Baja decidida por el gestor → «Confirmación de baja». Van al socio y, si tiene tutor, también al tutor.
+- **Ficha de usuario.** Los campos antiguos no se pintan, y ACF no guarda un campo que no pinta: nadie puede cambiarlos desde ahí.
+
+### 19.4. Comprobado en local (11 de noviembre de 2026)
+
+Con la base de PROD importada en local, copia antes de probar, el mu-plugin que no envía emails, dos socios de prueba con historial propio, un gestor de socios (sin `manage_options`) y un administrador, y peticiones HTTP. Al terminar se restauró la base y se borraron el mu-plugin y los archivos temporales.
+
+- C1: 25 de noviembre → 1 de diciembre; 26 y 30 de noviembre → 1 de enero; 27 de diciembre → 1 de febrero; 23 de febrero de 2027 → 1 de marzo y 24 → 1 de abril.
+- C2: una baja aprobada queda programada; el socio sigue activo y en reservas. Al llegar el día (simulado), la tarea la aplica y reservas lo retira.
+- C3: la congelación inmediata guarda la marca del recibo del mes y el socio sigue activo y en reservas hasta el día 1. Una inmediata que no empiece el mes siguiente se rechaza.
+- C4: al llegar la vuelta (simulada), vuelve a activo con los mismos servicios. Cambiar la vuelta actualiza el fin previsto.
+- C5: «al momento» sin confirmar se rechaza; confirmado, se aplica hoy, con el motivo en el registro, y el socio entra en reservas.
+- C6: la tarea diaria dos veces seguidas: la segunda no aplica nada.
+- Mis cuotas: el socio pide un cambio y la baja; una segunda petición se rechaza; puede cancelar la suya. Cada petición avisa al club.
+- Gestor: aprueba y rechaza (motivo obligatorio, email al socio), programa un cambio de tipo y lo anula. Los pasos de cambio y de baja se crean.
+- Socio de baja en Mi cuenta: sin perfil de deportista ni documentos; Mis cuotas muestra el último día y no deja pedir nada.
+- Baja avisada migrada de Diego Lardón (simulada): pasa de congelado a baja.
+- Ficha de usuario sin los cinco campos antiguos y con el recuadro del socio. Listado de usuarios, «Sulayr Info» (por tarifa, por estado y nadadores), Mi cuenta y las pantallas de Socios responden 200 sin avisos de PHP. «Sulayr Info» agrupa por el entrenamiento del historial.
+- Aviso de conservación con un antiguo socio con baja de 2018 (simulada).
+- Regresión de la parte B: «Crear y aprobar» sigue dando de alta y sincronizando con reservas.
+
+No comprobado: el aspecto en el navegador (Mis cuotas y los formularios de la ficha), los emails reales y PHP 7.4. Las pruebas manuales que faltan están en [pruebas.md](altas-y-ciclo-de-vida-socio/pruebas.md).
+
+### 19.5. Despliegue en PROD
+
+Si la parte B aún no está en PROD, desplegar primero la B (18.5) y después esto. Con FileZilla, en `wp-content/plugins/club-triatlon-sulayr/`:
+
+1. Copia de seguridad, como en 16.4.
+2. Subir los archivos nuevos:
+   - `src/Modules/Members/Lifecycle/` (carpeta entera: `FeesAccount.php`, `LegacyFieldsHidden.php`, `MemberChanges.php`, `MembersDailyTask.php`)
+   - `src/Modules/Members/Admin/MemberActions.php`
+   - `src/Modules/Members/MemberDates.php`, `MemberSummary.php`
+3. Sobrescribir:
+   - `src/App/App.php`
+   - `src/Services/UserService.php`
+   - `src/Modules/Members/Admin/MembersMenu.php`, `Admin/RequestsPage.php`
+   - `src/Modules/Members/Database/MembersSchema.php`
+   - `src/Modules/Members/Join/JoinApproval.php`, `Join/JoinForm.php`
+   - `src/Modules/Members/StatusPeriods.php`
+   - `src/Modules/Users/UserAdminList.php`
+   - `src/Modules/WooCommerce/WooCommerceIntegration.php`
+   - `templates/parts/content-athlete-profile.php`
+   - `public/css/styles.css`
+4. Después, borrar del servidor:
+   - `src/Modules/Members/Migration/` (carpeta entera: `LegacyFieldsSync.php`, `LegacyMapping.php`)
+   - `src/Modules/Users/AthleteUpdate.php`
+   - `templates/email/` (carpeta entera)
+   - `src/Modules/Members/Join/JoinDailyTask.php` (solo existe si se subió la parte B)
+5. Entrar en wp-admin del club: la primera carga sube el esquema a la versión 3 y regenera los enlaces de Mi cuenta (aparece «Mis cuotas»). Si «Mis cuotas» diera 404, guardar Ajustes → Enlaces permanentes.
+6. Revisar en Socios → Ajustes los «Pasos de cambio», «Pasos de baja» y los textos de «Resultado de solicitud» y «Confirmación de baja».
+7. En Socios, pulsar «Ejecutar ahora» una vez y comprobar el resumen. La baja avisada de Diego Lardón sale como programada para el 1 de enero de 2027 en su ficha.
+8. Actualizar el estado de esta spec y de `docs/FASES.md`.
+
+### 19.6. Abierto
+
+- El cambio de tipo de socio se guarda como meta (sin historial por fechas). Si la parte D regenera recibos de meses anteriores a un cambio de tipo, usaría el tipo nuevo.
+- El cambio de la meta de natación que hace `ReservationsAccess` queda en el registro sin la nota del cambio que lo causó (la entrada del cambio está justo antes).
+
+### 19.7. Para la parte D
+
+- Matrícula del primer recibo: `data.approval.fee` de la solicitud de alta aprobada (18.7).
+- Congelación inmediata: `data.cancel_month` (`AAAA-MM`) de la fila `congelacion` aplicada; ese mes se anulan los servicios con «se anula al congelar».
+- Cambio inmediato (D27): filas `cambio`/`tipo`/`baja` con `data.immediate = true`; el recibo del mes en curso se recalcula con las reglas del primer mes y C5 debe comprobar que no está pagado.
+- La tarea diaria (`MembersDailyTask::run()`) es donde van la generación automática de recibos y la retribución de la junta, después de aplicar los cambios del día.
+- «Mis cuotas» (`FeesAccount::render()`) es donde van los recibos y el PDF.
 
