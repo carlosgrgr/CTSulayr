@@ -1,7 +1,7 @@
 # SPEC — Alta y ciclo de vida del socio
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr`
-**Estado:** Definida el 11 de noviembre de 2026. Decisiones D1 a D58 cerradas con el club (sección 3). Parte A implementada en la rama `altas-socio-parte-a` (sin commit ni `main`) y desplegada en PROD el 11 de noviembre de 2026 con FileZilla. Stripe limpiado y migración terminada en PROD ese día (sección 16.5). Partes B a D pendientes (sección 13).
+**Estado:** Definida el 11 de noviembre de 2026. Decisiones D1 a D58 cerradas con el club (sección 3). Parte A en `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026 con FileZilla. Stripe limpiado y migración terminada en PROD ese día (sección 16.5). Partes B a D pendientes (sección 13).
 **Fecha:** 11 de noviembre de 2026
 
 Esta spec sustituye el alta manual de socios (WhatsApp + Excel + alta a mano en la web) por un proceso en la web del club (blog 1): solicitud, aprobación, cambios, congelaciones, bajas, recibos mensuales y listados. Conserva el histórico de altas, bajas y cambios de servicios, y deja los Excel de Drive solo para ingresos y gastos del club.
@@ -473,7 +473,7 @@ No se importan «Posibles deportistas» ni las pestañas mensuales de pagos.
 
 | Parte | Contenido | Estado |
 |---|---|---|
-| A | Catálogo y tipos de socio (4.3, 4.4), tablas (4.2), registro de cambios (D58), migración (11), eliminación de Stripe (12), roles (10) y capacidades del monedero (9.4) | Desplegada en PROD el 11 de noviembre de 2026 desde la rama `altas-socio-parte-a`, sin commit ni `main`. Ver sección 16. |
+| A | Catálogo y tipos de socio (4.3, 4.4), tablas (4.2), registro de cambios (D58), migración (11), eliminación de Stripe (12), roles (10) y capacidades del monedero (9.4) | En `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026. Ver sección 16. |
 | B | Formulario público y de gestor, aprobación, detección de duplicados y reingresos, consentimientos, email de bienvenida, pasos de alta (5) | Pendiente |
 | C | Cambios, bajas, congelaciones, solicitudes desde Mi cuenta, tarea nocturna, sincronización con reservas (6, 7) | Pendiente |
 | D | Recibos, PDF, Mis cuotas, monedero de la junta, exportación, listado del entrenador, welcome pack, tareas pendientes (8, 9) | Pendiente |
@@ -649,7 +649,7 @@ PROD está en Hostinger, sin SSH ni WP-CLI. El código se sube con FileZilla y l
 
 ### 16.5. Despliegue en PROD (11 de noviembre de 2026)
 
-- Código subido con FileZilla desde la rama `altas-socio-parte-a`, todavía sin commit ni `main`.
+- Código subido con FileZilla. Después quedó en `main`: `fab85c343` (lo desplegado) y `892d6fcff` (retirada de la migración, 16.6).
 - Limpieza de Stripe desde Socios → Migración: 3 opciones, 7 metas de usuario y los 4 productos de tarifa (#2425 a #2428) borrados. Ningún producto estaba en pedidos.
 - Migración con `17,40,63`: 61 deportistas migrados, 21 antiguos socios creados, 25 números nuevos (su ID de usuario), 29 avisos y 2 errores.
 - David Sánchez Cabrerizo y Lorena Montellano Peláez (los 2 errores) son deportistas externos: no se migran y se quedan solo en el Excel, que deja de mantenerse (decidido el 11 de noviembre de 2026). La migración está terminada.
@@ -665,3 +665,43 @@ Para llevarlo a PROD con FileZilla, en `wp-content/plugins/club-triatlon-sulayr/
 1. Subir, sobrescribiendo: `src/App/App.php`, `src/Modules/Members/Admin/MembersMenu.php`, `src/Modules/Members/Migration/LegacyFieldsSync.php` y `src/Modules/PostTypes/WalletPostType.php`.
 2. Después, borrar del servidor: `src/Modules/Members/Admin/MigrationPage.php` y, en `src/Modules/Members/Migration/`, `LegacyMigrator.php`, `SheetCsvReader.php`, `CatalogSeeder.php`, `MembersCommand.php` y `StripeCleanup.php`.
 3. Comprobar que el menú Socios ya no tiene «Migración» y que el monedero sale agrupado.
+
+---
+
+## 17. Traspaso para las partes B a D
+
+Estado al 11 de noviembre de 2026: parte A en `main` y en PROD, migración terminada. Lo que sigue es lo que hay que saber antes de empezar la parte B.
+
+### 17.1. Lo que ya existe y la parte B debe usar
+
+- **Tablas** (`Database\MembersSchema`): `sulayr_member_requests` (tipo, usuario, estado, `data` en JSON, fecha efectiva, quién resolvió, motivo, IP), `sulayr_member_consents` y `sulayr_member_tasks` ya están creadas y vacías, salvo una solicitud de baja aprobada de Diego Lardón (efecto 1 de enero de 2027, origen `migracion`). Si la parte B necesita columnas nuevas, subir `MembersSchema::VERSION`.
+- **Ajustes** (`MemberSettings::get()`): tipos de socio, matrícula normal y de reingreso, promociones, email del club, enlace de WhatsApp, pasos de alta, textos y asuntos de los emails de bienvenida, rechazo y aviso al club (con marcadores `{nombre}`, `{numero_socio}`, `{fecha_alta}`, `{enlace_contrasena}`, `{enlace_whatsapp}`, `{bloques_servicios}`, `{motivo}`, `{tipo}`, `{nombre_completo}`), textos y versiones de los tres consentimientos, y plazos de conservación. Todo tiene valor por defecto.
+- **Catálogo** (`ServiceCatalog`): cada servicio dice si sale en el formulario público, sus opciones, con qué es incompatible, su texto de bienvenida y sus pasos de alta. `ServiceCatalog::base()` da la cuota base.
+- **Ficha** (`MemberFields`): número (`MemberFields::next_number()` da el siguiente al mayor, D14), tipo, fecha de baja, talla (XS a XXL), retribución de la junta y tutor (grupo ACF `sulayr_member_guardian`: `_name`, `_dni`, `_phone`, `_email`).
+- **Historial** (`MemberServices::open()`, `StatusPeriods::open()`) y **registro** (`MemberLog`).
+- **Validación de DNI/NIE**: la función de letra de control estaba en `SheetCsvReader::is_valid_dni()`, que se retiró con la migración (commit `fab85c343`). Recuperarla en una clase propia.
+
+### 17.2. Cuidado en la parte B
+
+- **Puente transitorio.** `LegacyFieldsSync` se dispara en `acf/save_post` de cualquier deportista y cierra todo servicio vigente que no se deduzca de los campos antiguos. Con el formulario nuevo eso rompería altas (p. ej. un servicio que no sea cuota base, entrenamiento genérico o natación). Primera tarea de la parte B: que el puente solo toque las filas de esos tres servicios, o que la aprobación escriba también los campos antiguos de forma coherente (tarifa, modalidad, natación, directiva). En cualquier caso, la aprobación debe escribir `sulayr_user_swimming` y `sulayr_user_athlete_status` (D38).
+- **Usuarios en multisite.** El email es único en toda la red. `UserService::assign_athlete_role` pone `athlete` en `user_register` si el usuario no tiene rol o es `subscriber`. Reservas crea usuarios en el blog 2 con rol `nadador`. Para «vincular» a un usuario de otra web usar `add_user_to_blog()` o `add_role()`, sin crear otra cuenta (D13).
+- **Email de bienvenida (D15).** `wp_insert_user()` no envía aviso; el enlace de contraseña se genera con `get_password_reset_key()`. No usar `wp_new_user_notification()` ni `user-new.php`, que en multisite pide confirmación. Remitente: `Modules\Emails\EmailConfig`.
+- **Avisos antiguos.** `AthleteUpdate` sigue enviando emails al cambiar tarifa o pasar a baja desde la ficha de usuario; se sustituyen en la parte C. Escribir metas con `update_user_meta()` no los dispara.
+- **Front.** Un deportista con sesión iniciada es redirigido fuera de `wp-admin` (`UserService::redirect_athlete_to_profile`), así que los formularios del front no deben enviar a `admin-post.php`. El formulario público es para visitantes sin sesión. Identidad visual: `docs/club/identidad-sulayr.html`.
+- **Pantallas de gestión** bajo el menú Socios (`Admin\MembersMenu`), con la capacidad `sulayr_manage_members`. El gestor no tiene `edit_users`.
+- **PROD sin WP-CLI.** Cualquier tarea puntual en PROD tiene que poder hacerse desde wp-admin (ver «Production» en `AGENT.md`).
+
+### 17.3. Pruebas en local
+
+No hay PHPUnit. Lo que funcionó en la parte A:
+
+- Copia de la base con `wp db export` antes de probar y `wp db import` al terminar.
+- Usuarios temporales (administrador, gestor) y peticiones con `curl` iniciando sesión en `wp-login.php`; borrarlos al terminar.
+- `add_filter( 'pre_wp_mail', ... )` en `wp eval` para no enviar emails reales. Los avisos de WP-CLI con PHP 8.5 son ruido.
+- Desde WP-CLI, `is_admin()` es falso y `UserService` bloquea los campos de tarifa: para simular cambios del gestor, escribir las metas con `update_user_meta()`.
+
+### 17.4. Abierto
+
+- **Fecha de baja en día 1.** En la migración se aplicó que «1/07/2026» en el Excel significa último día como socio el 30 de junio de 2026. Falta que el club lo confirme; afecta a cómo se muestran y calculan las bajas en las partes C y D.
+- **Deportistas externos.** David Sánchez Cabrerizo y Lorena Montellano Peláez no están en la web y se quedan solo en el Excel. Si se quisiera distinguir «externo» como tipo de socio, sería una decisión nueva.
+

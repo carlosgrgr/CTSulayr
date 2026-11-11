@@ -87,6 +87,21 @@ How the data and the two sites fit together:
 - **Sync from the club.** `Sync\ClubSync` hooks `profile_update` at priority 30. It reads club data and writes only the local swimmer table.
 - **Schema.** Tables are created with `dbDelta`. The version is stored in the per-site option `sulayr_reservas_db_version`. Schema changes bump that version and must preserve existing data.
 
+## Club members module
+
+Implements `docs/club/SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md` (part A in `main` and PROD since 11 November 2026; parts B to D pending). Code in `wp-content/plugins/club-triatlon-sulayr/src/Modules/Members/`, wired in `App::load_members()`. Section 16 of the spec has the implementation notes; section 17 is the handoff for the next parts.
+
+- **History is rows, not meta.** `MemberServices` (services with start/end dates, both inclusive, end null = current) and `StatusPeriods` (activo, congelado, baja) never delete rows: a change closes one row and opens another. Both write to `MemberLog`, which only inserts. Wrap bulk writes in `MemberLog::with_note()`.
+- **Catalog is data.** Services are the CPT `sulayr_service` (slug = stable key); prices by member type and start date come from `ServiceCatalog::price_for()`. Member types, enrollment fee, notice days, email and consent texts, and step lists come from `MemberSettings::get()`, which falls back to defaults. Don't hard-code prices, types or texts.
+- **Reservations contract.** Reservations only reads `sulayr_user_swimming = '1'` and `sulayr_user_athlete_status = 'active'`. The members module must keep writing those two metas from services and status (D38); reservations is not edited.
+- **ACF dates** are stored as `Ymd`; the history tables use `Y-m-d`. Convert with `LegacyMapping::acf_date_to_iso()` / `iso_to_acf_date()`.
+- **Roles.** `sulayr_member_manager` and `sulayr_shop_manager` are added on top of `athlete`. Check capabilities (`sulayr_manage_members`, `sulayr_view_member_log`), not role names. Managers have no `edit_users` in multisite, so member screens live under the Socios menu, not in `user-edit.php`.
+- **Transitional bridge.** `Migration\LegacyFieldsSync` copies edits of the old ACF fields (plan, training type, swimming, directive, status) into the history. Remove it, and `LegacyMapping`, when part C provides its own changes and leaves.
+
+## Production
+
+PROD is on Hostinger without SSH or WP-CLI. Code is deployed with FileZilla: upload new files first, then overwrite, and delete removed files by hand afterwards (FileZilla does not delete). Any one-off data task needed in PROD must be runnable from wp-admin by an administrator, with a dry run first. WP-CLI is only available locally.
+
 ## Conventions
 
 - **Reservations plugin:**
