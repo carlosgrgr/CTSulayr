@@ -36,6 +36,8 @@ WooCommerce ya está en el sitio del club, con el catálogo de equipación 2025-
 
 Falta decidir si esta prioridad es ese borrador, el pago de la tienda, o los dos.
 
+Desde el 11 de noviembre de 2026, [SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](club/SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md) define los recibos mensuales y el control manual de pagos sobre los que se apoyará el cobro online, y elimina la integración con Stripe. No define el cobro online.
+
 ## 4. Rentabilidad frente a SportEasy
 
 Valorada el 28 de octubre de 2026. SportEasy se usa solo para cobrar. La diferencia de dinero con el TPV virtual es pequeña, unos 20 € al año arriba o abajo. El motivo para el TPV es el tiempo de gestión: la tarjeta se guarda una vez, el cobro mensual es automático y los pagos quedan en la web, sin Excel.
@@ -47,3 +49,5 @@ Las cifras y la cuenta están en el borrador de cobros. Sigue pendiente la respu
 No hay spec. El borrador de cobros pide, solo para los pagos, informar del tratamiento, autorizar cargos recurrentes, fijar cuánto se conservan recibos y referencia de tarjeta, e incluir al banco en el registro de actividades. Este documento no redacta cláusulas.
 
 Falta decidir qué tratamientos cubre, en qué formularios aparece y quién escribe el texto legal.
+
+[SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](club/SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md) (11 de noviembre de 2026) cubre solo el formulario de alta: casillas de privacidad, normas del club e imagen, con versión y fecha, y plazos de conservación. El texto legal lo redacta el club.

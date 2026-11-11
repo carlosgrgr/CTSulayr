@@ -4,6 +4,8 @@
 **Estado:** Decisiones D1–D8 tomadas (sección 12). Fases D1 a D7 en `main`. D1 a D4 también en producción (`cfed7450`). D5 a D7 en `deb5398e` (11.8).
 **Fecha:** octubre 2026
 
+> Nota del 11 de noviembre de 2026: la parte A de [SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md) quita «Mis pagos» (Stripe) de Mi cuenta, así que «Documentos» va detrás de «Mi monedero». Los estados pasan a ser `active`, `pendiente`, `congelado` y `baja` (`standby` → `congelado`; `moroso` deja de existir). La regla D2 no cambia: solo `active` (o vacío) ve los documentos. El resto de este documento describe la situación de octubre de 2026.
+
 Este documento analiza el código actual, compara arquitecturas y propone una solución para publicar documentos desde la administración y ofrecerlos a los deportistas en su área privada. Las decisiones que dependían de información ausente en el código se marcaron como pendientes y ya están resueltas en la sección 12. El texto de las secciones 4 a 11 refleja esas decisiones.
 
 ---

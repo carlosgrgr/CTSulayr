@@ -16,11 +16,19 @@ use ClubTriatlonSulayr\Modules\Users\AthleteUpdate;
 use ClubTriatlonSulayr\Modules\WooCommerce\WooCommerceIntegration;
 use ClubTriatlonSulayr\Modules\WooCommerce\PrintNameField;
 use ClubTriatlonSulayr\Modules\WooCommerce\OrdersCsvExport;
-use ClubTriatlonSulayr\Modules\Subscriptions\SubscriptionProducts;
-use ClubTriatlonSulayr\Modules\Subscriptions\StripeWebhookHandler;
 use ClubTriatlonSulayr\Modules\PostTypes\WalletPostType;
-use ClubTriatlonSulayr\Modules\PostTypes\SubscriptionChangesPostType;
-use ClubTriatlonSulayr\Modules\Fields\SubscriptionChangesFields\SubscriptionChangesFields;
+use ClubTriatlonSulayr\Modules\Members\Database\MembersSchema;
+use ClubTriatlonSulayr\Modules\Members\MemberLog;
+use ClubTriatlonSulayr\Modules\Members\MemberRoles;
+use ClubTriatlonSulayr\Modules\Members\MemberSettings;
+use ClubTriatlonSulayr\Modules\Members\MemberFields;
+use ClubTriatlonSulayr\Modules\Members\Admin\MembersMenu;
+use ClubTriatlonSulayr\Modules\Members\Admin\ManagerAccess;
+use ClubTriatlonSulayr\Modules\Members\Admin\MigrationPage;
+use ClubTriatlonSulayr\Modules\Members\Catalog\ServicePostType;
+use ClubTriatlonSulayr\Modules\Members\Catalog\ServiceFields;
+use ClubTriatlonSulayr\Modules\Members\Migration\LegacyFieldsSync;
+use ClubTriatlonSulayr\Modules\Members\Migration\MembersCommand;
 use ClubTriatlonSulayr\Modules\Wallet\WalletAdminList;
 use ClubTriatlonSulayr\Modules\Wallet\WalletBalancePage;
 use ClubTriatlonSulayr\Modules\PostTypes\DocumentPostType;
@@ -92,9 +100,7 @@ class App {
         $helpers = new HelperService();
         $user_fields = new UserFields();
         new WalletPostType( [] );
-        new SubscriptionChangesPostType( [] );
         $wallet_fields = new WalletFields();
-        new SubscriptionChangesFields();
         new DocumentPostType();
         new DocumentCategoryTaxonomy();
         new DocumentCapabilities();
@@ -114,17 +120,43 @@ class App {
         $athlete_admin_profile = new AthleteAdminProfile();
         $athlete_update = new AthleteUpdate( $helpers );
 
-        $stripe_webhook = new StripeWebhookHandler();
-        $stripe_webhook->init();
+        $this->load_members();
 
         if ( class_exists( 'WooCommerce' ) ) {
             new DocumentsAccountEndpoint( new DocumentService() );
             new WooCommerceIntegration();
-            new SubscriptionProducts();
             new PrintNameField();
             if ( is_admin() ) {
                 new OrdersCsvExport();
             }
+        }
+    }
+
+    /**
+     * Socios: alta y ciclo de vida (docs/club/SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md).
+     *
+     * @return 	void
+     * @access 	private
+     * @package	club-triatlon-sulayr
+     */
+    private function load_members(): void {
+        new MembersSchema();
+        new MemberLog();
+        new MemberRoles();
+        new MemberSettings();
+        new MemberFields();
+        new ServicePostType();
+        new ServiceFields();
+        new LegacyFieldsSync();
+        new ManagerAccess();
+
+        if ( is_admin() ) {
+            new MembersMenu();
+            new MigrationPage();
+        }
+
+        if ( defined( 'WP_CLI' ) && WP_CLI ) {
+            \WP_CLI::add_command( 'sulayr socios', MembersCommand::class );
         }
     }
 

@@ -44,6 +44,7 @@ Plugin `club-triatlon-sulayr`. Estas specs conservan su nombre. No modifican `SP
 |---|---|---|
 | Documentos | [SPEC-DOCUMENTOS.md](club/SPEC-DOCUMENTOS.md) | Fases D0 a D7 en `main`. D5 a D7 en `deb5398e`. |
 | Cobros de cuotas | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) | Borrador abierto. Sin implementar. |
+| Alta y ciclo de vida del socio | [SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](club/SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md) | Definida el 11 de noviembre de 2026. Parte A desplegada en PROD el 11 de noviembre de 2026 desde la rama `altas-socio-parte-a` (sin commit ni `main`). Migración terminada en PROD. Partes B a D pendientes. |
 | Tienda online | [SPEC-TIENDA-ONLINE.md](club/SPEC-TIENDA-ONLINE.md) | Cerrada. En `main` (`2f9e0503f` y `79ce29b9b`) y desplegada en PROD el 9 de noviembre de 2026. |
 
 La identidad visual Sulayr del panel, la cabecera del tema y el acceso no tiene spec: no cambia comportamiento. Está en `main` y en PROD desde el 28 de octubre de 2026. Detalle en `DEVELOPMENT.md`, sección «Identidad visual Sulayr».

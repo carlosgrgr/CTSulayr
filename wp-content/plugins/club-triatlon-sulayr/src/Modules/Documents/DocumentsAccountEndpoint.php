@@ -21,7 +21,7 @@ class DocumentsAccountEndpoint {
     private const ATHLETE_ROLE = 'athlete';
 
     /** El ítem se coloca detrás del primero de estos que exista. */
-    private const MENU_AFTER = [ 'mis-pagos', 'mi-monedero', 'dashboard' ];
+    private const MENU_AFTER = [ 'mi-monedero', 'dashboard' ];
 
     /** Subir para forzar que se regeneren las reglas de reescritura al desplegar. */
     private const ENDPOINT_VERSION = 1;

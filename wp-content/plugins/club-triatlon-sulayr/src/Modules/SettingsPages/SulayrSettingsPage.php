@@ -4,6 +4,7 @@ namespace ClubTriatlonSulayr\Modules\SettingsPages;
 use ClubTriatlonSulayr\Services\UserService;
 use ClubTriatlonSulayr\Services\CsvImporterService;
 use ClubTriatlonSulayr\Modules\PostTypes\DocumentPostType;
+use ClubTriatlonSulayr\Modules\Members\Admin\MembersMenu;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -47,59 +48,8 @@ class SulayrSettingsPage {
         add_filter( 'custom_menu_order', '__return_true' );
         add_filter( 'menu_order', [ $this, 'reorder_admin_menu' ], 99 );
         add_action( 'admin_init', [ $this, 'handle_list_requests' ] );
-        add_action( 'admin_init', [ $this, 'register_stripe_settings' ] );
-        add_action( 'admin_init', [ $this, 'handle_stripe_settings_save' ], 20 );
-        add_action( 'admin_init', [ $this, 'handle_subscription_checkout_link' ], 20 );
         // Procesar importación antes que otras acciones para evitar conflictos
         add_action( 'admin_init', [ $this, 'handle_csv_import' ], 5 );
-    }
-
-    /**
-     * Register Stripe API keys and webhook secret options.
-     */
-    public function register_stripe_settings(): void {
-        register_setting( 'sulayr_stripe', 'sulayr_stripe_publishable_key', [
-            'type'              => 'string',
-            'sanitize_callback' => 'sanitize_text_field',
-        ] );
-        register_setting( 'sulayr_stripe', 'sulayr_stripe_secret_key', [
-            'type'              => 'string',
-            'sanitize_callback' => 'sanitize_text_field',
-        ] );
-        register_setting( 'sulayr_stripe', 'sulayr_stripe_webhook_secret', [
-            'type'              => 'string',
-            'sanitize_callback' => 'sanitize_text_field',
-        ] );
-    }
-
-    /**
-     * Handle saving Stripe settings form.
-     */
-    public function handle_stripe_settings_save(): void {
-        if ( ! isset( $_POST['sulayr_stripe_save'] ) ) {
-            return;
-        }
-        if ( ! current_user_can( 'manage_options' ) ) {
-            return;
-        }
-        if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'sulayr_stripe_settings' ) ) {
-            wp_die( __( 'Acción no autorizada.', SULAYR_TEXTDOMAIN ) );
-        }
-        // Settings are saved via options.php or we save manually
-        if ( isset( $_POST['sulayr_stripe_publishable_key'] ) ) {
-            update_option( 'sulayr_stripe_publishable_key', sanitize_text_field( wp_unslash( $_POST['sulayr_stripe_publishable_key'] ) ) );
-        }
-        if ( isset( $_POST['sulayr_stripe_secret_key'] ) ) {
-            update_option( 'sulayr_stripe_secret_key', sanitize_text_field( wp_unslash( $_POST['sulayr_stripe_secret_key'] ) ) );
-        }
-        if ( isset( $_POST['sulayr_stripe_webhook_secret'] ) ) {
-            update_option( 'sulayr_stripe_webhook_secret', sanitize_text_field( wp_unslash( $_POST['sulayr_stripe_webhook_secret'] ) ) );
-        }
-        wp_safe_redirect( $this->get_page_url( [
-            'action'  => 'stripe',
-            'updated' => '1',
-        ] ) );
-        exit;
     }
 
     /**
@@ -124,7 +74,7 @@ class SulayrSettingsPage {
 
     /**
      * reorder_admin_menu()
-     * Coloca "Sulayr Info" y "Documentos Sulayr" justo debajo de Escritorio,
+     * Coloca "Socios", "Sulayr Info" y "Documentos Sulayr" justo debajo de Escritorio,
      * antes de Entradas.
      *
      * @param array $menu_order Slugs del menú principal en orden.
@@ -137,7 +87,7 @@ class SulayrSettingsPage {
             return [];
         }
 
-        $first = [ self::MENU_SLUG, 'edit.php?post_type=' . DocumentPostType::POST_TYPE_NAME ];
+        $first = [ MembersMenu::SLUG, self::MENU_SLUG, 'edit.php?post_type=' . DocumentPostType::POST_TYPE_NAME ];
         $rest  = array_values( array_diff( $menu_order, $first ) );
         $first = array_values( array_intersect( $first, $menu_order ) );
         $index = array_search( 'index.php', $rest, true );
@@ -222,8 +172,6 @@ class SulayrSettingsPage {
             'list_swimmers_url'  => $this->get_list_url( 'swimmers' ),
             'list_by_status_url' => $this->get_list_url( 'by_status' ),
             'import_url'          => $this->get_list_url( 'import' ),
-            'stripe_settings_url' => $this->get_list_url( 'stripe' ),
-            'subscriptions_url'   => $this->get_list_url( 'suscripciones' ),
         ] );
     }
 
@@ -249,12 +197,6 @@ class SulayrSettingsPage {
                 break;
             case 'import':
                 $this->render_import_view();
-                break;
-            case 'stripe':
-                $this->render_stripe_settings();
-                break;
-            case 'suscripciones':
-                $this->render_subscriptions_management();
                 break;
             default:
                 $this->render_error_message( __( 'Acción no válida.', SULAYR_TEXTDOMAIN ) );
@@ -595,92 +537,6 @@ class SulayrSettingsPage {
             'imported' => '1',
         ] ) );
         exit;
-    }
-
-    /**
-     * Renderiza la configuración de Stripe (API keys y webhook secret).
-     *
-     * @return void
-     * @access private
-     */
-    private function render_stripe_settings(): void {
-        $publishable = get_option( 'sulayr_stripe_publishable_key', '' );
-        $secret      = get_option( 'sulayr_stripe_secret_key', '' );
-        $webhook     = get_option( 'sulayr_stripe_webhook_secret', '' );
-        $this->load_template( 'admin/stripe-settings', [
-            'stripe_publishable_key' => $publishable,
-            'stripe_secret_key'      => $secret,
-            'stripe_webhook_secret'  => $webhook,
-        ] );
-    }
-
-    /**
-     * Handle admin request to generate checkout link for an athlete.
-     */
-    public function handle_subscription_checkout_link(): void {
-        if ( ! isset( $_POST['sulayr_generar_enlace_suscripcion'] ) || ! current_user_can( 'manage_options' ) ) {
-            return;
-        }
-        if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'sulayr_generar_enlace_' . (int) $_POST['user_id'] ) ) {
-            return;
-        }
-        $user_id = (int) $_POST['user_id'];
-        if ( ! $user_id ) {
-            return;
-        }
-        $subscription_service = new \ClubTriatlonSulayr\Modules\Subscriptions\SubscriptionService();
-        if ( ! $subscription_service->is_available() || $subscription_service->hasActiveSubscription( $user_id ) ) {
-            wp_safe_redirect( $this->get_page_url( [ 'action' => 'suscripciones' ] ) );
-            exit;
-        }
-        $success_url = wc_get_endpoint_url( 'perfil-deportista', '', wc_get_page_permalink( 'myaccount' ) );
-        $cancel_url  = $success_url;
-        $checkout_url = $subscription_service->createCheckoutSessionForUser( $user_id, $success_url, $cancel_url );
-        if ( $checkout_url ) {
-            set_transient( 'sulayr_checkout_url_' . $user_id, $checkout_url, 300 );
-        }
-        wp_safe_redirect( $this->get_page_url( [
-            'action'   => 'suscripciones',
-            'generado' => $user_id,
-        ] ) );
-        exit;
-    }
-
-    /**
-     * Renderiza la gestión de suscripciones (admin): listar deportistas y generar enlace de pago.
-     *
-     * @return void
-     * @access private
-     */
-    private function render_subscriptions_management(): void {
-        $subscription_service = new \ClubTriatlonSulayr\Modules\Subscriptions\SubscriptionService();
-        $athletes = $this->user_service->get_athletes_by_plan();
-        $list = [];
-        foreach ( $athletes as $a ) {
-            $user_id = (int) ( $a['ID'] ?? 0 );
-            if ( ! $user_id ) {
-                continue;
-            }
-            $list[] = [
-                'user_id'      => $user_id,
-                'name'         => $a['name'] ?? '',
-                'email'        => $a['email'] ?? '',
-                'plan'         => $a['plan_value'] ?? '',
-                'is_directive' => ! empty( $a['is_directive'] ),
-                'has_sub'      => $subscription_service->hasActiveSubscription( $user_id ),
-            ];
-        }
-        $generado = isset( $_GET['generado'] ) ? (int) $_GET['generado'] : 0;
-        $checkout_url = $generado ? get_transient( 'sulayr_checkout_url_' . $generado ) : '';
-        if ( $checkout_url ) {
-            delete_transient( 'sulayr_checkout_url_' . $generado );
-        }
-        $this->load_template( 'admin/subscriptions-management', [
-            'subscription_service' => $subscription_service,
-            'athletes'             => $list,
-            'generado_user_id'     => $generado,
-            'checkout_url'         => $checkout_url,
-        ] );
     }
 
     /**

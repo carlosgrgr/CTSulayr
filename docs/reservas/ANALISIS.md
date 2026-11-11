@@ -34,7 +34,7 @@ Orígenes verificados en `CustomFields.php`, `UserFields.php` y `UserService::ge
 - Teléfono: `sulayr_user_phone`.
 - DNI: `sulayr_user_dni`.
 - Natación: `sulayr_user_swimming`, select, valores `'1'` y `'0'`.
-- Estado: `sulayr_user_athlete_status`, select, valores `active`, `standby`, `baja` y `moroso`.
+- Estado: `sulayr_user_athlete_status`, select, valores `active`, `standby`, `baja` y `moroso`. Desde la parte A de `docs/club/SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md` (11 de noviembre de 2026) son `active`, `pendiente`, `congelado` y `baja`; reservas sigue exigiendo `active`.
 
 La comparación debe ser estricta con `'1'` y `active`. `HelperService::format_swimming_supplement_to_bool()` acepta variantes (`yes`, `sí`, `true`) que el SPEC no admite.
 

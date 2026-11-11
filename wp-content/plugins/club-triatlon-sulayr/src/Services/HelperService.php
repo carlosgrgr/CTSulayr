@@ -265,8 +265,12 @@ class HelperService {
             return __( 'Activo', SULAYR_TEXTDOMAIN );
         }
         
-        if ( $status_normalized === 'standby' || $status_normalized === 'stand by' || stripos( $status_normalized, 'standby' ) !== false || stripos( $status_normalized, 'stand by' ) !== false ) {
-            return __( 'Stand By', SULAYR_TEXTDOMAIN );
+        if ( $status_normalized === 'congelado' || $status_normalized === 'standby' || $status_normalized === 'stand by' ) {
+            return __( 'Congelado', SULAYR_TEXTDOMAIN );
+        }
+
+        if ( $status_normalized === 'pendiente' ) {
+            return __( 'Pendiente', SULAYR_TEXTDOMAIN );
         }
         
         if ( $status_normalized === 'baja' || stripos( $status_normalized, 'baja' ) !== false ) {

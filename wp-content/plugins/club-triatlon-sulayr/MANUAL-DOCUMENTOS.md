@@ -18,7 +18,7 @@ Los archivos no tienen una dirección pública. Solo se pueden abrir desde **Mi 
 
 - **Publicar y gestionar documentos y categorías**: solo los administradores del club.
 - **Ver documentos**: los deportistas en estado activo. Un estado vacío cuenta como activo.
-- Un deportista en **standby**, **baja** o **moroso** no ve la sección ni abre ningún documento, **tampoco los que van dirigidos a él**. Si tienes que hacer llegar un documento a alguien de baja, usa otro canal (por ejemplo, el correo).
+- Un deportista **congelado**, **pendiente** o de **baja** no ve la sección ni abre ningún documento, **tampoco los que van dirigidos a él**. Si tienes que hacer llegar un documento a alguien de baja, usa otro canal (por ejemplo, el correo).
 - Los clientes de la tienda que no son deportistas no ven la sección.
 
 ## 3. Publicar un documento
@@ -119,8 +119,8 @@ Repasa, en este orden:
 1. ¿Está **publicado**? No en borrador, programado o en la papelera.
 2. ¿Tiene archivo? En el listado no debe poner **Sin archivo**.
 3. Si es para deportistas concretos, ¿está él en la lista? Pasa el ratón por **Visible para**.
-4. ¿El deportista está en estado **activo**? Míralo en su perfil (**Usuarios**). En standby, baja o moroso no ve nada.
-5. ¿Ha entrado con su cuenta? La sección está en **Mi cuenta → Documentos**, detrás de **Mis pagos**.
+4. ¿El deportista está en estado **activo**? Míralo en su perfil (**Usuarios**). Congelado, pendiente o de baja no ve nada.
+5. ¿Ha entrado con su cuenta? La sección está en **Mi cuenta → Documentos**, detrás de **Mi monedero**.
 
 Si el deportista pulsa un enlace antiguo de un documento que ya no puede ver, vuelve a la sección con el aviso «Este documento ya no está disponible.».
 

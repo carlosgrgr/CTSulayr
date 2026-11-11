@@ -2,6 +2,8 @@
 
 namespace ClubTriatlonSulayr\Modules\Wallet;
 
+use ClubTriatlonSulayr\Modules\Members\Admin\MembersMenu;
+use ClubTriatlonSulayr\Modules\Members\MemberRoles;
 use ClubTriatlonSulayr\Infrastructure\CustomFields;
 use ClubTriatlonSulayr\Modules\PostTypes\WalletPostType;
 
@@ -11,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Página en wp-admin: estado total del monedero por deportista (listado de deportistas con saldo).
- * Subpágina del menú del CPT Monedero.
+ * Subpágina del menú Socios.
  */
 class WalletBalancePage {
 
@@ -23,17 +25,17 @@ class WalletBalancePage {
 
     public function add_submenu_page(): void {
         add_submenu_page(
-            'edit.php?post_type=' . WalletPostType::POST_TYPE_NAME,
+            MembersMenu::SLUG,
             __( 'Estado del monedero', SULAYR_TEXTDOMAIN ),
             __( 'Estado del monedero', SULAYR_TEXTDOMAIN ),
-            'manage_options',
+            MemberRoles::MANAGE_MEMBERS,
             self::PAGE_SLUG,
             [ $this, 'render_page' ]
         );
     }
 
     public function render_page(): void {
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( MemberRoles::MANAGE_MEMBERS ) ) {
             wp_die( esc_html__( 'No tienes permiso para acceder a esta página.', SULAYR_TEXTDOMAIN ) );
         }
 
@@ -70,7 +72,7 @@ class WalletBalancePage {
             return $order === 'asc' ? $cmp : -$cmp;
         } );
 
-        $base_url = admin_url( 'edit.php?post_type=' . WalletPostType::POST_TYPE_NAME . '&page=' . self::PAGE_SLUG );
+        $base_url = admin_url( 'admin.php?page=' . self::PAGE_SLUG );
         $link_name_asc  = add_query_arg( [ 'orderby' => 'name',  'order' => 'asc' ],  $base_url );
         $link_name_desc = add_query_arg( [ 'orderby' => 'name',  'order' => 'desc' ], $base_url );
         $link_bal_asc   = add_query_arg( [ 'orderby' => 'balance', 'order' => 'asc' ],  $base_url );

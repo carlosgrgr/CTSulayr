@@ -4,6 +4,8 @@
 
 Oct 28, 2026 · @Carlos · Estado: borrador abierto
 
+Nota del 11 de noviembre de 2026: [SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md) define socios, servicios con vigencia, histórico y recibos mensuales con control manual de pagos, y elimina Stripe. Este borrador debe apoyarse en ese modelo para el cobro online.
+
 ## Contexto y objetivos
 
 El club cobrará las mensualidades desde su propia web WordPress con un TPV virtual, y dejará de usar el Excel de cuotas. La integración la desarrolla el club en su plugin de área de socio, sin coste más allá del tiempo.
@@ -12,7 +14,7 @@ El club cobrará las mensualidades desde su propia web WordPress con un TPV virt
 
 - Los cobros de mensualidades se hacen con SportEasy. Solo se usa para cobrar.
 - El control de cuotas vive en un Excel de Drive con una pestaña por mes. En cada pestaña se ajustan a mano altas, bajas, piscina, saldos a favor, matrículas y prorrateos.
-- Un socio ya paga por la web con una suscripción de Stripe.
+- Un socio pagó por la web con una suscripción de Stripe. La integración se elimina en la parte A de [SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md) (D57).
 
 **Objetivos**
 
@@ -229,7 +231,7 @@ Enviado el 28 de octubre de 2026. Pendiente de respuesta.
 - [ ] Regla de prorrateo para altas a mitad de mes.
 - [ ] Cuántos reintentos tras un cobro fallido y si se aplica penalización por retraso.
 - [ ] ¿Los cambios de servicio pedidos por socios se aplican solos o necesitan aprobación?
-- [ ] ¿Qué pasa con el socio que paga ahora con suscripción de Stripe?
+- [x] ¿Qué pasa con el socio que paga ahora con suscripción de Stripe? Ya no se usa: Stripe se elimina (spec de altas, D57).
 - [ ] Recordatorio 5 días antes del vencimiento, con el importe de la tarifa y los toppings, por correo y por aviso en el perfil (Comunicaciones o Alertas), con enlace al pago. Ver el apunte del apartado de notificaciones.
 
 **Plan de implantación**

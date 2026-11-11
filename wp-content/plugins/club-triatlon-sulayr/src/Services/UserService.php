@@ -4,6 +4,7 @@ namespace ClubTriatlonSulayr\Services;
 use ClubTriatlonSulayr\Infrastructure\CustomTemplates;
 use ClubTriatlonSulayr\Infrastructure\CustomFields;
 use ClubTriatlonSulayr\Services\HelperService;
+use ClubTriatlonSulayr\Modules\Members\MemberRoles;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -418,7 +419,7 @@ class UserService {
 
         if ( is_user_logged_in() ) {
             $user = wp_get_current_user();
-            if ( $user instanceof \WP_User && in_array('athlete', (array) $user->roles, true) ) {
+            if ( $user instanceof \WP_User && in_array('athlete', (array) $user->roles, true) && false === MemberRoles::can_use_admin( $user ) ) {
                 return false;
             }
         }
@@ -593,9 +594,9 @@ class UserService {
 
         $grouped = [
             'active' => [],
-            'standby' => [],
+            'congelado' => [],
+            'pendiente' => [],
             'baja' => [],
-            'moroso' => [],
         ];
 
         foreach ( $athletes as $athlete ) {
@@ -873,6 +874,11 @@ class UserService {
         $user = wp_get_current_user();
     
         if ( ! in_array( 'athlete', (array) $user->roles, true ) ) {
+            return;
+        }
+
+        // Un deportista que además es gestor (spec altas §10) sí entra en wp-admin.
+        if ( true === MemberRoles::can_use_admin( $user ) ) {
             return;
         }
     

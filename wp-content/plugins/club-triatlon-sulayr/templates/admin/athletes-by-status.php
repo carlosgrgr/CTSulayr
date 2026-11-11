@@ -29,11 +29,11 @@ if ( ! defined( 'ABSPATH' ) ) {
             ] );
         }
         
-        if ( ! empty( $grouped['standby'] ) ) {
+        if ( ! empty( $grouped['congelado'] ) ) {
             sulayr_load_template( 'admin/athletes-group', [
-                'group_key' => 'standby',
-                'athletes' => $grouped['standby'],
-                'title' => __( 'Stand By', SULAYR_TEXTDOMAIN ),
+                'group_key' => 'congelado',
+                'athletes' => $grouped['congelado'],
+                'title' => __( 'Congelados', SULAYR_TEXTDOMAIN ),
                 'bold' => true,
             ] );
         }
@@ -47,11 +47,11 @@ if ( ! defined( 'ABSPATH' ) ) {
             ] );
         }
         
-        if ( ! empty( $grouped['moroso'] ) ) {
+        if ( ! empty( $grouped['pendiente'] ) ) {
             sulayr_load_template( 'admin/athletes-group', [
-                'group_key' => 'moroso',
-                'athletes' => $grouped['moroso'],
-                'title' => __( 'Moroso', SULAYR_TEXTDOMAIN ),
+                'group_key' => 'pendiente',
+                'athletes' => $grouped['pendiente'],
+                'title' => __( 'Pendientes', SULAYR_TEXTDOMAIN ),
                 'bold' => true,
             ] );
         }

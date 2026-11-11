@@ -20,6 +20,22 @@ class CustomFields
     /** Miembro de la directiva: solo paga suscripción natación directiva (29,50 €). Solo editable por administrador. */
     const USER_PROFILE_IS_DIRECTIVE = 'sulayr_user_is_directive';
 
+    /** Ficha del socio (SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO §4.1). */
+    const MEMBER_NUMBER = 'sulayr_member_number';
+    const MEMBER_TYPE = 'sulayr_member_type';
+    /** Fecha de baja (Y-m-d) o MEMBER_LEAVE_DATE_UNKNOWN. */
+    const MEMBER_LEAVE_DATE = 'sulayr_member_leave_date';
+    const MEMBER_LEAVE_DATE_UNKNOWN = 'desconocida';
+    const MEMBER_TSHIRT_SIZE = 'sulayr_member_tshirt_size';
+    const MEMBER_GUARDIAN = 'sulayr_member_guardian';
+    const MEMBER_BOARD_PAYMENT = 'sulayr_member_board_payment';
+
+    /** Valores de sulayr_user_athlete_status. */
+    const STATUS_PENDING = 'pendiente';
+    const STATUS_ACTIVE = 'active';
+    const STATUS_FROZEN = 'congelado';
+    const STATUS_LEFT = 'baja';
+
     /** Monedero (wallet) CPT */
     const WALLET_FIELDS_GROUP = 'wallet_fields';
     const WALLET_ATHLETE = 'sulayr_wallet_athlete';
@@ -28,18 +44,25 @@ class CustomFields
     const WALLET_DATE = 'sulayr_wallet_date';
     const WALLET_CREATED_BY = 'sulayr_wallet_created_by';
 
-    /** Subscription changes (histórico de cambios de tarifas) CPT */
-    const SUBSCRIPTION_CHANGES_FIELDS_GROUP = 'subscription_changes_fields';
-    const SUB_CHANGE_USER = 'sulayr_change_user';
-    const SUB_CHANGE_MADE_BY = 'sulayr_change_made_by';
-    const SUB_CHANGE_PLAN_BEFORE = 'sulayr_change_plan_before';
-    const SUB_CHANGE_PLAN_AFTER = 'sulayr_change_plan_after';
-    const SUB_CHANGE_SWIMMING_BEFORE = 'sulayr_change_swimming_before';
-    const SUB_CHANGE_SWIMMING_AFTER = 'sulayr_change_swimming_after';
-    const SUB_CHANGE_DATE = 'sulayr_change_date';
-    const SUB_CHANGE_EFFECTIVE_DATE = 'sulayr_change_effective_date';
-    const SUB_CHANGE_REASON = 'sulayr_change_reason';
-    const SUB_CHANGE_STRIPE_SUBSCRIPTION_ID = 'sulayr_stripe_subscription_id';
+    /** Servicios del catálogo (CPT sulayr_service). */
+    const SERVICE_FIELDS_GROUP = 'service_fields';
+    const SERVICE_IS_BASE = 'sulayr_service_is_base';
+    const SERVICE_PRICES = 'sulayr_service_prices';
+    const SERVICE_PRICE_MEMBER_TYPE = 'member_type';
+    const SERVICE_PRICE_AMOUNT = 'amount';
+    const SERVICE_PRICE_VALID_FROM = 'valid_from';
+    const SERVICE_PRORATED = 'sulayr_service_prorated';
+    const SERVICE_CANCEL_ON_FREEZE = 'sulayr_service_cancel_on_freeze';
+    const SERVICE_PUBLIC = 'sulayr_service_public';
+    const SERVICE_OPTIONS = 'sulayr_service_options';
+    const SERVICE_OPTION_KEY = 'key';
+    const SERVICE_OPTION_LABEL = 'label';
+    const SERVICE_INCOMPATIBLE = 'sulayr_service_incompatible';
+    const SERVICE_GRANTS_SWIMMING = 'sulayr_service_grants_swimming';
+    const SERVICE_COACH_LIST = 'sulayr_service_coach_list';
+    const SERVICE_WELCOME_TEXT = 'sulayr_service_welcome_text';
+    const SERVICE_STEPS = 'sulayr_service_steps';
+    const SERVICE_STEP_LABEL = 'label';
 
     /** Documentos CPT (sulayr_document) */
     const DOCUMENT_FIELDS_GROUP = 'document_fields';

@@ -50,20 +50,6 @@ if ( ! defined( 'ABSPATH' ) ) {
                         <?php esc_html_e( 'Importar deportistas desde CSV', SULAYR_TEXTDOMAIN ); ?>
                     </a>
                     
-                    <?php /* if ( ! empty( $stripe_settings_url ) ) : ?>
-                    <a href="<?php echo esc_url( $stripe_settings_url ); ?>" 
-                       class="button button-secondary button-large">
-                        <span class="dashicons dashicons-money-alt"></span>
-                        <?php esc_html_e( 'Configuración Stripe (Suscripciones)', SULAYR_TEXTDOMAIN ); ?>
-                    </a>
-                    <?php endif; ?>
-                    <?php if ( ! empty( $subscriptions_url ) ) : ?>
-                    <a href="<?php echo esc_url( $subscriptions_url ); ?>" 
-                       class="button button-secondary button-large">
-                        <span class="dashicons dashicons-admin-generic"></span>
-                        <?php esc_html_e( 'Gestión de suscripciones', SULAYR_TEXTDOMAIN ); ?>
-                    </a>
-                    <?php endif; */?>
                 </div>
             </div>
         </div>
