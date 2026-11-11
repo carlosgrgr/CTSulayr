@@ -30,10 +30,15 @@ class UserService {
         add_filter('acf/update_value/name=' . CustomFields::USER_PROFILE_IS_DIRECTIVE, [$this, 'preserve_directive_field_value'], 10, 3);
 
         if ( ! is_admin() ) {
+            // D33 (spec de altas): en Mi cuenta el deportista solo cambia teléfono, foto, email
+            // e imagen. Estado, DNI y nacimiento los cambia un gestor; servicios y baja, por solicitud.
             $locked_fields = [
                 CustomFields::USER_PROFILE_MEMBERSHIP_PLAN,
                 CustomFields::USER_PROFILE_TRAINING_TYPE,
                 CustomFields::USER_PROFILE_SWIMMING,
+                CustomFields::USER_PROFILE_ATHLETE_STATUS,
+                CustomFields::USER_PROFILE_DNI,
+                CustomFields::USER_PROFILE_BIRTH,
             ];
             foreach ( $locked_fields as $field_name ) {
                 add_filter( 'acf/prepare_field/name=' . $field_name, [ $this, 'lock_public_plan_field' ] );

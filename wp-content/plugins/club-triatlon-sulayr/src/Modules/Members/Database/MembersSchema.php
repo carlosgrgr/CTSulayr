@@ -10,10 +10,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Se crean con dbDelta en el blog donde está activo el plugin (blog 1).
  * Subir VERSION cuando cambie una tabla; dbDelta conserva los datos.
+ *
+ * Versión 2 (parte B): updated_at en solicitudes (para caducar las pendientes
+ * sin tocar) y created_by en consentimientos (gestor que los registró).
  */
 class MembersSchema {
 
-    public const VERSION = 1;
+    public const VERSION = 2;
     public const VERSION_OPTION = 'sulayr_members_db_version';
 
     public const SERVICES = 'sulayr_member_services';
@@ -130,8 +133,10 @@ class MembersSchema {
   reason varchar(255) NOT NULL DEFAULT '',
   ip varchar(45) NOT NULL DEFAULT '',
   created_at datetime NOT NULL,
+  updated_at datetime DEFAULT NULL,
   PRIMARY KEY  (id),
   KEY type_status (type,status),
+  KEY ip_created (ip,created_at),
   KEY user_id (user_id)
 ) $charset;";
 
@@ -158,6 +163,7 @@ class MembersSchema {
   version varchar(32) NOT NULL,
   accepted tinyint(1) NOT NULL,
   given_by varchar(10) NOT NULL DEFAULT 'socio',
+  created_by bigint(20) unsigned NOT NULL DEFAULT 0,
   created_at datetime NOT NULL,
   PRIMARY KEY  (id),
   KEY user_id (user_id),
@@ -251,9 +257,12 @@ class MembersSchema {
             dbDelta( $statement );
         }
 
+        $previous = (int) get_option( self::VERSION_OPTION );
         update_option( self::VERSION_OPTION, self::VERSION );
 
         // La versión 1 quita el endpoint «mis-pagos»: WooCommerceIntegration regenera los enlaces en init.
-        update_option( 'sulayr_wc_flush_rewrite_rules', '1' );
+        if ( $previous < 1 ) {
+            update_option( 'sulayr_wc_flush_rewrite_rules', '1' );
+        }
     }
 }

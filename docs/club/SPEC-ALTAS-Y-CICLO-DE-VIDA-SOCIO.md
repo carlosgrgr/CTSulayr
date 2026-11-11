@@ -1,7 +1,7 @@
 # SPEC — Alta y ciclo de vida del socio
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr`
-**Estado:** Definida el 11 de noviembre de 2026. Decisiones D1 a D58 cerradas con el club (sección 3). Parte A en `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026 con FileZilla. Stripe limpiado y migración terminada en PROD ese día (sección 16.5). Partes B a D pendientes (sección 13).
+**Estado:** Definida el 11 de noviembre de 2026. Decisiones D1 a D58 cerradas con el club (sección 3). Parte A en `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026 con FileZilla. Stripe limpiado y migración terminada en PROD ese día (sección 16.5). Parte B implementada y probada en local el 11 de noviembre de 2026, con commit en la rama `altas-socio-parte-b` sin mergear: no está en `main` ni en PROD (sección 18). Pruebas manuales pendientes en `altas-y-ciclo-de-vida-socio/pruebas.md`. Partes C y D pendientes (sección 13).
 **Fecha:** 11 de noviembre de 2026
 
 Esta spec sustituye el alta manual de socios (WhatsApp + Excel + alta a mano en la web) por un proceso en la web del club (blog 1): solicitud, aprobación, cambios, congelaciones, bajas, recibos mensuales y listados. Conserva el histórico de altas, bajas y cambios de servicios, y deja los Excel de Drive solo para ingresos y gastos del club.
@@ -474,7 +474,7 @@ No se importan «Posibles deportistas» ni las pestañas mensuales de pagos.
 | Parte | Contenido | Estado |
 |---|---|---|
 | A | Catálogo y tipos de socio (4.3, 4.4), tablas (4.2), registro de cambios (D58), migración (11), eliminación de Stripe (12), roles (10) y capacidades del monedero (9.4) | En `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026. Ver sección 16. |
-| B | Formulario público y de gestor, aprobación, detección de duplicados y reingresos, consentimientos, email de bienvenida, pasos de alta (5) | Pendiente |
+| B | Formulario público y de gestor, aprobación, detección de duplicados y reingresos, consentimientos, email de bienvenida, pasos de alta (5) | Implementada y probada en local el 11 de noviembre de 2026. Commit en la rama `altas-socio-parte-b`, sin mergear: no está en `main` ni en PROD. Pruebas manuales pendientes en [pruebas.md](altas-y-ciclo-de-vida-socio/pruebas.md). Ver sección 18. |
 | C | Cambios, bajas, congelaciones, solicitudes desde Mi cuenta, tarea nocturna, sincronización con reservas (6, 7) | Pendiente |
 | D | Recibos, PDF, Mis cuotas, monedero de la junta, exportación, listado del entrenador, welcome pack, tareas pendientes (8, 9) | Pendiente |
 
@@ -555,7 +555,7 @@ Implementada el 11 de noviembre de 2026 en la rama `altas-socio-parte-a`. Códig
 | Roles (§10) | `MemberRoles`, `Admin\ManagerAccess` | Roles `sulayr_member_manager` y `sulayr_shop_manager`, sincronizados con versión en `sulayr_member_roles_version`. Casillas en la ficha de usuario solo para administradores; se guardan en `profile_update`, después del desplegable de rol de WordPress, que borraría los roles añadidos. `UserService` ya no saca de wp-admin al deportista que es gestor. |
 | Monedero (§9.4) | `WalletPostType`, `WalletBalancePage` | `capability_type` `sulayr_wallet`: solo administrador y gestor de socios. Ahora cuelga de Socios. |
 | Migración (§11) | `Migration\LegacyMigrator`, `SheetCsvReader`, `CatalogSeeder`, `MembersCommand`, `Admin\MigrationPage` | `wp sulayr socios migrar` o **Socios → Migración**. Eliminadas tras la migración en PROD (16.6); están en el commit `fab85c343`. |
-| Puente transitorio | `Migration\LegacyFieldsSync`, `LegacyMapping` | Hasta la parte C: si un administrador cambia tarifa, modalidad, natación, directiva o estado en la ficha de usuario, se aplica al histórico con fecha de hoy. Solo actúa tras la migración. |
+| Puente transitorio | `Migration\LegacyFieldsSync`, `LegacyMapping` | Hasta la parte C: si un administrador cambia tarifa, modalidad, natación, directiva o estado en la ficha de usuario, se aplica al histórico con fecha de hoy. Solo actúa tras la migración. Desde la parte B solo toca lo que cambió en ese guardado (18.3). |
 | Limpieza de Stripe (§12) | `Migration\StripeCleanup` | `wp sulayr socios limpiar-stripe`. Eliminada tras usarla en PROD (16.6). |
 
 Eliminado: `Modules/Subscriptions/*`, el CPT y los campos de `sulayr_subscription_changes`, la sección Stripe y «Gestión de suscripciones» de Sulayr Info, «Mis pagos» y el botón de suscripción de Mi cuenta, el bloqueo de 5 días de `AthleteUpdate` y la librería `stripe/stripe-php` de Composer.
@@ -670,7 +670,7 @@ Para llevarlo a PROD con FileZilla, en `wp-content/plugins/club-triatlon-sulayr/
 
 ## 17. Traspaso para las partes B a D
 
-Estado al 11 de noviembre de 2026: parte A en `main` y en PROD, migración terminada. Lo que sigue es lo que hay que saber antes de empezar la parte B.
+Estado al 11 de noviembre de 2026: parte A en `main` y en PROD, migración terminada. Lo que sigue es lo que había que saber antes de empezar la parte B. La parte B ya está hecha (sección 18): el riesgo del puente de 17.2 está resuelto y la validación del DNI está en `Join\Identity`. Lo que queda para las partes C y D está en 18.7.
 
 ### 17.1. Lo que ya existe y la parte B debe usar
 
@@ -679,11 +679,11 @@ Estado al 11 de noviembre de 2026: parte A en `main` y en PROD, migración termi
 - **Catálogo** (`ServiceCatalog`): cada servicio dice si sale en el formulario público, sus opciones, con qué es incompatible, su texto de bienvenida y sus pasos de alta. `ServiceCatalog::base()` da la cuota base.
 - **Ficha** (`MemberFields`): número (`MemberFields::next_number()` da el siguiente al mayor, D14), tipo, fecha de baja, talla (XS a XXL), retribución de la junta y tutor (grupo ACF `sulayr_member_guardian`: `_name`, `_dni`, `_phone`, `_email`).
 - **Historial** (`MemberServices::open()`, `StatusPeriods::open()`) y **registro** (`MemberLog`).
-- **Validación de DNI/NIE**: la función de letra de control estaba en `SheetCsvReader::is_valid_dni()`, que se retiró con la migración (commit `fab85c343`). Recuperarla en una clase propia.
+- **Validación de DNI/NIE**: la función de letra de control estaba en `SheetCsvReader::is_valid_dni()`, que se retiró con la migración (commit `fab85c343`). Recuperarla en una clase propia. Hecho en la parte B: `Join\Identity`.
 
 ### 17.2. Cuidado en la parte B
 
-- **Puente transitorio.** `LegacyFieldsSync` se dispara en `acf/save_post` de cualquier deportista y cierra todo servicio vigente que no se deduzca de los campos antiguos. Con el formulario nuevo eso rompería altas (p. ej. un servicio que no sea cuota base, entrenamiento genérico o natación). Primera tarea de la parte B: que el puente solo toque las filas de esos tres servicios, o que la aprobación escriba también los campos antiguos de forma coherente (tarifa, modalidad, natación, directiva). En cualquier caso, la aprobación debe escribir `sulayr_user_swimming` y `sulayr_user_athlete_status` (D38).
+- **Puente transitorio** (resuelto en la parte B, ver 18.3). `LegacyFieldsSync` se dispara en `acf/save_post` de cualquier deportista y cierra todo servicio vigente que no se deduzca de los campos antiguos. Con el formulario nuevo eso rompería altas (p. ej. un servicio que no sea cuota base, entrenamiento genérico o natación). Primera tarea de la parte B: que el puente solo toque las filas de esos tres servicios, o que la aprobación escriba también los campos antiguos de forma coherente (tarifa, modalidad, natación, directiva). En cualquier caso, la aprobación debe escribir `sulayr_user_swimming` y `sulayr_user_athlete_status` (D38).
 - **Usuarios en multisite.** El email es único en toda la red. `UserService::assign_athlete_role` pone `athlete` en `user_register` si el usuario no tiene rol o es `subscriber`. Reservas crea usuarios en el blog 2 con rol `nadador`. Para «vincular» a un usuario de otra web usar `add_user_to_blog()` o `add_role()`, sin crear otra cuenta (D13).
 - **Email de bienvenida (D15).** `wp_insert_user()` no envía aviso; el enlace de contraseña se genera con `get_password_reset_key()`. No usar `wp_new_user_notification()` ni `user-new.php`, que en multisite pide confirmación. Remitente: `Modules\Emails\EmailConfig`.
 - **Avisos antiguos.** `AthleteUpdate` sigue enviando emails al cambiar tarifa o pasar a baja desde la ficha de usuario; se sustituyen en la parte C. Escribir metas con `update_user_meta()` no los dispara.
@@ -703,4 +703,135 @@ No hay PHPUnit. Lo que funcionó en la parte A:
 ### 17.4. Abierto
 
 - **Deportistas externos.** David Sánchez Cabrerizo y Lorena Montellano Peláez no están en la web y se quedan solo en el Excel. Si se quisiera distinguir «externo» como tipo de socio, sería una decisión nueva.
+
+---
+
+## 18. Parte B: implementación
+
+Implementada el 11 de noviembre de 2026 en la rama `altas-socio-parte-b`, creada desde `main`. Probada en local por HTTP. Commit en esa rama, sin mergear: no está en `main` ni en PROD. Las pruebas manuales que faltan (navegador, emails reales, PROD) están en [pruebas.md](altas-y-ciclo-de-vida-socio/pruebas.md).
+
+### 18.1. Decisiones cerradas con el club (11 de noviembre de 2026)
+
+La spec no fijaba estos puntos. Se decidieron con el club antes de implementar:
+
+| # | Decisión |
+|---|---|
+| B-a | La aprobación lanza la sincronización con reservas sea quien sea quien apruebe (también un gestor de socios sin `manage_options`). El plugin del club llama directamente a la sincronización de `sulayr-reservas`, sin cambiar reservas. |
+| B-b | Alta con fecha posterior a hoy: el socio queda en `pendiente`, sin natación, hasta esa fecha. Una tarea diaria mínima lo activa ese día (estado, natación y sincronización) y caduca las solicitudes (D16). La parte C la amplía. |
+| B-c | Si el email o el DNI son de un socio en vigor (activo, congelado o pendiente), no se puede aprobar: solo rechazar. |
+| B-d | El email es único en la red. «Es otra persona» con el mismo email no se puede aprobar: el gestor corrige los datos de la solicitud (incluido el email) antes de aprobar. Si solo coincide el DNI, «otra persona» crea una cuenta nueva. |
+| B-e | Reingreso durante una promoción de matrícula: se propone el importe más bajo de los dos. |
+| B-f | El socio da o revoca el consentimiento de imagen desde Mi cuenta → Perfil de deportista (parte B). |
+| B-g | En el formulario del gestor hay las mismas casillas de consentimiento, con las obligatorias obligatorias. El gestor confirma que el socio o el tutor ha aceptado. Se guarda «socio» o «tutor» y el gestor como autor. |
+| B-h | En la parte B los pasos se ven y se marcan en la ficha del socio. La vista general «Tareas pendientes» (9.1) es de la parte D. |
+| B-i | Vinculados y reingresos reciben el mismo email de bienvenida: el enlace sirve para crear o cambiar la contraseña. |
+| B-j | Las solicitudes creadas por un gestor no avisan al club (D11 es para el formulario público). |
+| B-k | Límite de 3 solicitudes por hora desde una misma IP, configurable en Socios → Ajustes. |
+| B-l | Un socio en vigor con sesión iniciada ve «Ya eres socio» en el formulario. Cualquier otro usuario (cliente de la tienda, nadador, antiguo socio) puede enviarlo, y al aprobar se vincula su cuenta. |
+| B-m | El enlace de contraseña de la bienvenida caduca a las 24 horas, como todos los de WordPress (`password_reset_expiration`). Pasado ese tiempo, el socio usa «¿Has olvidado tu contraseña?». No se alarga porque afectaría a todos los enlaces de la web. |
+
+### 18.2. Qué hay
+
+Código en `wp-content/plugins/club-triatlon-sulayr/src/Modules/Members/`, conectado en `App::load_members()`.
+
+| Pieza | Clase | Notas |
+|---|---|---|
+| Formulario público (5.1) | `Join\PublicJoinForm` | Shortcode `[sulayr_solicitud_alta]`. Envía a la propia página (no a `admin-post.php`) y no usa nonce, para que una página en caché no lo rompa. El envío se reconoce por un campo oculto, así que funciona aunque el shortcode esté en una plantilla de Templatera. Antispam: campo trampa y límite por IP. Pide a los plugins de caché que no guarden la página (`DONOTCACHEPAGE`). |
+| Campos y validación (D8, 5.1) | `Join\JoinForm`, `Join\Identity`, `public/js/join-form.js` | Los comparten los dos formularios. DNI/NIE con letra de control, email, teléfono (9 cifras), fechas, menor de 18 en la fecha de inicio → datos del tutor, cuota base siempre incluida, incompatibles en los dos sentidos, opción obligatoria si el servicio tiene opciones. El JavaScript solo ayuda (tutor, incompatibles, opciones): el servidor vuelve a comprobarlo todo. Talla de camiseta de `MemberFields::TSHIRT_SIZES`. |
+| Solicitudes | `Join\JoinRequests` | Tabla `sulayr_member_requests`, tipo `alta`. Estados `pendiente`, `aprobada`, `rechazada` y `caducada`. Datos del formulario en `data` (JSON). Al aprobar se añade `approval`: modo, usuario, reingreso, tipo, número, matrícula propuesta y aprobada y su motivo. La parte D leerá de ahí la matrícula del primer recibo. |
+| Duplicados (D13, 6.6) | `Join\DuplicateFinder` | Email y DNI en toda la red: usuarios y metas de red, y el DNI de la ficha local de reservas (solo lectura). Clasifica cada cuenta como socio en vigor, antiguo socio (reingreso) u otro usuario de la red. Avisa también de otras solicitudes pendientes con el mismo email o DNI. |
+| Aprobación y rechazo (5.3) | `Join\JoinApproval` | Ver 18.3. |
+| Pantallas de gestión | `Admin\RequestsPage` | **Socios → Solicitudes** (con globo de pendientes): listado por estado y detalle con coincidencias, datos editables, aprobación y rechazo. **Socios → Nueva alta** (5.2): mismos campos. «Crear solicitud» o «Crear y aprobar»: si nadie de la red tiene ese email ni ese DNI, aprueba en el mismo paso; si hay coincidencias, lleva a la solicitud para decidir. Envían a `admin-post.php` con nonce y `sulayr_manage_members`. |
+| Consentimientos (D10, B8) | `MemberConsents` | Cada aceptación o revocación es una fila nueva con tipo, versión del texto, aceptado, quién (socio o tutor), autor y fecha. Al aprobar se pasan de la solicitud al socio y se anotan en el registro. Textos y versiones de Socios → Ajustes. |
+| Consentimiento de imagen en Mi cuenta | `Join\ImageConsentAccount` | Casilla bajo el formulario de Perfil de deportista (gancho nuevo `sulayr_athlete_profile_edit_after` en `templates/parts/content-athlete-profile.php`). Con nonce. |
+| Pasos (D9, D12) | `MemberTasks` | Al aprobar: los pasos de alta de Socios → Ajustes más los de cada servicio, sin repetir. En la ficha del socio, botón «Marcar hecho» (fecha y autor). |
+| Emails (D11, D15) | `Join\MemberMailer` | Asunto y texto de Socios → Ajustes con sus marcadores. HTML. Bienvenida, rechazo y aviso al club. |
+| Metas de reservas (D38) | `ReservationsAccess`, `Join\ReservationsSync` | Escribe `sulayr_user_athlete_status` (periodo que cubre hoy, o `pendiente` si solo hay uno futuro) y `sulayr_user_swimming` (`1` si está activo y tiene vigente un servicio que da acceso a reservas). Si cambia algo, lanza la sincronización de reservas llamando a `SulayrReservas\Sync\SyncService::sync()`, si el plugin está activo. |
+| Tarea diaria (B-b) | `Join\JoinDailyTask` | WP-Cron `sulayr_members_daily`, a las 00:15 hora del club. Aplica `ReservationsAccess` a los socios `pendiente` y caduca solicitudes (D16). Repetirla el mismo día no cambia nada. |
+| Ficha del socio | `Admin\MembersMenu` | Añade talla, tutor, pasos, consentimientos y enlaces a las solicitudes. El listado avisa de las solicitudes pendientes. |
+| Ajustes | `MemberSettings` | Pestaña nueva «Formulario de alta»: texto encima del formulario, mensaje tras enviar y límite por IP. |
+| Esquema | `Database\MembersSchema` | Versión 2: `updated_at` en solicitudes (para caducar las pendientes sin tocar) y `created_by` en consentimientos. Se aplica sola en la primera carga. |
+
+### 18.3. Decisiones de implementación
+
+- **Puente transitorio (17.2).** `LegacyFieldsSync` guarda los campos antiguos antes de que ACF guarde (prioridad 1 de `acf/save_post`) y solo actúa sobre lo que cambió: tarifa o modalidad → solo el entrenamiento genérico; natación → solo la natación; directiva → tipo de socio, y solo si el tipo es «normal» o «junta»; estado → periodo de estado. Una baja sigue cerrando todos los servicios. La vuelta desde una baja reabre los tres servicios antiguos. Guardar Mi cuenta no cambia nada del historial. Además, la aprobación escribe la tarifa, la modalidad y la directiva antiguas de forma coherente (`LegacyMapping::write_plan_fields()`), para que la ficha de usuario y Mi cuenta muestren lo mismo que el historial.
+- **D33 en Mi cuenta.** El deportista podía cambiarse el estado desde Mi cuenta: el desplegable no estaba bloqueado y el servidor lo aceptaba. Con el puente, ponerse «baja» le cerraba los servicios y reservas le quitaba el acceso. Venía de antes de la parte B. Ahora el estado, el DNI y la fecha de nacimiento quedan bloqueados en Mi cuenta, con el mismo mecanismo que la tarifa (`UserService`).
+- **Aprobación.** Comprueba la decisión antes de tocar nada (socio en vigor, email libre al crear, cuenta elegida entre las coincidencias, fecha, tipo, servicios y motivo si la matrícula no es la propuesta). Después marca la solicitud como «aprobando» con una actualización condicionada, para que dos clics no la aprueben dos veces. Todo se anota en el registro con la nota «Alta, solicitud #N».
+- **Cuenta nueva.** `wp_insert_user()` con rol `athlete`, sin email de WordPress. El usuario sale del email y solo lleva minúsculas y números (regla de multisite), con un número detrás si ya existe.
+- **Vincular.** Si la cuenta no es de la web del club, `add_user_to_blog()` con `athlete`; si lo es, `add_role( 'athlete' )`. Si el email de la cuenta es otro, el gestor puede marcar «Cambiar el email de esa cuenta». En ese caso no se envía el aviso de cambio de email de WordPress, para que el socio reciba un solo email. Nombre y apellidos se toman de la solicitud.
+- **Reingreso.** Conserva el número y cierra el periodo de baja el día antes del alta. Borra la fecha de baja de la ficha: queda en los periodos. Abre un periodo activo y los servicios nuevos.
+- **Ficha.** Teléfono, DNI, nacimiento, fecha de alta (= fecha de alta aprobada), talla, tipo y, si es menor, tutor. Número de socio: el que tenga, o el siguiente al mayor (D14).
+- **Matrícula propuesta.** Normal o de reingreso. Si hay una promoción vigente el día de la aprobación, su importe; en un reingreso, el más bajo de los dos. Si el gestor deja la matrícula vacía, se usa la propuesta. Se guarda en la solicitud y en el registro. El cobro llega con los recibos (parte D).
+- **Bienvenida.** Un solo envío al socio y, si es menor, también al tutor. El enlace de contraseña lleva a Mi cuenta → contraseña perdida de WooCommerce (`key`, `id` y `login`), que abre el formulario de nueva contraseña. `{bloques_servicios}` junta el texto de bienvenida de los servicios contratados.
+- **Rechazo.** Motivo obligatorio, que se envía al solicitante (y al tutor).
+- **Caducidad (D16).** Las rechazadas tras su plazo y las pendientes sin tocar tras el suyo pierden los datos personales, la IP y el motivo. Queda la fila con tipo, estado, fechas, origen, menor sí o no y servicios elegidos. Las pendientes pasan a «caducada». Los consentimientos de la solicitud (tipo, versión, sí o no, fecha) se conservan. La baja migrada de Diego Lardón (tipo `baja`) no se toca.
+- **5.3, recibo del mes de alta.** No se hace en la parte B: los recibos llegan en la parte D.
+
+### 18.4. Comprobado en local (11 de noviembre de 2026)
+
+Con una copia de la base de datos (`wp db export`), un mu-plugin temporal que no enviaba emails y los guardaba en una opción, usuarios temporales (administrador y deportista con «Gestor de socios», sin `manage_options`) y peticiones HTTP con `curl` iniciando sesión. En local no existían los servicios del catálogo (IDs 2655 a 2657); para probar se recrearon en la copia, con un servicio «Entrenamiento individualizado» incompatible con el genérico. Al terminar se restauró la base, se borró el mu-plugin y los usuarios y la página de prueba desaparecieron con la restauración.
+
+- B1: el formulario público guarda la solicitud y sus consentimientos, no crea usuario y envía un único email, al club.
+- B2: un DNI con letra incorrecta se rechaza.
+- B3: un menor sin datos del tutor no se puede enviar. Con tutor, los consentimientos quedan como «tutor».
+- B4: dos servicios incompatibles se rechazan, y también un servicio con opciones sin opción elegida.
+- B5: una solicitud con el email de un antiguo socio (de baja) propone vincular su cuenta como reingreso. Al aprobar recupera la cuenta y el número, propone 10 € de matrícula, cierra la baja el día anterior y vuelve a reservas.
+- B6: una solicitud con el email de un usuario que solo existía en la web de reservas le añade `athlete` en el club, sin otra cuenta (el número de usuarios no cambia).
+- B7: el socio nuevo recibe un solo email, de bienvenida, con el enlace de contraseña (abre el formulario de nueva contraseña de Mi cuenta) y solo los textos de sus servicios.
+- B8: cada consentimiento queda con su versión, fecha, socio o tutor y autor (0 en el formulario público, el gestor en el suyo).
+- Aprobación por un gestor de socios sin `manage_options`: el socio con natación queda en reservas como nadador activo.
+- Fecha de alta futura: queda `pendiente` sin natación. Simulando que llega el día, la tarea diaria lo activa y lo sincroniza. La segunda ejecución no hace nada.
+- Email de un socio activo: no se puede aprobar, ni siquiera forzando la petición. Rechazar envía el motivo al solicitante.
+- «Crear y aprobar» sin coincidencias aprueba en un paso. Una matrícula distinta de la propuesta sin motivo se rechaza antes de crear la solicitud.
+- Caducidad: rechazada de 31 días y pendiente de 61 quedan sin datos; la solicitud reciente y la baja migrada no cambian.
+- Campo trampa: responde como si fuera bien y no guarda nada. La cuarta solicitud en una hora desde la misma IP se rechaza.
+- Mi cuenta: dar y revocar el consentimiento de imagen crea filas nuevas; un nonce falso da 403. Un socio dado de alta con «Entrenamiento individualizado» guarda su perfil y no se le cierra nada. Un envío manipulado con estado «baja» ya no cambia el estado.
+- Puente: con un socio migrado, guardar sin cambios no toca nada; quitar la natación cierra solo la natación; marcar directiva no cambia un tipo «menor».
+- Pantallas de Socios (listado, ficha, solicitudes, detalle, nueva alta, ajustes) responden 200 sin avisos de PHP, como gestor y como administrador. «Marcar hecho» guarda fecha y autor. Un deportista sin rol de gestor no puede aprobar.
+
+No comprobado:
+
+- El formulario en un navegador (aspecto en móvil y el JavaScript): las pruebas fueron por HTTP. No hay Node en local para revisar el JavaScript.
+- PHP 7.4: no está instalado en local. Se revisó a mano que no hay sintaxis de PHP 8.
+- El envío real de emails en PROD (WP Mail SMTP) y cómo se ven en un cliente de correo.
+
+### 18.5. Despliegue en PROD
+
+Con FileZilla, en `wp-content/plugins/club-triatlon-sulayr/`:
+
+1. Copia de seguridad (hPanel o FileZilla + phpMyAdmin), como en 16.4.
+2. Subir primero los archivos nuevos:
+   - `src/Modules/Members/Join/` (carpeta entera: `DuplicateFinder.php`, `Identity.php`, `ImageConsentAccount.php`, `JoinApproval.php`, `JoinDailyTask.php`, `JoinForm.php`, `JoinRequests.php`, `MemberMailer.php`, `PublicJoinForm.php`, `ReservationsSync.php`)
+   - `src/Modules/Members/Admin/RequestsPage.php`
+   - `src/Modules/Members/MemberConsents.php`, `MemberTasks.php`, `ReservationsAccess.php`
+   - `public/js/join-form.js`
+3. Después, sobrescribir:
+   - `src/App/App.php`
+   - `src/Services/UserService.php`
+   - `src/Modules/Members/Admin/MembersMenu.php`
+   - `src/Modules/Members/Database/MembersSchema.php`
+   - `src/Modules/Members/MemberFields.php`, `MemberSettings.php`, `StatusPeriods.php`
+   - `src/Modules/Members/Migration/LegacyFieldsSync.php`, `LegacyMapping.php`
+   - `templates/parts/content-athlete-profile.php`
+   - `public/css/styles.css`
+4. No hay nada que borrar.
+5. Entrar en wp-admin del club. La primera carga sube el esquema a la versión 2 y programa la tarea diaria. Comprobar que salen **Socios → Solicitudes** y **Socios → Nueva alta**.
+6. En **Socios → Ajustes**: enlace de WhatsApp (si está vacío, la bienvenida deja la línea sin enlace), email del club, textos y versiones de los consentimientos (los redacta el club, sección 15), pestaña «Formulario de alta» y textos de los emails. Revisar el texto de bienvenida y los pasos de cada servicio en el catálogo.
+7. Crear una página del club con el shortcode `[sulayr_solicitud_alta]` y enlazarla donde corresponda.
+8. Prueba en PROD con un email propio: enviar una solicitud, comprobar el aviso al club, rechazarla o aprobarla y revisar la bienvenida. En **Socios → Solicitudes**, abrir la solicitud y comprobar que la IP no es la misma en todas (ver 18.6).
+9. Actualizar el estado de esta spec y de `docs/FASES.md` con la fecha.
+
+### 18.6. Abierto
+
+- **IP detrás de un proxy.** El límite usa la IP que ve el servidor (`REMOTE_ADDR`), sin fiarse de cabeceras. Si Hostinger pone un proxy o una CDN delante, todas las solicitudes llevarían la misma IP y el límite sería para todos a la vez. Comprobarlo en el paso 8 de 18.5.
+- **WP-Cron.** La tarea diaria corre con las visitas a la web. Un día sin visitas se ejecuta con la primera visita del día siguiente.
+
+### 18.7. Para las partes C y D
+
+- `ReservationsAccess::apply()` es el punto único para escribir las metas de reservas a partir del historial. La tarea nocturna de la parte C puede llamarlo para cada socio con un cambio que empiece ese día.
+- `Join\JoinDailyTask` es la tarea diaria: la parte C le añade cambios, congelaciones, bajas y la retribución de la junta (7).
+- `LegacyFieldsSync`, `LegacyMapping` (incluido `write_plan_fields()`) y los avisos de `AthleteUpdate` se retiran en la parte C, que sustituye la edición de la ficha de usuario.
+- `MemberTasks::create()` ya admite los contextos `cambio` y `baja`; los pasos de cambio y de baja están en Socios → Ajustes.
+- La matrícula aprobada está en `data.approval.fee` de la solicitud aprobada (`user_id`). La parte D la añade al primer recibo; si el recibo del mes de alta ya existe, lo genera al aprobar (5.3).
+- La vista general de pasos pendientes (9.1) es de la parte D.
 

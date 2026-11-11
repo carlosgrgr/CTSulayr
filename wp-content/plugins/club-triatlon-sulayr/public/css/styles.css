@@ -828,3 +828,128 @@ nav.woocommerce-MyAccount-navigation {
 .entry-content .woocommerce-MyAccount-navigation ul {
 	padding-left: 0;
 }
+
+/* ---------------------------------------------------------------
+ * Formulario de solicitud de alta [sulayr_solicitud_alta]
+ * Colores de la marca Sulayr (tema ct-sulayr-theme), con valores de respaldo.
+ * --------------------------------------------------------------- */
+.sulayr-join {
+    max-width: 760px;
+    margin: 0 auto;
+    color: var(--sulayr-pizarra, #2A3550);
+}
+.sulayr-join-group {
+    border: 1px solid #dde4ea;
+    border-radius: 10px;
+    padding: 1rem 1.25rem 1.25rem;
+    margin: 0 0 1.25rem;
+    background: #fff;
+}
+.sulayr-join-group legend {
+    float: none;
+    width: auto;
+    padding: 0 .4rem;
+    margin: 0;
+    font-family: var(--sulayr-display, inherit);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--sulayr-noche, #0B1638);
+}
+.sulayr-join-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .75rem 1rem;
+}
+@media (max-width: 600px) {
+    .sulayr-join-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.sulayr-join-field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: .25rem;
+}
+.sulayr-join-field + .sulayr-join-field {
+    margin-top: 0;
+}
+.sulayr-join-service {
+    padding: .5rem 0 .5rem 1.75rem;
+    border-bottom: 1px solid #eef2f5;
+}
+.sulayr-join-service:last-of-type {
+    border-bottom: 0;
+}
+.sulayr-join-service.is-blocked {
+    opacity: .5;
+}
+.sulayr-join-options {
+    margin-top: .4rem;
+    max-width: 260px;
+}
+.sulayr-join-note {
+    color: var(--sulayr-texto2, #566079);
+    font-size: .9rem;
+}
+.sulayr-join-consent {
+    margin-bottom: .9rem;
+    padding-left: 1.75rem;
+}
+.sulayr-join-consent-text {
+    font-size: .9rem;
+    color: var(--sulayr-texto2, #566079);
+}
+.sulayr-join-consent-text p {
+    margin: .2rem 0;
+}
+.sulayr-join-error {
+    color: #b42318;
+    font-size: .9rem;
+    margin: .25rem 0 0;
+}
+.sulayr-join-notice {
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin: 0 0 1.25rem;
+    background: var(--sulayr-nieve, #F3F7FA);
+    border-left: 4px solid var(--sulayr-acento, #0A7C8A);
+}
+.sulayr-join-errors {
+    border-left-color: #b42318;
+}
+.sulayr-join-success {
+    border-left-color: var(--sulayr-menta, #1EE8A3);
+}
+.sulayr-join-hp {
+    position: absolute !important;
+    left: -9999px !important;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+.sulayr-join-button {
+    background: var(--sulayr-acento, #0A7C8A);
+    border: 0;
+    border-radius: 999px;
+    color: #fff;
+    font-weight: 700;
+    padding: .75rem 2rem;
+    cursor: pointer;
+}
+.sulayr-join-button:hover,
+.sulayr-join-button:focus-visible {
+    background: var(--sulayr-noche, #0B1638);
+    color: #fff;
+}
+
+/* Consentimiento de imagen en Mi cuenta → Perfil de deportista. */
+.sulayr-image-consent {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: var(--sulayr-profile-border, 1px solid #e8ecef);
+}
+.sulayr-image-consent-date {
+    color: var(--sulayr-profile-label, #5a6c7d);
+    font-size: .9rem;
+    margin: .5rem 0 0;
+}

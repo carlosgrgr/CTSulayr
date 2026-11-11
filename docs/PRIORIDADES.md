@@ -50,4 +50,4 @@ No hay spec. El borrador de cobros pide, solo para los pagos, informar del trata
 
 Falta decidir qué tratamientos cubre, en qué formularios aparece y quién escribe el texto legal.
 
-[SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](club/SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md) (11 de noviembre de 2026) cubre solo el formulario de alta: casillas de privacidad, normas del club e imagen, con versión y fecha, y plazos de conservación. El texto legal lo redacta el club.
+[SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](club/SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md) (11 de noviembre de 2026) cubre solo el formulario de alta: casillas de privacidad, normas del club e imagen, con versión y fecha, y plazos de conservación. El texto legal lo redacta el club. Implementado en la parte B de esa spec (commit en la rama `altas-socio-parte-b`, probada en local el 11 de noviembre de 2026, sin mergear; no está en `main` ni en PROD).

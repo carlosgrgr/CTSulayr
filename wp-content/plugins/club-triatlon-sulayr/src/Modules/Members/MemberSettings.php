@@ -29,6 +29,9 @@ class MemberSettings {
         'enrollment_fee_return' => 10,
         'enrollment_promotions' => [],
         'notice_days' => 5,
+        'join_rate_limit' => 3,
+        'join_form_intro' => '<p>Rellena este formulario para hacerte socio/a del club. Revisaremos tu solicitud y te escribiremos por email cuando esté aprobada.</p>',
+        'join_success_message' => '<p>¡Gracias! Hemos recibido tu solicitud. Te escribiremos por email cuando la revisemos.</p>',
         'penalty_amount' => 2,
         'penalty_day' => 20,
         'receipts_day' => 1,
@@ -206,6 +209,18 @@ class MemberSettings {
             ],
             $this->number( 'notice_days', __( 'Días de aviso para cambios y bajas', SULAYR_TEXTDOMAIN ), $d['notice_days'], __( 'Días antes de fin de mes. Si se avisa más tarde, el cambio se aplica un mes después.', SULAYR_TEXTDOMAIN ) ),
 
+            $this->tab( 'join_form', __( 'Formulario de alta', SULAYR_TEXTDOMAIN ) ),
+            [
+                'key' => 'field_sulayr_members_join_form_help',
+                'label' => __( 'Dónde se usa', SULAYR_TEXTDOMAIN ),
+                'name' => '',
+                'type' => 'message',
+                'message' => __( 'Pon el shortcode [sulayr_solicitud_alta] en una página del club. Los servicios que salen son los del catálogo marcados como visibles en el formulario público.', SULAYR_TEXTDOMAIN ),
+            ],
+            $this->wysiwyg( 'join_form_intro', __( 'Texto encima del formulario', SULAYR_TEXTDOMAIN ), $d['join_form_intro'] ),
+            $this->wysiwyg( 'join_success_message', __( 'Mensaje tras enviar la solicitud', SULAYR_TEXTDOMAIN ), $d['join_success_message'] ),
+            $this->number( 'join_rate_limit', __( 'Solicitudes por hora desde una misma conexión (IP)', SULAYR_TEXTDOMAIN ), $d['join_rate_limit'], __( 'Antispam. Las siguientes se rechazan hasta que pase la hora.', SULAYR_TEXTDOMAIN ), 1, '', 1 ),
+
             $this->tab( 'enrollment', __( 'Matrícula', SULAYR_TEXTDOMAIN ) ),
             $this->number( 'enrollment_fee', __( 'Matrícula (€)', SULAYR_TEXTDOMAIN ), $d['enrollment_fee'], '', 0.01 ),
             $this->number( 'enrollment_fee_return', __( 'Matrícula de reingreso (€)', SULAYR_TEXTDOMAIN ), $d['enrollment_fee_return'], '', 0.01 ),
@@ -373,6 +388,20 @@ class MemberSettings {
             'name' => '',
             'type' => 'tab',
             'placement' => 'left',
+        ];
+    }
+
+    /** Editor de texto. */
+    private function wysiwyg( string $name, string $label, string $default ): array {
+        return [
+            'key' => 'field_sulayr_members_' . $name,
+            'label' => $label,
+            'name' => $name,
+            'type' => 'wysiwyg',
+            'tabs' => 'all',
+            'toolbar' => 'basic',
+            'media_upload' => 0,
+            'default_value' => $default,
         ];
     }
 

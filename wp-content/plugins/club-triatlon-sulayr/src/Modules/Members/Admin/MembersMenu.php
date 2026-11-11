@@ -6,7 +6,10 @@ use ClubTriatlonSulayr\Modules\Members\Catalog\ServiceCatalog;
 use ClubTriatlonSulayr\Modules\Members\Catalog\ServicePostType;
 use ClubTriatlonSulayr\Modules\PostTypes\WalletPostType;
 use ClubTriatlonSulayr\Modules\Wallet\WalletBalancePage;
+use ClubTriatlonSulayr\Modules\Members\Join\JoinRequests;
+use ClubTriatlonSulayr\Modules\Members\MemberConsents;
 use ClubTriatlonSulayr\Modules\Members\MemberLog;
+use ClubTriatlonSulayr\Modules\Members\MemberTasks;
 use ClubTriatlonSulayr\Modules\Members\MemberRoles;
 use ClubTriatlonSulayr\Modules\Members\MemberServices;
 use ClubTriatlonSulayr\Modules\Members\MemberSettings;
@@ -21,12 +24,14 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Menú «Socios» de wp-admin: listado y ficha de solo lectura.
  *
  * Los gestores de socios no tienen edit_users en multisite, así que la ficha
- * vive aquí y no en user-edit.php. Las pantallas de alta, solicitudes y
- * recibos se añaden en las partes B a D.
+ * vive aquí y no en user-edit.php. Solicitudes y alta están en RequestsPage
+ * (parte B); los recibos llegan en la parte D.
  */
 class MembersMenu {
 
     public const SLUG = 'sulayr-socios';
+
+    private const ACTION_TASK_DONE = 'sulayr_member_task_done';
 
     /**
      * __construct()
@@ -41,6 +46,27 @@ class MembersMenu {
         // Después de las páginas de opciones de ACF (prioridad 99).
         add_action( 'admin_menu', [ $this, 'order_submenu' ], 1000 );
         add_action( 'edit_user_profile', [ $this, 'render_profile_link' ], 1 );
+        add_action( 'admin_post_' . self::ACTION_TASK_DONE, [ $this, 'handle_task_done' ] );
+    }
+
+    /**
+     * Marca un paso como hecho desde la ficha.
+     *
+     * @return 	void
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public function handle_task_done(): void {
+        $task_id = isset( $_POST['task_id'] ) ? absint( $_POST['task_id'] ) : 0;
+        check_admin_referer( self::ACTION_TASK_DONE . '_' . $task_id );
+        if ( false === current_user_can( MemberRoles::MANAGE_MEMBERS ) ) {
+            wp_die( esc_html__( 'No tienes permiso para acceder a esta página.', SULAYR_TEXTDOMAIN ), 403 );
+        }
+
+        $task = MemberTasks::mark_done( $task_id );
+        $url = null !== $task ? self::member_url( (int) $task->user_id ) : add_query_arg( 'page', self::SLUG, admin_url( 'admin.php' ) );
+        wp_safe_redirect( $url . '#pasos' );
+        exit;
     }
 
     /**
@@ -115,6 +141,8 @@ class MembersMenu {
 
         $order = [
             self::SLUG,
+            RequestsPage::SLUG,
+            RequestsPage::NEW_SLUG,
             'edit.php?post_type=' . ServicePostType::POST_TYPE_NAME,
             'post-new.php?post_type=' . ServicePostType::POST_TYPE_NAME,
             'edit.php?post_type=' . WalletPostType::POST_TYPE_NAME,
@@ -181,6 +209,7 @@ class MembersMenu {
         $member_id = isset( $_GET['socio'] ) ? absint( $_GET['socio'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Solo lectura.
 
         echo '<div class="wrap sulayr-members">';
+        RequestsPage::print_notice();
         if ( $member_id > 0 ) {
             $this->render_member( $member_id );
         } else {
@@ -248,6 +277,15 @@ class MembersMenu {
         } );
 
         echo '<h1>' . esc_html__( 'Socios', SULAYR_TEXTDOMAIN ) . '</h1>';
+
+        $pending = JoinRequests::count_pending();
+        if ( $pending > 0 ) {
+            printf(
+                '<div class="notice notice-info inline"><p><a href="%s">%s</a></p></div>',
+                esc_url( RequestsPage::url() ),
+                esc_html( sprintf( _n( 'Hay %d solicitud de alta pendiente.', 'Hay %d solicitudes de alta pendientes.', $pending, SULAYR_TEXTDOMAIN ), $pending ) )
+            );
+        }
 
         echo '<ul class="subsubsub">';
         $links = [];
@@ -337,7 +375,17 @@ class MembersMenu {
             __( 'Fecha de nacimiento', SULAYR_TEXTDOMAIN ) => $date( $meta( CustomFields::USER_PROFILE_BIRTH ) ),
             __( 'Fecha de alta', SULAYR_TEXTDOMAIN ) => $date( $meta( CustomFields::USER_PROFILE_JOIN_DATE ) ),
             __( 'Fecha de baja', SULAYR_TEXTDOMAIN ) => $date( $meta( CustomFields::MEMBER_LEAVE_DATE ) ),
+            __( 'Talla de camiseta', SULAYR_TEXTDOMAIN ) => $meta( CustomFields::MEMBER_TSHIRT_SIZE ) ?: '—',
         ];
+        $guardian = array_filter( [
+            $meta( CustomFields::MEMBER_GUARDIAN . '_name' ),
+            $meta( CustomFields::MEMBER_GUARDIAN . '_dni' ),
+            $meta( CustomFields::MEMBER_GUARDIAN . '_phone' ),
+            $meta( CustomFields::MEMBER_GUARDIAN . '_email' ),
+        ] );
+        if ( ! empty( $guardian ) ) {
+            $data[ __( 'Tutor', SULAYR_TEXTDOMAIN ) ] = implode( ' · ', $guardian );
+        }
         $board_payment = $meta( CustomFields::MEMBER_BOARD_PAYMENT );
         if ( '' !== $board_payment && 0.0 !== (float) $board_payment ) {
             $data[ __( 'Retribución mensual (junta)', SULAYR_TEXTDOMAIN ) ] = number_format_i18n( (float) $board_payment, 2 ) . ' €';
@@ -393,8 +441,104 @@ class MembersMenu {
             echo '</tbody></table>';
         }
 
+        $this->render_tasks( $user_id );
+        $this->render_consents( $user_id );
+        $this->render_requests( $user_id );
+
         if ( current_user_can( MemberRoles::VIEW_LOG ) ) {
             $this->render_log( $user_id );
+        }
+    }
+
+    /**
+     * Pasos del socio, con botón para marcarlos como hechos.
+     *
+     * @param   int $user_id Socio.
+     * @return 	void
+     * @access 	private
+     * @package	club-triatlon-sulayr
+     */
+    private function render_tasks( int $user_id ): void {
+        echo '<h2 id="pasos">' . esc_html__( 'Pasos', SULAYR_TEXTDOMAIN ) . '</h2>';
+        $tasks = MemberTasks::for_user( $user_id );
+        if ( empty( $tasks ) ) {
+            echo '<p>' . esc_html__( 'Sin pasos.', SULAYR_TEXTDOMAIN ) . '</p>';
+            return;
+        }
+
+        echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Paso', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'De', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Creado', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Hecho', SULAYR_TEXTDOMAIN ) . '</th></tr></thead><tbody>';
+        foreach ( $tasks as $task ) {
+            if ( null === $task->done_at ) {
+                $done = sprintf(
+                    '<form method="post" action="%1$s">%2$s<input type="hidden" name="action" value="%3$s"><input type="hidden" name="task_id" value="%4$d"><button type="submit" class="button button-small">%5$s</button></form>',
+                    esc_url( admin_url( 'admin-post.php' ) ),
+                    wp_nonce_field( self::ACTION_TASK_DONE . '_' . (int) $task->id, '_wpnonce', true, false ),
+                    esc_attr( self::ACTION_TASK_DONE ),
+                    (int) $task->id,
+                    esc_html__( 'Marcar hecho', SULAYR_TEXTDOMAIN )
+                );
+            } else {
+                $by = (int) $task->done_by > 0 ? get_userdata( (int) $task->done_by ) : false;
+                $done = esc_html( date_i18n( 'd/m/Y H:i', strtotime( (string) $task->done_at ) ) . ( false !== $by ? ' · ' . $by->display_name : '' ) );
+            }
+            printf(
+                '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',
+                esc_html( (string) $task->label ),
+                esc_html( (string) $task->context ),
+                esc_html( date_i18n( 'd/m/Y', strtotime( (string) $task->created_at ) ) ),
+                $done // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escapado arriba.
+            );
+        }
+        echo '</tbody></table>';
+    }
+
+    /**
+     * Consentimientos del socio (todas las filas, la última manda).
+     *
+     * @param   int $user_id Socio.
+     * @return 	void
+     * @access 	private
+     * @package	club-triatlon-sulayr
+     */
+    private function render_consents( int $user_id ): void {
+        echo '<h2>' . esc_html__( 'Consentimientos', SULAYR_TEXTDOMAIN ) . '</h2>';
+        $rows = MemberConsents::rows( $user_id );
+        if ( empty( $rows ) ) {
+            echo '<p>' . esc_html__( 'Sin consentimientos guardados.', SULAYR_TEXTDOMAIN ) . '</p>';
+            return;
+        }
+
+        echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Fecha', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Consentimiento', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Resultado', SULAYR_TEXTDOMAIN ) . '</th><th>' . esc_html__( 'Registrado por', SULAYR_TEXTDOMAIN ) . '</th></tr></thead><tbody>';
+        foreach ( array_reverse( $rows ) as $row ) {
+            $by = (int) $row->created_by > 0 ? get_userdata( (int) $row->created_by ) : false;
+            printf(
+                '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',
+                esc_html( date_i18n( 'd/m/Y H:i', strtotime( (string) $row->created_at ) ) ),
+                esc_html( MemberConsents::label( (string) $row->type ) ),
+                esc_html( MemberConsents::describe( (bool) $row->accepted, (string) $row->version, (string) $row->given_by ) ),
+                esc_html( false !== $by ? $by->display_name : __( 'Formulario público', SULAYR_TEXTDOMAIN ) )
+            );
+        }
+        echo '</tbody></table>';
+    }
+
+    /**
+     * Solicitudes de alta aprobadas para este socio.
+     *
+     * @param   int $user_id Socio.
+     * @return 	void
+     * @access 	private
+     * @package	club-triatlon-sulayr
+     */
+    private function render_requests( int $user_id ): void {
+        $links = [];
+        foreach ( JoinRequests::list( JoinRequests::STATUS_APPROVED ) as $request ) {
+            if ( (int) $request->user_id === $user_id ) {
+                $links[] = sprintf( '<a href="%s">#%d</a> (%s)', esc_url( RequestsPage::url( (int) $request->id ) ), (int) $request->id, esc_html( date_i18n( 'd/m/Y', strtotime( (string) $request->created_at ) ) ) );
+            }
+        }
+        if ( ! empty( $links ) ) {
+            echo '<p>' . esc_html__( 'Solicitudes de alta:', SULAYR_TEXTDOMAIN ) . ' ' . implode( ', ', $links ) . '</p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escapado arriba.
         }
     }
 

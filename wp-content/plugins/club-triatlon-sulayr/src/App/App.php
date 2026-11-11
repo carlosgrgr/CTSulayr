@@ -24,6 +24,10 @@ use ClubTriatlonSulayr\Modules\Members\MemberSettings;
 use ClubTriatlonSulayr\Modules\Members\MemberFields;
 use ClubTriatlonSulayr\Modules\Members\Admin\MembersMenu;
 use ClubTriatlonSulayr\Modules\Members\Admin\ManagerAccess;
+use ClubTriatlonSulayr\Modules\Members\Admin\RequestsPage;
+use ClubTriatlonSulayr\Modules\Members\Join\PublicJoinForm;
+use ClubTriatlonSulayr\Modules\Members\Join\JoinDailyTask;
+use ClubTriatlonSulayr\Modules\Members\Join\ImageConsentAccount;
 use ClubTriatlonSulayr\Modules\Members\Catalog\ServicePostType;
 use ClubTriatlonSulayr\Modules\Members\Catalog\ServiceFields;
 use ClubTriatlonSulayr\Modules\Members\Migration\LegacyFieldsSync;
@@ -147,9 +151,14 @@ class App {
         new ServiceFields();
         new LegacyFieldsSync();
         new ManagerAccess();
+        new JoinDailyTask();
 
         if ( is_admin() ) {
             new MembersMenu();
+            new RequestsPage();
+        } else {
+            new PublicJoinForm();
+            new ImageConsentAccount();
         }
     }
 

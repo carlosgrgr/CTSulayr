@@ -138,6 +138,11 @@ if ( ! defined( 'ABSPATH' ) ) {
                                 'return'          => $return_url,
                             ] );
                         }
+
+                        /**
+                         * Bloques extra de la edición (consentimiento de imagen, spec altas D10).
+                         */
+                        do_action( 'sulayr_athlete_profile_edit_after', $current_user_id );
                         ?>
                     </div>
                 </section>

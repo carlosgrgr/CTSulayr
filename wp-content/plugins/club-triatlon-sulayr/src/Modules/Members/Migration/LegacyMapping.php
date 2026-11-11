@@ -4,6 +4,7 @@ namespace ClubTriatlonSulayr\Modules\Members\Migration;
 use ClubTriatlonSulayr\Infrastructure\CustomFields;
 use ClubTriatlonSulayr\Modules\Members\Catalog\Service;
 use ClubTriatlonSulayr\Modules\Members\Catalog\ServiceCatalog;
+use ClubTriatlonSulayr\Modules\Members\MemberServices;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -155,6 +156,45 @@ class LegacyMapping {
                 return [ 'status' => CustomFields::STATUS_PENDING, 'warning' => '' ];
             default:
                 return [ 'status' => CustomFields::STATUS_ACTIVE, 'warning' => sprintf( __( 'Estado desconocido «%s»: pasa a activo.', SULAYR_TEXTDOMAIN ), $legacy ) ];
+        }
+    }
+
+    /**
+     * Escribe la tarifa, la modalidad y la marca de directiva antiguas a
+     * partir de los servicios vigentes en $date y del tipo de socio.
+     *
+     * Las altas de la parte B lo usan para que la ficha de usuario, Mi cuenta
+     * y los listados antiguos muestren lo mismo que el historial, y para que
+     * el puente compare con valores coherentes. Natación y estado los escribe
+     * ReservationsAccess. Se retira con el puente en la parte C.
+     *
+     * @param   int    $user_id Socio.
+     * @param   string $date    Y-m-d.
+     * @return 	void
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function write_plan_fields( int $user_id, string $date ): void {
+        $training = ServiceCatalog::get_by_slug( self::SLUG_TRAINING );
+
+        $plan = 'basic';
+        $training_type = '';
+        foreach ( MemberServices::active_on( $user_id, $date ) as $row ) {
+            if ( null !== $training && (int) $row->service_id === $training->id ) {
+                $plan = 'premium';
+                $training_type = (string) ( array_search( (string) $row->option_key, self::TRAINING_OPTIONS, true ) ?: '' );
+            }
+        }
+
+        $values = [
+            CustomFields::USER_PROFILE_MEMBERSHIP_PLAN => $plan,
+            CustomFields::USER_PROFILE_TRAINING_TYPE => $training_type,
+            CustomFields::USER_PROFILE_IS_DIRECTIVE => self::TYPE_BOARD === (string) get_user_meta( $user_id, CustomFields::MEMBER_TYPE, true ) ? '1' : '0',
+        ];
+        foreach ( $values as $key => $value ) {
+            if ( (string) get_user_meta( $user_id, $key, true ) !== $value ) {
+                update_user_meta( $user_id, $key, $value );
+            }
         }
     }
 }

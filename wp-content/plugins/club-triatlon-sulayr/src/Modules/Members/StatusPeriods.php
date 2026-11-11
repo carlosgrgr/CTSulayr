@@ -98,6 +98,45 @@ class StatusPeriods {
     }
 
     /**
+     * Periodo que cubre una fecha, o null. Un inicio desconocido cuenta como «desde siempre».
+     *
+     * @param   int    $user_id Socio.
+     * @param   string $date    Y-m-d.
+     * @return 	object|null
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function on( int $user_id, string $date ): ?object {
+        global $wpdb;
+
+        $table = MembersSchema::table( MembersSchema::STATUS_PERIODS );
+
+        return $wpdb->get_row( $wpdb->prepare(
+            "SELECT * FROM {$table} WHERE user_id = %d AND ( start_date IS NULL OR start_date <= %s ) AND ( end_date IS NULL OR end_date >= %s ) ORDER BY id DESC LIMIT 1",
+            $user_id,
+            $date,
+            $date
+        ) );
+    }
+
+    /**
+     * True si el socio tiene un periodo que empieza después de $date.
+     *
+     * @param   int    $user_id Socio.
+     * @param   string $date    Y-m-d.
+     * @return 	bool
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function has_future( int $user_id, string $date ): bool {
+        global $wpdb;
+
+        $table = MembersSchema::table( MembersSchema::STATUS_PERIODS );
+
+        return 0 < (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND start_date > %s", $user_id, $date ) );
+    }
+
+    /**
      * Todos los periodos de un socio.
      *
      * @param   int $user_id Socio.
