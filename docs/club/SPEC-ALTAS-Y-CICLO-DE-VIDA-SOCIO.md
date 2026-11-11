@@ -572,7 +572,7 @@ Sin cambiar todavía: los avisos por email de `AthleteUpdate` al cambiar tarifa 
 - **Números de socio.** Los del Excel, que son el ID de usuario. Si faltan, el ID de usuario; si está ocupado, el siguiente al mayor (D14). Un número repetido de la misma persona en las dos pestañas no es error.
 - **Personas en las dos pestañas.** Se cruzan todas sus filas por DNI o email. Manda la de «Antiguos» si en la web está de baja; si no, la de «Socios». Lo que falte se completa con la otra fila.
 - **Solo en «Antiguos deportistas»** y activo en la web: se migra como baja (decidido el 11 de noviembre de 2026: Bettina Hosso y Ramón López Martín ya no son socios).
-- **Fecha de baja del Excel.** Hasta 2023 se apuntaba el último día como socio (31/08/2023); desde 2024, el primer día ya de baja (1/07/2026). Regla: una fecha en día 1 se lee como primer día de baja y se guarda el día anterior como último día. Pendiente de confirmar con el club.
+- **Fecha de baja del Excel.** La fecha de baja es el último día del mes en que el socio deja el club (31/08/2023). Las fechas en día 1 que aparecen desde 2024 (1/07/2026) eran un error de anotación: se guardan como el día anterior, el último día del mes previo. Confirmado por el club el 11 de noviembre de 2026.
 - **Filas con columnas corridas** (la fecha de alta es la edad): la fecha de baja de esa fila se guarda como desconocida.
 - **Fechas con año de dos cifras** (`09/09/25`, como exporta ahora la hoja): se leen con el siglo actual y, si así quedarían en el futuro, con el anterior (`02/06/65` → 1965).
 - **Varias filas de la misma persona en «Antiguos»** (p. ej. dos etapas en el club): una fecha de baja real gana a «desconocida». Solo se guarda la última etapa.
@@ -702,6 +702,5 @@ No hay PHPUnit. Lo que funcionó en la parte A:
 
 ### 17.4. Abierto
 
-- **Fecha de baja en día 1.** En la migración se aplicó que «1/07/2026» en el Excel significa último día como socio el 30 de junio de 2026. Falta que el club lo confirme; afecta a cómo se muestran y calculan las bajas en las partes C y D.
 - **Deportistas externos.** David Sánchez Cabrerizo y Lorena Montellano Peláez no están en la web y se quedan solo en el Excel. Si se quisiera distinguir «externo» como tipo de socio, sería una decisión nueva.
 
