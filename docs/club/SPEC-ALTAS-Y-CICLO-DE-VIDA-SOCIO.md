@@ -1,7 +1,7 @@
 # SPEC — Alta y ciclo de vida del socio
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr`
-**Estado:** Definida el 11 de noviembre de 2026. Decisiones D1 a D58 cerradas con el club (sección 3). Parte A en `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026 con FileZilla. Stripe limpiado y migración terminada en PROD ese día (sección 16.5). Partes B, C y D (secciones 18, 19 y 20, con la identidad Sulayr) implementadas y probadas en local el 11 y 12 de noviembre de 2026, en `main` (merge `21914c88d`) y su código subido a PROD el 12 de noviembre de 2026 con FileZilla (pasos 1 a 4 de [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md): esquema en la versión 4 y menú Socios completo). Pasos 5 a 7 hechos ese día (archivos retirados borrados, Socios → Ajustes configurado con los datos reales y comprobaciones con un alta de prueba). Pendiente en PROD: empezar con los recibos (paso 8). Pruebas manuales pendientes en [pruebas.md](altas-y-ciclo-de-vida-socio/pruebas.md).
+**Estado:** Definida el 11 de noviembre de 2026. Decisiones D1 a D58 cerradas con el club (sección 3). Parte A en `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026 con FileZilla. Stripe limpiado y migración terminada en PROD ese día (sección 16.5). Partes B, C y D (secciones 18, 19 y 20, con la identidad Sulayr) implementadas y probadas en local el 11 y 12 de noviembre de 2026, en `main` (merge `21914c88d`) y su código subido a PROD el 12 de noviembre de 2026 con FileZilla (pasos 1 a 4 de [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md): esquema en la versión 4 y menú Socios completo). Pasos 5 a 7 hechos ese día (archivos retirados borrados, Socios → Ajustes configurado con los datos reales y comprobaciones con un alta de prueba). Recibos en marcha desde noviembre de 2026 (paso 8). Pruebas manuales de local y PROD hechas el 12 de noviembre de 2026; quedan las que dependen de una fecha (penalización del día 20, generación automática del 1 de diciembre, baja de Diego Lardón el 1 de enero de 2027), en [pruebas.md](altas-y-ciclo-de-vida-socio/pruebas.md).
 **Fecha:** 11 de noviembre de 2026
 
 Esta spec sustituye el alta manual de socios (WhatsApp + Excel + alta a mano en la web) por un proceso en la web del club (blog 1): solicitud, aprobación, cambios, congelaciones, bajas, recibos mensuales y listados. Conserva el histórico de altas, bajas y cambios de servicios, y deja los Excel de Drive solo para ingresos y gastos del club.
@@ -476,7 +476,7 @@ No se importan «Posibles deportistas» ni las pestañas mensuales de pagos.
 | A | Catálogo y tipos de socio (4.3, 4.4), tablas (4.2), registro de cambios (D58), migración (11), eliminación de Stripe (12), roles (10) y capacidades del monedero (9.4) | En `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026. Ver sección 16. |
 | B | Formulario público y de gestor, aprobación, detección de duplicados y reingresos, consentimientos, email de bienvenida, pasos de alta (5) | En `main` y desplegada en PROD el 12 de noviembre de 2026, configurada y comprobada. Pruebas manuales en [pruebas.md](altas-y-ciclo-de-vida-socio/pruebas.md). Ver sección 18. |
 | C | Cambios, bajas, congelaciones, solicitudes desde Mi cuenta, tarea nocturna, sincronización con reservas (6, 7) | En `main` y desplegada en PROD el 12 de noviembre de 2026, configurada y comprobada. Ver sección 19. |
-| D | Recibos, PDF, Mis cuotas, monedero de la junta, exportación, listado del entrenador, welcome pack, tareas pendientes (8, 9) | En `main` y desplegada en PROD el 12 de noviembre de 2026, configurada y comprobada. Pendiente: decidir el primer mes de recibos. Ver sección 20. |
+| D | Recibos, PDF, Mis cuotas, monedero de la junta, exportación, listado del entrenador, welcome pack, tareas pendientes (8, 9) | En `main` y desplegada en PROD el 12 de noviembre de 2026, configurada y comprobada. Recibos desde noviembre de 2026. Ver sección 20. |
 
 Cada parte se puede usar en cuanto está terminada. Hasta la parte D, el control de cuotas sigue en el Excel.
 
@@ -797,7 +797,7 @@ No comprobado:
 
 ### 18.5. Despliegue en PROD
 
-**Desplegado el 12 de noviembre de 2026** junto con B, C y D, siguiendo [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md) (pasos 1 a 7 hechos; el 8, primer mes de recibos, pendiente). Lo que sigue queda como referencia.
+**Desplegado el 12 de noviembre de 2026** junto con B, C y D, siguiendo [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md) (pasos 1 a 8 hechos; primer mes con recibos: noviembre de 2026). Lo que sigue queda como referencia.
 
 Para subir B, C y D juntas, que es lo previsto, sigue [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md), que tiene el cambio neto de archivos. Lo que sigue es para subir solo la parte B.
 
@@ -914,7 +914,7 @@ No comprobado: el aspecto en el navegador (Mis cuotas y los formularios de la fi
 
 ### 19.5. Despliegue en PROD
 
-**Desplegado el 12 de noviembre de 2026** junto con B, C y D, siguiendo [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md) (pasos 1 a 7 hechos; el 8, primer mes de recibos, pendiente). Lo que sigue queda como referencia.
+**Desplegado el 12 de noviembre de 2026** junto con B, C y D, siguiendo [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md) (pasos 1 a 8 hechos; primer mes con recibos: noviembre de 2026). Lo que sigue queda como referencia.
 
 Para subir B, C y D juntas, que es lo previsto, sigue [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md), que tiene el cambio neto de archivos. Lo que sigue es para subir solo la parte C.
 
@@ -1064,7 +1064,7 @@ No comprobado: el aspecto en el navegador (Mis cuotas en el móvil, las pantalla
 
 ### 20.6. Despliegue en PROD
 
-**Desplegado el 12 de noviembre de 2026** junto con B, C y D, siguiendo [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md) (pasos 1 a 7 hechos; el 8, primer mes de recibos, pendiente). Lo que sigue queda como referencia.
+**Desplegado el 12 de noviembre de 2026** junto con B, C y D, siguiendo [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md) (pasos 1 a 8 hechos; primer mes con recibos: noviembre de 2026). Lo que sigue queda como referencia.
 
 Para subir B, C y D juntas, que es lo previsto, sigue [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md), que tiene el cambio neto de archivos. Lo que sigue es para subir solo la parte D, con B y C ya en PROD (18.5 y 19.5). Con FileZilla, en `wp-content/plugins/club-triatlon-sulayr/`:
 
