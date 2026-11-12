@@ -17,6 +17,9 @@ class MemberFields {
 
     public const GROUP = 'sulayr_member_fields';
 
+    /** Tallas de camiseta de la ficha y del formulario de alta. */
+    public const TSHIRT_SIZES = [ 'XS', 'S', 'M', 'L', 'XL', 'XXL' ];
+
     /**
      * __construct()
      *
@@ -89,14 +92,7 @@ class MemberFields {
                     'label' => __( 'Talla de camiseta', SULAYR_TEXTDOMAIN ),
                     'name' => CustomFields::MEMBER_TSHIRT_SIZE,
                     'type' => 'select',
-                    'choices' => [
-                        'XS' => 'XS',
-                        'S' => 'S',
-                        'M' => 'M',
-                        'L' => 'L',
-                        'XL' => 'XL',
-                        'XXL' => 'XXL',
-                    ],
+                    'choices' => array_combine( self::TSHIRT_SIZES, self::TSHIRT_SIZES ),
                     'allow_null' => 1,
                 ],
                 [

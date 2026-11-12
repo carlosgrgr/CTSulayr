@@ -2,11 +2,17 @@
     "name": "carlosgrgr/club-triatlon-sulayr",
     "description": "Plugin with functions for Club Triatlon Sulayr webpage",
     "require": {
-        "php": ">=7.4.0"
+        "php": ">=7.4.0",
+        "dompdf/dompdf": "^3.1"
     },
     "autoload": {
         "psr-4": {
             "ClubTriatlonSulayr\\": "src/"
+        }
+    },
+    "config": {
+        "platform": {
+            "php": "7.4.33"
         }
     }
 }

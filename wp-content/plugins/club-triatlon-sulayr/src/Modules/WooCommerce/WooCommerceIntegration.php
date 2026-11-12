@@ -86,7 +86,10 @@ class WooCommerceIntegration {
         foreach ( $items as $key => $label ) {
             $new[ $key ] = $label;
             if ( 'dashboard' === $key ) {
-                $new[ self::ENDPOINT_PERFIL_DEPORTISTA ] = __( 'Perfil de deportista', SULAYR_TEXTDOMAIN );
+                // De baja (D32): sin perfil de deportista; conserva Mis cuotas, el monedero y la tienda.
+                if ( false === $this->is_left() ) {
+                    $new[ self::ENDPOINT_PERFIL_DEPORTISTA ] = __( 'Perfil de deportista', SULAYR_TEXTDOMAIN );
+                }
                 $new[ self::ENDPOINT_MONEDERO ] = __( 'Mi monedero', SULAYR_TEXTDOMAIN );
             }
         }
@@ -127,6 +130,10 @@ class WooCommerceIntegration {
      */
     public function output_perfil_deportista_endpoint(): void {
         if ( ! $this->is_athlete() ) {
+            return;
+        }
+        if ( $this->is_left() ) {
+            echo '<p>' . esc_html__( 'Ya no eres socio del club. Puedes consultar tus cuotas en «Mis cuotas».', SULAYR_TEXTDOMAIN ) . '</p>';
             return;
         }
 
@@ -271,6 +278,13 @@ class WooCommerceIntegration {
         }
 
         return $items;
+    }
+
+    /**
+     * True si el deportista actual está de baja.
+     */
+    private function is_left(): bool {
+        return CustomFields::STATUS_LEFT === (string) get_user_meta( get_current_user_id(), CustomFields::USER_PROFILE_ATHLETE_STATUS, true );
     }
 
     private function is_athlete(): bool {

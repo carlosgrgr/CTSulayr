@@ -10,10 +10,19 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Se crean con dbDelta en el blog donde está activo el plugin (blog 1).
  * Subir VERSION cuando cambie una tabla; dbDelta conserva los datos.
+ *
+ * Versión 2 (parte B): updated_at en solicitudes (para caducar las pendientes
+ * sin tocar) y created_by en consentimientos (gestor que los registró).
+ * Versión 3 (parte C): applied_at en solicitudes (cambios, bajas y
+ * congelaciones aprobadas que ya se aplicaron al historial).
+ * Versión 4 (parte D): historial de tipos de socio (MEMBER_TYPES), user_id y
+ * source_receipt_id en líneas (correcciones pendientes), note en recibos y
+ * pagos, y medio de pago más largo. Al subir, MemberTypes::seed() crea el
+ * periodo inicial de cada socio con su tipo actual.
  */
 class MembersSchema {
 
-    public const VERSION = 1;
+    public const VERSION = 4;
     public const VERSION_OPTION = 'sulayr_members_db_version';
 
     public const SERVICES = 'sulayr_member_services';
@@ -27,6 +36,7 @@ class MembersSchema {
     public const RECEIPT_LINES = 'sulayr_receipt_lines';
     public const RECEIPT_PAYMENTS = 'sulayr_receipt_payments';
     public const LOG = 'sulayr_member_log';
+    public const MEMBER_TYPES = 'sulayr_member_type_periods';
 
     /**
      * __construct()
@@ -81,7 +91,7 @@ class MembersSchema {
 
         $charset = $wpdb->get_charset_collate();
         $n = [];
-        foreach ( [ 'SERVICES', 'STATUS_PERIODS', 'REQUESTS', 'SUBSIDIES', 'CONSENTS', 'TASKS', 'WELCOME_DELIVERIES', 'RECEIPTS', 'RECEIPT_LINES', 'RECEIPT_PAYMENTS', 'LOG' ] as $const ) {
+        foreach ( [ 'SERVICES', 'STATUS_PERIODS', 'REQUESTS', 'SUBSIDIES', 'CONSENTS', 'TASKS', 'WELCOME_DELIVERIES', 'RECEIPTS', 'RECEIPT_LINES', 'RECEIPT_PAYMENTS', 'LOG', 'MEMBER_TYPES' ] as $const ) {
             $n[ $const ] = self::table( constant( self::class . '::' . $const ) );
         }
 
@@ -130,8 +140,12 @@ class MembersSchema {
   reason varchar(255) NOT NULL DEFAULT '',
   ip varchar(45) NOT NULL DEFAULT '',
   created_at datetime NOT NULL,
+  updated_at datetime DEFAULT NULL,
+  applied_at datetime DEFAULT NULL,
   PRIMARY KEY  (id),
   KEY type_status (type,status),
+  KEY effective_date (effective_date),
+  KEY ip_created (ip,created_at),
   KEY user_id (user_id)
 ) $charset;";
 
@@ -158,6 +172,7 @@ class MembersSchema {
   version varchar(32) NOT NULL,
   accepted tinyint(1) NOT NULL,
   given_by varchar(10) NOT NULL DEFAULT 'socio',
+  created_by bigint(20) unsigned NOT NULL DEFAULT 0,
   created_at datetime NOT NULL,
   PRIMARY KEY  (id),
   KEY user_id (user_id),
@@ -197,6 +212,7 @@ class MembersSchema {
   total decimal(10,2) NOT NULL DEFAULT 0,
   status varchar(20) NOT NULL DEFAULT 'pendiente',
   outdated tinyint(1) NOT NULL DEFAULT 0,
+  note varchar(255) NOT NULL DEFAULT '',
   generated_by bigint(20) unsigned NOT NULL DEFAULT 0,
   generated_at datetime NOT NULL,
   PRIMARY KEY  (id),
@@ -208,6 +224,8 @@ class MembersSchema {
         $sql[] = "CREATE TABLE {$n['RECEIPT_LINES']} (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   receipt_id bigint(20) unsigned NOT NULL,
+  user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+  source_receipt_id bigint(20) unsigned NOT NULL DEFAULT 0,
   type varchar(20) NOT NULL,
   concept varchar(255) NOT NULL,
   amount decimal(10,2) NOT NULL,
@@ -216,7 +234,9 @@ class MembersSchema {
   created_by bigint(20) unsigned NOT NULL DEFAULT 0,
   created_at datetime NOT NULL,
   PRIMARY KEY  (id),
-  KEY receipt_id (receipt_id)
+  KEY receipt_id (receipt_id),
+  KEY user_id (user_id),
+  KEY source_receipt_id (source_receipt_id)
 ) $charset;";
 
         $sql[] = "CREATE TABLE {$n['RECEIPT_PAYMENTS']} (
@@ -224,8 +244,9 @@ class MembersSchema {
   receipt_id bigint(20) unsigned NOT NULL,
   amount decimal(10,2) NOT NULL,
   paid_on date NOT NULL,
-  method varchar(20) NOT NULL,
+  method varchar(60) NOT NULL,
   wallet_post_id bigint(20) unsigned NOT NULL DEFAULT 0,
+  note varchar(255) NOT NULL DEFAULT '',
   created_by bigint(20) unsigned NOT NULL DEFAULT 0,
   created_at datetime NOT NULL,
   PRIMARY KEY  (id),
@@ -247,13 +268,33 @@ class MembersSchema {
   KEY created_at (created_at)
 ) $charset;";
 
+        $sql[] = "CREATE TABLE {$n['MEMBER_TYPES']} (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  user_id bigint(20) unsigned NOT NULL,
+  member_type varchar(32) NOT NULL,
+  start_date date DEFAULT NULL,
+  end_date date DEFAULT NULL,
+  created_by bigint(20) unsigned NOT NULL DEFAULT 0,
+  created_at datetime NOT NULL,
+  PRIMARY KEY  (id),
+  KEY user_id (user_id)
+) $charset;";
+
         foreach ( $sql as $statement ) {
             dbDelta( $statement );
         }
 
+        $previous = (int) get_option( self::VERSION_OPTION );
         update_option( self::VERSION_OPTION, self::VERSION );
 
         // La versión 1 quita el endpoint «mis-pagos»: WooCommerceIntegration regenera los enlaces en init.
-        update_option( 'sulayr_wc_flush_rewrite_rules', '1' );
+        if ( $previous < 1 ) {
+            update_option( 'sulayr_wc_flush_rewrite_rules', '1' );
+        }
+
+        // La versión 4 empieza el historial de tipos con el tipo actual de cada socio.
+        if ( $previous < 4 ) {
+            \ClubTriatlonSulayr\Modules\Members\MemberTypes::seed();
+        }
     }
 }

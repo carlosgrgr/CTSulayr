@@ -127,6 +127,11 @@ class MemberLog {
             ],
             [ '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s' ]
         );
+
+        // Servicios y estados afectan a los recibos (D40): Receipts comprueba si alguno queda desfasado.
+        if ( in_array( $area, [ self::AREA_SERVICES, self::AREA_STATUS ], true ) ) {
+            do_action( 'sulayr_member_history_changed', $user_id );
+        }
     }
 
     /**
