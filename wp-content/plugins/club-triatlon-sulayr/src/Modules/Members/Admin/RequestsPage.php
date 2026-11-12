@@ -62,11 +62,38 @@ class RequestsPage {
      * @package	club-triatlon-sulayr
      */
     public function register(): void {
-        $pending = current_user_can( MemberRoles::MANAGE_MEMBERS ) ? JoinRequests::count_pending() + count( MemberChanges::pending() ) : 0;
-        $bubble = $pending > 0 ? sprintf( ' <span class="awaiting-mod count-%1$d"><span class="pending-count">%1$d</span></span>', $pending ) : '';
+        $bubble = self::bubble();
 
         add_submenu_page( MembersMenu::SLUG, __( 'Solicitudes de alta', SULAYR_TEXTDOMAIN ), __( 'Solicitudes', SULAYR_TEXTDOMAIN ) . $bubble, MemberRoles::MANAGE_MEMBERS, self::SLUG, [ $this, 'render' ] );
         add_submenu_page( MembersMenu::SLUG, __( 'Nueva alta', SULAYR_TEXTDOMAIN ), __( 'Nueva alta', SULAYR_TEXTDOMAIN ), MemberRoles::MANAGE_MEMBERS, self::NEW_SLUG, [ $this, 'render_new' ] );
+    }
+
+    /**
+     * Solicitudes por resolver: altas pendientes y cambios o bajas pedidos por socios.
+     *
+     * @return 	int
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function pending_count(): int {
+        if ( false === current_user_can( MemberRoles::MANAGE_MEMBERS ) ) {
+            return 0;
+        }
+
+        return JoinRequests::count_pending() + count( MemberChanges::pending() );
+    }
+
+    /**
+     * Globo del menú con las solicitudes por resolver, o '' si no hay.
+     *
+     * @return 	string
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function bubble(): string {
+        $pending = self::pending_count();
+
+        return $pending > 0 ? sprintf( ' <span class="awaiting-mod count-%1$d"><span class="pending-count">%1$d</span></span>', $pending ) : '';
     }
 
     /**

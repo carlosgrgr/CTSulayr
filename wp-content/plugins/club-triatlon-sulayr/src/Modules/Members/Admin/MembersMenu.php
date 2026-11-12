@@ -122,9 +122,10 @@ class MembersMenu {
      * @package	club-triatlon-sulayr
      */
     public function register(): void {
+        // El globo de solicitudes también en el menú padre. El primer submenú se queda sin él.
         add_menu_page(
             __( 'Socios', SULAYR_TEXTDOMAIN ),
-            __( 'Socios', SULAYR_TEXTDOMAIN ),
+            __( 'Socios', SULAYR_TEXTDOMAIN ) . RequestsPage::bubble(),
             MemberRoles::MANAGE_MEMBERS,
             self::SLUG,
             [ $this, 'render' ],
