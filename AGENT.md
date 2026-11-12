@@ -89,7 +89,7 @@ How the data and the two sites fit together:
 
 ## Club members module
 
-Implements `docs/club/SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md` (part A in `main` and PROD since 11 November 2026; parts B, C and D, with the Sulayr brand, merged into `main` (`21914c88d`) and their code uploaded to PROD on 12 November 2026; PROD settings, cleanup of removed files, checks and the first receipts month are still pending, see steps 5 to 8 of `docs/club/altas-y-ciclo-de-vida-socio/despliegue-prod.md`; manual tests left in `docs/club/altas-y-ciclo-de-vida-socio/pruebas.md`). Code in `wp-content/plugins/club-triatlon-sulayr/src/Modules/Members/`, wired in `App::load_members()`. Sections 16, 18, 19 and 20 of the spec have the implementation notes of parts A to D.
+Implements `docs/club/SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md` (part A in `main` and PROD since 11 November 2026; parts B, C and D, with the Sulayr brand, merged into `main` (`21914c88d`) and their code uploaded to PROD on 12 November 2026; removed files deleted, settings configured and checks done that day; only the first receipts month is pending, see step 8 of `docs/club/altas-y-ciclo-de-vida-socio/despliegue-prod.md`; manual tests left in `docs/club/altas-y-ciclo-de-vida-socio/pruebas.md`). Code in `wp-content/plugins/club-triatlon-sulayr/src/Modules/Members/`, wired in `App::load_members()`. Sections 16, 18, 19 and 20 of the spec have the implementation notes of parts A to D.
 
 - **History is rows, not meta.** `MemberServices` (services with start/end dates, both inclusive, end null = current) and `StatusPeriods` (activo, congelado, baja) never delete rows: a change closes one row and opens another. Both write to `MemberLog`, which only inserts. Wrap bulk writes in `MemberLog::with_note()`.
 - **Catalog is data.** Services are the CPT `sulayr_service` (slug = stable key); prices by member type and start date come from `ServiceCatalog::price_for()`. Member types, enrollment fee, notice days, email and consent texts, and step lists come from `MemberSettings::get()`, which falls back to defaults. Don't hard-code prices, types or texts.
@@ -108,7 +108,7 @@ Implements `docs/club/SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md` (part A in `main` and
 
 ## Production
 
-PROD is on Hostinger without SSH or WP-CLI. Code is deployed with FileZilla: upload new files first, then overwrite, and delete removed files by hand afterwards (FileZilla does not delete). Members parts B, C and D were uploaded to PROD on 12 November 2026 following `docs/club/altas-y-ciclo-de-vida-socio/despliegue-prod.md` (steps 1 to 4); its steps 5 to 8 (delete removed files, settings, checks, receipts) are still pending. Any one-off data task needed in PROD must be runnable from wp-admin by an administrator, with a dry run first. WP-CLI is only available locally.
+PROD is on Hostinger without SSH or WP-CLI. Code is deployed with FileZilla: upload new files first, then overwrite, and delete removed files by hand afterwards (FileZilla does not delete). Members parts B, C and D were uploaded to PROD on 12 November 2026 following `docs/club/altas-y-ciclo-de-vida-socio/despliegue-prod.md` (steps 1 to 4); steps 1 to 7 are done; step 8 (first receipts month) is pending. Any one-off data task needed in PROD must be runnable from wp-admin by an administrator, with a dry run first. WP-CLI is only available locally.
 
 ## Conventions
 

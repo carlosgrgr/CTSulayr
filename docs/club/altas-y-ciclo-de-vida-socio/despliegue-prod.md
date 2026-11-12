@@ -11,7 +11,7 @@ Escrito el 12 de noviembre de 2026. PROD tiene la parte A (`main`, último commi
 
 Todas las rutas son relativas a `wp-content/plugins/club-triatlon-sulayr/` en el servidor.
 
-**Estado (12 de noviembre de 2026):** rama mergeada en `main` (`21914c88d`) y desplegada desde `main`. Pasos 0 a 4 hechos: copia de seguridad, extensiones comprobadas (PHP 8.2, `dom`, `mbstring` y `gd`), archivos subidos, primera carga con el menú Socios completo. Pendientes: pasos 5 a 8.
+**Estado (12 de noviembre de 2026):** rama mergeada en `main` (`21914c88d`) y desplegada desde `main`. Pasos 0 a 7 hechos: copia de seguridad, extensiones comprobadas (PHP 8.2, `dom`, `mbstring` y `gd`), archivos subidos, primera carga con el menú Socios completo, archivos retirados borrados, Socios → Ajustes configurado y comprobaciones con un alta de prueba. Pendiente: paso 8 (primer mes de recibos).
 
 ## Antes de empezar
 

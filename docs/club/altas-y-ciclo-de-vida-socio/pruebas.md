@@ -109,26 +109,26 @@ El proceso completo de B, C y D juntas está en [despliegue-prod.md](despliegue-
 ### 7. Puesta en marcha
 
 - [x] wp-admin carga y salen Socios → Solicitudes y Nueva alta. Esto confirma que funciona con el PHP de PROD. (12/11/2026, PHP 8.2)
-- [ ] Socios → Ajustes con los textos reales: WhatsApp, email del club, consentimientos con su versión y emails.
-- [ ] Página con `[sulayr_solicitud_alta]` creada y enlazada.
+- [x] Socios → Ajustes con los textos reales: WhatsApp, email del club, consentimientos con su versión y emails. (12/11/2026)
+- [x] Página con `[sulayr_solicitud_alta]` creada y enlazada. (12/11/2026)
 
 ### 8. Prueba completa con un email propio
 
-- [ ] Envía una solicitud: llega el aviso al Gmail del club.
-- [ ] Envía otra desde otra conexión (p. ej. el móvil con datos). En Socios → Solicitudes, las IP son distintas. Si son iguales, el límite de 3 por hora es común para todos: súbelo en Ajustes.
-- [ ] Aprueba y revisa la bienvenida en el correo, también en el móvil.
-- [ ] Después, da de baja al socio de prueba o rechaza la solicitud.
+- [x] Envía una solicitud: llega el aviso al Gmail del club. (12/11/2026)
+- [x] Envía otra desde otra conexión (p. ej. el móvil con datos). En Socios → Solicitudes, las IP son distintas. (12/11/2026, revisado en el paso 7 del despliegue) Si son iguales, el límite de 3 por hora es común para todos: súbelo en Ajustes.
+- [x] Aprueba y revisa la bienvenida en el correo, también en el móvil. (12/11/2026)
+- [x] Después, da de baja al socio de prueba o rechaza la solicitud. (12/11/2026)
 
 ### 9. Parte C en PROD (spec 19.5)
 
-- [ ] Tras subir y borrar los archivos, «Mis cuotas» abre en Mi cuenta (si da 404, guardar Ajustes → Enlaces permanentes).
-- [ ] La ficha de Diego Lardón muestra la baja programada para el 1 de enero de 2027.
-- [ ] «Ejecutar ahora» en Socios no aplica nada inesperado.
+- [x] Tras subir y borrar los archivos, «Mis cuotas» abre en Mi cuenta (si da 404, guardar Ajustes → Enlaces permanentes).
+- [x] La ficha de Diego Lardón muestra la baja programada para el 1 de enero de 2027. (12/11/2026)
+- [x] «Ejecutar ahora» en Socios no aplica nada inesperado. (12/11/2026)
 - [ ] El 1 de enero de 2027, Diego Lardón está de baja.
 
 ### 9 bis. Parte D en PROD (spec 20.6)
 
-- [ ] Tras subir, salen Socios → Recibos, Tareas pendientes, Entrenador y Welcome pack. Herramientas → Salud del sitio no avisa de que falten DOM, mbstring o GD.
+- [x] Tras subir, salen Socios → Recibos, Tareas pendientes, Entrenador y Welcome pack. Herramientas → Salud del sitio no avisa de que falten DOM, mbstring o GD. (12/11/2026)
 - [ ] Ajustes → Recibos revisados y retribución de la junta puesta en cada ficha. «Primer mes con recibos» decidido (ver Diego Lardón en 20.7).
 - [ ] Generar el primer mes y revisar varios recibos y su PDF, en especial uno de la junta y uno con natación de la junta.
 - [ ] El día 1 siguiente, sin pulsar nada: los recibos del mes se generaron solos y la retribución de la junta está en el monedero una sola vez.
