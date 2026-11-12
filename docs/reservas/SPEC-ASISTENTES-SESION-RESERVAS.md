@@ -1,6 +1,6 @@
 # Nadadores apuntados en el detalle de la sesión
 
-**Estado:** Definida el 12 de noviembre de 2026 con el club. Implementada en la rama `feature/asistentes-sesion`. Pendiente de entrar en `main` y de desplegar en PROD.
+**Estado:** Definida el 12 de noviembre de 2026 con el club. En `main` (`501f6a185` y `0e56b6346`) y desplegada en PROD el 12 de noviembre de 2026 con FileZilla.
 
 **Plugin:** `sulayr-reservas`.
 

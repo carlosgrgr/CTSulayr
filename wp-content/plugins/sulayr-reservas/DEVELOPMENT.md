@@ -412,7 +412,7 @@ Ordenar conserva `origen`. **Exportar CSV** recibe el mismo `origen` y exporta l
 
 ## Nadadores apuntados en el detalle
 
-Spec: `docs/reservas/SPEC-ASISTENTES-SESION-RESERVAS.md`. No cambia el esquema.
+Spec: `docs/reservas/SPEC-ASISTENTES-SESION-RESERVAS.md`. En `main` y en PROD desde el 12 de noviembre de 2026. No cambia el esquema.
 
 - `PanelQuery::sessionSwimmers()` exige `sulayr_view_session_attendees` y lee de `sulayr_swim_bookings` solo `user_id`, `first_name` y `last_name`, con `LEFT JOIN` a `sulayr_swim_swimmers` para la foto. Una reserva sin ficha sale sin foto.
 - `PanelQuery::attendees()` sigue exigiendo `sulayr_view_all_bookings`. Ahora trae también la foto y ordena por nombre y apellidos.
