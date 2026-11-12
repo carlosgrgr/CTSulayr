@@ -4,7 +4,7 @@ Reservas de natación, en el móvil. Hay una versión para el navegador en `GUIA
 
 ## 1. Entrar y menú
 
-Abre la web de reservas y pulsa **Iniciar sesión**. El botón de las tres rayas abre el menú.
+Abre la web de reservas y pulsa **Iniciar sesión**. El botón de las tres rayas abre el menú. **Facturación** consulta el mes en curso y los meses anteriores.
 
 ![Menú del gestor](docs/guia-gestor/02-menu.png)
 

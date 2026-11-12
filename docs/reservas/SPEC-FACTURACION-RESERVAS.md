@@ -3,7 +3,7 @@
 ## Resumen mensual del coste del sistema de reservas y liquidación con CN Nazarí
 
 **Proyecto:** Club Triatlón Sulayr / sulayr-reservas  
-**Estado:** Cerrada. Implementada, probada y desplegada en PROD el 28 de octubre de 2026. El enlace «Facturación» del menú del panel está comentado hasta que se empiece a usar. Decisiones cerradas (sección 12). Pruebas en `ACEPTACION.md`.  
+**Estado:** Cerrada. Implementada, probada y desplegada en PROD el 28 de octubre de 2026. El enlace «Facturación» del menú del panel está visible para quien tenga `sulayr_view_billing`. Decisiones cerradas (sección 12). Pruebas en `ACEPTACION.md`.  
 **Fecha:** octubre 2026
 
 ---
@@ -233,7 +233,7 @@ El primer mes que se puede generar es el **mes de instalación** de esta fase.
 
 - Solo la ven los usuarios con rol **gestor** o **administrador** del site de reservas, y el superadministrador de la red.
 - Se controla con una capacidad nueva, `sulayr_view_billing`, no por nombre de rol.
-- La sección forma parte del panel `[sulayr_reservas]` del frontend. No usa `wp-admin` ni `admin-post.php`.
+- La sección forma parte del panel `[sulayr_reservas]` del frontend. El menú muestra **Facturación** a quien tenga `sulayr_view_billing`. No usa `wp-admin` ni `admin-post.php`.
 - La sección es de consulta. El resumen se genera y los valores económicos se cambian en la página de ajustes (4.3, 7.1), no desde aquí.
 
 ## 8.2. Contenido

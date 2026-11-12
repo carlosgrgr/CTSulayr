@@ -454,7 +454,7 @@ La tarea diaria se probó con `wp cron event run sulayr_billing_daily` en el blo
 
 Estado: cerrada. Desplegada en PROD el 28 de octubre de 2026. La primera carga del blog 2 sube el esquema a `3` y los roles a `2`, crea la tarifa inicial y fija el mes de instalación: el primer mes facturable es el del despliegue. El importe por deportista empieza vacío y hay que configurarlo en PROD antes de usar la facturación.
 
-El enlace «Facturación» de `PanelRenderer::nav()` está comentado hasta que se empiece a usar. La vista sigue respondiendo a `?sulayr_vista=facturacion` para quien tenga `sulayr_view_billing`; solo se oculta el enlace. Para activarla basta con descomentar esa línea.
+El enlace «Facturación» de `PanelRenderer::nav()` está visible para quien tenga `sulayr_view_billing` (gestor, administrador del sitio de reservas y superadministrador). El nadador no lo ve. Abre `?sulayr_vista=facturacion`.
 
 ## Identidad visual Sulayr
 

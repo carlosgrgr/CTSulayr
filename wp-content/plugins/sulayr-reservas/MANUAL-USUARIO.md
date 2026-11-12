@@ -124,6 +124,7 @@ Además de Calendario, Mis reservas y Mi perfil, el gestor ve:
 - **Alta de nadador**
 - **Importar**
 - **Meses anteriores**
+- **Facturación**: consulta del mes en curso, el histórico y los usuarios de cada mes. No genera el resumen ni cambia los importes.
 
 En el detalle de una sesión ve quién está apuntado, con su foto y su correo, y puede reservar o cancelar por ellos.
 
