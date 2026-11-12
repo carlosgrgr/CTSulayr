@@ -108,7 +108,7 @@ El proceso completo de B, C y D juntas está en [despliegue-prod.md](despliegue-
 
 ### 7. Puesta en marcha
 
-- [ ] wp-admin carga y salen Socios → Solicitudes y Nueva alta. Esto confirma que funciona con el PHP de PROD.
+- [x] wp-admin carga y salen Socios → Solicitudes y Nueva alta. Esto confirma que funciona con el PHP de PROD. (12/11/2026, PHP 8.2)
 - [ ] Socios → Ajustes con los textos reales: WhatsApp, email del club, consentimientos con su versión y emails.
 - [ ] Página con `[sulayr_solicitud_alta]` creada y enlazada.
 

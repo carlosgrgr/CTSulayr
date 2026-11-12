@@ -1,7 +1,7 @@
 # SPEC — Alta y ciclo de vida del socio
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr`
-**Estado:** Definida el 11 de noviembre de 2026. Decisiones D1 a D58 cerradas con el club (sección 3). Parte A en `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026 con FileZilla. Stripe limpiado y migración terminada en PROD ese día (sección 16.5). Parte B implementada y probada en local el 11 de noviembre de 2026, con commit en la rama `altas-socio-parte-b` sin mergear: no está en `main` ni en PROD (sección 18). Pruebas manuales pendientes en `altas-y-ciclo-de-vida-socio/pruebas.md`. Parte C implementada y probada en local el 11 de noviembre de 2026, con commit en la rama `altas-socio-parte-c` (`beeacf224`, creada desde la de la parte B), sin mergear (sección 19). Parte D implementada y probada en local el 11 y 12 de noviembre de 2026, con la identidad Sulayr aplicada a las partes B, C y D, y con commit en la rama `altas-socio-parte-d` (creada desde la de la parte C), sin mergear (sección 20). Ni B, ni C, ni D están en `main` ni en PROD. Su despliegue conjunto está en [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md).
+**Estado:** Definida el 11 de noviembre de 2026. Decisiones D1 a D58 cerradas con el club (sección 3). Parte A en `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026 con FileZilla. Stripe limpiado y migración terminada en PROD ese día (sección 16.5). Partes B, C y D (secciones 18, 19 y 20, con la identidad Sulayr) implementadas y probadas en local el 11 y 12 de noviembre de 2026, en `main` (merge `21914c88d`) y su código subido a PROD el 12 de noviembre de 2026 con FileZilla (pasos 1 a 4 de [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md): esquema en la versión 4 y menú Socios completo). Pendientes en PROD: borrar los archivos retirados (paso 5), configurar Socios → Ajustes con los datos reales (paso 6), las comprobaciones (paso 7) y empezar con los recibos (paso 8). Pruebas manuales pendientes en [pruebas.md](altas-y-ciclo-de-vida-socio/pruebas.md).
 **Fecha:** 11 de noviembre de 2026
 
 Esta spec sustituye el alta manual de socios (WhatsApp + Excel + alta a mano en la web) por un proceso en la web del club (blog 1): solicitud, aprobación, cambios, congelaciones, bajas, recibos mensuales y listados. Conserva el histórico de altas, bajas y cambios de servicios, y deja los Excel de Drive solo para ingresos y gastos del club.
@@ -474,9 +474,9 @@ No se importan «Posibles deportistas» ni las pestañas mensuales de pagos.
 | Parte | Contenido | Estado |
 |---|---|---|
 | A | Catálogo y tipos de socio (4.3, 4.4), tablas (4.2), registro de cambios (D58), migración (11), eliminación de Stripe (12), roles (10) y capacidades del monedero (9.4) | En `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026. Ver sección 16. |
-| B | Formulario público y de gestor, aprobación, detección de duplicados y reingresos, consentimientos, email de bienvenida, pasos de alta (5) | Implementada y probada en local el 11 de noviembre de 2026. Commit en la rama `altas-socio-parte-b`, sin mergear: no está en `main` ni en PROD. Pruebas manuales pendientes en [pruebas.md](altas-y-ciclo-de-vida-socio/pruebas.md). Ver sección 18. |
-| C | Cambios, bajas, congelaciones, solicitudes desde Mi cuenta, tarea nocturna, sincronización con reservas (6, 7) | Implementada y probada en local el 11 de noviembre de 2026. Commit en la rama `altas-socio-parte-c` (`beeacf224`), sin mergear: no está en `main` ni en PROD. Ver sección 19. |
-| D | Recibos, PDF, Mis cuotas, monedero de la junta, exportación, listado del entrenador, welcome pack, tareas pendientes (8, 9) | Implementada y probada en local el 11 y 12 de noviembre de 2026. Commit en la rama `altas-socio-parte-d` (creada desde la de la parte C), sin mergear: no está en `main` ni en PROD. Ver sección 20. |
+| B | Formulario público y de gestor, aprobación, detección de duplicados y reingresos, consentimientos, email de bienvenida, pasos de alta (5) | En `main` y subida a PROD el 12 de noviembre de 2026; configuración y comprobaciones en PROD pendientes. Pruebas manuales en [pruebas.md](altas-y-ciclo-de-vida-socio/pruebas.md). Ver sección 18. |
+| C | Cambios, bajas, congelaciones, solicitudes desde Mi cuenta, tarea nocturna, sincronización con reservas (6, 7) | En `main` y subida a PROD el 12 de noviembre de 2026; configuración y comprobaciones en PROD pendientes. Ver sección 19. |
+| D | Recibos, PDF, Mis cuotas, monedero de la junta, exportación, listado del entrenador, welcome pack, tareas pendientes (8, 9) | En `main` y subida a PROD el 12 de noviembre de 2026; configuración, comprobaciones y primer mes de recibos en PROD pendientes. Ver sección 20. |
 
 Cada parte se puede usar en cuanto está terminada. Hasta la parte D, el control de cuotas sigue en el Excel.
 
@@ -708,7 +708,7 @@ No hay PHPUnit. Lo que funcionó en la parte A:
 
 ## 18. Parte B: implementación
 
-Implementada el 11 de noviembre de 2026 en la rama `altas-socio-parte-b`, creada desde `main`. Probada en local por HTTP. Commit en esa rama, sin mergear: no está en `main` ni en PROD. Las pruebas manuales que faltan (navegador, emails reales, PROD) están en [pruebas.md](altas-y-ciclo-de-vida-socio/pruebas.md).
+Implementada el 11 de noviembre de 2026 en la rama `altas-socio-parte-b`, creada desde `main`. Probada en local por HTTP. En `main` desde el 12 de noviembre de 2026 (merge `21914c88d`, junto con C y D) y subida a PROD ese día. Las pruebas manuales que faltan (navegador, emails reales, PROD) están en [pruebas.md](altas-y-ciclo-de-vida-socio/pruebas.md).
 
 ### 18.1. Decisiones cerradas con el club (11 de noviembre de 2026)
 
@@ -797,6 +797,8 @@ No comprobado:
 
 ### 18.5. Despliegue en PROD
 
+**Desplegado el 12 de noviembre de 2026** junto con B, C y D, siguiendo [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md) (pasos 1 a 4 hechos; 5 a 8 pendientes). Lo que sigue queda como referencia.
+
 Para subir B, C y D juntas, que es lo previsto, sigue [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md), que tiene el cambio neto de archivos. Lo que sigue es para subir solo la parte B.
 
 Con FileZilla, en `wp-content/plugins/club-triatlon-sulayr/`:
@@ -844,7 +846,7 @@ La parte C ya está hecha (sección 19); lo que sigue para la D está en 19.7.
 
 ## 19. Parte C: implementación
 
-Implementada el 11 de noviembre de 2026 en la rama `altas-socio-parte-c`, creada desde el commit de la parte B (`f5450b29a`). Probada en local con una copia de la base de PROD. Commit `beeacf224` en esa rama, sin mergear: no está en `main` ni en PROD.
+Implementada el 11 de noviembre de 2026 en la rama `altas-socio-parte-c`, creada desde el commit de la parte B (`f5450b29a`). Probada en local con una copia de la base de PROD. Commit `beeacf224`. En `main` desde el 12 de noviembre de 2026 (merge `21914c88d`) y subida a PROD ese día.
 
 ### 19.1. Decisiones cerradas con el club (11 de noviembre de 2026)
 
@@ -912,6 +914,8 @@ No comprobado: el aspecto en el navegador (Mis cuotas y los formularios de la fi
 
 ### 19.5. Despliegue en PROD
 
+**Desplegado el 12 de noviembre de 2026** junto con B, C y D, siguiendo [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md) (pasos 1 a 4 hechos; 5 a 8 pendientes). Lo que sigue queda como referencia.
+
 Para subir B, C y D juntas, que es lo previsto, sigue [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md), que tiene el cambio neto de archivos. Lo que sigue es para subir solo la parte C.
 
 Si la parte B aún no está en PROD, desplegar primero la B (18.5) y después esto. Con FileZilla, en `wp-content/plugins/club-triatlon-sulayr/`:
@@ -961,7 +965,7 @@ Hecho en la parte D (sección 20).
 
 ## 20. Parte D: implementación
 
-Implementada el 11 de noviembre de 2026 en la rama `altas-socio-parte-d`, creada desde la de la parte C (`beeacf224`), y completada el 12 de noviembre de 2026 con la identidad Sulayr en las partes B, C y D. Probada en local con la copia de la base de PROD. Commit en esa rama, sin mergear: no está en `main` ni en PROD.
+Implementada el 11 de noviembre de 2026 en la rama `altas-socio-parte-d`, creada desde la de la parte C (`beeacf224`), y completada el 12 de noviembre de 2026 con la identidad Sulayr en las partes B, C y D. Probada en local con la copia de la base de PROD. En `main` desde el 12 de noviembre de 2026 (merge `21914c88d`) y subida a PROD ese día.
 
 ### 20.1. Decisiones cerradas con el club (11 de noviembre de 2026)
 
@@ -1059,6 +1063,8 @@ Con copia de la base (`wp db export`), un mu-plugin temporal que guardaba los em
 No comprobado: el aspecto en el navegador (Mis cuotas en el móvil, las pantallas de wp-admin y el formulario público con la marca), los emails en un cliente de correo real (Gmail, móvil), el botón «Copiar texto» (usa el portapapeles del navegador), el CSV abierto en Excel, los emails reales y PHP 7.4. Pendiente en [pruebas.md](altas-y-ciclo-de-vida-socio/pruebas.md).
 
 ### 20.6. Despliegue en PROD
+
+**Desplegado el 12 de noviembre de 2026** junto con B, C y D, siguiendo [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md) (pasos 1 a 4 hechos; 5 a 8 pendientes). Lo que sigue queda como referencia.
 
 Para subir B, C y D juntas, que es lo previsto, sigue [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md), que tiene el cambio neto de archivos. Lo que sigue es para subir solo la parte D, con B y C ya en PROD (18.5 y 19.5). Con FileZilla, en `wp-content/plugins/club-triatlon-sulayr/`:
 
