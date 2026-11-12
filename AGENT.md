@@ -41,7 +41,7 @@ php -l wp-content/plugins/sulayr-reservas/src/Path/To/File.php   # syntax check
 
 Reservations specs are in Spanish under `docs/reservas/` and use the `-RESERVAS` suffix. Club-site specs are under `docs/club/` and are listed apart in `docs/FASES.md`. They are outside the precedence below. When reservations specs disagree, this order wins:
 
-1. `docs/reservas/SPEC-MEJORAS-RESERVAS.md` (its section 16 wins over earlier paragraphs in the same file) and `docs/reservas/SPEC-FASE11-RESERVAS.md` override `docs/reservas/SPEC-RESERVAS.md` where they change behaviour.
+1. `docs/reservas/SPEC-MEJORAS-RESERVAS.md` (its section 16 wins over earlier paragraphs in the same file) and `docs/reservas/SPEC-FASE11-RESERVAS.md` override `docs/reservas/SPEC-RESERVAS.md` where they change behaviour. So does `docs/reservas/SPEC-ASISTENTES-SESION-RESERVAS.md` for section 3.1: swimmers see the names and reservation photos of the other swimmers booked in a session.
 2. `docs/reservas/SPEC-RESERVAS.md` — functional requirements and approved decisions.
 3. `docs/reservas/ANALISIS.md` — why the implementation differs from names or mechanisms in the original spec.
 4. `wp-content/plugins/sulayr-reservas/DEVELOPMENT.md` — technical reference: class responsibilities, capability map, locking order, known incidents, pending tests, and per-phase notes. It never overrides the spec.

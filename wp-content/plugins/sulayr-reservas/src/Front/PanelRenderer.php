@@ -182,7 +182,7 @@ class PanelRenderer {
 			$this->navItem( 'Meses anteriores', 'clock', array( 'sulayr_vista' => 'historial' ), 'historial', $current );
 		}
 		if ( BillingView::allowed() ) {
-			// $this->navItem( 'Facturación', 'list', array( 'sulayr_vista' => BillingView::VIEW ), BillingView::VIEW, $current );
+			$this->navItem( 'Facturación', 'list', array( 'sulayr_vista' => BillingView::VIEW ), BillingView::VIEW, $current );
 		}
 
 		$bridge = new CrossSite( $this->config, $this->blog_context );
@@ -723,30 +723,101 @@ class PanelRenderer {
 			$this->bookForForm( $session );
 		}
 
-		if ( ! $manager ) {
-			echo '</div>';
+		if ( $manager && current_user_can( Capabilities::VIEW_ALL_BOOKINGS ) ) {
+			$this->attendeeTable( $this->query->attendees( (int) $session->id ) );
+		} elseif ( current_user_can( Capabilities::VIEW_SESSION_ATTENDEES ) ) {
+			$this->attendeeCards( $session, $this->query->sessionSwimmers( (int) $session->id ), $now );
+		}
+		echo '</div>';
+	}
+
+	/**
+	 * Listado del gestor: tabla con contacto, origen y cancelación.
+	 *
+	 * @param object[] $attendees Reservas de la sesión, ordenadas por nombre.
+	 * @return void
+	 */
+	private function attendeeTable( array $attendees ) {
+		$this->attendeeHeading( count( $attendees ) );
+		if ( array() === $attendees ) {
 			return;
 		}
 
-		$attendees = $this->query->attendees( (int) $session->id );
-		echo '<h3>Reservas</h3>';
-		if ( array() === $attendees ) {
-			echo '<p>Nadie ha reservado esta sesión.</p></div>';
-			return;
-		}
-		echo '<ul class="sulayr-people">';
+		$viewer = get_current_user_id();
+		echo '<div class="sulayr-table-wrap">';
+		echo '<table class="sulayr-table sulayr-attendee-table">';
+		echo '<thead><tr><th scope="col">Nadador</th><th scope="col">Email</th><th scope="col">Origen</th><th scope="col">Acción</th></tr></thead><tbody>';
 		foreach ( $attendees as $attendee ) {
-			echo '<li><span>' . esc_html( $attendee->first_name . ' ' . $attendee->last_name ) . '</span> ';
-			echo '<span>' . esc_html( (string) $attendee->email ) . '</span> ';
-			if ( 1 === (int) $attendee->is_manual ) {
-				echo '<span>Añadida por un gestor</span> ';
-			}
+			$name = trim( (string) $attendee->first_name . ' ' . (string) $attendee->last_name );
+			echo '<tr' . ( (int) $attendee->user_id === $viewer ? ' class="sulayr-attendee-own"' : '' ) . '>';
+			echo '<td><div class="sulayr-attendee">';
+			$this->avatar( $name, (string) $attendee->photo_url, 'sulayr-avatar sulayr-avatar-small' );
+			echo '<span class="sulayr-attendee-name">' . esc_html( $name ) . '</span></div></td>';
+			echo '<td>' . esc_html( (string) $attendee->email ) . '</td>';
+			echo '<td>' . esc_html( 1 === (int) $attendee->is_manual ? 'Añadida por un gestor' : '' ) . '</td>';
+			echo '<td>';
 			if ( current_user_can( Capabilities::CANCEL_ANY ) ) {
 				$this->post( 'cancel', 'Cancelar reserva', array( 'booking_id' => (int) $attendee->id ) );
 			}
+			echo '</td></tr>';
+		}
+		echo '</tbody></table></div>';
+	}
+
+	/**
+	 * Listado del nadador: fichas con foto y nombre. La propia lleva el botón de cancelar.
+	 *
+	 * @param object             $session  Sesión.
+	 * @param object[]           $swimmers Nadadores apuntados, ordenados por nombre.
+	 * @param \DateTimeImmutable $now      Ahora.
+	 * @return void
+	 */
+	private function attendeeCards( $session, array $swimmers, \DateTimeImmutable $now ) {
+		$this->attendeeHeading( count( $swimmers ) );
+		if ( array() === $swimmers ) {
+			return;
+		}
+
+		$viewer = get_current_user_id();
+		$own    = (int) $session->own_booking_id;
+		echo '<ul class="sulayr-attendee-grid">';
+		foreach ( $swimmers as $swimmer ) {
+			$name    = trim( (string) $swimmer->first_name . ' ' . (string) $swimmer->last_name );
+			$is_mine = $own > 0 && (int) $swimmer->user_id === $viewer;
+			echo '<li class="' . esc_attr( $is_mine ? 'sulayr-attendee sulayr-attendee-own' : 'sulayr-attendee' ) . '">';
+			$this->avatar( $name, (string) $swimmer->photo_url, 'sulayr-avatar sulayr-avatar-small' );
+			echo '<span class="sulayr-attendee-name">' . esc_html( $name ) . '</span>';
+			if ( $is_mine && $this->canCancelOwn( $session, $now ) ) {
+				$this->post( 'cancel', 'Cancelar mi reserva', array( 'booking_id' => $own ), array(), 'trash' );
+			}
 			echo '</li>';
 		}
-		echo '</ul></div>';
+		echo '</ul>';
+	}
+
+	/**
+	 * @param int $count Reservas de la sesión.
+	 * @return void
+	 */
+	private function attendeeHeading( $count ) {
+		echo '<h3>' . esc_html( 'Nadadores apuntados (' . $count . ')' ) . '</h3>';
+		if ( 0 === $count ) {
+			echo '<p>Nadie ha reservado esta sesión todavía.</p>';
+		}
+	}
+
+	/**
+	 * Regla de cancelación de la reserva propia: cualquiera con CANCEL_ANY, o CANCEL_OWN hasta 60 minutos antes.
+	 *
+	 * @param object             $session Sesión.
+	 * @param \DateTimeImmutable $now     Ahora.
+	 * @return bool
+	 */
+	private function canCancelOwn( $session, \DateTimeImmutable $now ) {
+		$start   = $this->sessionStart( $session );
+		$in_time = $start instanceof \DateTimeImmutable && $now <= $start->modify( '-60 minutes' );
+
+		return current_user_can( Capabilities::CANCEL_ANY ) || ( current_user_can( Capabilities::CANCEL_OWN ) && $in_time );
 	}
 
 	/**
@@ -1195,8 +1266,7 @@ class PanelRenderer {
 		$started = $start instanceof \DateTimeImmutable && $now >= $start;
 		$own     = (int) $session->own_booking_id;
 		if ( $own > 0 ) {
-			$in_time = $start instanceof \DateTimeImmutable && $now <= $start->modify( '-60 minutes' );
-			if ( current_user_can( Capabilities::CANCEL_ANY ) || ( current_user_can( Capabilities::CANCEL_OWN ) && $in_time ) ) {
+			if ( $this->canCancelOwn( $session, $now ) ) {
 				$this->post( 'cancel', 'Cancelar mi reserva', array( 'booking_id' => $own ) );
 			}
 			return;
@@ -1294,15 +1364,20 @@ class PanelRenderer {
 	 * @param string                    $label  Texto del botón.
 	 * @param array<string, int|string> $fields Campos ocultos.
 	 * @param array<string, int|string> $return Argumentos de vuelta.
+	 * @param string                    $icon   Icono en lugar del texto. El texto queda para lectores de pantalla.
 	 * @return void
 	 */
-	private function post( $action, $label, array $fields, array $return = array() ) {
+	private function post( $action, $label, array $fields, array $return = array(), $icon = '' ) {
 		echo '<form method="post" action="' . esc_url( $this->url( array() ) ) . '" class="sulayr-inline sulayr-action-' . esc_attr( $action ) . '">';
 		wp_nonce_field( PanelActions::NONCE, 'sulayr_nonce' );
 		echo '<input type="hidden" name="sulayr_action" value="' . esc_attr( $action ) . '">';
 		echo '<input type="hidden" name="sulayr_return" value="' . esc_attr( $this->url( $return ) ) . '">';
 		foreach ( $fields as $name => $value ) {
 			echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( (string) $value ) . '">';
+		}
+		if ( '' !== $icon ) {
+			echo '<button type="submit" class="sulayr-icon-button" title="' . esc_attr( $label ) . '">' . $this->icon( $icon ) . '<span class="sulayr-sr">' . esc_html( $label ) . '</span></button></form>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG fijo de icon().
+			return;
 		}
 		echo '<button type="submit">' . esc_html( $label ) . '</button></form>';
 	}
@@ -1720,6 +1795,7 @@ class PanelRenderer {
 			'clock'    => '<circle cx="12" cy="12" r="8"></circle><path d="M12 8v4.5l3 2"></path>',
 			'logout'   => '<path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h7A1.5 1.5 0 0 1 19 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 9 18.5V17"></path><path d="M13 12H4M6.5 9.5 4 12l2.5 2.5"></path>',
 			'external' => '<path d="M14 5h5v5"></path><path d="M19 5l-8 8"></path><path d="M17 13.5V18a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h4.5"></path>',
+			'trash'    => '<path d="M4.5 7h15M9.5 7V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"></path><path d="M6.5 7l.8 11.6a1.5 1.5 0 0 0 1.5 1.4h6.4a1.5 1.5 0 0 0 1.5-1.4L17.5 7M10 11v5M14 11v5"></path>',
 		);
 		if ( ! isset( $paths[ $name ] ) ) {
 			return '';

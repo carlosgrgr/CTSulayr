@@ -15,6 +15,7 @@ class Capabilities {
 	const BOOK_SELF          = 'sulayr_book_self';
 	const CANCEL_OWN         = 'sulayr_cancel_own';
 	const VIEW_OWN_BOOKINGS  = 'sulayr_view_own_bookings';
+	const VIEW_SESSION_ATTENDEES = 'sulayr_view_session_attendees';
 	const VIEW_ALL_BOOKINGS  = 'sulayr_view_all_bookings';
 	const BOOK_FOR_OTHERS    = 'sulayr_book_for_others';
 	const CANCEL_ANY         = 'sulayr_cancel_any';
@@ -58,6 +59,7 @@ class Capabilities {
 			self::BOOK_SELF,
 			self::CANCEL_OWN,
 			self::VIEW_OWN_BOOKINGS,
+			self::VIEW_SESSION_ATTENDEES,
 		);
 	}
 

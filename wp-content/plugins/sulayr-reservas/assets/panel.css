@@ -721,6 +721,91 @@ p.sulayr-panel > a:hover,
 	overflow-wrap: anywhere;
 }
 
+/* Nadadores apuntados a una sesión: fichas para el nadador, tabla para el gestor. */
+.sulayr-attendee-grid {
+	display: grid;
+	gap: 0.5rem;
+	grid-template-columns: 1fr;
+	list-style: none;
+	margin: 0.75rem 0 0;
+	padding: 0;
+}
+
+.sulayr-attendee {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 0.75rem;
+}
+
+.sulayr-attendee-grid .sulayr-attendee {
+	border: 1px solid var(--sr-linea);
+	border-radius: var(--sr-radio-sm);
+	padding: 0.6rem 0.75rem;
+}
+
+.sulayr-attendee-name {
+	flex: 1 1 8rem;
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+
+/* Reserva propia: mismo tamaño que las demás, en Menta. */
+.sulayr-attendee-grid .sulayr-attendee-own {
+	background: rgba(30, 232, 163, 0.14);
+	border-color: var(--sr-menta);
+	border-left: 4px solid var(--sr-menta);
+	flex-wrap: nowrap;
+	padding-bottom: 0.35rem;
+	padding-top: 0.35rem;
+}
+
+.sulayr-attendee-own .sulayr-attendee-name {
+	min-width: 0;
+}
+
+.sulayr-attendee-own .sulayr-action-cancel {
+	flex: 0 0 auto;
+	margin: 0 -0.35rem 0 0;
+}
+
+.sulayr-panel .sulayr-icon-button {
+	align-items: center;
+	display: inline-flex;
+	justify-content: center;
+	margin: 0;
+	padding: 0;
+	width: 44px;
+}
+
+.sulayr-panel .sulayr-action-cancel .sulayr-icon-button {
+	border-color: transparent;
+}
+
+.sulayr-table.sulayr-attendee-table {
+	min-width: 0;
+}
+
+.sulayr-table tbody tr.sulayr-attendee-own td {
+	background: rgba(30, 232, 163, 0.14);
+}
+
+.sulayr-table tbody tr.sulayr-attendee-own td:first-child {
+	box-shadow: inset 4px 0 0 var(--sr-menta);
+}
+
+@media (min-width: 40rem) {
+	.sulayr-attendee-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 64rem) {
+	.sulayr-attendee-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
 .sulayr-swimmer-total {
 	color: var(--sr-texto-2);
 	font-weight: 600;

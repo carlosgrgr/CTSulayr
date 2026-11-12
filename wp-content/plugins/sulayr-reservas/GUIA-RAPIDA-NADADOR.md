@@ -39,6 +39,8 @@ Cada sesión indica su hora y su estado, y cuántas plazas quedan:
 - **Deshabilitada**: no admite reservas.
 - **Ya ha comenzado**: ya no se puede reservar.
 
+**Detalle** abre la sesión. Ahí está **Nadadores apuntados**, con el nombre y la foto de quien ha reservado. Si tienes plaza, tu ficha sale en verde y con una papelera para cancelar mientras falte al menos una hora.
+
 Horario habitual: de lunes a jueves de 15:00 a 16:30 y de 21:00 a 22:30, y los sábados de 13:00 a 14:30. Los viernes y los domingos no hay sesión.
 
 ## 4. Reservar una sesión

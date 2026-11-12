@@ -19,6 +19,7 @@ Desde la página **Reservas de natación**:
 - Dar de alta a una persona, de una en una o con un CSV.
 - Cambiar el límite semanal, pedir un cambio de correo y poner o quitar la fotografía de reservas.
 - Desactivar, reactivar o retirar a un nadador.
+- Consultar la facturación mensual: el mes en curso, el histórico y la lista de usuarios de cada mes. No generas el resumen ni cambias los importes.
 
 También puedes reservar y cancelar tus propias plazas, si tienes ficha de nadador activa. Esas reservas cuentan para tu límite, igual que las de cualquier otra persona.
 
@@ -34,7 +35,7 @@ Tú no cambias la contraseña de otra persona. Cada cual la cambia en **Mi perfi
 
 El DNI se ve en la ficha y no se edita en reservas. En una ficha vinculada al club, el nombre, los apellidos y el teléfono tampoco se editan aquí: los copia el club.
 
-El escritorio de administración de WordPress no es tu sitio de trabajo. Si lo abres, el sitio te devuelve al panel.
+El escritorio de administración de WordPress no es tu sitio de trabajo. Si lo abres, el sitio te devuelve al panel. Generar el resumen del mes y cambiar la tarifa o el importe por deportista se hace desde ese escritorio, y solo lo hace un administrador.
 
 ## 3. Entrar y salir
 
@@ -42,7 +43,7 @@ El escritorio de administración de WordPress no es tu sitio de trabajo. Si lo a
 2. Pulsa **Iniciar sesión**.
 3. Entra con tu cuenta. Al terminar vuelves a esa página.
 
-En el menú aparecen **Calendario**, **Mis reservas**, **Mi perfil**, **Nadadores**, **Alta de nadador**, **Importar** y **Meses anteriores**.
+En el menú aparecen **Calendario**, **Mis reservas**, **Mi perfil**, **Nadadores**, **Alta de nadador**, **Importar**, **Meses anteriores** y **Facturación**.
 
 Si además eres deportista activo del club y tu ficha de reservas está activa, verás **Mi perfil en el club**. Abre tu perfil del club y no cierra la sesión de reservas.
 
@@ -111,9 +112,11 @@ En **Detalle**:
 2. Para cambiar el aforo, escribe la capacidad y pulsa **Guardar capacidad**.
 3. Pulsa **Deshabilitar sesión** o **Habilitar sesión**.
 4. En **Reservar para**, elige un nadador activo y pulsa **Reservar**.
-5. En la lista **Reservas**, pulsa **Cancelar reserva** junto a quien corresponda.
+5. En la tabla **Nadadores apuntados**, pulsa **Cancelar reserva** junto a quien corresponda.
 
-La lista muestra nombre, apellidos y correo. Si la plaza se registró después de que la sesión hubiera empezado, aparece el texto «Añadida por un gestor».
+La tabla muestra foto, nombre, apellidos y correo, ordenados por nombre. Si la plaza se registró después de que la sesión hubiera empezado, la columna Origen dice «Añadida por un gestor». Tu propia reserva, si la tienes, sale destacada.
+
+Los nadadores también ven esta lista en el detalle, pero solo con nombre, apellidos y foto.
 
 Bajar el número de plazas no borra a quien ya estaba apuntado. Mientras las plazas ocupadas lleguen al nuevo máximo, no se admiten más reservas.
 

@@ -60,7 +60,7 @@ La fotografía es solo de reservas. No sustituye a la foto del club. Admite JPG,
 
 La contraseña la cambias tú. El gestor no puede verla ni poner otra.
 
-No verás los nombres de las demás personas apuntadas.
+En el detalle de una sesión verás el nombre, los apellidos y la foto de reservas de quien se ha apuntado. Los demás nadadores ven también los tuyos. No se ve el correo, el teléfono ni ningún otro dato.
 
 ## 5. Consulta del calendario
 
@@ -124,8 +124,9 @@ Además de Calendario, Mis reservas y Mi perfil, el gestor ve:
 - **Alta de nadador**
 - **Importar**
 - **Meses anteriores**
+- **Facturación**: consulta del mes en curso, el histórico y los usuarios de cada mes. No genera el resumen ni cambia los importes.
 
-En el detalle de una sesión ve quién está apuntado, con su correo, y puede reservar o cancelar por ellos.
+En el detalle de una sesión ve quién está apuntado, con su foto y su correo, y puede reservar o cancelar por ellos.
 
 ## 10. Gestión de sesiones
 

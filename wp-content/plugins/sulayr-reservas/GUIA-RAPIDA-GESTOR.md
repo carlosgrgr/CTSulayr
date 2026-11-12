@@ -4,7 +4,7 @@ Reservas de natación, en el móvil. Hay una versión para el navegador en `GUIA
 
 ## 1. Entrar y menú
 
-Abre la web de reservas y pulsa **Iniciar sesión**. El botón de las tres rayas abre el menú.
+Abre la web de reservas y pulsa **Iniciar sesión**. El botón de las tres rayas abre el menú. **Facturación** consulta el mes en curso y los meses anteriores.
 
 ![Menú del gestor](docs/guia-gestor/02-menu.png)
 
@@ -23,7 +23,7 @@ Si aparece **Generar sesiones de…**, púlsalo una vez para crear el mes.
 - **Guardar capacidad** cambia las plazas. Bajarlas no quita a quien ya está apuntado.
 - **Deshabilitar sesión** la deja en el calendario, pero nadie puede reservarla.
 - **Reservar para** y **Reservar** apuntan a un nadador.
-- **Cancelar reserva**, en la lista, libera esa plaza.
+- **Cancelar reserva**, en la tabla **Nadadores apuntados**, libera esa plaza. Los nadadores ven esa lista con nombre y foto, sin correo.
 
 Cada nadador tiene un máximo de reservas por semana, de lunes a domingo.
 
