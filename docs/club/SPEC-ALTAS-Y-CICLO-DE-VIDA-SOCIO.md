@@ -1,7 +1,7 @@
 # SPEC — Alta y ciclo de vida del socio
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr`
-**Estado:** Definida el 11 de noviembre de 2026. Decisiones D1 a D58 cerradas con el club (sección 3). Parte A en `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026 con FileZilla. Stripe limpiado y migración terminada en PROD ese día (sección 16.5). Partes B, C y D (secciones 18, 19 y 20, con la identidad Sulayr) implementadas y probadas en local el 11 y 12 de noviembre de 2026, en `main` (merge `21914c88d`) y su código subido a PROD el 12 de noviembre de 2026 con FileZilla (pasos 1 a 4 de [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md): esquema en la versión 4 y menú Socios completo). Pasos 5 a 7 hechos ese día (archivos retirados borrados, Socios → Ajustes configurado con los datos reales y comprobaciones con un alta de prueba). Recibos en marcha desde noviembre de 2026 (paso 8). Pruebas manuales de local y PROD hechas el 12 de noviembre de 2026; quedan las que dependen de una fecha (penalización del día 20, generación automática del 1 de diciembre, baja de Diego Lardón el 1 de enero de 2027), en [pruebas.md](altas-y-ciclo-de-vida-socio/pruebas.md).
+**Estado:** Definida el 11 de noviembre de 2026. Decisiones D1 a D58 cerradas con el club (sección 3). Parte A en `main` (`fab85c343` y `892d6fcff`) y desplegada en PROD el 11 de noviembre de 2026 con FileZilla. Stripe limpiado y migración terminada en PROD ese día (sección 16.5). Partes B, C y D (secciones 18, 19 y 20, con la identidad Sulayr) implementadas y probadas en local el 11 y 12 de noviembre de 2026, en `main` (merge `21914c88d`) y su código subido a PROD el 12 de noviembre de 2026 con FileZilla (pasos 1 a 4 de [despliegue-prod.md](altas-y-ciclo-de-vida-socio/despliegue-prod.md): esquema en la versión 4 y menú Socios completo). Pasos 5 a 7 hechos ese día (archivos retirados borrados, Socios → Ajustes configurado con los datos reales y comprobaciones con un alta de prueba). Recibos en marcha desde noviembre de 2026 (paso 8). Pruebas manuales de local y PROD hechas el 12 de noviembre de 2026; quedan las que dependen de una fecha (penalización del día 20, generación automática del 1 de diciembre, baja de Diego Lardón el 1 de enero de 2027), en [pruebas.md](altas-y-ciclo-de-vida-socio/pruebas.md). Pestaña «Mis recibos» (20.8) hecha, probada y subida a PROD el 12 de noviembre de 2026.
 **Fecha:** 11 de noviembre de 2026
 
 Esta spec sustituye el alta manual de socios (WhatsApp + Excel + alta a mano en la web) por un proceso en la web del club (blog 1): solicitud, aprobación, cambios, congelaciones, bajas, recibos mensuales y listados. Conserva el histórico de altas, bajas y cambios de servicios, y deja los Excel de Drive solo para ingresos y gastos del club.
@@ -163,7 +163,7 @@ Cerradas con el club el 11 de noviembre de 2026.
 | D50 | La junta siempre tiene recibo, aunque salga a 0 €. Congelados y bajas, no. Un recibo de total 0 queda en «no aplica». |
 | D51 | El PDF se genera al pulsar «Ver recibo», a partir de los datos guardados. No se guarda en disco. |
 | D52 | Sin emails de recibos. Ajuste «Avisar por email del recibo mensual» desactivado por defecto. |
-| D53 | Pestaña «Mis cuotas» en Mi cuenta: recibos con todas sus líneas y estado, PDF, servicios actuales y cambios pendientes. Sustituye a «Mis pagos». |
+| D53 | Pestaña «Mis cuotas» en Mi cuenta: servicios actuales, cambios pendientes y un resumen de los recibos. Los recibos, con todas sus líneas y estado (también «No aplica» y «Anulado») y el PDF, van en su propia pestaña «Mis recibos» (20.8). Sustituye a «Mis pagos». |
 
 ### Listados, roles y registro
 
@@ -959,7 +959,7 @@ Hecho en la parte D (sección 20).
 - Congelación inmediata: `data.cancel_month` (`AAAA-MM`) de la fila `congelacion` aplicada; ese mes se anulan los servicios con «se anula al congelar».
 - Cambio inmediato (D27): filas `cambio`/`tipo`/`baja` con `data.immediate = true`; el recibo del mes en curso se recalcula con las reglas del primer mes y C5 debe comprobar que no está pagado.
 - La tarea diaria (`MembersDailyTask::run()`) es donde van la generación automática de recibos y la retribución de la junta, después de aplicar los cambios del día.
-- «Mis cuotas» (`FeesAccount::render()`) es donde van los recibos y el PDF.
+- «Mis cuotas» (`FeesAccount::render()`) es donde van los recibos y el PDF. (Desde el 12 de noviembre de 2026 van en «Mis recibos», 20.8.)
 
 ---
 
@@ -1015,7 +1015,7 @@ La spec no fijaba estos puntos. Se decidieron antes de implementar:
 | Subvenciones (D35) | `Subsidies` | Tabla ya existente. Se crean y terminan en la ficha. |
 | Pantalla Recibos | `Admin\ReceiptsPage` | **Socios → Recibos**: mes, generar (o generar los que faltan), penalizar desde el día límite, exportar, totales. Detalle: líneas, línea manual, volver a calcular o regenerar, corrección, pagos (añadir y borrar), anular y PDF. En la ficha del socio: sus recibos, correcciones pendientes, subvenciones y retribución de la junta. |
 | Listados (9.1 a 9.3) | `CoachList`, `WelcomePack`, `Admin\ListsPage` | **Tareas pendientes** (filtro por paso y por alta/cambio/baja, con globo), **Entrenador** (agrupado por modalidad, novedades, texto para WhatsApp con «Copiar», «Marcar como enviado», «Enviar por email») y **Welcome pack** (activos sin entrega y últimas entregas). En la ficha, «Registrar entrega» y borrar una entrega. |
-| Mis cuotas (D53) | `Lifecycle\FeesAccount` | Bloque «Tus recibos»: cada mes con líneas, pagos, pendiente y «Ver recibo». El PDF se abre con `?recibo=ID` en la pestaña y solo si el recibo es del socio (D6). Estilos en `public/css/styles.css` con las variables de marca del tema (`--sulayr-*`): mes en Archivo, importes en mono, estado con el color de la paleta. |
+| Mis cuotas (D53) | `Lifecycle\FeesAccount` | Ahora en «Mis recibos» (20.8). Bloque «Tus recibos»: cada mes con líneas, pagos, pendiente y «Ver recibo». El PDF se abre con `?recibo=ID` en la pestaña y solo si el recibo es del socio (D6). Estilos en `public/css/styles.css` con las variables de marca del tema (`--sulayr-*`): mes en Archivo, importes en mono, estado con el color de la paleta. |
 | Tarea diaria (§7) | `Lifecycle\MembersDailyTask` | Añade la retribución de la junta y la generación automática después de los cambios del día. El resumen de «Ejecutar ahora» las cuenta. |
 | Ajustes | `MemberSettings` | En «Recibos»: primer mes con recibos, medios de pago, pie del recibo, textos de las líneas y de los movimientos del monedero. En «Emails»: recibo mensual. |
 | Esquema | `Database\MembersSchema` | Versión 4: tabla de tipos; `user_id` y `source_receipt_id` en líneas; `note` en recibos y pagos; medio de pago de 60 caracteres. |
@@ -1102,3 +1102,18 @@ Si PROD no tuviera la extensión GD de PHP, el PDF sale sin logo; si faltaran DO
 - **Fuentes en los emails**: Gmail y Outlook no cargan Archivo, Instrument Sans ni JetBrains Mono; ahí salen Arial Black, Arial y Consolas (el respaldo del manual).
 - **Precios cambiados en el catálogo**: comprueban todos los recibos guardados; con muchos años de recibos podría tardar al guardar un servicio.
 
+### 20.8. Pestaña «Mis recibos» (12 de noviembre de 2026)
+
+**Estado:** en `main` y subida a PROD el 12 de noviembre de 2026, con el texto del email del recibo mensual cambiado en Socios → Ajustes. Comprobada en local y en PROD, en ordenador y móvil.
+
+Pedido por el club: los recibos estaban dentro de «Mis cuotas», mezclados con la situación, los servicios y los formularios, y no se encontraban. Ahora tienen pestaña propia.
+
+| Qué | Dónde | Notas |
+|---|---|---|
+| Mi cuenta → Mis recibos | `Receipts\ReceiptsAccount` | Endpoint `mis-recibos`, en el menú justo detrás de «Mis cuotas», solo para deportistas. Todos los recibos del socio, del más reciente al más antiguo y en cualquier estado (también «No aplica» a 0 € y «Anulado»): líneas, pagos, pendiente y «Ver recibo». El PDF se abre con `?recibo=ID` en esta pestaña y solo si el recibo es del socio (D6). Pide regenerar los enlaces la primera vez (`sulayr_receipts_endpoint_version`). |
+| Mis cuotas | `Lifecycle\FeesAccount` | El bloque «Tus recibos» pasa a ser un resumen: «Tienes X € pendientes de pago» o «Estás al día con tus recibos», con el botón «Ver mis recibos». Los enlaces antiguos `mis-cuotas/?recibo=ID` redirigen a `mis-recibos/?recibo=ID`. `FeesAccount::is_athlete()` pasa a ser pública. |
+| Email del recibo mensual | `Receipts::maybe_email()`, `MemberSettings` | Marcador nuevo `{enlace_mis_recibos}` (botón «Ver mis recibos»). `{enlace_mis_cuotas}` sigue funcionando. El texto por defecto ya usa el nuevo, pero el texto guardado en Socios → Ajustes manda: hay que cambiarlo a mano (ver despliegue). |
+
+Comprobado en local con el socio 6 (junta, recibo R-2026-0005 de noviembre a 0 €, «No aplica»): sale en «Mis recibos» con sus líneas; «Mis cuotas» dice «Estás al día» con el enlace. Por HTTP: la pestaña da 200; el PDF propio, 200 (`application/pdf`); el de otro socio, 403; sin sesión, al login; `mis-cuotas/?recibo=5` redirige a `mis-recibos/?recibo=5`.
+
+Comprobado después por el club (12 de noviembre de 2026): el aspecto en ordenador y móvil, en local y en PROD.

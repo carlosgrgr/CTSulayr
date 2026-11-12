@@ -30,6 +30,7 @@ use ClubTriatlonSulayr\Modules\Members\Join\PublicJoinForm;
 use ClubTriatlonSulayr\Modules\Members\Lifecycle\MembersDailyTask;
 use ClubTriatlonSulayr\Modules\Members\Lifecycle\LegacyFieldsHidden;
 use ClubTriatlonSulayr\Modules\Members\Lifecycle\FeesAccount;
+use ClubTriatlonSulayr\Modules\Members\Receipts\ReceiptsAccount;
 use ClubTriatlonSulayr\Modules\Members\Join\ImageConsentAccount;
 use ClubTriatlonSulayr\Modules\Members\Catalog\ServicePostType;
 use ClubTriatlonSulayr\Modules\Members\Catalog\ServiceFields;
@@ -154,6 +155,7 @@ class App {
         new ManagerAccess();
         new MembersDailyTask();
         new FeesAccount();
+        new ReceiptsAccount();
         new MemberTypes();
         new Receipts();
 

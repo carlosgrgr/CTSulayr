@@ -1152,6 +1152,7 @@ class Receipts {
             'numero' => (string) $receipt->number,
             'total' => self::money( (float) $receipt->total ),
             'enlace_mis_cuotas_html' => MemberMailer::button( FeesAccount::url(), __( 'Ver mis cuotas', SULAYR_TEXTDOMAIN ) ),
+            'enlace_mis_recibos_html' => MemberMailer::button( ReceiptsAccount::url(), __( 'Ver mis recibos', SULAYR_TEXTDOMAIN ) ),
         ], true );
     }
 

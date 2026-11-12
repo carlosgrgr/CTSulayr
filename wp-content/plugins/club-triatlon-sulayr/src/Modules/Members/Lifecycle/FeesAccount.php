@@ -8,8 +8,8 @@ use ClubTriatlonSulayr\Modules\Members\Join\JoinForm;
 use ClubTriatlonSulayr\Modules\Members\MemberDates;
 use ClubTriatlonSulayr\Modules\Members\MemberServices;
 use ClubTriatlonSulayr\Modules\Members\MemberSettings;
-use ClubTriatlonSulayr\Modules\Members\Receipts\ReceiptPdf;
 use ClubTriatlonSulayr\Modules\Members\Receipts\Receipts;
+use ClubTriatlonSulayr\Modules\Members\Receipts\ReceiptsAccount;
 use ClubTriatlonSulayr\Modules\Members\StatusPeriods;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -19,10 +19,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Mi cuenta → Mis cuotas (6.2, D31, D53).
  *
- * Muestra los servicios actuales, los recibos (con líneas, pagos y PDF), los
- * cambios programados y la solicitud pendiente, y deja pedir cambios de
- * servicios y la baja. El PDF se abre con ?recibo=ID en esta pestaña y solo
- * para recibos del propio socio (D6).
+ * Muestra los servicios actuales, un resumen de los recibos con enlace a
+ * «Mis recibos» (ReceiptsAccount), los cambios programados y la solicitud
+ * pendiente, y deja pedir cambios de servicios y la baja.
  */
 class FeesAccount {
 
@@ -52,38 +51,20 @@ class FeesAccount {
     }
 
     /**
-     * URL del PDF de un recibo en Mis cuotas.
-     *
-     * @param   int $id Recibo.
-     * @return 	string
-     * @access 	public
-     * @package	club-triatlon-sulayr
-     */
-    public static function pdf_url( int $id ): string {
-        return add_query_arg( 'recibo', $id, self::url() );
-    }
-
-    /**
-     * «Ver recibo» desde Mis cuotas: solo los recibos propios (8.6, D6).
+     * Enlaces antiguos al PDF (mis-cuotas/?recibo=ID): llevan a Mis recibos,
+     * que es donde se comprueba el dueño y se abre el PDF.
      *
      * @return 	void
      * @access 	public
      * @package	club-triatlon-sulayr
      */
     public function maybe_pdf(): void {
-        if ( empty( $_GET['recibo'] ) || false === function_exists( 'is_wc_endpoint_url' ) || false === is_wc_endpoint_url( self::ENDPOINT ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Lectura; se comprueba el dueño.
+        if ( empty( $_GET['recibo'] ) || false === function_exists( 'is_wc_endpoint_url' ) || false === is_wc_endpoint_url( self::ENDPOINT ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Solo redirige.
             return;
         }
-        if ( false === is_user_logged_in() ) {
-            auth_redirect();
-        }
 
-        $receipt = Receipts::get( absint( $_GET['recibo'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        if ( null === $receipt || (int) $receipt->user_id !== get_current_user_id() || false === self::is_athlete() ) {
-            wp_die( esc_html__( 'No puedes ver este recibo.', SULAYR_TEXTDOMAIN ), esc_html__( 'Recibo', SULAYR_TEXTDOMAIN ), [ 'response' => 403 ] );
-        }
-
-        ReceiptPdf::stream( $receipt );
+        wp_safe_redirect( ReceiptsAccount::pdf_url( absint( $_GET['recibo'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        exit;
     }
 
     /**
@@ -335,7 +316,7 @@ class FeesAccount {
     }
 
     /**
-     * Recibos del socio con sus líneas, pagos y PDF (D53).
+     * Resumen de los recibos con enlace a Mis recibos (D53).
      *
      * @param   int $user_id Socio.
      * @return 	void
@@ -348,38 +329,18 @@ class FeesAccount {
             return;
         }
 
-        echo '<div class="sulayr-info-block sulayr-receipts-block"><h3 class="sulayr-info-block-title">' . esc_html__( 'Tus recibos', SULAYR_TEXTDOMAIN ) . '</h3>';
+        $outstanding = 0.0;
         foreach ( $receipts as $receipt ) {
-            $status = Receipts::display_status( $receipt );
-            $outstanding = Receipts::outstanding( $receipt );
-            printf(
-                '<details class="sulayr-receipt"><summary><span class="sulayr-receipt-month">%1$s</span> <span class="sulayr-receipt-total">%2$s</span> <span class="sulayr-receipt-badge sulayr-receipt-%3$s">%4$s</span></summary>',
-                esc_html( ucfirst( Receipts::month_label( (string) $receipt->period ) ) ),
-                esc_html( Receipts::money( (float) $receipt->total ) ),
-                esc_attr( $status ),
-                esc_html( Receipts::status_label( $status ) )
-            );
-            echo '<table class="sulayr-receipt-lines"><tbody>';
-            foreach ( Receipts::lines( (int) $receipt->id ) as $line ) {
-                $cancelled = (int) $line->cancelled > 0;
-                printf(
-                    '<tr%s><td>%s%s</td><td class="sulayr-num">%s</td></tr>',
-                    $cancelled ? ' class="sulayr-line-cancelled"' : '',
-                    esc_html( (string) $line->concept ),
-                    $cancelled ? ' <small>(' . esc_html__( 'anulada', SULAYR_TEXTDOMAIN ) . ')</small>' : '',
-                    esc_html( Receipts::money( (float) $line->amount ) )
-                );
-            }
-            printf( '</tbody><tfoot><tr><th>%s</th><th class="sulayr-num">%s</th></tr></tfoot></table>', esc_html__( 'Total', SULAYR_TEXTDOMAIN ), esc_html( Receipts::money( (float) $receipt->total ) ) );
-            foreach ( Receipts::payments( (int) $receipt->id ) as $payment ) {
-                printf( '<p class="sulayr-fees-note">%s</p>', esc_html( sprintf( __( 'Pagado %1$s el %2$s (%3$s).', SULAYR_TEXTDOMAIN ), Receipts::money( (float) $payment->amount ), MemberDates::show( (string) $payment->paid_on ), Receipts::method_label( (string) $payment->method ) ) ) );
-            }
-            if ( $outstanding > 0 ) {
-                printf( '<p class="sulayr-fees-note">%s</p>', esc_html( sprintf( __( 'Pendiente: %s', SULAYR_TEXTDOMAIN ), Receipts::money( $outstanding ) ) ) );
-            }
-            printf( '<p><a class="button" href="%s" target="_blank" rel="noopener">%s</a></p></details>', esc_url( self::pdf_url( (int) $receipt->id ) ), esc_html( sprintf( __( 'Ver recibo %s', SULAYR_TEXTDOMAIN ), $receipt->number ) ) );
+            $outstanding += Receipts::outstanding( $receipt );
         }
-        echo '</div>';
+
+        echo '<div class="sulayr-info-block"><h3 class="sulayr-info-block-title">' . esc_html__( 'Tus recibos', SULAYR_TEXTDOMAIN ) . '</h3>';
+        if ( $outstanding > 0 ) {
+            printf( '<p>%s</p>', esc_html( sprintf( __( 'Tienes %s pendientes de pago.', SULAYR_TEXTDOMAIN ), Receipts::money( $outstanding ) ) ) );
+        } else {
+            printf( '<p>%s</p>', esc_html__( 'Estás al día con tus recibos.', SULAYR_TEXTDOMAIN ) );
+        }
+        printf( '<p><a class="button" href="%s">%s</a></p></div>', esc_url( ReceiptsAccount::url() ), esc_html__( 'Ver mis recibos', SULAYR_TEXTDOMAIN ) );
     }
 
     /**
@@ -451,10 +412,10 @@ class FeesAccount {
      * True si el usuario actual es deportista.
      *
      * @return 	bool
-     * @access 	private
+     * @access 	public
      * @package	club-triatlon-sulayr
      */
-    private static function is_athlete(): bool {
+    public static function is_athlete(): bool {
         $user = wp_get_current_user();
 
         return $user->exists() && in_array( 'athlete', (array) $user->roles, true );

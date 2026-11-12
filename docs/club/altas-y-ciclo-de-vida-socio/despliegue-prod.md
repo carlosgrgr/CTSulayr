@@ -143,3 +143,16 @@ Actualiza el día del despliegue en:
 - `docs/FASES.md`;
 - `AGENT.md` (sección «Club members module»);
 - [pruebas.md](pruebas.md): marca las pruebas de PROD que hayas hecho.
+
+## Actualización: pestaña «Mis recibos» (spec 20.8)
+
+**Hecha el 12 de noviembre de 2026** (pasos 1 a 5).
+
+Con FileZilla, en `wp-content/plugins/club-triatlon-sulayr/`, después de una copia de seguridad de esos archivos:
+
+1. Subir el archivo nuevo `src/Modules/Members/Receipts/ReceiptsAccount.php`.
+2. Sobrescribir `src/App/App.php`, `src/Modules/Members/Lifecycle/FeesAccount.php`, `src/Modules/Members/Receipts/Receipts.php` y `src/Modules/Members/MemberSettings.php`.
+3. Cargar cualquier página: se regeneran los enlaces de Mi cuenta y aparece «Mis recibos» detrás de «Mis cuotas». Si da 404, guarda Ajustes → Enlaces permanentes sin cambiar nada.
+4. En **Socios → Ajustes**, email del recibo mensual: cambia «Mi cuenta → Mis cuotas» por «Mi cuenta → Mis recibos» y `{enlace_mis_cuotas}` por `{enlace_mis_recibos}`.
+5. Entra con un socio de prueba: «Mis recibos» lista todos sus recibos (también los de 0 €, «No aplica») y «Ver recibo» abre el PDF; «Mis cuotas» muestra el resumen con «Ver mis recibos».
+

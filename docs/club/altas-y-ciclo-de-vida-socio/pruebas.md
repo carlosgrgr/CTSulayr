@@ -137,6 +137,11 @@ El proceso completo de B, C y D juntas está en [despliegue-prod.md](despliegue-
 - [ ] El día de penalización, «Aplicar penalización a impagados» solo añade la línea a los pendientes. (**pendiente: 20 de noviembre de 2026**)
 - [x] Con tu email en «Emails del entrenador», «Enviar por email» del listado llega con la banda Noche, el escudo y la franja tricolor; revísalo en Gmail y en el móvil. Si activas un momento el aviso de recibo mensual con un socio de prueba, lo mismo con ese email. (12/11/2026)
 
+### 9 ter. Pestaña «Mis recibos» (spec 20.8)
+
+- [x] En local, en ordenador y móvil: «Mis recibos» sale detrás de «Mis cuotas», lista todos los recibos (también los de 0 €, «No aplica»), se despliegan y «Ver recibo» abre el PDF. «Mis cuotas» muestra el resumen y «Ver mis recibos». (12/11/2026)
+- [x] En PROD, tras subir: lo mismo con un socio de prueba, y el texto del email del recibo mensual cambiado a «Mis recibos». (12/11/2026)
+
 ### 10. Al día siguiente
 
 - [ ] Herramientas → Salud del sitio sin avisos de WP-Cron. (**pendiente: 13 de noviembre de 2026**)

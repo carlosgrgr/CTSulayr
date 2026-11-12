@@ -95,7 +95,7 @@ class MemberSettings {
         'email_coach_subject' => 'Deportistas con plan de entrenamiento',
         'email_coach_body' => "<p>Listado actualizado de deportistas con plan de entrenamiento:</p>\n{listado}",
         'email_receipt_subject' => 'Tu recibo de {mes} del Club Triatlón Sulayr',
-        'email_receipt_body' => "<p>Hola {nombre}:</p>\n<p>Ya tienes tu recibo {numero} de {mes}: {total}.</p>\n<p>Tienes el detalle y el PDF en Mi cuenta → Mis cuotas.</p>\n<p>{enlace_mis_cuotas}</p>",
+        'email_receipt_body' => "<p>Hola {nombre}:</p>\n<p>Ya tienes tu recibo {numero} de {mes}: {total}.</p>\n<p>Tienes el detalle y el PDF en Mi cuenta → Mis recibos.</p>\n<p>{enlace_mis_recibos}</p>",
         'consent_privacy_text' => 'He leído y acepto la política de privacidad del Club Triatlón Sulayr.',
         'consent_privacy_version' => '1',
         'consent_rules_text' => 'He leído y acepto las normas y condiciones del club para la temporada.',
@@ -393,7 +393,7 @@ class MemberSettings {
                 'label' => __( 'Marcadores', SULAYR_TEXTDOMAIN ),
                 'name' => '',
                 'type' => 'message',
-                'message' => __( '{nombre}, {nombre_completo}, {numero_socio}, {fecha_alta}, {fecha_efectiva}, {enlace_contrasena}, {enlace_whatsapp}, {bloques_servicios}, {tipo}, {resultado}, {detalle}, {motivo}, {listado}. Recibo mensual: {nombre}, {mes}, {numero}, {total}, {enlace_mis_cuotas}', SULAYR_TEXTDOMAIN ),
+                'message' => __( '{nombre}, {nombre_completo}, {numero_socio}, {fecha_alta}, {fecha_efectiva}, {enlace_contrasena}, {enlace_whatsapp}, {bloques_servicios}, {tipo}, {resultado}, {detalle}, {motivo}, {listado}. Recibo mensual: {nombre}, {mes}, {numero}, {total}, {enlace_mis_recibos}, {enlace_mis_cuotas}', SULAYR_TEXTDOMAIN ),
             ],
         ];
 
