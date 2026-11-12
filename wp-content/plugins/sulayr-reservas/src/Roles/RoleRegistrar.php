@@ -16,7 +16,7 @@ class RoleRegistrar {
 	const ROLE_NADADOR = 'nadador';
 	const ROLE_GESTOR  = 'gestor';
 
-	const VERSION        = 2;
+	const VERSION        = 3;
 	const OPTION_VERSION = 'sulayr_reservas_roles_version';
 
 	/**

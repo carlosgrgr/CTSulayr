@@ -721,6 +721,69 @@ p.sulayr-panel > a:hover,
 	overflow-wrap: anywhere;
 }
 
+/* Nadadores apuntados a una sesión: fichas para el nadador, tabla para el gestor. */
+.sulayr-attendee-grid {
+	display: grid;
+	gap: 0.5rem;
+	grid-template-columns: 1fr;
+	list-style: none;
+	margin: 0.75rem 0 0;
+	padding: 0;
+}
+
+.sulayr-attendee {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 0.75rem;
+}
+
+.sulayr-attendee-grid .sulayr-attendee {
+	border: 1px solid var(--sr-linea);
+	border-radius: var(--sr-radio-sm);
+	padding: 0.6rem 0.75rem;
+}
+
+.sulayr-attendee-name {
+	flex: 1 1 8rem;
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+
+.sulayr-attendee-grid .sulayr-attendee-own {
+	background: var(--sr-nieve);
+	border-left: 4px solid var(--sr-menta);
+	grid-column: 1 / -1;
+}
+
+.sulayr-attendee-own .sulayr-action-cancel {
+	margin: 0;
+}
+
+.sulayr-table.sulayr-attendee-table {
+	min-width: 0;
+}
+
+.sulayr-table tbody tr.sulayr-attendee-own td {
+	background: var(--sr-nieve);
+}
+
+.sulayr-table tbody tr.sulayr-attendee-own td:first-child {
+	box-shadow: inset 4px 0 0 var(--sr-menta);
+}
+
+@media (min-width: 40rem) {
+	.sulayr-attendee-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 64rem) {
+	.sulayr-attendee-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
 .sulayr-swimmer-total {
 	color: var(--sr-texto-2);
 	font-weight: 600;

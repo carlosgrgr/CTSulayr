@@ -111,9 +111,11 @@ En **Detalle**:
 2. Para cambiar el aforo, escribe la capacidad y pulsa **Guardar capacidad**.
 3. Pulsa **Deshabilitar sesión** o **Habilitar sesión**.
 4. En **Reservar para**, elige un nadador activo y pulsa **Reservar**.
-5. En la lista **Reservas**, pulsa **Cancelar reserva** junto a quien corresponda.
+5. En la tabla **Nadadores apuntados**, pulsa **Cancelar reserva** junto a quien corresponda.
 
-La lista muestra nombre, apellidos y correo. Si la plaza se registró después de que la sesión hubiera empezado, aparece el texto «Añadida por un gestor».
+La tabla muestra foto, nombre, apellidos y correo, ordenados por nombre. Si la plaza se registró después de que la sesión hubiera empezado, la columna Origen dice «Añadida por un gestor». Tu propia reserva, si la tienes, sale destacada.
+
+Los nadadores también ven esta lista en el detalle, pero solo con nombre, apellidos y foto.
 
 Bajar el número de plazas no borra a quien ya estaba apuntado. Mientras las plazas ocupadas lleguen al nuevo máximo, no se admiten más reservas.
 

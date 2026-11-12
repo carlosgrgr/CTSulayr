@@ -35,6 +35,7 @@ Plugin `sulayr-reservas`. Estas specs llevan el sufijo `-RESERVAS`. `SPEC-RESERV
 |---|---|---|
 | Reservas | [SPEC-RESERVAS.md](reservas/SPEC-RESERVAS.md), [SPEC-MEJORAS-RESERVAS.md](reservas/SPEC-MEJORAS-RESERVAS.md), [SPEC-FASE11-RESERVAS.md](reservas/SPEC-FASE11-RESERVAS.md) | Cerrada. Fases 0 a 11 en `main`. |
 | Facturación | [SPEC-FACTURACION-RESERVAS.md](reservas/SPEC-FACTURACION-RESERVAS.md) | Cerrada. Criterios de la sección 11 probados (ver `ACEPTACION.md`). En `main` y desplegada en PROD el 28 de octubre de 2026. El enlace «Facturación» del menú del panel está comentado en `PanelRenderer` hasta que se empiece a usar. |
+| Nadadores apuntados en el detalle de la sesión | [SPEC-ASISTENTES-SESION-RESERVAS.md](reservas/SPEC-ASISTENTES-SESION-RESERVAS.md) | Definida el 12 de noviembre de 2026. Implementada en la rama `feature/asistentes-sesion`. Pendiente de `main` y de PROD. |
 
 ## Web del club
 

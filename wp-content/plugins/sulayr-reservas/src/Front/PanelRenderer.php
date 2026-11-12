@@ -723,30 +723,101 @@ class PanelRenderer {
 			$this->bookForForm( $session );
 		}
 
-		if ( ! $manager ) {
-			echo '</div>';
+		if ( $manager && current_user_can( Capabilities::VIEW_ALL_BOOKINGS ) ) {
+			$this->attendeeTable( $this->query->attendees( (int) $session->id ) );
+		} elseif ( current_user_can( Capabilities::VIEW_SESSION_ATTENDEES ) ) {
+			$this->attendeeCards( $session, $this->query->sessionSwimmers( (int) $session->id ), $now );
+		}
+		echo '</div>';
+	}
+
+	/**
+	 * Listado del gestor: tabla con contacto, origen y cancelación.
+	 *
+	 * @param object[] $attendees Reservas de la sesión, ordenadas por nombre.
+	 * @return void
+	 */
+	private function attendeeTable( array $attendees ) {
+		$this->attendeeHeading( count( $attendees ) );
+		if ( array() === $attendees ) {
 			return;
 		}
 
-		$attendees = $this->query->attendees( (int) $session->id );
-		echo '<h3>Reservas</h3>';
-		if ( array() === $attendees ) {
-			echo '<p>Nadie ha reservado esta sesión.</p></div>';
-			return;
-		}
-		echo '<ul class="sulayr-people">';
+		$viewer = get_current_user_id();
+		echo '<div class="sulayr-table-wrap">';
+		echo '<table class="sulayr-table sulayr-attendee-table">';
+		echo '<thead><tr><th scope="col">Nadador</th><th scope="col">Email</th><th scope="col">Origen</th><th scope="col">Acción</th></tr></thead><tbody>';
 		foreach ( $attendees as $attendee ) {
-			echo '<li><span>' . esc_html( $attendee->first_name . ' ' . $attendee->last_name ) . '</span> ';
-			echo '<span>' . esc_html( (string) $attendee->email ) . '</span> ';
-			if ( 1 === (int) $attendee->is_manual ) {
-				echo '<span>Añadida por un gestor</span> ';
-			}
+			$name = trim( (string) $attendee->first_name . ' ' . (string) $attendee->last_name );
+			echo '<tr' . ( (int) $attendee->user_id === $viewer ? ' class="sulayr-attendee-own"' : '' ) . '>';
+			echo '<td><div class="sulayr-attendee">';
+			$this->avatar( $name, (string) $attendee->photo_url, 'sulayr-avatar sulayr-avatar-small' );
+			echo '<span class="sulayr-attendee-name">' . esc_html( $name ) . '</span></div></td>';
+			echo '<td>' . esc_html( (string) $attendee->email ) . '</td>';
+			echo '<td>' . esc_html( 1 === (int) $attendee->is_manual ? 'Añadida por un gestor' : '' ) . '</td>';
+			echo '<td>';
 			if ( current_user_can( Capabilities::CANCEL_ANY ) ) {
 				$this->post( 'cancel', 'Cancelar reserva', array( 'booking_id' => (int) $attendee->id ) );
 			}
+			echo '</td></tr>';
+		}
+		echo '</tbody></table></div>';
+	}
+
+	/**
+	 * Listado del nadador: fichas con foto y nombre. La propia lleva el botón de cancelar.
+	 *
+	 * @param object             $session  Sesión.
+	 * @param object[]           $swimmers Nadadores apuntados, ordenados por nombre.
+	 * @param \DateTimeImmutable $now      Ahora.
+	 * @return void
+	 */
+	private function attendeeCards( $session, array $swimmers, \DateTimeImmutable $now ) {
+		$this->attendeeHeading( count( $swimmers ) );
+		if ( array() === $swimmers ) {
+			return;
+		}
+
+		$viewer = get_current_user_id();
+		$own    = (int) $session->own_booking_id;
+		echo '<ul class="sulayr-attendee-grid">';
+		foreach ( $swimmers as $swimmer ) {
+			$name    = trim( (string) $swimmer->first_name . ' ' . (string) $swimmer->last_name );
+			$is_mine = $own > 0 && (int) $swimmer->user_id === $viewer;
+			echo '<li class="' . esc_attr( $is_mine ? 'sulayr-attendee sulayr-attendee-own' : 'sulayr-attendee' ) . '">';
+			$this->avatar( $name, (string) $swimmer->photo_url, 'sulayr-avatar sulayr-avatar-small' );
+			echo '<span class="sulayr-attendee-name">' . esc_html( $name ) . '</span>';
+			if ( $is_mine && $this->canCancelOwn( $session, $now ) ) {
+				$this->post( 'cancel', 'Cancelar mi reserva', array( 'booking_id' => $own ) );
+			}
 			echo '</li>';
 		}
-		echo '</ul></div>';
+		echo '</ul>';
+	}
+
+	/**
+	 * @param int $count Reservas de la sesión.
+	 * @return void
+	 */
+	private function attendeeHeading( $count ) {
+		echo '<h3>' . esc_html( 'Nadadores apuntados (' . $count . ')' ) . '</h3>';
+		if ( 0 === $count ) {
+			echo '<p>Nadie ha reservado esta sesión todavía.</p>';
+		}
+	}
+
+	/**
+	 * Regla de cancelación de la reserva propia: cualquiera con CANCEL_ANY, o CANCEL_OWN hasta 60 minutos antes.
+	 *
+	 * @param object             $session Sesión.
+	 * @param \DateTimeImmutable $now     Ahora.
+	 * @return bool
+	 */
+	private function canCancelOwn( $session, \DateTimeImmutable $now ) {
+		$start   = $this->sessionStart( $session );
+		$in_time = $start instanceof \DateTimeImmutable && $now <= $start->modify( '-60 minutes' );
+
+		return current_user_can( Capabilities::CANCEL_ANY ) || ( current_user_can( Capabilities::CANCEL_OWN ) && $in_time );
 	}
 
 	/**
@@ -1195,8 +1266,7 @@ class PanelRenderer {
 		$started = $start instanceof \DateTimeImmutable && $now >= $start;
 		$own     = (int) $session->own_booking_id;
 		if ( $own > 0 ) {
-			$in_time = $start instanceof \DateTimeImmutable && $now <= $start->modify( '-60 minutes' );
-			if ( current_user_can( Capabilities::CANCEL_ANY ) || ( current_user_can( Capabilities::CANCEL_OWN ) && $in_time ) ) {
+			if ( $this->canCancelOwn( $session, $now ) ) {
 				$this->post( 'cancel', 'Cancelar mi reserva', array( 'booking_id' => $own ) );
 			}
 			return;

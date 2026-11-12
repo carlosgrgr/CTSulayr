@@ -109,7 +109,7 @@ class PanelQuery {
 	}
 
 	/**
-	 * Asistentes de una sesión. Solo quien puede ver todas las reservas.
+	 * Asistentes de una sesión, con sus datos de contacto. Solo quien puede ver todas las reservas.
 	 *
 	 * @param int $session_id Sesión.
 	 * @return object[]
@@ -125,14 +125,56 @@ class PanelQuery {
 
 				$rows = $wpdb->get_results(
 					$wpdb->prepare(
-						'SELECT id, user_id, first_name, last_name, phone, email, is_manual FROM ' . $this->bookings() . ' WHERE session_id = %d ORDER BY last_name ASC, first_name ASC, id ASC',
+						'SELECT b.id, b.user_id, b.first_name, b.last_name, b.phone, b.email, b.is_manual, w.photo_id FROM ' . $this->bookings() . ' b LEFT JOIN ' . $this->swimmersTable() . ' w ON w.user_id = b.user_id WHERE b.session_id = %d ORDER BY b.first_name ASC, b.last_name ASC, b.id ASC',
 						(int) $session_id
 					)
 				);
 
-				return is_array( $rows ) ? $rows : array();
+				return $this->withPhotos( is_array( $rows ) ? $rows : array() );
 			}
 		);
+	}
+
+	/**
+	 * Nadadores apuntados a una sesión, para cualquier nadador. Solo nombre, apellidos y foto.
+	 *
+	 * @param int $session_id Sesión.
+	 * @return object[]
+	 */
+	public function sessionSwimmers( $session_id ) {
+		return $this->blog_context->onBookings(
+			function () use ( $session_id ) {
+				if ( ! current_user_can( Capabilities::VIEW_SESSION_ATTENDEES ) ) {
+					return array();
+				}
+
+				global $wpdb;
+
+				$rows = $wpdb->get_results(
+					$wpdb->prepare(
+						'SELECT b.user_id, b.first_name, b.last_name, w.photo_id FROM ' . $this->bookings() . ' b LEFT JOIN ' . $this->swimmersTable() . ' w ON w.user_id = b.user_id WHERE b.session_id = %d ORDER BY b.first_name ASC, b.last_name ASC, b.id ASC',
+						(int) $session_id
+					)
+				);
+
+				return $this->withPhotos( is_array( $rows ) ? $rows : array() );
+			}
+		);
+	}
+
+	/**
+	 * Cambia `photo_id` por `photo_url`. Debe ejecutarse en el blog de reservas.
+	 *
+	 * @param object[] $rows Filas con `photo_id`.
+	 * @return object[]
+	 */
+	private function withPhotos( array $rows ) {
+		foreach ( $rows as $row ) {
+			$row->photo_url = $this->photoUrl( isset( $row->photo_id ) ? (int) $row->photo_id : 0 );
+			unset( $row->photo_id );
+		}
+
+		return $rows;
 	}
 
 	/**

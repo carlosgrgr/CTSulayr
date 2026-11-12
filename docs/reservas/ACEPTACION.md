@@ -121,6 +121,20 @@ No reabre las filas del apartado 18. El acceso entre sitios y el calendario móv
 | Calendario de un día por debajo de 1024 px | `PanelRenderer`, `panel.js`, `panel.css` | 390, 414 y 768 px; anterior, siguiente, swipe, viernes, domingo y cambio de semana | Cumplido y probado | Desde 1024 px sigue la cuadrícula. Hoy es `Europe/Madrid` |
 | Reservar, cancelar y límite semanal | `BookingService` | Una reserva futura creada y cancelada; la cuarta de la misma semana rechazada | Cumplido y probado | Los formularios no han cambiado de nonce ni de campos |
 
+## Nadadores apuntados
+
+No reabre las filas del apartado 18. Los identificadores son los de la sección 4 de [SPEC-ASISTENTES-SESION-RESERVAS.md](SPEC-ASISTENTES-SESION-RESERVAS.md). Script con `wp eval-file` en el blog 2 el 12 de noviembre de 2026, sesión 19 con una reserva, sin cambiar datos.
+
+| Referencia | Requisito | Prueba | Resultado | Observaciones |
+|---|---|---|---|---|
+| C1 | El nadador ve título con número y apuntados | HTML de `attendeeCards()` como nadador sin reserva | Cumplido y probado | Con una sola reserva no se comprobó el orden entre varias |
+| C2 | Sin correo, teléfono, DNI ni marca manual | Campos devueltos por `sessionSwimmers()` | Cumplido y probado | `user_id`, `first_name`, `last_name`, `photo_url` |
+| C3 | Sin capacidad no hay nombres | `sessionSwimmers()` sin usuario; `attendees()` como nadador | Cumplido y probado | Ambas devuelven lista vacía |
+| C4 | Ficha propia destacada y con cancelación en plazo | HTML como el nadador que reservó | Cumplido y probado | Clase `sulayr-attendee-own` y «Cancelar mi reserva» |
+| C5 | Tabla del gestor | HTML de `attendeeTable()` como gestor | Cumplido y probado | Foto real no probada: no hay imágenes en local |
+| C6 | Texto sin reservas | `attendeeCards()` con lista vacía | Cumplido y probado | |
+| C7 | Roles existentes reciben la capacidad | `syncIfNeeded()` y `has_cap()` en los tres roles | Cumplido y probado | Versión de roles `3` |
+
 ## Facturación
 
 No reabre las filas del apartado 18. Los identificadores son los de la sección 11 de [SPEC-FACTURACION-RESERVAS.md](SPEC-FACTURACION-RESERVAS.md). Script con `wp eval-file` en el blog 2 el 28 de octubre de 2026, con fichas ficticias y fechas fijas; los datos quedaron como estaban. Detalle en `DEVELOPMENT.md`, sección «Facturación».

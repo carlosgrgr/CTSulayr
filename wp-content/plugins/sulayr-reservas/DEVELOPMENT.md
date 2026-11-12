@@ -77,6 +77,7 @@ El rol también recibe `read`, igual que `athlete` en el club. Sin esa capacidad
 | `sulayr_book_self` | sí | sí | sí |
 | `sulayr_cancel_own` | sí | sí | sí |
 | `sulayr_view_own_bookings` | sí | sí | sí |
+| `sulayr_view_session_attendees` | sí | sí | sí |
 | `sulayr_view_all_bookings` | no | sí | sí |
 | `sulayr_book_for_others` | no | sí | sí |
 | `sulayr_cancel_any` | no | sí | sí |
@@ -91,7 +92,8 @@ Correspondencia con el SPEC:
 - Reservar para sí mismo: `sulayr_book_self`.
 - Cancelar la propia reserva cuando el plazo lo permita: `sulayr_cancel_own`. El plazo de 60 minutos lo comprueba `BookingService`.
 - Ver reservas propias e historial propio: `sulayr_view_own_bookings`.
-- Ver reservas de todos, sesiones pasadas y asistentes: `sulayr_view_all_bookings`.
+- Ver nombre, apellidos y foto de quien ha reservado una sesión: `sulayr_view_session_attendees` (SPEC-ASISTENTES-SESION, que modifica la sección 3.1).
+- Ver reservas de todos, sesiones pasadas y asistentes con sus datos de contacto: `sulayr_view_all_bookings`.
 - Reservar para otro usuario, incluida la reserva retroactiva del gestor: `sulayr_book_for_others`.
 - Cancelar cualquier reserva: `sulayr_cancel_any`.
 - Alta, consulta, activación, desactivación y eliminación de nadadores: `sulayr_manage_swimmers`.
@@ -135,7 +137,7 @@ Si una capacidad `sulayr_` deja de estar en el mapa, se retira de `nadador`, `ge
 
 ### Esquema de base de datos
 
-La versión actual es `3`, opción `sulayr_reservas_db_version` en cada sitio. La `3` añade las tablas de facturación del blog 2. La versión de roles (`sulayr_reservas_roles_version`) es `2`, por las capacidades de facturación. Una modificación futura sube esa versión y pasa por `dbDelta` o por una migración explícita. Si el cambio puede alterar datos existentes, la migración tiene que conservarlos. Una actualización del esquema no borra datos. La versión no se marca como instalada si falta alguna tabla prevista.
+La versión actual es `3`, opción `sulayr_reservas_db_version` en cada sitio. La `3` añade las tablas de facturación del blog 2. La versión de roles (`sulayr_reservas_roles_version`) es `3`: la `2` añadió las capacidades de facturación y la `3`, `sulayr_view_session_attendees`. Una modificación futura sube esa versión y pasa por `dbDelta` o por una migración explícita. Si el cambio puede alterar datos existentes, la migración tiene que conservarlos. Una actualización del esquema no borra datos. La versión no se marca como instalada si falta alguna tabla prevista.
 
 ### Concurrencia de las reservas
 
@@ -193,7 +195,7 @@ No hay suite PHPUnit. Lo comprobado hasta la fase 6 se ha ejecutado con scripts 
 
 Implementada en `Roles\Capabilities`, `Roles\RoleRegistrar` y `Access\AdminAccess`.
 
-`RoleRegistrar` sincroniza los roles al activar el plugin, dentro de `onBookings()`, y en cada petición del blog 2 si la versión de roles (`sulayr_reservas_roles_version`, valor `1`) no coincide o falta un rol. Repetir la activación no crea roles duplicados ni toca el blog 1.
+`RoleRegistrar` sincroniza los roles al activar el plugin, dentro de `onBookings()`, y en cada petición del blog 2 si la versión de roles (`sulayr_reservas_roles_version`, valor `1` en esta fase; hoy `3`) no coincide o falta un rol. Repetir la activación no crea roles duplicados ni toca el blog 1.
 
 `AdminAccess` redirige en `admin_init` y oculta la barra de administración. No actúa en el blog 1, ni con administradores, ni con superadministradores, ni si el usuario tiene otro rol además de `nadador` o `gestor`. No interrumpe AJAX ni cron.
 
@@ -407,6 +409,19 @@ El listado de la fase 10 ganó un contador y un filtro por origen. No cambia el 
 El filtro añade `origen=todos|nazari|sulayr`. `todos` no se escribe en la URL. Se combina con `estado` y `q`. `swimmers()` traduce `nazari` a `linked_to_club = 0` y `sulayr` a `linked_to_club = 1`. La columna Origen muestra «CN Nazarí» o «CT Sulayr». La ficha sigue diciendo «Alta manual» o «Vinculado al club».
 
 Ordenar conserva `origen`. **Exportar CSV** recibe el mismo `origen` y exporta las filas filtradas. El archivo no añade una columna de origen: sigue siendo nombre, apellidos, email, teléfono, estado, fecha de alta y límite semanal. El desplegable «Reservar para» no usa este filtro.
+
+## Nadadores apuntados en el detalle
+
+Spec: `docs/reservas/SPEC-ASISTENTES-SESION-RESERVAS.md`. No cambia el esquema.
+
+- `PanelQuery::sessionSwimmers()` exige `sulayr_view_session_attendees` y lee de `sulayr_swim_bookings` solo `user_id`, `first_name` y `last_name`, con `LEFT JOIN` a `sulayr_swim_swimmers` para la foto. Una reserva sin ficha sale sin foto.
+- `PanelQuery::attendees()` sigue exigiendo `sulayr_view_all_bookings`. Ahora trae también la foto y ordena por nombre y apellidos.
+- `withPhotos()` cambia `photo_id` por `photo_url` dentro de `onBookings()`, porque los adjuntos son del blog 2.
+- `PanelRenderer::session()` pinta `attendeeTable()` al gestor con `sulayr_view_all_bookings` y `attendeeCards()` al resto con la capacidad nueva. `canCancelOwn()` reúne la regla de los 60 minutos que usan `quickActions()` y la ficha propia.
+- Estilos en `panel.css`: `.sulayr-attendee-grid`, `.sulayr-attendee`, `.sulayr-attendee-own` y `.sulayr-attendee-table` (anula el `min-width` de `.sulayr-table`).
+- `RoleRegistrar::VERSION` pasa a `3`; los roles existentes reciben la capacidad en la siguiente petición del blog 2.
+
+Probado el 12 de noviembre de 2026 con `wp eval-file` en el blog 2: ver `ACEPTACION.md`, sección «Nadadores apuntados». La foto no se pudo probar con datos reales: en local no hay ninguna imagen en el blog 2.
 
 ## Facturación
 
