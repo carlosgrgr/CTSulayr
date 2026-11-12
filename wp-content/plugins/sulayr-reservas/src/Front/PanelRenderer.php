@@ -788,7 +788,7 @@ class PanelRenderer {
 			$this->avatar( $name, (string) $swimmer->photo_url, 'sulayr-avatar sulayr-avatar-small' );
 			echo '<span class="sulayr-attendee-name">' . esc_html( $name ) . '</span>';
 			if ( $is_mine && $this->canCancelOwn( $session, $now ) ) {
-				$this->post( 'cancel', 'Cancelar mi reserva', array( 'booking_id' => $own ) );
+				$this->post( 'cancel', 'Cancelar mi reserva', array( 'booking_id' => $own ), array(), 'trash' );
 			}
 			echo '</li>';
 		}
@@ -1364,15 +1364,20 @@ class PanelRenderer {
 	 * @param string                    $label  Texto del botón.
 	 * @param array<string, int|string> $fields Campos ocultos.
 	 * @param array<string, int|string> $return Argumentos de vuelta.
+	 * @param string                    $icon   Icono en lugar del texto. El texto queda para lectores de pantalla.
 	 * @return void
 	 */
-	private function post( $action, $label, array $fields, array $return = array() ) {
+	private function post( $action, $label, array $fields, array $return = array(), $icon = '' ) {
 		echo '<form method="post" action="' . esc_url( $this->url( array() ) ) . '" class="sulayr-inline sulayr-action-' . esc_attr( $action ) . '">';
 		wp_nonce_field( PanelActions::NONCE, 'sulayr_nonce' );
 		echo '<input type="hidden" name="sulayr_action" value="' . esc_attr( $action ) . '">';
 		echo '<input type="hidden" name="sulayr_return" value="' . esc_attr( $this->url( $return ) ) . '">';
 		foreach ( $fields as $name => $value ) {
 			echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( (string) $value ) . '">';
+		}
+		if ( '' !== $icon ) {
+			echo '<button type="submit" class="sulayr-icon-button" title="' . esc_attr( $label ) . '">' . $this->icon( $icon ) . '<span class="sulayr-sr">' . esc_html( $label ) . '</span></button></form>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG fijo de icon().
+			return;
 		}
 		echo '<button type="submit">' . esc_html( $label ) . '</button></form>';
 	}
@@ -1790,6 +1795,7 @@ class PanelRenderer {
 			'clock'    => '<circle cx="12" cy="12" r="8"></circle><path d="M12 8v4.5l3 2"></path>',
 			'logout'   => '<path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h7A1.5 1.5 0 0 1 19 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 9 18.5V17"></path><path d="M13 12H4M6.5 9.5 4 12l2.5 2.5"></path>',
 			'external' => '<path d="M14 5h5v5"></path><path d="M19 5l-8 8"></path><path d="M17 13.5V18a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h4.5"></path>',
+			'trash'    => '<path d="M4.5 7h15M9.5 7V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"></path><path d="M6.5 7l.8 11.6a1.5 1.5 0 0 0 1.5 1.4h6.4a1.5 1.5 0 0 0 1.5-1.4L17.5 7M10 11v5M14 11v5"></path>',
 		);
 		if ( ! isset( $paths[ $name ] ) ) {
 			return '';

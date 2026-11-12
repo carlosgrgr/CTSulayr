@@ -418,7 +418,8 @@ Spec: `docs/reservas/SPEC-ASISTENTES-SESION-RESERVAS.md`. No cambia el esquema.
 - `PanelQuery::attendees()` sigue exigiendo `sulayr_view_all_bookings`. Ahora trae también la foto y ordena por nombre y apellidos.
 - `withPhotos()` cambia `photo_id` por `photo_url` dentro de `onBookings()`, porque los adjuntos son del blog 2.
 - `PanelRenderer::session()` pinta `attendeeTable()` al gestor con `sulayr_view_all_bookings` y `attendeeCards()` al resto con la capacidad nueva. `canCancelOwn()` reúne la regla de los 60 minutos que usan `quickActions()` y la ficha propia.
-- Estilos en `panel.css`: `.sulayr-attendee-grid`, `.sulayr-attendee`, `.sulayr-attendee-own` y `.sulayr-attendee-table` (anula el `min-width` de `.sulayr-table`).
+- Estilos en `panel.css`: `.sulayr-attendee-grid`, `.sulayr-attendee`, `.sulayr-attendee-own` (fondo Menta al 14 %, sin cambiar de tamaño) y `.sulayr-attendee-table` (anula el `min-width` de `.sulayr-table`).
+- `post()` acepta un quinto argumento con el nombre de un icono de `icon()`. Pinta un botón cuadrado de 44 px (`.sulayr-icon-button`) con el texto en `.sulayr-sr` y en `title`. La ficha propia lo usa con `trash`.
 - `RoleRegistrar::VERSION` pasa a `3`; los roles existentes reciben la capacidad en la siguiente petición del blog 2.
 
 Probado el 12 de noviembre de 2026 con `wp eval-file` en el blog 2: ver `ACEPTACION.md`, sección «Nadadores apuntados». La foto no se pudo probar con datos reales: en local no hay ninguna imagen en el blog 2.

@@ -20,8 +20,8 @@ Un nadador que abre el detalle de una sesión ve quién ha reservado plaza en el
 | A4 | El listado se ordena por nombre y después por apellidos. El gestor usa el mismo orden. |
 | A5 | Título «Nadadores apuntados (N)». Sin reservas: «Nadie ha reservado esta sesión todavía». |
 | A6 | Para el nadador, fichas en rejilla: una columna en móvil, dos desde 640 px y tres desde 1024 px. Avatar pequeño y nombre. Sin enlaces ni ampliación de la foto. |
-| A7 | La ficha propia no lleva la palabra «Tú». Ocupa toda la fila, con fondo Nieve y filete Menta a la izquierda, y el botón «Cancelar mi reserva» con la regla de siempre (hasta 60 minutos antes). El botón de arriba del detalle se mantiene. |
-| A8 | Para el gestor, la tabla de marca del panel sin ancho mínimo: NADADOR (avatar y nombre), EMAIL, ORIGEN («Añadida por un gestor» o vacío) y ACCIÓN («Cancelar reserva»). Su propia fila, si está, va destacada igual. Sin enlace nuevo a la ficha. |
+| A7 | La ficha propia no lleva la palabra «Tú». Tiene el mismo tamaño que las demás, con fondo Menta suave, borde Menta y filete Menta a la izquierda. Lleva un botón con icono de papelera («Cancelar mi reserva» para lectores de pantalla y al pasar el ratón) con la regla de siempre (hasta 60 minutos antes). El botón de texto de arriba del detalle se mantiene. Cambiado el 12 de noviembre de 2026 tras verlo en pantalla: la ficha a todo el ancho rompía la rejilla. |
+| A8 | Para el gestor, la tabla de marca del panel sin ancho mínimo: NADADOR (avatar y nombre), EMAIL, ORIGEN («Añadida por un gestor» o vacío) y ACCIÓN («Cancelar reserva»). Su propia fila, si está, lleva el mismo fondo Menta suave y el filete Menta. Sin enlace nuevo a la ficha. |
 | A9 | Nadie puede ocultarse del listado. El club debe avisar a los nadadores de que su nombre y su foto de reservas los ven los demás nadadores en el detalle de las sesiones. Queda ligado a la fila 5 de [PRIORIDADES.md](../PRIORIDADES.md) (RGPD y LOPD). |
 
 ## 3. Permisos

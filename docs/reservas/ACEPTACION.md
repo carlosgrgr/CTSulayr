@@ -130,7 +130,7 @@ No reabre las filas del apartado 18. Los identificadores son los de la sección 
 | C1 | El nadador ve título con número y apuntados | HTML de `attendeeCards()` como nadador sin reserva | Cumplido y probado | Con una sola reserva no se comprobó el orden entre varias |
 | C2 | Sin correo, teléfono, DNI ni marca manual | Campos devueltos por `sessionSwimmers()` | Cumplido y probado | `user_id`, `first_name`, `last_name`, `photo_url` |
 | C3 | Sin capacidad no hay nombres | `sessionSwimmers()` sin usuario; `attendees()` como nadador | Cumplido y probado | Ambas devuelven lista vacía |
-| C4 | Ficha propia destacada y con cancelación en plazo | HTML como el nadador que reservó | Cumplido y probado | Clase `sulayr-attendee-own` y «Cancelar mi reserva» |
+| C4 | Ficha propia destacada y con cancelación en plazo | HTML como el nadador que reservó | Cumplido y probado | Clase `sulayr-attendee-own` y botón papelera con texto «Cancelar mi reserva» oculto |
 | C5 | Tabla del gestor | HTML de `attendeeTable()` como gestor | Cumplido y probado | Foto real no probada: no hay imágenes en local |
 | C6 | Texto sin reservas | `attendeeCards()` con lista vacía | Cumplido y probado | |
 | C7 | Roles existentes reciben la capacidad | `syncIfNeeded()` y `has_cap()` en los tres roles | Cumplido y probado | Versión de roles `3` |
