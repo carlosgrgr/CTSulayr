@@ -38,7 +38,10 @@ Lo normal es **importarla** (4.1): la web rellena todo a partir de los PDF de la
 1. **Descarga los PDF** oficiales de la clasificación:
    - en individual, la general masculina y la femenina;
    - en relevos, todas las que tengan socios (federado y open, masculina, femenina y mixta).
-2. **Conviértelos a JSON con Claude.** Abre **Ranking → Importar resultados**, pulsa **Copiar el prompt**, abre una conversación nueva en claude.ai, adjunta los PDF y pega el prompt. Claude contesta con el JSON. Si trabajas con Claude Code en el repositorio de la web, usa `/ranking-importar <prueba>`.
+2. **Conviértelos a JSON con Claude**, de una de estas dos formas:
+   - **Con la skill `ranking-importar`** (recomendado). En la app de escritorio de Claude o en claude.ai, adjunta los PDF y pide «pasa estos resultados al ranking interno». En Claude Code, escribe `/ranking-importar` y arrastra los PDF o pon su ruta. Claude lee todas las páginas, comprueba el archivo con las mismas reglas que la web y te da `resultados.json` para descargar, con un resumen: ganadores, finalizados y deportistas de equipos del club. Si algo no cuadra, lo corrige antes de dártelo.
+     Para tener la skill en la app hay que instalarla una vez: comprime la carpeta `.claude/skills/ranking-importar/` del repositorio en un .zip y súbelo en Ajustes → Capacidades → Skills.
+   - **Con claude.ai**: abre **Ranking → Importar resultados**, pulsa **Copiar el prompt**, abre una conversación nueva en claude.ai, adjunta los PDF y pega el prompt. Claude contesta con el JSON. Aquí nadie lo comprueba antes: si tiene errores, te los dirá la web al analizarlo.
 3. **Pega el JSON** en la misma pantalla, o sube el archivo `.json`, y pulsa **Analizar**. Si el JSON tiene errores, no se importa nada y la pantalla los lista: pídele a Claude que los corrija.
 4. **Revisa** lo que sale:
    - **Conjuntos del ranking**: cada conjunto, con su ganador y sus finalizados. Federado y open van juntos (lo explica el recuadro de abajo).

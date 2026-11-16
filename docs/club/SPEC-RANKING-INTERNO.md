@@ -1,7 +1,7 @@
 # SPEC — Ranking interno del club
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr`
-**Estado:** Definida el 16 de noviembre de 2026. Decisiones R1 a R38 tomadas con el club ese día (sección 1.3); R26 a R32 salen de los ejemplos de clasificaciones de la Federación Andaluza (`docs/club/ejemplos-clasificaciones/`). No quedan preguntas abiertas (sección 12). Implementada el 16 de noviembre de 2026 en la rama `ranking-interno` (pasos R0 a R6, sección 13): 47 tests PHPUnit y 42 comprobaciones con WordPress en verde. Mergeada en `main` (`7fb03aba1`) y subida a PROD el 16 de noviembre de 2026. Configuración hecha (ajustes, sexos y rol de gestor). Faltan los criterios de PROD. Quedan las pruebas manuales de [ranking-interno/pruebas.md](ranking-interno/pruebas.md) y el registro del despliegue en [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md). **Ampliación (16 de noviembre de 2026):** importación de resultados desde JSON (decisiones R39 a R41, sección 14), implementada ese día en la rama `ranking-importar`, probada en local con la competición de Úbeda (69 tests PHPUnit) y mergeada en `main` el mismo día. Sin subir a PROD (ver [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md), «Ampliación»).
+**Estado:** Definida el 16 de noviembre de 2026. Decisiones R1 a R38 tomadas con el club ese día (sección 1.3); R26 a R32 salen de los ejemplos de clasificaciones de la Federación Andaluza (`docs/club/ejemplos-clasificaciones/`). No quedan preguntas abiertas (sección 12). Implementada el 16 de noviembre de 2026 en la rama `ranking-interno` (pasos R0 a R6, sección 13): 47 tests PHPUnit y 42 comprobaciones con WordPress en verde. Mergeada en `main` (`7fb03aba1`) y subida a PROD el 16 de noviembre de 2026. Configuración hecha (ajustes, sexos y rol de gestor). Faltan los criterios de PROD. Quedan las pruebas manuales de [ranking-interno/pruebas.md](ranking-interno/pruebas.md) y el registro del despliegue en [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md). **Ampliación (16 de noviembre de 2026):** importación de resultados desde JSON (decisiones R39 a R41, sección 14), implementada ese día en la rama `ranking-importar`, probada en local con la competición de Úbeda (72 tests PHPUnit) y mergeada en `main` el mismo día. La skill `ranking-importar` es autónoma y está instalada en la app de escritorio de Claude desde ese día. Sin subir a PROD (ver [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md), «Ampliación»).
 **Fecha:** 16 de noviembre de 2026
 **Resumen para la junta:** [resumen-ranking-interno.html](resumen-ranking-interno.html), sin la parte técnica (16 de noviembre de 2026): puntuación, qué ven los socios y cómo se meten las competiciones (los tiempos se sacan con IA de los PDF de la federación). Si cambia el baremo o el flujo, hay que actualizarlo.
 
@@ -842,7 +842,7 @@ Añadida el 16 de noviembre de 2026, con la primera competición real (I Duatló
 
 1. El gestor descarga los PDF oficiales: en individual, la general de cada sexo; en relevos, todas las clasificaciones con socios (federado y open, masculina, femenina y mixta).
 2. Una IA los convierte en un JSON (14.2), de una de estas dos formas:
-   - Con Claude Code en el repositorio: se dejan los PDF en `docs/club/ranking-interno/<prueba>/` y se ejecuta la skill `/ranking-importar <prueba>`. Escribe `resultados.json` en esa carpeta y lo comprueba con el mismo código que la web (`.claude/skills/ranking-importar/validar.php`).
+   - Con la skill `ranking-importar` (`.claude/skills/ranking-importar/`). Es autónoma: sirve en Claude Code (dentro del repositorio, `/ranking-importar`) y en la app de escritorio o claude.ai (se sube como skill en un .zip de esa carpeta). Recibe los PDF adjuntos o con su ruta, extrae todos los deportistas, valida el JSON con `scripts/validar.py` (Python 3 sin dependencias, mismas reglas que `ImportParser` e `ImportMerger`) y entrega `resultados.json` para descargar: en la app, en `/mnt/user-data/outputs/`; en Claude Code, junto a los PDF. No guarda nada en el repositorio.
    - En claude.ai: se adjuntan los PDF y se pega el prompt que enseña la pantalla.
 3. **Ranking → Importar resultados**: se pega el JSON o se sube el archivo y se pulsa «Analizar». La pantalla tiene las instrucciones y el prompt con un botón para copiarlo. También hay un botón «Importar resultados» en Competiciones y un enlace en «Añadir competición».
 4. Revisión (14.4): conjuntos unificados con su ganador y sus finalizados, dudas, socios encontrados y deportistas de equipos del club sin socio. Avisa si ya hay una competición con esa fecha.
@@ -852,7 +852,7 @@ La importación en curso se guarda dos horas por usuario (transient `sulayr_rank
 
 ### 14.2. Formato del JSON
 
-La definición para la IA está en `wp-content/plugins/club-triatlon-sulayr/admin/ranking-import-prompt.md`. La web la enseña tal cual y la skill la lee de ahí, así que es el único sitio donde se cambia. La lee y la valida `Calc\ImportParser` (sin WordPress).
+La definición para la IA está en `wp-content/plugins/club-triatlon-sulayr/admin/ranking-import-prompt.md`, que la web enseña tal cual. La skill lleva una copia idéntica (`.claude/skills/ranking-importar/formato.md`) para funcionar fuera del repositorio; `ImportSkillTest` comprueba que son iguales y que `scripts/validar.py` da los mismos errores, ganadores y finalizados que la web. La lee y la valida `Calc\ImportParser` (sin WordPress).
 
 ```json
 {
@@ -909,11 +909,12 @@ En cada fila, el desplegable ofrece los candidatos, «No es socio» y el resto d
 | `admin/ranking-import-prompt.md` | Prompt y formato para la IA. |
 | `RankingRoster::info()` | Ahora también da `first` y `last` (nombre y apellidos por separado). |
 | `Labels::team_categories()` | «Masculina», «Femenina» y «Mixta» (R39). Las claves guardadas no cambian. |
-| `.claude/skills/ranking-importar/` | Skill de Claude Code (`SKILL.md`) y su comprobación (`validar.php`). No se sube a PROD. |
+| `.claude/skills/ranking-importar/` | Skill autónoma (`SKILL.md`, `formato.md` y `scripts/validar.py`) para Claude Code, la app de escritorio y claude.ai. No se sube a PROD. |
+| `tests/Unit/ImportSkillTest.php` | Comprueba que la skill y la web no se separan (formato y validación). |
 
 Comprobado en local el 16 de noviembre de 2026:
 
-- 69 tests PHPUnit: 22 nuevos en `ImportTest` y `NameMatcherTest`.
+- 72 tests PHPUnit: 25 nuevos en `ImportTest`, `NameMatcherTest` e `ImportSkillTest`.
 - `check-ranking.php` en verde.
 - Por HTTP con sesión de administrador, con el JSON de Úbeda (`docs/club/ranking-interno/i-duatlon-por-relevos-3x-ubeda-nazari/resultados.json`, 75 deportistas; esa carpeta, con los PDF, no se versiona): JSON con errores rechazado con la lista; análisis con 21 socios seguros, 2 dudas y 1 deportista del club sin socio; rechazo con dudas sin decidir; formulario relleno con 23 socios y 7 de 8 referencias; guardado en borrador con los puntos calculados.
 - La referencia que faltaba es la de Júnior femenina: la carrera clasifica a esa socia como 23F y la web como Júnior, y no había ninguna JNF.

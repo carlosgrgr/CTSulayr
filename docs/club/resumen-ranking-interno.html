@@ -107,11 +107,11 @@ td.up { color: var(--accent); font-weight: 600; }
 .note { font-size: 14px; color: var(--muted); }
 
 .steps { list-style: none; padding: 0; counter-reset: step; display: grid; gap: 0; max-width: none; }
-.steps li { counter-increment: step; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 14px; padding: 16px 0; border-top: 1px solid var(--line); }
-.steps li:first-child { border-top: 0; padding-top: 4px; }
-.steps li::before { content: counter(step); font-family: var(--f-display); font-weight: 900; font-style: italic; font-size: 28px; line-height: 1; color: var(--accent); }
-.steps li > div { display: grid; gap: 4px; min-width: 0; }
-.steps li.ai { background: var(--accent-soft); border-radius: 4px; padding: 16px 14px; border-top-color: transparent; grid-template-columns: 30px minmax(0, 1fr); }
+.steps > li { counter-increment: step; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 14px; padding: 16px 0; border-top: 1px solid var(--line); }
+.steps > li:first-child { border-top: 0; padding-top: 4px; }
+.steps > li::before { content: counter(step); font-family: var(--f-display); font-weight: 900; font-style: italic; font-size: 28px; line-height: 1; color: var(--accent); }
+.steps > li > div { display: grid; gap: 4px; min-width: 0; }
+.steps > li.ai { background: var(--accent-soft); border-radius: 4px; padding: 16px 14px; border-top-color: transparent; grid-template-columns: 30px minmax(0, 1fr); }
 .tag { display: inline-block; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; font-style: normal; color: var(--accent); border: 1px solid currentColor; border-radius: 3px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }
 
 .menu { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 28px; margin: 0; }
@@ -225,7 +225,7 @@ td.up { color: var(--accent); font-weight: 600; }
     <h2>De las clasificaciones de la federación al ranking</h2>
     <ol class="steps">
       <li><div><h3>Descargamos las clasificaciones</h3><p>De cada prueba, los PDF oficiales de la federación: en una prueba individual, la general de cada sexo; en relevos, todas las clasificaciones (federado y open, masculina, femenina y mixta).</p></div></li>
-      <li class="ai"><div><h3>La IA pasa los PDF a un archivo de datos <span class="tag">Automático</span></h3><p>Le pasamos los PDF a Claude con unas instrucciones que da la propia web, y devuelve un archivo (JSON) con todos los deportistas de la carrera: posición, categoría, posición en la categoría y tiempo. No hay que copiar nada a mano.</p></div></li>
+      <li class="ai"><div><h3>La IA pasa los PDF a un archivo de datos <span class="tag">Automático</span></h3><p>Le pasamos los PDF a Claude y devuelve un archivo de datos (JSON) con todos los deportistas de la carrera: posición, categoría, posición en la categoría y tiempo. No hay que copiar nada a mano. Hay dos formas:</p><ul><li><strong>Con la skill <span class="mono">/ranking-importar</span>.</strong> Una skill es una receta guardada que Claude sigue paso a paso. Funciona en la app de escritorio de Claude: se le adjuntan los PDF, lee todas las páginas, comprueba el archivo con las mismas reglas que usa la web y lo devuelve para descargar, con un resumen de ganadores, finalizados y socios que ha visto. Es la forma recomendada, y es la que usamos con el duatlón por relevos de Úbeda.</li><li><strong>Con claude.ai.</strong> Si no se tiene Claude Code, se adjuntan los PDF en una conversación y se pega el texto de instrucciones que da la propia web.</li></ul></div></li>
       <li class="ai"><div><h3>La web encuentra a nuestros socios <span class="tag">Automático</span></h3><p>En Ranking → Importar resultados se pega ese archivo. La web busca a cada deportista entre los socios por su nombre, y comprueba que el sexo y la categoría cuadran. También calcula los tiempos de los ganadores, los primeros de cada categoría y los finalizados. Si un nombre no está claro (por ejemplo, falta un apellido o hay dos socios parecidos), lo enseña al gestor para que diga si es ese socio o no.</p></div></li>
       <li><div><h3>El gestor revisa</h3><p>Con las dudas resueltas, la web rellena la competición, pero no la guarda. El gestor comprueba los datos, la guarda como borrador (que todavía no ve nadie) y revisa los puntos de cada socio. La web avisa si falta algo y no deja guardar datos imposibles, como un tiempo mejor que el del ganador. Todo se puede meter también a mano.</p></div></li>
       <li><div><h3>Se publica</h3><p>Con <strong>Guardar y publicar</strong>, la competición entra en el ranking y los socios la ven en Mi cuenta. Si después hay que corregir algo, se cambia y los puntos se recalculan solos.</p></div></li>

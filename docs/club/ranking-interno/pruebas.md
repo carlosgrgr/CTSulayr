@@ -2,7 +2,7 @@
 
 Criterios de aceptación de [SPEC-RANKING-INTERNO.md](../SPEC-RANKING-INTERNO.md), sección 10.3. Se marcan solo cuando se han hecho de verdad.
 
-Lo automático ya está en verde en local el 16 de noviembre de 2026: 47 tests PHPUnit (`tests/`) y 42 comprobaciones de `tests/wp/check-ranking.php` (sección 13.2 de la spec). Esas comprobaciones cubren por código los criterios 2, 3, 4, 5, 6, 7 y 10; aquí se repiten a mano, en el navegador. Con la importación (sección 14 de la spec, en `main` desde el 16 de noviembre de 2026) son 69 tests PHPUnit, también en verde el 16 de noviembre de 2026.
+Lo automático ya está en verde en local el 16 de noviembre de 2026: 47 tests PHPUnit (`tests/`) y 42 comprobaciones de `tests/wp/check-ranking.php` (sección 13.2 de la spec). Esas comprobaciones cubren por código los criterios 2, 3, 4, 5, 6, 7 y 10; aquí se repiten a mano, en el navegador. Con la importación (sección 14 de la spec, en `main` desde el 16 de noviembre de 2026) son 72 tests PHPUnit (con `ImportSkillTest`, que compara la skill con la web), también en verde el 16 de noviembre de 2026.
 
 | Nº | Criterio | Local | PROD |
 |---|---|---|---|
@@ -23,6 +23,6 @@ Lo automático ya está en verde en local el 16 de noviembre de 2026: 47 tests P
 
 ## Datos para probar
 
-Importación (criterios 11 a 13): `i-duatlon-por-relevos-3x-ubeda-nazari/resultados.json` (solo en local: esa carpeta no se versiona), generado el 16 de noviembre de 2026 con la skill `/ranking-importar` a partir de los 4 PDF de esa carpeta (75 deportistas; federado y open se unifican). Con el JSON de Úbeda, la referencia de Júnior femenina queda vacía: la carrera clasifica a una socia como 23F y la web como Júnior. Revisa su fecha de nacimiento antes de publicar.
+Importación (criterios 11 a 13): `i-duatlon-por-relevos-3x-ubeda-nazari/resultados.json` (solo en local: esa carpeta no se versiona), generado el 16 de noviembre de 2026 a partir de los 4 PDF de esa carpeta y comprobado fila a fila contra el texto de los PDF (75 de 75) (75 deportistas; federado y open se unifican). Con el JSON de Úbeda, la referencia de Júnior femenina queda vacía: la carrera clasifica a una socia como 23F y la web como Júnior. Revisa su fecha de nacimiento antes de publicar.
 
 Las clasificaciones de ejemplo de la federación están en `docs/club/ejemplos-clasificaciones/`. El duatlón cros de Guadix (8 de noviembre de 2026) sirve para una prueba individual con categoría AB; el duatlón por relevos de Úbeda (15 de noviembre de 2026), para relevos con varios equipos del club.

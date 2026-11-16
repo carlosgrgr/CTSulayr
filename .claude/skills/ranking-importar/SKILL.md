@@ -1,53 +1,81 @@
 ---
 name: ranking-importar
-description: Convierte los PDF de clasificaciones oficiales de la federación en el JSON que importa Ranking → Importar resultados (ranking interno del Club Triatlón Sulayr). Úsala cuando haya PDFs de una competición en docs/club/ranking-interno/<prueba>/, o cuando pidan pasar una clasificación a JSON para el ranking.
-argument-hint: "<carpeta de la prueba dentro de docs/club/ranking-interno/>"
+description: Convierte los PDF de clasificaciones oficiales de una competición de triatlón (Federación Andaluza u otra) en el archivo resultados.json que se importa en el ranking interno del Club Triatlón Sulayr (wp-admin → Ranking → Importar resultados). Úsala cuando el usuario adjunte esos PDF o dé su ruta y quiera los resultados para el ranking interno, o pida pasar una clasificación a JSON para el ranking.
 ---
 
-# Importar una competición al ranking interno
+# Clasificaciones en PDF → resultados.json del ranking interno
 
-Genera `resultados.json` a partir de los PDF de una competición. Después, un gestor lo pega en **wp-admin → Ranking → Importar resultados**. La web empareja a los deportistas con los socios y unifica las clasificaciones. Esta skill solo extrae y comprueba.
+Genera `resultados.json` a partir de los PDF oficiales de una competición y se lo entrega al usuario para descargarlo. Después, un gestor lo sube o lo pega en **wp-admin → Ranking → Importar resultados**. Allí la web empareja a los deportistas con los socios y unifica las clasificaciones (federado y open van juntos). Esta skill solo extrae y comprueba: no empareja socios ni recalcula posiciones.
 
-Las reglas de negocio están en `docs/club/SPEC-RANKING-INTERNO.md` §14 (R39 y R40).
+Funciona igual en Claude Code que en la app de escritorio o claude.ai. Solo necesita leer PDF y ejecutar Python 3 (biblioteca estándar).
 
-## Pasos
+## 1. Reúne los PDF
 
-1. **Localiza los PDF.** El argumento es la carpeta de la prueba: `docs/club/ranking-interno/<argumento>/`. Si no se da, lista `docs/club/ranking-interno/` y pregunta cuál. Usa todos los `.pdf` de la carpeta.
+Los PDF pueden llegar de dos formas, y se pueden mezclar:
 
-2. **Lee las instrucciones del formato.** Lee `wp-content/plugins/club-triatlon-sulayr/admin/ranking-import-prompt.md`. Es el mismo prompt que la web enseña para claude.ai y es la definición del JSON. Síguelo al pie de la letra.
+- **Adjuntos en la conversación.** En la app de escritorio o claude.ai, suelen estar también en `/mnt/user-data/uploads/`.
+- **Rutas** a archivos o a una carpeta. Usa todos los `.pdf` de esa carpeta. En WSL, las descargas de Windows están en `/mnt/c/Users/<usuario>/Downloads/`.
 
-3. **Lee cada PDF entero** con Read, todas las páginas.
-   - Los PDF de más de 10 páginas necesitan `pages`, y eso requiere `poppler-utils`. Si falta, pide al usuario que ejecute `! sudo apt install poppler-utils`.
-   - Hay que sacar a todos los deportistas, no solo a los del club. La web necesita al ganador, los primeros de cada categoría y los finalizados.
+Si no hay ningún PDF, pídelos. Hacen falta todas las clasificaciones con socios del club:
 
-4. **Escribe el JSON** en `docs/club/ranking-interno/<argumento>/resultados.json`:
-   - Una entrada de `classifications` por cada PDF o tabla.
-   - En relevos, `team_category` sale del título: MASCULINA → `m`, FEMENINA → `f`, MIXTA → `mixto`. Federado y open van como clasificaciones separadas: la web las unifica.
-   - Copia los nombres y los tiempos tal cual. No corrijas nada.
+- en una prueba individual, la general masculina y la femenina;
+- en relevos, todas (federado y open; masculina, femenina y mixta).
 
-5. **Valídalo** con el mismo código de la web:
-   ```bash
-   php .claude/skills/ranking-importar/validar.php docs/club/ranking-interno/<argumento>/resultados.json
-   ```
-   - Si hay errores, corrígelos volviendo al PDF y repite.
-   - Si avisa de que el número de finalizados no cuadra, vuelve al PDF: casi siempre falta una página o una fila.
+## 2. Lee el formato
 
-6. **Contrasta con el PDF.** Para cada clasificación, comprueba que:
-   - el primero y el último del JSON coinciden con el PDF;
-   - el número de deportistas coincide.
+Lee `formato.md`, en la carpeta de esta skill. Define el JSON y las reglas de extracción, y es el mismo texto que la web da para claude.ai. Síguelo al pie de la letra.
 
-   Revisa también la lista «Deportistas de equipos del club» que imprime el validador: nombres, categorías y tiempos.
+## 3. Extrae todos los deportistas
 
-7. **Informa al usuario.** Dale:
-   - la ruta del JSON;
-   - el resumen del validador: conjuntos, ganadores, finalizados y deportistas del club;
-   - los pasos que faltan: copiar el JSON (en WSL, `clip.exe < <ruta>`), pegarlo en Ranking → Importar resultados, resolver las dudas, «Rellenar la competición», «Guardar», revisar los puntos y «Guardar y publicar».
+- Lee cada PDF entero, todas las páginas. Si un PDF es largo y la lectura se corta, sigue por páginas hasta el final.
+- Copia **todos** los deportistas de cada clasificación, no solo los del club. La web los necesita para el ganador, los primeros de cada categoría y los finalizados.
+- Usa una entrada de `classifications` por cada PDF o tabla.
+- En relevos, `team_category` sale del título: MASCULINA → `m`, FEMENINA → `f`, MIXTA → `mixto`. No juntes federado y open: van como clasificaciones separadas y la web las unifica.
+- Copia nombres, clubes, categorías, posiciones y tiempos tal cual. No corrijas nada.
+
+## 4. Escribe y valida el JSON
+
+Escribe el archivo `resultados.json`. Dónde (paso 6) no importa todavía. Después ejecuta:
+
+```bash
+python3 <carpeta de esta skill>/scripts/validar.py <ruta>/resultados.json
+```
+
+El script aplica las mismas reglas que la web: si lo da por bueno, la web también lo acepta.
+
+- **Errores:** corrígelos volviendo al PDF y repite la validación hasta que salga `OK`.
+- **Aviso de finalizados que no cuadran:** casi siempre falta una página o una fila. Revísalo.
+
+## 5. Contrasta con los PDF
+
+Para cada clasificación, comprueba que:
+
+- el número de deportistas coincide con el del PDF;
+- el primero y el último del JSON son los del PDF.
+
+Revisa también, uno a uno, los «Deportistas de equipos del club» que lista el validador: nombre, Cat, tiempo y club.
+
+## 6. Entrega el archivo para descargar
+
+- **App de escritorio o claude.ai:** guarda el archivo en `/mnt/user-data/outputs/resultados.json` y enlázalo para que el usuario lo descargue.
+- **Claude Code:** guárdalo junto a los PDF, o donde diga el usuario, y da la ruta completa. Si los PDF venían solo adjuntos, guárdalo en el directorio de trabajo. No lo guardes dentro de un repositorio salvo que el usuario lo pida. En WSL se copia al portapapeles con `clip.exe < <ruta>`.
+
+En la respuesta incluye:
+
+- el resumen del validador: conjuntos, ganadores, finalizados y deportistas del club;
+- cualquier aviso;
+- los pasos que faltan en la web:
+  1. Ranking → Importar resultados.
+  2. Subir o pegar el archivo y pulsar «Analizar».
+  3. Resolver las dudas y pulsar «Rellenar la competición».
+  4. Pulsar «Guardar», revisar los puntos y pulsar «Guardar y publicar».
 
 ## No hagas
 
-- No emparejes con socios ni consultes PROD: eso lo hace la web, que tiene la lista de socios.
-- No recalcules posiciones ni unifiques clasificaciones en el JSON: copia las del PDF y deja que la web aplique R39.
-- No cambies el formato del JSON aquí. Si hay que cambiarlo, cambia a la vez:
-  - `admin/ranking-import-prompt.md`;
+- No emparejes con socios ni consultes la web: eso lo hace la web, que tiene la lista de socios.
+- No recalcules posiciones ni unifiques clasificaciones en el JSON.
+- No cambies el formato. `formato.md` es una copia de `wp-content/plugins/club-triatlon-sulayr/admin/ranking-import-prompt.md`, y un test del plugin comprueba que son iguales. Si hay que cambiar el formato, cambia a la vez:
+  - esos dos archivos;
   - `Calc/ImportParser.php`;
-  - la §14 de la spec.
+  - `scripts/validar.py`;
+  - la §14 de `docs/club/SPEC-RANKING-INTERNO.md`.
