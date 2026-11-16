@@ -2,11 +2,11 @@
 
 Proceso para subir con FileZilla el ranking interno de [SPEC-RANKING-INTERNO.md](../SPEC-RANKING-INTERNO.md) (paso R7). PROD no tiene SSH ni WP-CLI: todo lo que hace falta se hace desde wp-admin.
 
-Escrito el 16 de noviembre de 2026. El código está en la rama `ranking-interno` (pasos R0 a R6) y aún no está en `main`. La lista de abajo es el cambio neto entre `main` (`e21a47f50`) y esa rama.
+Escrito el 16 de noviembre de 2026, antes de subirlo. El código (pasos R0 a R6) está en `main` desde ese día (merge `7fb03aba1`). La lista de abajo es el cambio neto entre el `main` anterior (`e21a47f50`) y el actual, tal como se subió.
 
 Todas las rutas son relativas a `wp-content/plugins/club-triatlon-sulayr/` en el servidor.
 
-**Estado (16 de noviembre de 2026):** sin desplegar.
+**Estado (16 de noviembre de 2026):** código subido a PROD y paso 4 hecho (ajustes, sexos y rol de gestor). Faltan las comprobaciones del paso 5. Ver «Registro del despliegue» al final.
 
 ## Antes de empezar
 
@@ -77,3 +77,10 @@ Si algo falla, desactiva el módulo volviendo a subir el `src/App/App.php` de `m
 ## Después
 
 Actualiza ese mismo día el estado en `docs/FASES.md`, en la spec (cabecera y sección 13.1), en este documento y en `AGENT.md`.
+
+## Registro del despliegue
+
+- **16 de noviembre de 2026:** código de `main` (`7fb03aba1`) subido a PROD con FileZilla. También el `style.css` del tema, con el botón «Hazte socio» sin subrayado y en negrita. Comprobado en PROD: el CSS nuevo está servido.
+- **Corregido: `admin/js/ranking-results.js`.** A las 18:55 del 16 de noviembre de 2026 PROD respondía 404 en esa URL. Subido después, y comprobado: responde 200 y su SHA-1 (`20d145d5…`) es el de `main`.
+- **Hecho: paso 4** (16 de noviembre de 2026). Ajustes revisados, sexos rellenados en «Ranking → Deportistas» y rol de gestor dado.
+- **Pendiente: paso 5** (criterios 1 a 9). Se marcan en `pruebas.md`, columna PROD, solo cuando estén hechos.

@@ -1,7 +1,7 @@
 # SPEC — Ranking interno del club
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr`
-**Estado:** Definida el 16 de noviembre de 2026. Decisiones R1 a R38 tomadas con el club ese día (sección 1.3); R26 a R32 salen de los ejemplos de clasificaciones de la Federación Andaluza (`docs/club/ejemplos-clasificaciones/`). No quedan preguntas abiertas (sección 12). Implementada el 16 de noviembre de 2026 en la rama `ranking-interno` (pasos R0 a R6, sección 13): 47 tests PHPUnit y 42 comprobaciones con WordPress en verde. Sin mergear: no está en `main` ni en PROD. Quedan las pruebas manuales de [ranking-interno/pruebas.md](ranking-interno/pruebas.md) y el despliegue de [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md).
+**Estado:** Definida el 16 de noviembre de 2026. Decisiones R1 a R38 tomadas con el club ese día (sección 1.3); R26 a R32 salen de los ejemplos de clasificaciones de la Federación Andaluza (`docs/club/ejemplos-clasificaciones/`). No quedan preguntas abiertas (sección 12). Implementada el 16 de noviembre de 2026 en la rama `ranking-interno` (pasos R0 a R6, sección 13): 47 tests PHPUnit y 42 comprobaciones con WordPress en verde. Mergeada en `main` (`7fb03aba1`) y subida a PROD el 16 de noviembre de 2026. Configuración hecha (ajustes, sexos y rol de gestor). Faltan los criterios de PROD. Quedan las pruebas manuales de [ranking-interno/pruebas.md](ranking-interno/pruebas.md) y el registro del despliegue en [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md).
 **Fecha:** 16 de noviembre de 2026
 **Resumen para la junta:** [resumen-ranking-interno.html](resumen-ranking-interno.html), sin la parte técnica (16 de noviembre de 2026): puntuación, qué ven los socios y cómo se meten las competiciones (los tiempos se sacan con IA de los PDF de la federación). Si cambia el baremo o el flujo, hay que actualizarlo.
 
@@ -787,9 +787,9 @@ Ninguna. Cerradas el 16 de noviembre de 2026: P1 (R3), P2 (R30, R31 y R33), P3 (
 
 ---
 
-## 13. Implementación (rama `ranking-interno`)
+## 13. Implementación (rama `ranking-interno`, mergeada en `main` el 16 de noviembre de 2026)
 
-Hecha el 16 de noviembre de 2026 en la rama `ranking-interno`, que sale de `main` (`e21a47f50`). Código en `wp-content/plugins/club-triatlon-sulayr/src/Modules/Ranking/`, cargado desde `App::load_ranking()`.
+Hecha el 16 de noviembre de 2026 en la rama `ranking-interno`, que sale de `main` (`e21a47f50`), y mergeada en `main` ese mismo día (`7fb03aba1`). Código en `wp-content/plugins/club-triatlon-sulayr/src/Modules/Ranking/`, cargado desde `App::load_ranking()`.
 
 ### 13.1. Estado de los pasos
 
@@ -802,7 +802,7 @@ Hecha el 16 de noviembre de 2026 en la rama `ranking-interno`, que sale de `main
 | R4 | Hecho. Clasificación con caché, Deportistas, Clasificación (con los socios de baja aparte) y «Recalcular todo». |
 | R5 | Hecho. Pestaña «Ranking interno» de Mi cuenta, shortcode `[sulayr_ranking]`, plantillas sobrescribibles y estilos. Falta ver el móvil en un navegador (criterio 8). |
 | R6 | Hecho, sin capturas: `MANUAL-RANKING.md`. Las capturas quedan pendientes hasta tener datos reales. |
-| R7 | Pendiente. Pasos en [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md). |
+| R7 | Código subido a PROD el 16 de noviembre de 2026 y configuración hecha (ajustes, sexos y rol del gestor). Pendientes: criterios 1 a 9 en PROD. Registro en [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md). |
 
 ### 13.2. Comprobaciones hechas en local
 
