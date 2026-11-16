@@ -142,7 +142,7 @@ td.up { color: var(--accent); font-weight: 600; }
     <ul class="facts">
       <li><span class="k">Fecha</span><span class="v">16 nov 2026</span></li>
       <li><span class="k">Temporada</span><span class="v">1 ene – 31 dic</span></li>
-      <li><span class="k">Estado</span><span class="v sol">Hecho · subido a la web el 16 de noviembre de 2026 · pendiente de pruebas con datos reales</span></li>
+      <li><span class="k">Estado</span><span class="v sol">Hecho · subido a la web el 16 de noviembre de 2026 · pendiente de pruebas con datos reales · la importación desde los PDF está hecha y falta subirla</span></li>
     </ul>
   </div>
   <svg class="peaks" viewBox="0 0 1200 84" preserveAspectRatio="none" aria-hidden="true">
@@ -177,7 +177,7 @@ td.up { color: var(--accent); font-weight: 600; }
     <ul>
       <li><strong>Absoluta:</strong> el tiempo de referencia es el del ganador o la ganadora de la general de tu sexo.</li>
       <li><strong>Grupo de edad:</strong> el tiempo de referencia es el del primero de tu categoría. Si la federación te saca de tu categoría por estar entre los primeros de la general (categoría «AB»), cuentas como ganador de tu grupo.</li>
-      <li><strong>Relevos:</strong> cada relevista hace el recorrido completo, así que cuenta su tiempo individual frente al del mejor de su clasificación de relevos.</li>
+      <li><strong>Relevos:</strong> cada relevista hace el recorrido completo, así que cuenta su tiempo individual frente al del mejor de su sexo en los relevos. Para el ranking interno no se distingue entre federado y open: se juntan, y el ganador es el más rápido de los dos.</li>
       <li><strong>Contrarreloj por equipos:</strong> cuenta el tiempo del equipo frente al del equipo ganador de su categoría.</li>
       <li><strong>Si un socio terminó pero no aparece su tiempo</strong>, se le pide. Si no lo da, puntúa por su posición: 1000 × (1 − (posición − 1) ÷ finalizados) × coeficiente + 50.</li>
     </ul>
@@ -224,9 +224,10 @@ td.up { color: var(--accent); font-weight: 600; }
     <p class="eyebrow">Cómo se mete cada competición</p>
     <h2>De las clasificaciones de la federación al ranking</h2>
     <ol class="steps">
-      <li><div><h3>Descargamos las clasificaciones</h3><p>De cada prueba hacen falta los PDF de la federación: la clasificación general de cada sexo y la clasificación por categorías.</p></div></li>
-      <li class="ai"><div><h3>La IA pasa los resultados a la web <span class="tag">Así lo haremos</span></h3><p>En lugar de copiar los datos a mano, le pasamos los PDF a la IA. Ella localiza a nuestros socios en las clasificaciones y rellena, para cada uno, su posición, su categoría, su posición en la categoría y su tiempo, además de los tiempos de los ganadores y el número de finalizados. La web permite meterlo todo a mano, pero no es lo previsto.</p></div></li>
-      <li><div><h3>El gestor revisa</h3><p>La competición se guarda primero como borrador, que todavía no ve nadie. El gestor comprueba los datos y los puntos de cada socio. La web avisa si falta algo y no deja guardar datos imposibles, como un tiempo mejor que el del ganador.</p></div></li>
+      <li><div><h3>Descargamos las clasificaciones</h3><p>De cada prueba, los PDF oficiales de la federación: en una prueba individual, la general de cada sexo; en relevos, todas las clasificaciones (federado y open, masculina, femenina y mixta).</p></div></li>
+      <li class="ai"><div><h3>La IA pasa los PDF a un archivo de datos <span class="tag">Automático</span></h3><p>Le pasamos los PDF a Claude con unas instrucciones que da la propia web, y devuelve un archivo (JSON) con todos los deportistas de la carrera: posición, categoría, posición en la categoría y tiempo. No hay que copiar nada a mano.</p></div></li>
+      <li class="ai"><div><h3>La web encuentra a nuestros socios <span class="tag">Automático</span></h3><p>En Ranking → Importar resultados se pega ese archivo. La web busca a cada deportista entre los socios por su nombre, y comprueba que el sexo y la categoría cuadran. También calcula los tiempos de los ganadores, los primeros de cada categoría y los finalizados. Si un nombre no está claro (por ejemplo, falta un apellido o hay dos socios parecidos), lo enseña al gestor para que diga si es ese socio o no.</p></div></li>
+      <li><div><h3>El gestor revisa</h3><p>Con las dudas resueltas, la web rellena la competición, pero no la guarda. El gestor comprueba los datos, la guarda como borrador (que todavía no ve nadie) y revisa los puntos de cada socio. La web avisa si falta algo y no deja guardar datos imposibles, como un tiempo mejor que el del ganador. Todo se puede meter también a mano.</p></div></li>
       <li><div><h3>Se publica</h3><p>Con <strong>Guardar y publicar</strong>, la competición entra en el ranking y los socios la ven en Mi cuenta. Si después hay que corregir algo, se cambia y los puntos se recalculan solos.</p></div></li>
     </ol>
   </section>
@@ -237,6 +238,7 @@ td.up { color: var(--accent); font-weight: 600; }
     <p>Hay un rol nuevo, <strong>Gestor de ranking</strong>, que asigna un administrador desde la ficha del usuario. Los administradores también tienen acceso. El gestor solo ve el menú Ranking, no las fichas de los socios.</p>
     <dl class="menu">
       <div><dt>Competiciones</dt><dd>La lista de la temporada. Desde aquí se añade, corrige, publica o retira una competición.</dd></div>
+      <div><dt>Importar resultados</dt><dd>Las instrucciones para pasar los PDF de la federación a la web, y el sitio donde se pega el resultado y se revisan las dudas.</dd></div>
       <div><dt>Clasificación</dt><dd>La misma que ven los socios, con los socios de baja aparte.</dd></div>
       <div><dt>Deportistas</dt><dd>Sexo, fecha de nacimiento y grupo de edad de cada socio. Aquí se completa el sexo de quien no lo tenga.</dd></div>
       <div><dt>Registro</dt><dd>Quién cambió qué y cuándo. No se puede editar ni borrar.</dd></div>

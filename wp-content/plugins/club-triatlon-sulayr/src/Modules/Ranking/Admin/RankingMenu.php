@@ -35,6 +35,7 @@ class RankingMenu {
         add_action( 'admin_menu', [ $this, 'order_submenu' ], 1000 );
         add_action( 'admin_post_' . self::ACTION_RECALC, [ $this, 'handle_recalculate' ] );
         new CompetitionEditPage();
+        new ImportPage();
         new StandingsPage();
         new AthletesPage();
         new LogPage();
@@ -91,7 +92,7 @@ class RankingMenu {
             return;
         }
 
-        $order = array_flip( [ self::SLUG, CompetitionEditPage::SLUG, StandingsPage::SLUG, AthletesPage::SLUG, LogPage::SLUG, RankingSettings::PAGE_SLUG ] );
+        $order = array_flip( [ self::SLUG, CompetitionEditPage::SLUG, ImportPage::SLUG, StandingsPage::SLUG, AthletesPage::SLUG, LogPage::SLUG, RankingSettings::PAGE_SLUG ] );
         $keyed = [];
         foreach ( array_values( $submenu[ self::SLUG ] ) as $i => $item ) {
             $keyed[] = [ $order[ $item[2] ] ?? count( $order ), $i, $item ];
@@ -157,7 +158,9 @@ class RankingMenu {
 
         echo '<div class="wrap sulayr-brand">';
         echo '<p class="sulayr-eyebrow">' . esc_html__( 'Ranking interno', SULAYR_TEXTDOMAIN ) . '</p>';
-        printf( '<h1 class="wp-heading-inline">%s</h1> <a class="page-title-action" href="%s">%s</a><hr class="wp-header-end">', esc_html__( 'Competiciones', SULAYR_TEXTDOMAIN ), esc_url( CompetitionEditPage::url() ), esc_html__( 'Añadir competición', SULAYR_TEXTDOMAIN ) );
+        printf( '<h1 class="wp-heading-inline">%s</h1> <a class="page-title-action" href="%s">%s</a>', esc_html__( 'Competiciones', SULAYR_TEXTDOMAIN ), esc_url( CompetitionEditPage::url() ), esc_html__( 'Añadir competición', SULAYR_TEXTDOMAIN ) );
+        printf( ' <a class="page-title-action" href="%s">%s</a>', esc_url( ImportPage::url() ), esc_html__( 'Importar resultados', SULAYR_TEXTDOMAIN ) );
+        echo '<hr class="wp-header-end">';
         Notices::render();
 
         echo '<p>';

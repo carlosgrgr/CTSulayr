@@ -31,6 +31,31 @@ El grupo de edad es la categoría que corresponde a la edad que el socio cumple 
 
 ## 4. Meter una competición
 
+Lo normal es **importarla** (4.1): la web rellena todo a partir de los PDF de la federación y tú solo revisas. Meterla a mano (4.2) queda para los casos que la importación no cubre, como la contrarreloj por equipos.
+
+### 4.1. Importar los resultados
+
+1. **Descarga los PDF** oficiales de la clasificación:
+   - en individual, la general masculina y la femenina;
+   - en relevos, todas las que tengan socios (federado y open, masculina, femenina y mixta).
+2. **Conviértelos a JSON con Claude.** Abre **Ranking → Importar resultados**, pulsa **Copiar el prompt**, abre una conversación nueva en claude.ai, adjunta los PDF y pega el prompt. Claude contesta con el JSON. Si trabajas con Claude Code en el repositorio de la web, usa `/ranking-importar <prueba>`.
+3. **Pega el JSON** en la misma pantalla, o sube el archivo `.json`, y pulsa **Analizar**. Si el JSON tiene errores, no se importa nada y la pantalla los lista: pídele a Claude que los corrija.
+4. **Revisa** lo que sale:
+   - **Conjuntos del ranking**: cada conjunto, con su ganador y sus finalizados. Federado y open van juntos (lo explica el recuadro de abajo).
+   - **Dudas** (en amarillo): deportistas que se parecen a algún socio, pero no lo bastante. En cada una, elige el socio que corresponde o **No es socio**. Debajo del desplegable sale por qué es dudoso.
+   - **Socios encontrados**: vienen elegidos. Si alguno no es, cámbialo.
+   - **De equipos del club, sin socio**: corren en un equipo «Sulayr», pero su nombre no se parece al de ningún socio. Si alguno es socio, elígelo.
+   - Si ya hay una competición con la misma fecha, sale un aviso con su enlace, para que no la metas dos veces.
+5. Pulsa **Rellenar la competición**. Se abre **Añadir competición** con los datos, los resultados y las referencias rellenos. **Todavía no se ha guardado nada.**
+6. Revisa la tabla. Las referencias que no se pudieron rellenar salen en rojo, con el motivo arriba (por ejemplo, un grupo de edad sin código de la federación). Rellénalas a mano.
+7. Pulsa **Guardar**, revisa los puntos de cada fila y, si todo está bien, **Guardar y publicar**.
+
+> **Federado y open, juntos.** Para el ranking interno da igual en qué clasificación saliera cada uno. Se juntan todas las de la misma categoría (masculina, femenina o mixta). El ganador es el más rápido de todas, y la «Pos» y la «Pos Cat» se recalculan por tiempo, así que pueden no coincidir con las del PDF. Es lo esperado.
+
+La importación se guarda dos horas. Si cierras la pestaña de «Añadir competición» sin guardar, vuelve a **Importar resultados** y pulsa otra vez **Rellenar la competición**. Para empezar con otra competición, pulsa **Descartar e importar otro JSON**.
+
+### 4.2. Meterla a mano
+
 Necesitas dos documentos de la federación: la **Clasificación general** de cada sexo y la **Clasificación por categorías**.
 
 1. **Ranking → Añadir competición**.
@@ -42,7 +67,7 @@ Necesitas dos documentos de la federación: la **Clasificación general** de cad
    - **Pos Cat**: la posición en su categoría.
    - **Tiempo**: el tiempo final, como `1:35:53`.
    - **Estado**: Finalizado, DNF, DSQ, DNS o NC. Si no terminó, no hace falta tiempo ni posiciones: son 0 puntos.
-   - En relevos y equipos, además, la **categoría del equipo** (open masculina, open femenina o mixta).
+   - En relevos y equipos, además, la **categoría del equipo** (masculina, femenina o mixta).
    Un socio que ya está en otra fila no aparece en el desplegable, y un socio sin sexo tampoco.
    
    **Añadir fila** añade más filas; **Quitar** borra una.
@@ -60,7 +85,7 @@ Si falta algo, la web no publica y marca en rojo lo que falta. Si hay errores, n
 - **Un socio terminó pero no tiene tiempo** en la clasificación: pídeselo. Si no lo da, deja el tiempo vacío; sus puntos se calculan por su posición, y entonces hace falta el número de finalizados de su categoría.
 - **Categoría AB (ABM / ABF)**: son los primeros de la general y la federación los saca de su categoría por edad. Mete «ABM» en **Cat**. En su grupo de edad cuenta como ganador.
 - **El código de la carrera no coincide con el grupo de la web** (por ejemplo, la carrera dice `V2M` y la web calcula Veterano 1): se guarda, con un aviso. Revisa la fecha de nacimiento del socio o las edades de los grupos.
-- **Relevos**: cada relevista hace el recorrido completo. Mete su tiempo individual. Las referencias son las de su clasificación de relevos (open masculina, femenina o mixta).
+- **Relevos**: cada relevista hace el recorrido completo. Mete su tiempo individual. Las referencias son las de su categoría de relevos (masculina, femenina o mixta), con federado y open juntos: el ganador es el más rápido de los dos.
 - **Contrarreloj por equipos**: mete a cada socio con el tiempo de su equipo. La referencia es el tiempo del equipo ganador de su categoría.
 
 ## 5. Cómo se calculan los puntos
