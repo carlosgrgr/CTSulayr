@@ -254,10 +254,10 @@ No se reutiliza `sulayr_member_log`: exige un socio por entrada y su `record()` 
 Para que un cambio de ajustes no altere temporadas pasadas (R35), cada temporada guarda una copia de su baremo:
 
 - Opción `sulayr_ranking_baremo_<año>` (sin autoload), con puntos base, bonus, N, los treinta coeficientes y los grupos de edad.
-- `RankingSettings::for_season( int $year ): array` devuelve esa copia. Si no existe, la crea con los ajustes actuales y la devuelve.
+- `RankingSettings::for_season( int $year, bool $create = false ): array` devuelve esa copia. Si no existe, devuelve los ajustes actuales sin guardar nada; solo crea la copia cuando `$create` es `true`, que es lo que hacen las escrituras.
 - Los ajustes de «Ranking → Ajustes» son siempre los de la temporada en curso. Guardarlos sobrescribe la copia de esa temporada y no toca las demás.
 - El cálculo, la clasificación (N) y los grupos de edad de una temporada leen siempre `for_season()`, nunca los ajustes directamente.
-- Cuando empieza una temporada nueva, la primera lectura copia los ajustes vigentes. Así una competición de diciembre metida en enero se calcula con el baremo de su temporada.
+- Cuando empieza una temporada nueva, la primera escritura (guardar los ajustes o una competición de esa temporada) congela una copia de los ajustes vigentes. Al guardar los ajustes, antes de escribirlos se congelan las copias de la temporada anterior y de la en curso, con los valores que aún están vigentes. Las lecturas (ficha, clasificación, baremos de temporadas pasadas) nunca crean copias. Así una competición de diciembre metida en enero se calcula con el baremo de su temporada.
 - Los baremos de temporadas pasadas no se editan desde wp-admin. Si hiciera falta, se haría con un cambio de código y una entrada en el registro.
 
 ---
@@ -810,6 +810,7 @@ Hecha el 16 de noviembre de 2026 en la rama `ranking-interno`, que sale de `main
 - `wp eval-file wp-content/plugins/club-triatlon-sulayr/tests/wp/check-ranking.php`: 42 comprobaciones (esquema, roles, puntos T1, T3 y T9, categoría AB, borrador frente a publicada, caché, registro, cambio de fecha de nacimiento, baja y vuelta, baremo por temporada, vistas del front y de wp-admin, borrado). Crea sus propios socios y lo borra todo al terminar.
 - Los manejadores de los formularios (`handle_save`, `handle_delete`, guardar sexos), con errores por fila, publicación bloqueada por referencias, cambio de formato bloqueado y 403 sin capacidad.
 - Por HTTP con sesión: la pestaña de Mi cuenta de un socio, el menú «Ranking» de un gestor de ranking (sin el menú «Socios») y el 403 de un deportista sin rol.
+- Ejecutadas el 16 de noviembre de 2026 contra el WordPress local: PHPUnit 47 de 47 y `check-ranking.php` 42 de 42. Las correcciones de la revisión (formato bloqueado con resultados, socio sin sexo fuera del cálculo, ROLLBACK si falla una escritura, baremos de lectura sin copia) todavía no tienen comprobación automática.
 
 ### 13.3. Diferencias con el texto de la spec
 
@@ -820,3 +821,4 @@ Hecha el 16 de noviembre de 2026 en la rama `ranking-interno`, que sale de `main
 - **Desempate por nombre:** se ordena por apellidos sin tildes (`remove_accents()`), porque la comparación de textos no entiende de acentos.
 - **Edición de una competición publicada:** si al guardarla faltan referencias o se quedan sin resultados, vuelve a borrador con un aviso, para que no cuente a medias.
 - **Tests:** PHPUnit está en `tests/` con su propio `composer.json` y `vendor/` ignorado por git. No se sube a PROD.
+- **Correcciones tras la revisión contra esta spec:** formato bloqueado si ya hay resultados (§4.2); socio sin sexo con resultados fuera del cálculo y con aviso hasta rellenar el sexo (§2.1); lectura de baremos sin crear copias (§2.6); cada escritura del formulario comprueba su resultado y, si falla, hace ROLLBACK y no guarda nada (§4.2); 5 filas vacías, resumen de errores por fila y socios ya usados fuera de los desplegables (§4.2); orden DNF, DSQ, DNS y NC al final (§4.2).

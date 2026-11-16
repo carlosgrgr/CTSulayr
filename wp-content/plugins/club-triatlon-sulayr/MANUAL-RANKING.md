@@ -24,6 +24,7 @@ Hace falta el rol **Gestor de ranking** (o ser administrador). Lo da un administ
 **Ranking → Deportistas** lista los socios activos y congelados con su sexo, su fecha de nacimiento y su grupo de edad en la temporada.
 
 - Un socio **sin sexo** no se puede elegir en los resultados. Rellénalo aquí y pulsa **Guardar sexos**.
+- Si un socio que ya tiene resultados se queda **sin sexo**, sus resultados dejan de contar en la clasificación y sale un aviso hasta que lo rellenes.
 - Un socio **sin fecha de nacimiento** puntúa en la absoluta, pero no en grupo de edad. La fecha la cambia un gestor de socios o un administrador.
 
 El grupo de edad es la categoría que corresponde a la edad que el socio cumple el 31 de diciembre de la temporada. No cambia a mitad de temporada.
@@ -33,7 +34,7 @@ El grupo de edad es la categoría que corresponde a la edad que el socio cumple 
 Necesitas dos documentos de la federación: la **Clasificación general** de cada sexo y la **Clasificación por categorías**.
 
 1. **Ranking → Añadir competición**.
-2. **Datos**: nombre, fecha, lugar, modalidad (triatlón, triatlón cros, duatlón, duatlón cros, acuatlón, acuabike), distancia y formato (individual, relevos o contrarreloj por equipos). Copia lo que pone la cabecera de la clasificación.
+2. **Datos**: nombre, fecha, lugar, modalidad (triatlón, triatlón cros, duatlón, duatlón cros, acuatlón, acuabike), distancia y formato (individual, relevos o contrarreloj por equipos). Copia lo que pone la cabecera de la clasificación. El formato no se puede cambiar si la competición ya tiene resultados: bórralos antes.
 3. **Resultados**: una fila por socio que participó, con los datos de la clasificación general de su sexo:
    - **Socio**. Debajo aparecen su sexo y su grupo de edad.
    - **Pos**: la posición en la general de su sexo.
@@ -42,6 +43,7 @@ Necesitas dos documentos de la federación: la **Clasificación general** de cad
    - **Tiempo**: el tiempo final, como `1:35:53`.
    - **Estado**: Finalizado, DNF, DSQ, DNS o NC. Si no terminó, no hace falta tiempo ni posiciones: son 0 puntos.
    - En relevos y equipos, además, la **categoría del equipo** (open masculina, open femenina o mixta).
+   Un socio que ya está en otra fila no aparece en el desplegable, y un socio sin sexo tampoco.
    
    **Añadir fila** añade más filas; **Quitar** borra una.
 4. Pulsa **Guardar**. La competición queda en **borrador**: todavía no cuenta ni se ve.
@@ -51,7 +53,7 @@ Necesitas dos documentos de la federación: la **Clasificación general** de cad
    - Los finalizados de una categoría solo se piden si un socio de esa categoría no tiene tiempo.
 6. Revisa los puntos de cada fila y pulsa **Guardar y publicar**. Ya se ve en Mi cuenta.
 
-Si falta algo, la web no publica y marca en rojo lo que falta. Si hay errores, no se guarda nada y cada error sale junto a su campo.
+Si falta algo, la web no publica y marca en rojo lo que falta. Si hay errores, no se guarda nada: arriba sale un resumen por fila y cada error aparece junto a su campo. Si la base de datos falla a mitad de guardar, también se deshace todo y vuelves al formulario con tus datos.
 
 ### Casos especiales
 
