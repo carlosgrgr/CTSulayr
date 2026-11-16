@@ -1,7 +1,7 @@
 # SPEC — Ranking interno del club
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr`
-**Estado:** Definida el 16 de noviembre de 2026. Decisiones R1 a R38 tomadas con el club ese día (sección 1.3); R26 a R32 salen de los ejemplos de clasificaciones de la Federación Andaluza (`docs/club/ejemplos-clasificaciones/`). No quedan preguntas abiertas (sección 12). Implementada el 16 de noviembre de 2026 en la rama `ranking-interno` (pasos R0 a R6, sección 13): 47 tests PHPUnit y 42 comprobaciones con WordPress en verde. Mergeada en `main` (`7fb03aba1`) y subida a PROD el 16 de noviembre de 2026. Configuración hecha (ajustes, sexos y rol de gestor). Faltan los criterios de PROD. Quedan las pruebas manuales de [ranking-interno/pruebas.md](ranking-interno/pruebas.md) y el registro del despliegue en [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md).
+**Estado:** Definida el 16 de noviembre de 2026. Decisiones R1 a R38 tomadas con el club ese día (sección 1.3); R26 a R32 salen de los ejemplos de clasificaciones de la Federación Andaluza (`docs/club/ejemplos-clasificaciones/`). No quedan preguntas abiertas (sección 12). Implementada el 16 de noviembre de 2026 en la rama `ranking-interno` (pasos R0 a R6, sección 13): 47 tests PHPUnit y 42 comprobaciones con WordPress en verde. Mergeada en `main` (`7fb03aba1`) y subida a PROD el 16 de noviembre de 2026. Configuración hecha (ajustes, sexos y rol de gestor). Faltan los criterios de PROD. Quedan las pruebas manuales de [ranking-interno/pruebas.md](ranking-interno/pruebas.md) y el registro del despliegue en [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md). **Ampliación (16 de noviembre de 2026):** importación de resultados desde JSON (decisiones R39 a R41, sección 14), implementada ese día en la rama `ranking-importar`, probada en local con la competición de Úbeda (69 tests PHPUnit) y mergeada en `main` el mismo día. Sin subir a PROD (ver [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md), «Ampliación»).
 **Fecha:** 16 de noviembre de 2026
 **Resumen para la junta:** [resumen-ranking-interno.html](resumen-ranking-interno.html), sin la parte técnica (16 de noviembre de 2026): puntuación, qué ven los socios y cómo se meten las competiciones (los tiempos se sacan con IA de los PDF de la federación). Si cambia el baremo o el flujo, hay que actualizarlo.
 
@@ -64,7 +64,7 @@ Comprobado en local el 16 de noviembre de 2026 sobre `main` (`1c03c2634`).
 | R16 | El ranking solo se ve con sesión iniciada, en una pestaña de Mi cuenta. No se ocultan datos de menores ni fotos, porque no es público. |
 | R17 | La ficha del deportista y la de la competición están dentro de esa pestaña de Mi cuenta. La foto es la de `sulayr_user_photo`. |
 | R18 | Shortcodes en esta spec; un bloque queda para más adelante. `TemplateService` se amplía para que el tema pueda sobrescribir solo las plantillas del ranking. |
-| R19 | No hay importación por CSV. Se introduce todo a mano, en una tabla editable. |
+| R19 | ~~No hay importación por CSV. Se introduce todo a mano, en una tabla editable.~~ Sustituida por R40 el 16 de noviembre de 2026: los resultados se importan desde un JSON (sección 14). La tabla editable sigue para revisar y para meter datos a mano. |
 | R20 | No se cargan temporadas anteriores. El ranking empieza con las competiciones que se metan desde la puesta en marcha. |
 | R21 | PHPUnit solo para el cálculo, sin cargar WordPress. El resto se prueba con `wp eval-file` y a mano. |
 | R22 | PROD no tiene SSH ni WP-CLI. Todo lo que haga falta allí (crear tablas, recalcular, rellenar el sexo) se hace desde wp-admin. |
@@ -75,7 +75,7 @@ Comprobado en local el 16 de noviembre de 2026 sobre `main` (`1c03c2634`).
 | R27 | Estado «NC» (fuera de control / corte), además de DNF, DSQ y DNS. Da 0 puntos, como un DNF. |
 | R28 | Cada resultado guarda el código de categoría de la carrera (columna «Cat», p. ej. `V1M`). Si no coincide con el grupo que calcula la web, la pantalla avisa, pero se puede guardar. |
 | R29 | Categoría absoluta (`ABM` / `ABF`): la federación saca a los primeros de la general de la clasificación de su categoría por edad (no es acumulable). Un socio que corre en AB puntúa en su grupo de edad como ganador del grupo (ratio 1). |
-| R30 | Relevos: un socio se compara con el mejor tiempo individual de su sexo dentro de su clasificación de relevos (open masculina, open femenina o mixta). Puntúa también en su grupo de edad, con su «Pos Cat». |
+| R30 | Relevos: un socio se compara con el mejor tiempo individual de su sexo dentro de su clasificación de relevos (masculina, femenina o mixta; federado y open juntos, R39). Puntúa también en su grupo de edad, con su «Pos Cat». |
 | R31 | Contrarreloj por equipos: cada socio del equipo recibe el tiempo del equipo, comparado con el del equipo ganador de su categoría de equipo. En el grupo de edad recibe los mismos puntos que en la absoluta. |
 | R32 | La competición se identifica por los datos de la cabecera de la clasificación oficial (nombre, localidad, fecha, distancia). Los tiempos de referencia se toman de la clasificación general (ganador de cada sexo) y de la clasificación por categorías (primero de cada categoría). |
 | R33 | Relevos y contrarreloj por equipos llevan el coeficiente de la modalidad y distancia de la competición, como una prueba individual. (Antes P2 c.) |
@@ -84,6 +84,9 @@ Comprobado en local el 16 de noviembre de 2026 sobre `main` (`1c03c2634`).
 | R36 | Coeficientes por defecto de la sección 3.1: media ×1,4 y larga ×1,6 en triatlón y duatlón; acuatlón, acuabike y supersprint, ×1,0. Son provisionales: los cambia desde wp-admin («Ranking → Ajustes») un administrador o un gestor de ranking. (Antes P6.) |
 | R37 | El ranking solo lo ven los socios activos y congelados. Ningún otro usuario lo ve en el front, aunque sea entrenador. (Antes P7.) |
 | R38 | Si un socio terminó y la clasificación no trae su tiempo, el club se lo pide al deportista y el gestor lo mete en la tabla (pasa las mismas validaciones). Si no lo da, sus puntos se calculan por posición; entonces los finalizados de su categoría son obligatorios. (Antes P5.) |
+| R39 | Decidida por el club el 16 de noviembre de 2026. Para el ranking interno no se distingue la clasificación de la federación en la que sale un deportista (por ejemplo, **federado** y **open** en relevos): se unifican todas las de la misma categoría de equipo y el mismo sexo. El tiempo de referencia del ganador es el más rápido de todas ellas; el primero de cada categoría, el más rápido de esa categoría en todas ellas; los finalizados, la suma. «Pos» y «Pos Cat» se recalculan por tiempo dentro del conjunto unificado (empate, misma posición). Por eso la categoría de equipo se llama «Masculina», «Femenina» o «Mixta», sin «open». |
+| R40 | Decidida por el club el 16 de noviembre de 2026. Los resultados se importan desde un JSON que una IA genera a partir de los PDF oficiales (skill `/ranking-importar` de Claude Code, o claude.ai con el prompt que da la web). La web empareja a los deportistas con los socios por nombre y rellena el formulario de la competición sin guardarlo; el gestor revisa, guarda y publica como siempre. Sustituye a R19. |
+| R41 | El emparejamiento es por nombre, porque las clasificaciones no traen licencia ni DNI. Se contrasta con el sexo y el grupo de edad que da la categoría de la carrera. Lo que no es seguro se lista para que el gestor diga a qué socio corresponde o que no es socio (sección 14.4). |
 
 ### 1.4. Cómo encaja
 
@@ -187,7 +190,7 @@ Tiempos en segundos enteros. Puntos en `decimal(8,2)`. Fechas en `Y-m-d`.
 | `id` | `bigint(20) unsigned` AI | PK |
 | `competition_id` | `bigint(20) unsigned` | |
 | `scope` | `varchar(10)` | `absoluta` o `grupo`. |
-| `team_category` | `varchar(10)` | Vacío en individual. En relevos y equipos, la clasificación del equipo: `m` (open masculina), `f` (open femenina) o `mixto`. |
+| `team_category` | `varchar(10)` | Vacío en individual. En relevos y equipos, la clasificación del equipo: `m` (masculina), `f` (femenina) o `mixto`. Federado y open van juntos (R39). |
 | `sex` | `char(1)` | `m` o `f`. Vacío en equipos: la referencia es el tiempo del equipo ganador. |
 | `age_group` | `varchar(32)` | Clave del grupo cuando `scope = grupo`; vacío en `absoluta`. |
 | `winner_time` | `int unsigned` | Segundos. |
@@ -383,7 +386,7 @@ En la clasificación por grupo de edad, solo entran los resultados con `points_a
 
 ### 3.5. Relevos y equipos
 
-- **Relevos** (ejemplo: «I Duatlón por relevos 3X Úbeda Nazarí», clasificación «Open masculina»): cada deportista hace el recorrido completo. La federación publica, por cada clasificación de relevos (open masculina, open femenina, mixta), su tiempo individual, su «Pos», su «Cat» y su «Pos Cat»; el tiempo del equipo es la suma.
+- **Relevos** (ejemplo: «I Duatlón por relevos 3X Úbeda Nazarí», clasificación «Open masculina»): cada deportista hace el recorrido completo. La federación publica, por cada clasificación de relevos (open masculina, open femenina, mixta), su tiempo individual, su «Pos», su «Cat» y su «Pos Cat»; el tiempo del equipo es la suma. Si hay varias clasificaciones de la misma categoría (federado y open), se unifican (R39, sección 14.3).
   - Cada socio tiene una fila con su tiempo individual y su `team_category`.
   - Referencia absoluta: el mejor tiempo individual de su sexo dentro de esa clasificación (`scope = absoluta`, `team_category`, `sex`) (R30). En una clasificación mixta, una socia se compara con la mejor mujer.
   - Respaldo por posición: su posición entre los deportistas de su sexo de esa clasificación, frente a los que terminaron.
@@ -474,6 +477,8 @@ Una pantalla con tres bloques y un solo formulario. «Guardar» deja el estado c
 4. Revisa los puntos de cada fila y pulsa «Guardar y publicar».
 5. La competición y la clasificación se ven ya en Mi cuenta.
 
+Desde el 16 de noviembre de 2026 (R40), los pasos 1 a 3 los hace la importación de la sección 14: el gestor llega al paso 4 con todo relleno. Meterlo a mano sigue siendo posible.
+
 ### 4.4. Clasificación (`sulayr-ranking-clasificacion`)
 
 La misma vista que Mi cuenta (sección 8), con los mismos filtros. Además:
@@ -509,7 +514,7 @@ La página de opciones exige `sulayr_manage_ranking` (`capability` de `acf_add_o
 
 ## 5. Validaciones
 
-No hay importación por CSV (R19). Estas reglas valen para el formulario de la sección 4.2. Viven en `Calc\ResultValidator`, sin WordPress, para poder probarlas.
+Estas reglas valen para el formulario de la sección 4.2, se meta a mano o venga de la importación (sección 14), que solo lo rellena. Viven en `Calc\ResultValidator`, sin WordPress, para poder probarlas.
 
 **Competición**
 
@@ -757,6 +762,10 @@ En local y en PROD, con un gestor de ranking de prueba. Se apuntan en `docs/club
 8. En el móvil (360 px), la clasificación y las fichas se leen sin scroll horizontal.
 9. El shortcode en una página muestra lo mismo que la pestaña, y a quien no ha entrado le pide entrar.
 10. Una plantilla copiada en `ct-sulayr-theme/sulayr/ranking/` se usa en lugar de la del plugin.
+11. Importación (sección 14): un JSON con errores no importa nada y lista los errores; uno válido muestra los conjuntos unificados, las dudas y los socios encontrados.
+12. Importación: no se puede rellenar la competición sin decidir las dudas, ni con un socio en dos filas.
+13. Importación: «Rellenar la competición» abre «Añadir competición» con datos, resultados y referencias rellenos y sin guardar; al guardar pasa las validaciones de siempre.
+14. Un gestor de socios no ve «Importar resultados» y su URL da 403.
 
 ---
 
@@ -822,3 +831,91 @@ Hecha el 16 de noviembre de 2026 en la rama `ranking-interno`, que sale de `main
 - **Edición de una competición publicada:** si al guardarla faltan referencias o se quedan sin resultados, vuelve a borrador con un aviso, para que no cuente a medias.
 - **Tests:** PHPUnit está en `tests/` con su propio `composer.json` y `vendor/` ignorado por git. No se sube a PROD.
 - **Correcciones tras la revisión contra esta spec:** formato bloqueado si ya hay resultados (§4.2); socio sin sexo con resultados fuera del cálculo y con aviso hasta rellenar el sexo (§2.1); lectura de baremos sin crear copias (§2.6); cada escritura del formulario comprueba su resultado y, si falla, hace ROLLBACK y no guarda nada (§4.2); 5 filas vacías, resumen de errores por fila y socios ya usados fuera de los desplegables (§4.2); orden DNF, DSQ, DNS y NC al final (§4.2).
+
+---
+
+## 14. Importación desde JSON (R39 a R41)
+
+Añadida el 16 de noviembre de 2026, con la primera competición real (I Duatlón por relevos 3X Úbeda Nazarí, 15 de noviembre de 2026). Rama `ranking-importar`, mergeada en `main` ese día. Sin subir a PROD.
+
+### 14.1. Flujo
+
+1. El gestor descarga los PDF oficiales: en individual, la general de cada sexo; en relevos, todas las clasificaciones con socios (federado y open, masculina, femenina y mixta).
+2. Una IA los convierte en un JSON (14.2), de una de estas dos formas:
+   - Con Claude Code en el repositorio: se dejan los PDF en `docs/club/ranking-interno/<prueba>/` y se ejecuta la skill `/ranking-importar <prueba>`. Escribe `resultados.json` en esa carpeta y lo comprueba con el mismo código que la web (`.claude/skills/ranking-importar/validar.php`).
+   - En claude.ai: se adjuntan los PDF y se pega el prompt que enseña la pantalla.
+3. **Ranking → Importar resultados**: se pega el JSON o se sube el archivo y se pulsa «Analizar». La pantalla tiene las instrucciones y el prompt con un botón para copiarlo. También hay un botón «Importar resultados» en Competiciones y un enlace en «Añadir competición».
+4. Revisión (14.4): conjuntos unificados con su ganador y sus finalizados, dudas, socios encontrados y deportistas de equipos del club sin socio. Avisa si ya hay una competición con esa fecha.
+5. «Rellenar la competición» abre «Añadir competición» con datos, resultados y referencias rellenos, **sin guardar** (estado del formulario de `Admin\Notices`). Desde ahí se sigue el flujo de 4.3: «Guardar», revisar puntos, «Guardar y publicar».
+
+La importación en curso se guarda dos horas por usuario (transient `sulayr_ranking_import_<user_id>`). «Descartar e importar otro JSON» la borra. No se guarda nada en las tablas del ranking hasta que el gestor pulsa «Guardar» en la competición.
+
+### 14.2. Formato del JSON
+
+La definición para la IA está en `wp-content/plugins/club-triatlon-sulayr/admin/ranking-import-prompt.md`. La web la enseña tal cual y la skill la lee de ahí, así que es el único sitio donde se cambia. La lee y la valida `Calc\ImportParser` (sin WordPress).
+
+```json
+{
+  "schema": "sulayr-ranking-import/1",
+  "competition": { "name": "…", "race_date": "2026-11-15", "location": "Úbeda", "modality": "duatlon", "distance": "supersprint", "format": "relevos" },
+  "classifications": [
+    { "title": "OPEN MASCULINA", "team_category": "m", "finishers": null,
+      "athletes": [ { "pos": 1, "name": "…", "club": "…", "cat": "JVM", "pos_cat": 1, "time": "0:19:58", "status": "finalizado" } ] }
+  ]
+}
+```
+
+- Lleva **todos** los deportistas de cada clasificación, no solo los socios: hacen falta para el ganador, el primero de cada categoría y los finalizados.
+- `format`: `individual` o `relevos`. La contrarreloj por equipos no se importa todavía: se mete a mano.
+- `team_category`: en relevos, `m`, `f` o `mixto`; en individual se ignora.
+- `finishers`: el «FINALIZADOS» de la cabecera, si lo hay. Si no, se cuentan los deportistas con estado `finalizado`.
+- `sex`: sale de la última letra de `cat`. Solo hace falta si no hay categoría.
+- `status`: `finalizado`, `dnf`, `dsq`, `dns` o `nc`. Sin terminar, no lleva tiempo ni posiciones.
+- Admite el JSON dentro de un bloque de código (```` ```json ````), porque es como suele contestar la IA.
+
+### 14.3. Unificación (R39)
+
+`Calc\ImportMerger::merge()` junta a los deportistas por categoría de equipo y sexo (en individual, solo por sexo), venga cada uno de la clasificación que venga. En cada conjunto:
+
+- `Pos` = 1 + los que tienen un tiempo menor; `Pos Cat` = 1 + los de su misma «Cat» con un tiempo menor. Con un solo PDF coincide con la clasificación oficial, salvo en los empates, que comparten posición.
+- Ganador: el tiempo más rápido. Primero de categoría: el más rápido con esa «Cat».
+- Finalizados: la suma de los `finishers` de sus clasificaciones si todas los traen y son de un solo sexo; si no, los que hay en el JSON. Si no cuadran, la revisión lo avisa (suele ser que falta una página).
+- Si un deportista terminó sin tiempo y su clasificación se ha unido a otra, se queda con la «Pos» del PDF y sale un aviso para revisarla.
+
+`ImportMerger::build_input()` prepara el formulario: las filas de los socios elegidos y las referencias que pide `ResultValidator::required_references()`. La del grupo de edad sale del código de la federación del grupo (Ajustes → Grupos de edad): `V1` + sexo → `V1M`. Si el grupo no tiene código, o nadie de esa categoría tiene tiempo (por ejemplo, la carrera clasifica al socio en otra categoría, R28), esa referencia queda vacía con un aviso y se rellena a mano.
+
+### 14.4. Emparejamiento por nombre (R41)
+
+`Calc\NameMatcher`, sin WordPress. Compara sin tildes, sin mayúsculas, sin palabras de enlace (`de`, `del`, `al`, `la`…) y sin importar el orden. Solo se emparejan socios activos o congelados con sexo, y del mismo sexo que el deportista.
+
+| Resultado | Cuándo |
+|---|---|
+| **Seguro** (viene elegido) | Un único socio con el nombre idéntico; o, si corre en un equipo del club, un único socio con todos sus apellidos y su nombre de pila en el nombre del PDF (el PDF puede traer un segundo nombre). Además, la «Cat» no contradice su grupo de edad. |
+| **Duda** (hay que decidir) | Hay parecido pero no basta: falta un nombre o un apellido, una letra de diferencia (palabras de 5 o más), varios socios posibles, la categoría no cuadra, el mismo socio sale en dos filas, o el parecido es por apellidos y nombre en un equipo de otro club. |
+| **Ninguno** | Sin parecido. Si corre en un equipo del club, se lista con «No es socio» elegido; si no, solo se cuenta. |
+
+Un equipo es del club si la columna «Club» contiene «SULAYR» (filtro `sulayr_ranking_import_club_keywords`). En los equipos de otros clubes no se enseñan los parecidos flojos, para no llenar la revisión de tocayos.
+
+En cada fila, el desplegable ofrece los candidatos, «No es socio» y el resto de socios del mismo sexo. Antes de rellenar, la web comprueba que no quedan dudas sin decidir, que ningún socio está en dos filas y que todos los elegidos se pueden usar.
+
+### 14.5. Código
+
+| Archivo | Qué hace |
+|---|---|
+| `src/Modules/Ranking/Calc/ImportParser.php` | Lee y valida el JSON. |
+| `src/Modules/Ranking/Calc/ImportMerger.php` | Unifica clasificaciones y prepara el formulario. |
+| `src/Modules/Ranking/Calc/NameMatcher.php` | Emparejamiento por nombre. |
+| `src/Modules/Ranking/Admin/ImportPage.php` | Pantalla «Importar resultados» (instrucciones, análisis, revisión y relleno). |
+| `admin/ranking-import-prompt.md` | Prompt y formato para la IA. |
+| `RankingRoster::info()` | Ahora también da `first` y `last` (nombre y apellidos por separado). |
+| `Labels::team_categories()` | «Masculina», «Femenina» y «Mixta» (R39). Las claves guardadas no cambian. |
+| `.claude/skills/ranking-importar/` | Skill de Claude Code (`SKILL.md`) y su comprobación (`validar.php`). No se sube a PROD. |
+
+Comprobado en local el 16 de noviembre de 2026:
+
+- 69 tests PHPUnit: 22 nuevos en `ImportTest` y `NameMatcherTest`.
+- `check-ranking.php` en verde.
+- Por HTTP con sesión de administrador, con el JSON de Úbeda (`docs/club/ranking-interno/i-duatlon-por-relevos-3x-ubeda-nazari/resultados.json`, 75 deportistas; esa carpeta, con los PDF, no se versiona): JSON con errores rechazado con la lista; análisis con 21 socios seguros, 2 dudas y 1 deportista del club sin socio; rechazo con dudas sin decidir; formulario relleno con 23 socios y 7 de 8 referencias; guardado en borrador con los puntos calculados.
+- La referencia que faltaba es la de Júnior femenina: la carrera clasifica a esa socia como 23F y la web como Júnior, y no había ninguna JNF.
+- La competición de prueba se borró después.
+

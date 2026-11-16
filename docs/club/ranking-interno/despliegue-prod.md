@@ -84,3 +84,44 @@ Actualiza ese mismo día el estado en `docs/FASES.md`, en la spec (cabecera y se
 - **Corregido: `admin/js/ranking-results.js`.** A las 18:55 del 16 de noviembre de 2026 PROD respondía 404 en esa URL. Subido después, y comprobado: responde 200 y su SHA-1 (`20d145d5…`) es el de `main`.
 - **Hecho: paso 4** (16 de noviembre de 2026). Ajustes revisados, sexos rellenados en «Ranking → Deportistas» y rol de gestor dado.
 - **Pendiente: paso 5** (criterios 1 a 9). Se marcan en `pruebas.md`, columna PROD, solo cuando estén hechos.
+
+---
+
+# Ampliación: importación desde JSON (rama `ranking-importar`)
+
+Escrito el 16 de noviembre de 2026. Es la sección 14 de la spec (R39 a R41). **Estado:** mergeada en `main` el 16 de noviembre de 2026, sin subir a PROD. No cambia el esquema de la base de datos ni los ajustes.
+
+Rutas relativas a `wp-content/plugins/club-triatlon-sulayr/`.
+
+## Paso A. Subir lo nuevo
+
+Nada de esto se carga hasta el paso B.
+
+- `src/Modules/Ranking/Calc/ImportParser.php`
+- `src/Modules/Ranking/Calc/ImportMerger.php`
+- `src/Modules/Ranking/Calc/NameMatcher.php`
+- `src/Modules/Ranking/Admin/ImportPage.php`
+- `admin/ranking-import-prompt.md`
+
+## Paso B. Sobrescribir lo modificado
+
+En este orden:
+
+1. `src/Modules/Ranking/Calc/Keys.php` (solo un comentario)
+2. `src/Modules/Ranking/Labels.php` («Masculina», «Femenina», «Mixta»)
+3. `src/Modules/Ranking/RankingRoster.php` (nombre y apellidos por separado)
+4. `src/Modules/Ranking/Admin/CompetitionEditPage.php` (enlace a la importación)
+5. `src/Modules/Ranking/Admin/RankingMenu.php` (el último: es el que carga la pantalla nueva)
+
+No hay archivos que borrar. No subas `tests/` ni `.claude/`.
+
+## Paso C. Comprobar
+
+1. **Ranking → Importar resultados** se abre, con las instrucciones y el prompt. En «Competiciones» está el botón «Importar resultados».
+2. Pega el `resultados.json` de Úbeda (está en local, en `docs/club/ranking-interno/i-duatlon-por-relevos-3x-ubeda-nazari/`, que no se versiona), «Analizar», revisa las dudas y «Rellenar la competición». Debe abrirse «Añadir competición» relleno.
+3. Revisa los resultados y las referencias. Si todo cuadra, guarda; si no, no guardes nada.
+4. Con la cuenta del gestor de socios: no ve «Importar resultados».
+5. Marca los criterios 11 a 14 en `pruebas.md`, columna PROD.
+
+Si algo falla, vuelve a subir el `RankingMenu.php` de `main`: la pantalla deja de cargarse y lo demás sigue igual.
+

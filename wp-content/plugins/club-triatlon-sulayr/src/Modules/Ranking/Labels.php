@@ -92,8 +92,8 @@ class Labels {
      */
     public static function team_categories(): array {
         return [
-            'm' => __( 'Open masculina', SULAYR_TEXTDOMAIN ),
-            'f' => __( 'Open femenina', SULAYR_TEXTDOMAIN ),
+            'm' => __( 'Masculina', SULAYR_TEXTDOMAIN ),
+            'f' => __( 'Femenina', SULAYR_TEXTDOMAIN ),
             'mixto' => __( 'Mixta', SULAYR_TEXTDOMAIN ),
         ];
     }

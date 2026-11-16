@@ -154,6 +154,9 @@ class CompetitionEditPage {
         echo '<p class="sulayr-eyebrow">' . esc_html( null !== $competition ? Labels::of( Labels::competition_statuses(), (string) $competition->status ) : __( 'Nueva competición', SULAYR_TEXTDOMAIN ) ) . '</p>';
         printf( '<h1>%s</h1>', esc_html( null !== $competition ? (string) $competition->name : __( 'Añadir competición', SULAYR_TEXTDOMAIN ) ) );
         Notices::render();
+        if ( null === $competition && empty( $state ) ) {
+            printf( '<p class="description">%s <a href="%s">%s</a></p>', esc_html__( '¿Tienes los PDF de la federación?', SULAYR_TEXTDOMAIN ), esc_url( ImportPage::url() ), esc_html__( 'Importa los resultados en vez de meterlos a mano.', SULAYR_TEXTDOMAIN ) );
+        }
 
         if ( ! empty( $state['errors'] ) ) {
             echo '<div class="notice notice-error"><p>' . esc_html__( 'No se ha guardado nada. Corrige los errores marcados.', SULAYR_TEXTDOMAIN ) . '</p>';

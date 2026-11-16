@@ -27,7 +27,7 @@ class Keys {
     public const SEX_FEMALE = 'f';
     public const SEXES = [ self::SEX_MALE, self::SEX_FEMALE ];
 
-    /** Clasificaciones de relevos y equipos: open masculina, open femenina y mixta. */
+    /** Categoría de equipo en relevos y equipos: masculina, femenina o mixta (federado y open juntos, R39). */
     public const TEAM_CATEGORIES = [ 'm', 'f', 'mixto' ];
 
     public const SCOPE_ABSOLUTE = 'absoluta';

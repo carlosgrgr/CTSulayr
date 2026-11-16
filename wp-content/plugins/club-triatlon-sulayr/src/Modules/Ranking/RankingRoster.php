@@ -31,7 +31,7 @@ class RankingRoster {
     /**
      * Socios que salen en el ranking, por user_id.
      *
-     * @return 	array<int, array{user_id: int, name: string, sort: string, sex: string, birth: string, status: string, number: string}>
+     * @return 	array<int, array{user_id: int, name: string, first: string, last: string, sort: string, sex: string, birth: string, status: string, number: string}>
      * @access 	public
      * @package	club-triatlon-sulayr
      */
@@ -101,7 +101,7 @@ class RankingRoster {
      * Datos de un usuario, salga o no en el ranking.
      *
      * @param   int $user_id Usuario.
-     * @return 	array{user_id: int, name: string, sort: string, sex: string, birth: string, status: string, number: string}
+     * @return 	array{user_id: int, name: string, first: string, last: string, sort: string, sex: string, birth: string, status: string, number: string}
      * @access 	public
      * @package	club-triatlon-sulayr
      */
@@ -118,6 +118,8 @@ class RankingRoster {
         self::$info[ $user_id ] = [
             'user_id' => $user_id,
             'name' => '' !== $name ? $name : sprintf( __( 'Usuario %d', SULAYR_TEXTDOMAIN ), $user_id ),
+            'first' => trim( $first ),
+            'last' => trim( $last ),
             'sort' => strtolower( remove_accents( trim( $last . ' ' . $first ) ?: $name ) ),
             'sex' => in_array( $sex, [ CustomFields::SEX_MALE, CustomFields::SEX_FEMALE ], true ) ? $sex : '',
             'birth' => MemberDates::acf_to_iso( (string) get_user_meta( $user_id, CustomFields::USER_PROFILE_BIRTH, true ) ),
