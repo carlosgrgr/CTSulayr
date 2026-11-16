@@ -1,0 +1,266 @@
+<!doctype html><html lang="es"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Ranking interno Sulayr</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: banda Noche con perfil de cumbres; una columna de lectura con bloques por tema, la fórmula como pieza central. */
+:root {
+  --noche: #0B1638;
+  --nieve: #F3F7FA;
+  --cielo: #4FE6F2;
+  --menta: #1EE8A3;
+  --sol: #F46F5C;
+  --bg: #FFFFFF;
+  --fg: #0B1638;
+  --muted: #566079;
+  --line: #DCE3EA;
+  --surface: #F3F7FA;
+  --accent: #0A7C8A;
+  --accent-soft: rgba(10, 124, 138, .10);
+  --head-bg: #0B1638;
+  --head-fg: #F3F7FA;
+  --f-display: "Archivo", "Arial Narrow", Arial, sans-serif;
+  --f-body: "Instrument Sans", system-ui, "Segoe UI", Arial, sans-serif;
+  --f-mono: "JetBrains Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B1638; --fg: #F3F7FA; --muted: #8C93A3; --line: #2A3550;
+    --surface: #111D45; --accent: #4FE6F2; --accent-soft: rgba(79, 230, 242, .12);
+    --head-bg: #2A3550; --head-fg: #F3F7FA;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0B1638; --fg: #F3F7FA; --muted: #8C93A3; --line: #2A3550;
+  --surface: #111D45; --accent: #4FE6F2; --accent-soft: rgba(79, 230, 242, .12);
+  --head-bg: #2A3550; --head-fg: #F3F7FA;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 16px; line-height: 1.6; }
+.gutter {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 880px; margin: 0 auto; }
+
+/* Cabecera */
+.band { background: var(--noche); color: var(--nieve); position: relative; overflow: hidden; }
+.band-inner { padding-block: 40px 100px; position: relative; z-index: 1; display: grid; gap: 18px; }
+.brandline { display: flex; align-items: center; gap: 12px; font-family: var(--f-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--cielo); }
+.brandline svg { width: 36px; height: 36px; flex: none; }
+.band h1 { margin: 0; font-family: var(--f-display); font-weight: 900; font-style: italic; font-stretch: 118%; font-size: clamp(38px, 8vw, 64px); line-height: 1.02; text-wrap: balance; }
+.band h1 em { color: var(--menta); }
+.band .lede { margin: 0; max-width: 60ch; color: #C9D2DE; font-size: 18px; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 0; padding: 0; list-style: none; font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; }
+.facts li { display: flex; gap: 8px; }
+.facts .k { color: #8C93A3; text-transform: uppercase; }
+.facts .v { color: var(--nieve); }
+.facts .v.sol { color: var(--sol); }
+.peaks { position: absolute; left: 0; right: 0; bottom: 0; height: 84px; width: 100%; }
+.tricolor { display: grid; grid-template-columns: 1fr 1fr 1fr; height: 4px; }
+.tricolor i:nth-child(1) { background: var(--cielo); }
+.tricolor i:nth-child(2) { background: var(--menta); }
+.tricolor i:nth-child(3) { background: var(--sol); }
+
+/* Contenido */
+main { padding-block: 40px 72px; display: grid; gap: 56px; }
+section { display: grid; gap: 16px; min-width: 0; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 0; }
+h2 { margin: 0; font-family: var(--f-display); font-weight: 800; font-style: italic; font-stretch: 110%; font-size: 32px; line-height: 1.12; text-wrap: balance; }
+h3 { margin: 0; font-family: var(--f-display); font-weight: 700; font-stretch: 105%; font-size: 19px; line-height: 1.3; }
+p { margin: 0; max-width: 68ch; }
+ul, ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; max-width: 68ch; }
+strong { font-weight: 600; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+.keypoints { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.kp { border: 1px solid var(--line); border-radius: 4px; padding: 16px; display: grid; gap: 6px; align-content: start; }
+.kp .big { font-family: var(--f-display); font-weight: 900; font-style: italic; font-stretch: 115%; font-size: 34px; line-height: 1; }
+.kp .lbl { font-size: 14.5px; color: var(--muted); }
+
+.formula { background: var(--noche); color: var(--nieve); border-radius: 4px; padding: 24px; display: grid; gap: 14px; }
+.formula .k { font-family: var(--f-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #8C93A3; }
+.formula .eq { font-family: var(--f-mono); font-size: clamp(15px, 2.6vw, 21px); line-height: 1.5; overflow-wrap: anywhere; }
+.formula .eq b { color: var(--menta); font-weight: 600; }
+.formula .eq .bonus { color: var(--sol); }
+.formula p { color: #C9D2DE; font-size: 15px; }
+
+.example { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.example-head { background: var(--surface); padding: 10px 16px; font-family: var(--f-mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); }
+.example-body { padding: 16px; display: grid; gap: 10px; }
+.calc { font-family: var(--f-mono); font-size: 14px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.calc .res { font-weight: 600; color: var(--accent); }
+
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 4px; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th { background: var(--head-bg); color: var(--head-fg); font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; padding: 10px 12px; text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+td { padding: 9px 12px; border-top: 1px solid var(--line); text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td:first-child { font-family: var(--f-body); }
+tbody tr:nth-child(even) td { background: var(--surface); }
+td.up { color: var(--accent); font-weight: 600; }
+.note { font-size: 14px; color: var(--muted); }
+
+.steps { list-style: none; padding: 0; counter-reset: step; display: grid; gap: 0; max-width: none; }
+.steps li { counter-increment: step; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 14px; padding: 16px 0; border-top: 1px solid var(--line); }
+.steps li:first-child { border-top: 0; padding-top: 4px; }
+.steps li::before { content: counter(step); font-family: var(--f-display); font-weight: 900; font-style: italic; font-size: 28px; line-height: 1; color: var(--accent); }
+.steps li > div { display: grid; gap: 4px; min-width: 0; }
+.steps li.ai { background: var(--accent-soft); border-radius: 4px; padding: 16px 14px; border-top-color: transparent; grid-template-columns: 30px minmax(0, 1fr); }
+.tag { display: inline-block; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; font-style: normal; color: var(--accent); border: 1px solid currentColor; border-radius: 3px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }
+
+.menu { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 28px; margin: 0; }
+.menu div { padding: 12px 0; border-top: 1px solid var(--line); display: grid; gap: 2px; }
+.menu dt { font-weight: 600; }
+.menu dd { margin: 0; color: var(--muted); font-size: 15px; }
+
+.callout { border-left: 4px solid var(--menta); background: var(--surface); padding: 16px 20px; border-radius: 0 4px 4px 0; display: grid; gap: 10px; }
+
+.foot { border-top: 1px solid var(--line); }
+.foot-inner { padding-block: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+
+@media (max-width: 600px) {
+  h2 { font-size: 26px; }
+  .band-inner { padding-block: 28px 84px; }
+  .formula { padding: 18px; }
+}
+</style>
+
+<header class="band">
+  <div class="band-inner wrap gutter">
+    <div class="brandline">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48" fill="#0B1638" stroke="#2A3550" stroke-width="2"/><circle cx="40" cy="30" r="9" fill="#F46F5C"/><path d="M8 66 L28 44 L36 50 L50 26 L58 36 L66 30 L92 66 Z" fill="#4FE6F2"/><path d="M28 44 L33 48 M50 26 L46 36 M66 30 L62 38" stroke="#F3F7FA" stroke-width="2.5" stroke-linecap="round" fill="none"/><rect x="8" y="66" width="84" height="3" fill="#1EE8A3"/><g fill="#F46F5C"><circle cx="38" cy="80" r="3.2"/><circle cx="50" cy="83" r="3.2"/><circle cx="62" cy="80" r="3.2"/></g></svg>
+      <span>Club Triatlón Sulayr · Resumen para la junta</span>
+    </div>
+    <h1>Ranking <em>interno</em> del club</h1>
+    <p class="lede">Después de cada competición, metemos los resultados de los socios en la web. La web calcula los puntos y publica la clasificación de la temporada para que cada socio vea dónde está.</p>
+    <ul class="facts">
+      <li><span class="k">Fecha</span><span class="v">16 nov 2026</span></li>
+      <li><span class="k">Temporada</span><span class="v">1 ene – 31 dic</span></li>
+      <li><span class="k">Estado</span><span class="v sol">Hecho · pendiente de pruebas y de subir a la web</span></li>
+    </ul>
+  </div>
+  <svg class="peaks" viewBox="0 0 1200 84" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 84 L0 70 L140 58 L260 46 L360 52 L470 26 L540 34 L610 14 L680 30 L760 20 L850 40 L960 48 L1080 60 L1200 66 L1200 84 Z" fill="#4FE6F2" opacity=".9"/>
+    <path d="M0 70 L140 58 L260 46 L360 52 L470 26 L540 34 L610 14 L680 30 L760 20 L850 40 L960 48 L1080 60 L1200 66" fill="none" stroke="#F3F7FA" stroke-width="2"/>
+  </svg>
+</header>
+<div class="tricolor" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<main class="wrap gutter">
+
+  <section>
+    <p class="eyebrow">Qué es</p>
+    <h2>Una clasificación del club, temporada a temporada</h2>
+    <p>Puntúan todas las competiciones en las que participen socios: triatlón, duatlón (también de cros), acuatlón y acuabike, de supersprint a larga distancia, individuales, por relevos y contrarreloj por equipos.</p>
+    <div class="keypoints">
+      <div class="kp"><span class="big">2</span><span class="lbl">clasificaciones: absoluta (por sexo) y por grupo de edad</span></div>
+      <div class="kp"><span class="big">6</span><span class="lbl">mejores pruebas de cada socio suman en la temporada</span></div>
+      <div class="kp"><span class="big">0</span><span class="lbl">puntos si no termina (retirado, descalificado o no sale)</span></div>
+    </div>
+    <p>El grupo de edad es la categoría de la federación que corresponde a la edad que el socio cumple el 31 de diciembre (Cadete, Junior, Sub-23, Senior, Veterano 1 a 5…). No cambia a mitad de temporada.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Sistema de puntuación</p>
+    <h2>Se compara tu tiempo con el del ganador</h2>
+    <div class="formula">
+      <span class="k">Puntos de una prueba</span>
+      <div class="eq">1000 × (<b>tiempo del ganador</b> ÷ <b>tu tiempo</b>) × coeficiente <span class="bonus">+ 50</span></div>
+      <p>Quien gana la prueba se lleva los 1000 puntos multiplicados por el coeficiente. Los demás, en proporción a lo cerca que hayan quedado. Los 50 puntos son por terminar.</p>
+    </div>
+    <ul>
+      <li><strong>Absoluta:</strong> el tiempo de referencia es el del ganador o la ganadora de la general de tu sexo.</li>
+      <li><strong>Grupo de edad:</strong> el tiempo de referencia es el del primero de tu categoría. Si la federación te saca de tu categoría por estar entre los primeros de la general (categoría «AB»), cuentas como ganador de tu grupo.</li>
+      <li><strong>Relevos:</strong> cada relevista hace el recorrido completo, así que cuenta su tiempo individual frente al del mejor de su clasificación de relevos.</li>
+      <li><strong>Contrarreloj por equipos:</strong> cuenta el tiempo del equipo frente al del equipo ganador de su categoría.</li>
+      <li><strong>Si un socio terminó pero no aparece su tiempo</strong>, se le pide. Si no lo da, puntúa por su posición: 1000 × (1 − (posición − 1) ÷ finalizados) × coeficiente + 50.</li>
+    </ul>
+
+    <div class="example">
+      <div class="example-head">Ejemplo con datos inventados · triatlón sprint, coeficiente 1,1</div>
+      <div class="example-body">
+        <p>La ganadora hace <span class="mono">1:02:30</span>. Una socia termina en <span class="mono">1:15:00</span>.</p>
+        <div class="calc">Socia: 1000 × (1:02:30 ÷ 1:15:00) × 1,1 + 50 = <span class="res">966,67 puntos</span></div>
+        <div class="calc">Ganadora: 1000 × 1 × 1,1 + 50 = <span class="res">1150 puntos</span></div>
+      </div>
+    </div>
+
+    <h3>Coeficientes: las pruebas largas valen más</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Modalidad</th><th>Supersprint</th><th>Sprint</th><th>Olímpica / Estándar</th><th>Media</th><th>Larga</th></tr></thead>
+        <tbody>
+          <tr><td>Triatlón y triatlón cros</td><td>1,0</td><td class="up">1,1</td><td class="up">1,2</td><td class="up">1,4</td><td class="up">1,6</td></tr>
+          <tr><td>Duatlón y duatlón cros</td><td>1,0</td><td>1,0</td><td class="up">1,2</td><td class="up">1,4</td><td class="up">1,6</td></tr>
+          <tr><td>Acuatlón y acuabike</td><td>1,0</td><td>1,0</td><td>1,0</td><td>1,0</td><td>1,0</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">La distancia estándar es la olímpica (en triatlón, 1,5 km de natación, 40 km de ciclismo y 10 km de carrera). Son los valores de partida. Los puntos base, el bonus por terminar, cuántas pruebas cuentan, los coeficientes y los grupos de edad se cambian desde wp-admin. Cada temporada guarda su baremo: un cambio solo afecta a la temporada en curso.</p>
+
+    <h3>Empates</h3>
+    <p>Con los mismos puntos va delante quien ha terminado más pruebas y, si siguen igual, quien tiene el mejor resultado. Si aun así empatan, comparten puesto.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Qué ven los socios</p>
+    <h2>En Mi cuenta, con su sesión iniciada</h2>
+    <p>Los socios activos y congelados tienen una pestaña nueva, <strong>Mi cuenta → Ranking interno</strong>, que también se ve bien en el móvil:</p>
+    <ul>
+      <li><strong>La clasificación</strong> de la temporada, absoluta o por grupo de edad, con filtros por sexo y por grupo. La fila de cada socio aparece destacada.</li>
+      <li><strong>La ficha de cada deportista</strong>: sus pruebas, sus puntos y cuáles son las 6 que cuentan. Tocando los puntos se ve el cálculo.</li>
+      <li><strong>La ficha de cada competición</strong>: los socios que participaron y sus resultados.</li>
+    </ul>
+    <p>Los socios no meten sus tiempos. Quien se da de baja desaparece del ranking, pero sus resultados se guardan; si vuelve al club, los recupera.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Cómo se mete cada competición</p>
+    <h2>De las clasificaciones de la federación al ranking</h2>
+    <ol class="steps">
+      <li><div><h3>Descargamos las clasificaciones</h3><p>De cada prueba hacen falta los PDF de la federación: la clasificación general de cada sexo y la clasificación por categorías.</p></div></li>
+      <li class="ai"><div><h3>La IA pasa los resultados a la web <span class="tag">Así lo haremos</span></h3><p>En lugar de copiar los datos a mano, le pasamos los PDF a la IA. Ella localiza a nuestros socios en las clasificaciones y rellena, para cada uno, su posición, su categoría, su posición en la categoría y su tiempo, además de los tiempos de los ganadores y el número de finalizados. La web permite meterlo todo a mano, pero no es lo previsto.</p></div></li>
+      <li><div><h3>El gestor revisa</h3><p>La competición se guarda primero como borrador, que todavía no ve nadie. El gestor comprueba los datos y los puntos de cada socio. La web avisa si falta algo y no deja guardar datos imposibles, como un tiempo mejor que el del ganador.</p></div></li>
+      <li><div><h3>Se publica</h3><p>Con <strong>Guardar y publicar</strong>, la competición entra en el ranking y los socios la ven en Mi cuenta. Si después hay que corregir algo, se cambia y los puntos se recalculan solos.</p></div></li>
+    </ol>
+  </section>
+
+  <section>
+    <p class="eyebrow">En wp-admin</p>
+    <h2>Un menú «Ranking» para el gestor</h2>
+    <p>Hay un rol nuevo, <strong>Gestor de ranking</strong>, que asigna un administrador desde la ficha del usuario. Los administradores también tienen acceso. El gestor solo ve el menú Ranking, no las fichas de los socios.</p>
+    <dl class="menu">
+      <div><dt>Competiciones</dt><dd>La lista de la temporada. Desde aquí se añade, corrige, publica o retira una competición.</dd></div>
+      <div><dt>Clasificación</dt><dd>La misma que ven los socios, con los socios de baja aparte.</dd></div>
+      <div><dt>Deportistas</dt><dd>Sexo, fecha de nacimiento y grupo de edad de cada socio. Aquí se completa el sexo de quien no lo tenga.</dd></div>
+      <div><dt>Registro</dt><dd>Quién cambió qué y cuándo. No se puede editar ni borrar.</dd></div>
+      <div><dt>Ajustes</dt><dd>El baremo de la temporada en curso y el nombre de la pestaña en Mi cuenta.</dd></div>
+    </dl>
+  </section>
+
+  <section>
+    <p class="eyebrow">Antes de empezar</p>
+    <h2>Lo que hace falta</h2>
+    <div class="callout">
+      <p><strong>El sexo de cada socio.</strong> Es un dato nuevo de la ficha, necesario para la clasificación absoluta. El formulario de alta ya lo pide; a los socios actuales hay que completárselo en Ranking → Deportistas.</p>
+      <p><strong>La fecha de nacimiento.</strong> Sin ella, el socio puntúa en la absoluta, pero no en su grupo de edad.</p>
+      <p><strong>Uno o varios gestores de ranking.</strong> La junta decide quién mete las competiciones.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="foot-inner wrap gutter">
+    <span>Club Triatlón Sulayr · Granada</span>
+    <span>Ranking interno · resumen para la junta</span>
+  </div>
+</footer>
+
+</body></html>
