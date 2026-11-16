@@ -1,7 +1,7 @@
 # SPEC — Ranking interno del club
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr`
-**Estado:** Definida el 16 de noviembre de 2026. Decisiones R1 a R38 tomadas con el club ese día (sección 1.3); R26 a R32 salen de los ejemplos de clasificaciones de la Federación Andaluza (`docs/club/ejemplos-clasificaciones/`). No quedan preguntas abiertas (sección 12). Implementada el 16 de noviembre de 2026 en la rama `ranking-interno` (pasos R0 a R6, sección 13): 47 tests PHPUnit y 42 comprobaciones con WordPress en verde. Mergeada en `main` (`7fb03aba1`) y subida a PROD el 16 de noviembre de 2026. Configuración hecha (ajustes, sexos y rol de gestor). Faltan los criterios de PROD. Quedan las pruebas manuales de [ranking-interno/pruebas.md](ranking-interno/pruebas.md) y el registro del despliegue en [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md). **Ampliación (16 de noviembre de 2026):** importación de resultados desde JSON (decisiones R39 a R41, sección 14), implementada ese día en la rama `ranking-importar`, probada en local con la competición de Úbeda (72 tests PHPUnit) y mergeada en `main` el mismo día. La skill `ranking-importar` es autónoma y está instalada en la app de escritorio de Claude desde ese día. Sin subir a PROD (ver [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md), «Ampliación»).
+**Estado:** Definida el 16 de noviembre de 2026. Decisiones R1 a R38 tomadas con el club ese día (sección 1.3); R26 a R32 salen de los ejemplos de clasificaciones de la Federación Andaluza (`docs/club/ejemplos-clasificaciones/`). No quedan preguntas abiertas (sección 12). Implementada el 16 de noviembre de 2026 en la rama `ranking-interno` (pasos R0 a R6, sección 13): 47 tests PHPUnit y 42 comprobaciones con WordPress en verde. Mergeada en `main` (`7fb03aba1`) y subida a PROD el 16 de noviembre de 2026. Configuración hecha (ajustes, sexos y rol de gestor). Faltan los criterios de PROD. Quedan las pruebas manuales de [ranking-interno/pruebas.md](ranking-interno/pruebas.md) y el registro del despliegue en [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md). **Ampliación (16 de noviembre de 2026):** importación de resultados desde JSON (decisiones R39 a R41, sección 14), implementada ese día en la rama `ranking-importar`, probada en local con la competición de Úbeda (72 tests PHPUnit) y mergeada en `main` el mismo día. La skill `ranking-importar` es autónoma y está instalada en la app de escritorio de Claude desde ese día. Subida a PROD el 16 de noviembre de 2026; Úbeda se está importando y quedan los criterios 11 a 14 en PROD (ver [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md), «Ampliación»). El mismo día se corrigieron los estilos del ranking en el móvil (sección 8.4), pendientes de subir.
 **Fecha:** 16 de noviembre de 2026
 **Resumen para la junta:** [resumen-ranking-interno.html](resumen-ranking-interno.html), sin la parte técnica (16 de noviembre de 2026): puntuación, qué ven los socios y cómo se meten las competiciones (los tiempos se sacan con IA de los PDF de la federación). Si cambia el baremo o el flujo, hay que actualizarlo.
 
@@ -677,6 +677,10 @@ Ejemplo de sobrescritura: `wp-content/themes/ct-sulayr-theme/sulayr/ranking/stan
   - podio (puestos 1 a 3) con un filete `--sulayr-sol`;
   - texto siempre en Noche sobre fondo claro.
 - Móvil (menos de 600 px): cada fila de la tabla pasa a ser una tarjeta con etiquetas (`data-label` en cada celda), sin scroll horizontal. Los filtros se apilan.
+- Pantallas medianas (móvil apaisado, tableta): cada tabla va dentro de `.sulayr-ranking-scroll`, que da el borde y se desplaza en horizontal; la tabla tiene un ancho mínimo de 560 px y el nombre no se parte.
+- Foto o iniciales: siempre un círculo de 32 px (72 px en la ficha), con tamaño fijo aunque el tema dé a las imágenes `height: auto` o `max-width: 100%`.
+- Filas impares en blanco y pares en Nieve, también cuando el fondo de la página es Nieve.
+- Caché: el servidor de PROD cachea CSS y JS siete días. `App::asset_version()` añade a la versión la fecha del archivo, así que cada subida cambia la URL y los navegadores no se quedan con la copia antigua. Se añadió el 16 de noviembre de 2026, cuando un móvil seguía mostrando la clasificación sin estilos.
 - Accesibilidad: tablas con `<caption>` y `scope="col"`, la fila propia marcada también con texto («Tú»), contraste AA, filtros con `<label>`.
 
 ---
@@ -836,7 +840,7 @@ Hecha el 16 de noviembre de 2026 en la rama `ranking-interno`, que sale de `main
 
 ## 14. Importación desde JSON (R39 a R41)
 
-Añadida el 16 de noviembre de 2026, con la primera competición real (I Duatlón por relevos 3X Úbeda Nazarí, 15 de noviembre de 2026). Rama `ranking-importar`, mergeada en `main` ese día. Sin subir a PROD.
+Añadida el 16 de noviembre de 2026, con la primera competición real (I Duatlón por relevos 3X Úbeda Nazarí, 15 de noviembre de 2026). Rama `ranking-importar`, mergeada en `main` y subida a PROD ese día.
 
 ### 14.1. Flujo
 

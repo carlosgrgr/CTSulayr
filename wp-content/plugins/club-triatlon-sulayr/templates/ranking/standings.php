@@ -28,6 +28,7 @@ $with_group = 'absoluta' === $filters['view'];
 <?php if ( empty( $rows ) ) : ?>
     <p class="sulayr-ranking-empty"><?php esc_html_e( 'Todavía no hay nadie en esta clasificación.', SULAYR_TEXTDOMAIN ); ?></p>
 <?php else : ?>
+    <div class="sulayr-ranking-scroll">
     <table class="sulayr-ranking-table">
         <caption class="screen-reader-text"><?php echo esc_html( $title ); ?></caption>
         <thead>
@@ -63,6 +64,7 @@ $with_group = 'absoluta' === $filters['view'];
             <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
 <?php endif; ?>
 
 <?php if ( ! empty( $competitions ) ) : ?>

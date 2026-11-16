@@ -43,6 +43,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 <?php if ( empty( $results ) ) : ?>
     <p class="sulayr-ranking-empty"><?php echo esc_html( sprintf( __( 'Sin resultados en %d.', SULAYR_TEXTDOMAIN ), $season ) ); ?></p>
 <?php else : ?>
+    <div class="sulayr-ranking-scroll">
     <table class="sulayr-ranking-table">
         <caption class="screen-reader-text"><?php echo esc_html( sprintf( __( 'Resultados de %1$s en %2$d', SULAYR_TEXTDOMAIN ), $athlete['name'], $season ) ); ?></caption>
         <thead>
@@ -75,4 +76,5 @@ if ( ! defined( 'ABSPATH' ) ) {
             <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
 <?php endif; ?>

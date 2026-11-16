@@ -89,7 +89,7 @@ Actualiza ese mismo día el estado en `docs/FASES.md`, en la spec (cabecera y se
 
 # Ampliación: importación desde JSON (rama `ranking-importar`)
 
-Escrito el 16 de noviembre de 2026. Es la sección 14 de la spec (R39 a R41). **Estado:** mergeada en `main` el 16 de noviembre de 2026, sin subir a PROD. No cambia el esquema de la base de datos ni los ajustes.
+Escrito el 16 de noviembre de 2026. Es la sección 14 de la spec (R39 a R41). **Estado:** subida a PROD el 16 de noviembre de 2026. Paso C en curso (importando Úbeda). No cambia el esquema de la base de datos ni los ajustes.
 
 Rutas relativas a `wp-content/plugins/club-triatlon-sulayr/`.
 
@@ -124,4 +124,26 @@ No hay archivos que borrar. No subas `tests/` ni `.claude/`.
 5. Marca los criterios 11 a 14 en `pruebas.md`, columna PROD.
 
 Si algo falla, vuelve a subir el `RankingMenu.php` de `main`: la pantalla deja de cargarse y lo demás sigue igual.
+
+---
+
+# Ajuste: estilos del ranking en el móvil
+
+Escrito el 16 de noviembre de 2026. Sección 8.4 de la spec. **Estado:** en `main`, sin subir a PROD.
+
+En un móvil la clasificación se veía sin estilos: iniciales sin círculo, fotos enormes, sin cabecera ni filas alternas. El CSS estaba en PROD, pero el móvil usaba la copia antigua de `styles.css?ver=0.3.0` (el servidor la cachea siete días). Ahora la versión lleva la fecha del archivo. También se añade scroll horizontal a las tablas en pantallas medianas y el avatar tiene un tamaño fijo.
+
+Rutas relativas a `wp-content/plugins/club-triatlon-sulayr/`. Sobrescribe, en este orden:
+
+1. `public/css/styles.css`
+2. `templates/ranking/standings.php`
+3. `templates/ranking/athlete.php`
+4. `templates/ranking/competition.php`
+5. `src/App/App.php` (el último: es el que cambia la versión de los archivos)
+
+Comprobar:
+
+1. En el código fuente de la web, `styles.css?ver=` lleva un número largo detrás de `0.3.0`.
+2. En el móvil, en vertical: tarjetas; en apaisado: tabla con cabecera Noche, filas alternas y scroll horizontal si no cabe. Iniciales y fotos en un círculo pequeño.
+3. Criterio 8 de `pruebas.md`.
 

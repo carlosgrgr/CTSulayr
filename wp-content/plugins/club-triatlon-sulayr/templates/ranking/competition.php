@@ -40,6 +40,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     <?php if ( '' !== $section ) : ?>
         <h3 class="sulayr-ranking-subtitle"><?php echo esc_html( $section ); ?></h3>
     <?php endif; ?>
+    <div class="sulayr-ranking-scroll">
     <table class="sulayr-ranking-table">
         <caption class="screen-reader-text"><?php echo esc_html( $competition['name'] . ( '' !== $section ? ' · ' . $section : '' ) ); ?></caption>
         <thead>
@@ -70,4 +71,5 @@ if ( ! defined( 'ABSPATH' ) ) {
             <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
 <?php endforeach; ?>

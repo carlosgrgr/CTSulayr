@@ -218,10 +218,26 @@ class App {
      */
     public function load_public_assets(): void {
         wp_enqueue_style( 'bootstrap-css', SULAYR_PUBLIC_ASSETS . '/bootstrap/css/bootstrap.min.css', [], '5.3.8' );
-        wp_enqueue_style( 'club-triatlon-sulayr-front', SULAYR_PUBLIC_ASSETS . '/css/styles.css', [ 'bootstrap-css', 'woocommerce-general' ], SULAYR_VERSION );
+        wp_enqueue_style( 'club-triatlon-sulayr-front', SULAYR_PUBLIC_ASSETS . '/css/styles.css', [ 'bootstrap-css', 'woocommerce-general' ], self::asset_version( 'public/css/styles.css' ) );
         
         wp_enqueue_script( 'bootstrap-js', SULAYR_PUBLIC_ASSETS . '/bootstrap/js/bootstrap.bundle.min.js', [], '5.3.8', true );
-        wp_enqueue_script( 'club-triatlon-sulayr-front', SULAYR_PUBLIC_ASSETS . '/js/scripts.js', [], SULAYR_VERSION, true );
+        wp_enqueue_script( 'club-triatlon-sulayr-front', SULAYR_PUBLIC_ASSETS . '/js/scripts.js', [], self::asset_version( 'public/js/scripts.js' ), true );
+    }
+
+    /**
+     * Versión de un archivo estático: la del plugin más la fecha del archivo.
+     * El servidor cachea CSS y JS siete días; así, cada vez que se sube un archivo
+     * cambia su URL y los navegadores dejan de usar la copia antigua.
+     *
+     * @param   string $relative Ruta dentro del plugin, p. ej. public/css/styles.css.
+     * @return 	string
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function asset_version( string $relative ): string {
+        $file = SULAYR_DIR . $relative;
+
+        return is_readable( $file ) ? SULAYR_VERSION . '.' . filemtime( $file ) : SULAYR_VERSION;
     }
 
     /**
@@ -232,8 +248,8 @@ class App {
      * @package	club-triatlon-sulayr
      */
     public function load_admin_assets(): void {
-        wp_enqueue_script( 'club-triatlon-sulayr-admin', SULAYR_ADMIN_ASSETS . '/js/scripts.js', [], SULAYR_VERSION, true );
-        wp_enqueue_style( 'club-triatlon-sulayr-admin', SULAYR_ADMIN_ASSETS . '/css/styles.css', [], SULAYR_VERSION );
+        wp_enqueue_script( 'club-triatlon-sulayr-admin', SULAYR_ADMIN_ASSETS . '/js/scripts.js', [], self::asset_version( 'admin/js/scripts.js' ), true );
+        wp_enqueue_style( 'club-triatlon-sulayr-admin', SULAYR_ADMIN_ASSETS . '/css/styles.css', [], self::asset_version( 'admin/css/styles.css' ) );
     }
 
     /**
