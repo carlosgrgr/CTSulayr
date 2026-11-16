@@ -252,9 +252,7 @@ body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .wc-block-pr
 	}
 }
 
-.ast-custom-button-link {
+/* Bootstrap subraya todos los <a>. Este botón no es .menu-link, así que Astra no se lo quita. */
+a.ast-custom-button-link {
 	text-decoration: none;
-}
-.ast-custom-button-link .ast-custom-button{
-	font-weight: bold;
 }
