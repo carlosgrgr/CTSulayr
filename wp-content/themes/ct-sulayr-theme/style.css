@@ -256,3 +256,8 @@ body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .wc-block-pr
 a.ast-custom-button-link {
 	text-decoration: none;
 }
+
+/* Astra pone peso 500 al texto del botón; el de la marca va en negrita. */
+a.ast-custom-button-link .ast-custom-button {
+	font-weight: bold;
+}
