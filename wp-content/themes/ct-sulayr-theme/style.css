@@ -251,3 +251,10 @@ body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .wc-block-pr
 		transition: transform 0.15s ease;
 	}
 }
+
+.ast-custom-button-link {
+	text-decoration: none;
+}
+.ast-custom-button-link .ast-custom-button{
+	font-weight: bold;
+}
