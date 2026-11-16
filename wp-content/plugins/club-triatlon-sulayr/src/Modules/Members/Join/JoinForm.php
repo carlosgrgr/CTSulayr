@@ -86,6 +86,7 @@ class JoinForm {
             'phone' => $text( 'phone', 30 ),
             'dni' => Identity::normalize_dni( (string) ( $input['dni'] ?? '' ) ),
             'birth_date' => $text( 'birth_date', 10 ),
+            'sex' => $text( 'sex', 1 ),
             'start_date' => $text( 'start_date', 10 ),
             'tshirt' => $text( 'tshirt', 5 ),
             'notes' => substr( sanitize_textarea_field( (string) ( $input['notes'] ?? '' ) ), 0, 2000 ),
@@ -111,6 +112,11 @@ class JoinForm {
 
         if ( false === Identity::is_valid_dni( $data['dni'] ) ) {
             $errors['dni'] = __( 'El DNI o NIE no es válido: revisa los números y la letra.', SULAYR_TEXTDOMAIN );
+        }
+
+        if ( false === array_key_exists( $data['sex'], MemberFields::sexes() ) ) {
+            $data['sex'] = '';
+            $errors['sex'] = __( 'Elige el sexo.', SULAYR_TEXTDOMAIN );
         }
 
         $today = current_time( 'Y-m-d' );
@@ -283,6 +289,13 @@ class JoinForm {
         $input( 'phone', __( 'Teléfono', SULAYR_TEXTDOMAIN ), 'tel', [ 'required' => 'required', 'autocomplete' => 'tel' ] );
         $input( 'dni', __( 'DNI o NIE', SULAYR_TEXTDOMAIN ), 'text', [ 'required' => 'required', 'maxlength' => '12' ] );
         $input( 'birth_date', __( 'Fecha de nacimiento', SULAYR_TEXTDOMAIN ), 'date', [ 'required' => 'required', 'max' => $today, 'data-sulayr-birth' => '1' ] );
+        printf( '<div class="sulayr-join-field"><label for="sulayr-join-sex">%s</label><select class="form-select" id="sulayr-join-sex" name="%s" required><option value="">%s</option>', esc_html__( 'Sexo (para las clasificaciones del club)', SULAYR_TEXTDOMAIN ), esc_attr( $name( 'sex' ) ), esc_html__( '— Elige —', SULAYR_TEXTDOMAIN ) );
+        foreach ( MemberFields::sexes() as $value => $label ) {
+            printf( '<option value="%1$s"%2$s>%3$s</option>', esc_attr( $value ), selected( $v( 'sex' ), $value, false ), esc_html( $label ) );
+        }
+        echo '</select>';
+        $error( 'sex' );
+        echo '</div>';
         echo '</div></fieldset>';
 
         // Servicios.

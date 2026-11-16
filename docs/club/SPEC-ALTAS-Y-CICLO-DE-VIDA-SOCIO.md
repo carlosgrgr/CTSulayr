@@ -194,6 +194,7 @@ Se mantiene el usuario de WordPress y los metas ACF actuales. Se añaden:
 | `sulayr_member_tshirt_size` | Talla de camiseta |
 | `sulayr_member_guardian` | Datos del tutor: nombre, DNI, teléfono, email |
 | `sulayr_member_board_payment` | Retribución mensual de la junta (D34) |
+| `sulayr_member_sex` | Sexo (`m` / `f`). Lo añade [SPEC-RANKING-INTERNO.md](SPEC-RANKING-INTERNO.md) (paso R0, 16 de noviembre de 2026): obligatorio en el formulario de alta y en «Nueva alta», visible en la ficha y registrado en el historial. El socio no lo cambia desde Mi cuenta; el gestor de ranking lo rellena en Ranking → Deportistas. No cambia ninguna decisión de esta spec. |
 
 `sulayr_user_membership_plan`, `sulayr_user_training_type`, `sulayr_user_is_directive` dejan de ser la fuente de verdad tras la migración. `sulayr_user_swimming` se sigue escribiendo para reservas (D38).
 

@@ -1,7 +1,7 @@
 # SPEC — Ranking interno del club
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr`
-**Estado:** Definida el 16 de noviembre de 2026. Decisiones R1 a R38 tomadas con el club ese día (sección 1.3); R26 a R32 salen de los ejemplos de clasificaciones de la Federación Andaluza (`docs/club/ejemplos-clasificaciones/`). No quedan preguntas abiertas (sección 12). Sin implementar: no hay código, rama, `main` ni PROD.
+**Estado:** Definida el 16 de noviembre de 2026. Decisiones R1 a R38 tomadas con el club ese día (sección 1.3); R26 a R32 salen de los ejemplos de clasificaciones de la Federación Andaluza (`docs/club/ejemplos-clasificaciones/`). No quedan preguntas abiertas (sección 12). Implementada el 16 de noviembre de 2026 en la rama `ranking-interno` (pasos R0 a R6, sección 13): 47 tests PHPUnit y 42 comprobaciones con WordPress en verde. Sin mergear: no está en `main` ni en PROD. Quedan las pruebas manuales de [ranking-interno/pruebas.md](ranking-interno/pruebas.md) y el despliegue de [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md).
 **Fecha:** 16 de noviembre de 2026
 
 Después de cada competición, un gestor de ranking introduce en la web del club (blog 1) los resultados de los socios que participaron. La web calcula los puntos de cada resultado y publica, en Mi cuenta, una clasificación interna de la temporada: absoluta por sexo y por grupo de edad, con una ficha por deportista y otra por competición.
@@ -230,6 +230,7 @@ Tiempos en segundos enteros. Puntos en `decimal(8,2)`. Fechas en `Y-m-d`.
 | `user_id` | `bigint(20) unsigned` | Socio afectado; 0 si no aplica. |
 | `field` | `varchar(64)` | Campo, o `alta` / `borrado` / `publicar` / `despublicar`. |
 | `old_value`, `new_value` | `text` | En un borrado, la fila entera como JSON. |
+| `note` | `varchar(255)` | Motivo común, p. ej. «Cambio de ajustes · Temporada 2027» (`RankingLog::with_note()`). |
 | `author_id` | `bigint(20) unsigned` | |
 | `created_at` | `datetime` | |
 
@@ -782,3 +783,39 @@ Carpeta de trabajo para el despliegue y las pruebas: `docs/club/ranking-interno/
 ## 12. Preguntas abiertas
 
 Ninguna. Cerradas el 16 de noviembre de 2026: P1 (R3), P2 (R30, R31 y R33), P3 (R34), P4 (R35), P5 (R38), P6 (R36) y P7 (R37).
+
+---
+
+## 13. Implementación (rama `ranking-interno`)
+
+Hecha el 16 de noviembre de 2026 en la rama `ranking-interno`, que sale de `main` (`e21a47f50`). Código en `wp-content/plugins/club-triatlon-sulayr/src/Modules/Ranking/`, cargado desde `App::load_ranking()`.
+
+### 13.1. Estado de los pasos
+
+| Paso | Estado |
+|---|---|
+| R0 | Hecho. Sexo en la ficha, en el formulario de alta y en «Nueva alta» (obligatorio), en la ficha de Socios y en el historial del socio. SPEC-ALTAS §4.1 lo menciona. |
+| R1 | Hecho. Esquema versión 1 (cuatro tablas), rol «Gestor de ranking» con `MemberRoles` versión 2, menú «Ranking» con la identidad Sulayr, ajustes y registro. |
+| R2 | Hecho. 47 tests PHPUnit (T1 a T32 y casos de validación) en verde con PHPUnit 9.6 sobre PHP 8.5. |
+| R3 | Hecho. Alta, edición, publicación y borrado de competiciones; tabla de resultados; referencias; recálculo por competición. |
+| R4 | Hecho. Clasificación con caché, Deportistas, Clasificación (con los socios de baja aparte) y «Recalcular todo». |
+| R5 | Hecho. Pestaña «Ranking interno» de Mi cuenta, shortcode `[sulayr_ranking]`, plantillas sobrescribibles y estilos. Falta ver el móvil en un navegador (criterio 8). |
+| R6 | Hecho, sin capturas: `MANUAL-RANKING.md`. Las capturas quedan pendientes hasta tener datos reales. |
+| R7 | Pendiente. Pasos en [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md). |
+
+### 13.2. Comprobaciones hechas en local
+
+- `cd wp-content/plugins/club-triatlon-sulayr/tests && composer install && vendor/bin/phpunit`: 47 tests, 115 aserciones.
+- `wp eval-file wp-content/plugins/club-triatlon-sulayr/tests/wp/check-ranking.php`: 42 comprobaciones (esquema, roles, puntos T1, T3 y T9, categoría AB, borrador frente a publicada, caché, registro, cambio de fecha de nacimiento, baja y vuelta, baremo por temporada, vistas del front y de wp-admin, borrado). Crea sus propios socios y lo borra todo al terminar.
+- Los manejadores de los formularios (`handle_save`, `handle_delete`, guardar sexos), con errores por fila, publicación bloqueada por referencias, cambio de formato bloqueado y 403 sin capacidad.
+- Por HTTP con sesión: la pestaña de Mi cuenta de un socio, el menú «Ranking» de un gestor de ranking (sin el menú «Socios») y el 403 de un deportista sin rol.
+
+### 13.3. Diferencias con el texto de la spec
+
+- **Clases añadidas:** `Calc\Keys` (claves cerradas), `Calc\Baremo` (baremo por defecto, normalización y coeficiente), `Labels` (textos visibles de las claves) y `Admin\Notices` (avisos y estado de formularios). No cambian el comportamiento.
+- **El listado de competiciones** está en `Admin\RankingMenu`, no en una clase `CompetitionsPage` aparte.
+- **El registro** tiene una columna `note` (sección 2.3) para el motivo de los recálculos.
+- **Cambios de sexo o fecha de nacimiento:** se recalculan al final de la petición (`shutdown`), una vez por socio, aunque se cambien varios campos.
+- **Desempate por nombre:** se ordena por apellidos sin tildes (`remove_accents()`), porque la comparación de textos no entiende de acentos.
+- **Edición de una competición publicada:** si al guardarla faltan referencias o se quedan sin resultados, vuelve a borrador con un aviso, para que no cuente a medias.
+- **Tests:** PHPUnit está en `tests/` con su propio `composer.json` y `vendor/` ignorado por git. No se sube a PROD.

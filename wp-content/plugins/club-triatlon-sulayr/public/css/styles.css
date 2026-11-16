@@ -1208,3 +1208,414 @@ nav.woocommerce-MyAccount-navigation {
     color: var(--sulayr-nube, #8C93A3);
     text-decoration: line-through;
 }
+
+/* ---------------------------------------------------------------
+ * Ranking interno (SPEC-RANKING-INTERNO §8.4): Mi cuenta → Ranking interno
+ * y shortcode [sulayr_ranking]. Identidad Sulayr con las variables del tema
+ * (--sulayr-*): cabecera de tabla Noche con texto Nieve en JetBrains Mono,
+ * filas alternas Nieve, cifras en mono, fila propia con filete Cielo y podio
+ * con filete Sol. En móvil cada fila es una tarjeta, sin scroll horizontal.
+ * --------------------------------------------------------------- */
+.sulayr-ranking {
+    --rk-noche: var(--sulayr-noche, #0B1638);
+    --rk-nieve: var(--sulayr-nieve, #F3F7FA);
+    --rk-cielo: var(--sulayr-cielo, #4FE6F2);
+    --rk-menta: var(--sulayr-menta, #1EE8A3);
+    --rk-sol: var(--sulayr-sol, #F46F5C);
+    --rk-texto2: var(--sulayr-texto2, #566079);
+    --rk-acento: var(--sulayr-acento, #0A7C8A);
+    --rk-linea: var(--mc-linea, #D6DCE5);
+    --rk-display: var(--sulayr-display, "Archivo", "Arial Narrow", Arial, sans-serif);
+    --rk-texto: var(--sulayr-texto, "Instrument Sans", system-ui, "Segoe UI", Arial, sans-serif);
+    --rk-mono: var(--sulayr-mono, "JetBrains Mono", Consolas, monospace);
+    color: var(--rk-noche);
+    font-family: var(--rk-texto);
+}
+.sulayr-ranking a {
+    color: var(--rk-acento);
+}
+.sulayr-ranking a:hover,
+.sulayr-ranking a:focus {
+    color: var(--rk-noche);
+}
+.sulayr-ranking a:focus-visible,
+.sulayr-ranking select:focus-visible,
+.sulayr-ranking button:focus-visible {
+    outline: 2px solid var(--rk-acento);
+    outline-offset: 2px;
+}
+.sulayr-ranking-eyebrow {
+    color: var(--rk-acento);
+    font-family: var(--rk-mono);
+    font-size: 12px;
+    letter-spacing: .14em;
+    margin: 0;
+    text-transform: uppercase;
+}
+.sulayr-ranking-title {
+    font-family: var(--rk-display);
+    font-size: 1.6rem;
+    font-stretch: 112%;
+    font-style: italic;
+    font-weight: 900;
+    line-height: 1.1;
+    margin: .25rem 0 .5rem;
+    padding-bottom: .5rem;
+    position: relative;
+}
+.sulayr-ranking-title::after {
+    background: linear-gradient(90deg, var(--rk-cielo) 0 33.33%, var(--rk-menta) 33.33% 66.66%, var(--rk-sol) 66.66% 100%);
+    bottom: 0;
+    content: "";
+    height: 4px;
+    left: 0;
+    position: absolute;
+    width: 96px;
+}
+.sulayr-ranking-subtitle {
+    font-family: var(--rk-display);
+    font-size: 1.15rem;
+    font-stretch: 108%;
+    font-weight: 700;
+    margin: 1.5rem 0 .5rem;
+}
+.sulayr-ranking-note,
+.sulayr-ranking-type,
+.sulayr-ranking-empty {
+    color: var(--rk-texto2);
+    font-size: .9rem;
+}
+.sulayr-ranking-type {
+    display: block;
+}
+.sulayr-ranking-header {
+    margin-bottom: 1rem;
+}
+.sulayr-ranking-notice {
+    background: var(--rk-nieve);
+    border-left: 4px solid var(--rk-cielo);
+    border-radius: var(--mc-radio-sm, 4px);
+    padding: .75rem 1rem;
+}
+.sulayr-ranking-notice p {
+    margin: 0;
+}
+.sulayr-ranking-notice p + p {
+    margin-top: .5rem;
+}
+
+/* Filtros */
+.sulayr-ranking-filters {
+    align-items: flex-end;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem 1rem;
+    margin: 0 0 1.25rem;
+}
+.sulayr-ranking-filter label {
+    color: var(--rk-texto2);
+    display: block;
+    font-family: var(--rk-mono);
+    font-size: 11px;
+    letter-spacing: .12em;
+    margin-bottom: .25rem;
+    text-transform: uppercase;
+}
+.sulayr-ranking-filter select {
+    border: 1px solid var(--rk-linea);
+    border-radius: var(--mc-radio-sm, 4px);
+    color: var(--rk-noche);
+    min-width: 150px;
+    padding: .4rem .6rem;
+}
+.sulayr-ranking-button {
+    background: var(--rk-sol);
+    border: 0;
+    border-radius: var(--mc-radio-sm, 4px);
+    color: var(--rk-noche);
+    cursor: pointer;
+    font-weight: 600;
+    padding: .5rem 1rem;
+}
+.sulayr-ranking-button:hover,
+.sulayr-ranking-button:focus {
+    background: var(--rk-noche);
+    color: var(--rk-nieve);
+}
+
+/* Tablas */
+.sulayr-ranking-table {
+    border: 1px solid var(--rk-linea);
+    border-collapse: separate;
+    border-radius: var(--mc-radio, 6px);
+    border-spacing: 0;
+    margin: 0 0 1rem;
+    overflow: hidden;
+    width: 100%;
+}
+.sulayr-ranking-table thead th {
+    background: var(--rk-noche);
+    color: var(--rk-nieve);
+    font-family: var(--rk-mono);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: .12em;
+    padding: .6rem .75rem;
+    text-align: left;
+    text-transform: uppercase;
+}
+.sulayr-ranking-table td {
+    border-top: 1px solid var(--rk-linea);
+    padding: .55rem .75rem;
+    vertical-align: middle;
+}
+.sulayr-ranking-table tbody tr:nth-child(even) td {
+    background: var(--rk-nieve);
+}
+.sulayr-ranking-table .sulayr-num,
+.sulayr-ranking-rank,
+.sulayr-ranking-date {
+    font-family: var(--rk-mono);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.sulayr-ranking-table th.sulayr-num,
+.sulayr-ranking-table td.sulayr-num {
+    text-align: right;
+}
+.sulayr-ranking-rank {
+    font-weight: 600;
+    width: 4rem;
+}
+.sulayr-ranking-total {
+    font-weight: 600;
+}
+.sulayr-ranking-table tr.is-podium td:first-child {
+    box-shadow: inset 4px 0 0 var(--rk-sol);
+}
+.sulayr-ranking-table tr.is-me td {
+    background: #fff;
+    box-shadow: inset 0 2px 0 var(--rk-cielo), inset 0 -2px 0 var(--rk-cielo);
+}
+.sulayr-ranking-table tr.is-me.is-podium td:first-child {
+    box-shadow: inset 4px 0 0 var(--rk-sol), inset 0 2px 0 var(--rk-cielo), inset 0 -2px 0 var(--rk-cielo);
+}
+.sulayr-ranking-name a {
+    align-items: center;
+    display: inline-flex;
+    gap: .6rem;
+    text-decoration: none;
+}
+.sulayr-ranking-name a span {
+    text-decoration: underline;
+    text-decoration-color: var(--rk-linea);
+    text-underline-offset: 3px;
+}
+.sulayr-ranking-me {
+    background: var(--rk-cielo);
+    border-radius: var(--mc-radio-sm, 4px);
+    color: var(--rk-noche);
+    font-family: var(--rk-mono);
+    font-size: 11px;
+    letter-spacing: .08em;
+    margin-left: .4rem;
+    padding: 1px 6px;
+    text-transform: uppercase;
+}
+
+/* Foto o iniciales */
+.sulayr-ranking-avatar {
+    align-items: center;
+    background: var(--rk-noche);
+    border-radius: 50%;
+    color: var(--rk-nieve);
+    display: inline-flex;
+    flex: 0 0 auto;
+    font-family: var(--rk-mono);
+    font-size: 12px;
+    justify-content: center;
+    object-fit: cover;
+}
+.sulayr-ranking-avatar-sm {
+    height: 32px;
+    width: 32px;
+}
+.sulayr-ranking-avatar-lg {
+    font-size: 22px;
+    height: 72px;
+    width: 72px;
+}
+
+/* Puntos */
+.sulayr-ranking-points {
+    display: inline-block;
+    text-align: right;
+}
+.sulayr-ranking-points.is-counted {
+    font-weight: 600;
+}
+.sulayr-ranking-counts {
+    background: var(--rk-menta);
+    border-radius: var(--mc-radio-sm, 4px);
+    color: var(--rk-noche);
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: .08em;
+    margin-left: .25rem;
+    padding: 0 5px;
+    text-transform: uppercase;
+}
+.sulayr-ranking-breakdown {
+    color: var(--rk-texto2);
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+}
+
+/* Fichas */
+.sulayr-ranking-profile {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.sulayr-ranking-stats {
+    display: grid;
+    gap: .75rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    margin: 0 0 1.25rem;
+}
+.sulayr-ranking-stats > div {
+    background: #fff;
+    border: 1px solid var(--rk-linea);
+    border-radius: var(--mc-radio, 6px);
+    border-top: 4px solid var(--rk-noche);
+    padding: .6rem .8rem;
+}
+.sulayr-ranking-stats dt {
+    color: var(--rk-texto2);
+    font-family: var(--rk-mono);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+.sulayr-ranking-stats dd {
+    font-family: var(--rk-mono);
+    font-size: 1.15rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    margin: .2rem 0 0;
+}
+.sulayr-ranking-stats dd small {
+    color: var(--rk-texto2);
+    font-size: .8rem;
+    font-weight: 400;
+}
+.sulayr-ranking-seasons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-bottom: 1rem;
+}
+.sulayr-ranking-seasons a {
+    border: 1px solid var(--rk-linea);
+    border-radius: var(--mc-radio-sm, 4px);
+    font-family: var(--rk-mono);
+    padding: .2rem .6rem;
+    text-decoration: none;
+}
+.sulayr-ranking-seasons a[aria-current="page"] {
+    background: var(--rk-noche);
+    border-color: var(--rk-noche);
+    color: var(--rk-nieve);
+}
+.sulayr-ranking-competitions ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.sulayr-ranking-competitions li {
+    border-bottom: 1px solid var(--rk-linea);
+    padding: .5rem 0;
+}
+.sulayr-ranking-competitions .sulayr-ranking-date {
+    color: var(--rk-texto2);
+    margin-right: .5rem;
+}
+
+/* Móvil: cada fila es una tarjeta con etiquetas */
+@media (max-width: 600px) {
+    .sulayr-ranking-filters {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .sulayr-ranking-filter select {
+        width: 100%;
+    }
+    .sulayr-ranking-table,
+    .sulayr-ranking-table tbody,
+    .sulayr-ranking-table tr,
+    .sulayr-ranking-table td {
+        display: block;
+        width: 100%;
+    }
+    .sulayr-ranking-table {
+        border: 0;
+    }
+    .sulayr-ranking-table thead {
+        clip: rect(0 0 0 0);
+        height: 1px;
+        overflow: hidden;
+        position: absolute;
+        width: 1px;
+    }
+    .sulayr-ranking-table tr {
+        background: #fff;
+        border: 1px solid var(--rk-linea);
+        border-radius: var(--mc-radio, 6px);
+        margin-bottom: .75rem;
+        overflow: hidden;
+    }
+    .sulayr-ranking-table tbody tr:nth-child(even) td {
+        background: transparent;
+    }
+    .sulayr-ranking-table td {
+        border-top: 0;
+        display: flex;
+        gap: 1rem;
+        justify-content: space-between;
+        padding: .35rem .75rem;
+        text-align: right;
+    }
+    .sulayr-ranking-table td::before {
+        color: var(--rk-texto2);
+        content: attr(data-label);
+        font-family: var(--rk-mono);
+        font-size: 11px;
+        letter-spacing: .1em;
+        text-align: left;
+        text-transform: uppercase;
+    }
+    .sulayr-ranking-table td.sulayr-ranking-name {
+        background: var(--rk-nieve);
+        flex-wrap: wrap;
+        text-align: left;
+    }
+    .sulayr-ranking-table td.sulayr-ranking-name::before {
+        display: none;
+    }
+    .sulayr-ranking-table tr.is-me {
+        border: 2px solid var(--rk-cielo);
+    }
+    .sulayr-ranking-table tr.is-me td,
+    .sulayr-ranking-table tr.is-podium td:first-child {
+        box-shadow: none;
+    }
+    .sulayr-ranking-table tr.is-podium {
+        border-left: 4px solid var(--rk-sol);
+    }
+    .sulayr-ranking-rank {
+        width: 100%;
+    }
+}

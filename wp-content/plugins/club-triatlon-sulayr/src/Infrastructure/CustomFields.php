@@ -27,6 +27,10 @@ class CustomFields
     const MEMBER_LEAVE_DATE = 'sulayr_member_leave_date';
     const MEMBER_LEAVE_DATE_UNKNOWN = 'desconocida';
     const MEMBER_TSHIRT_SIZE = 'sulayr_member_tshirt_size';
+    /** Sexo para las clasificaciones del ranking interno (SPEC-RANKING-INTERNO §2.1): SEX_MALE o SEX_FEMALE. */
+    const MEMBER_SEX = 'sulayr_member_sex';
+    const SEX_MALE = 'm';
+    const SEX_FEMALE = 'f';
     const MEMBER_GUARDIAN = 'sulayr_member_guardian';
     const MEMBER_BOARD_PAYMENT = 'sulayr_member_board_payment';
 

@@ -277,6 +277,9 @@ class JoinApproval {
             CustomFields::USER_PROFILE_JOIN_DATE => MemberDates::iso_to_acf( $start ),
             CustomFields::MEMBER_TYPE => (string) $choice['member_type'],
         ];
+        if ( '' !== (string) ( $f['sex'] ?? '' ) ) {
+            $meta[ CustomFields::MEMBER_SEX ] = (string) $f['sex'];
+        }
         if ( '' !== (string) ( $f['tshirt'] ?? '' ) ) {
             $meta[ CustomFields::MEMBER_TSHIRT_SIZE ] = (string) $f['tshirt'];
         }

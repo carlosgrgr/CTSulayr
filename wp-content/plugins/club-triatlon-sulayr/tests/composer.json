@@ -1,0 +1,12 @@
+{
+    "name": "carlosgrgr/club-triatlon-sulayr-tests",
+    "description": "Tests del cálculo del ranking interno (sin WordPress). No se sube a PROD.",
+    "require-dev": {
+        "phpunit/phpunit": "^9.6"
+    },
+    "config": {
+        "platform": {
+            "php": "7.4.33"
+        }
+    }
+}

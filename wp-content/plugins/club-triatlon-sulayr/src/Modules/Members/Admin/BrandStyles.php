@@ -133,7 +133,7 @@ class BrandStyles {
 
     /**
      * True en una pantalla del menú Socios (listado, ficha, solicitudes,
-     * nueva alta, recibos y listados).
+     * nueva alta, recibos y listados) o del menú Ranking.
      *
      * @return 	bool
      * @access 	public
@@ -142,6 +142,6 @@ class BrandStyles {
     public static function is_members_screen(): bool {
         $page = sanitize_key( wp_unslash( $_GET['page'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Solo decide si pinta estilos.
 
-        return 0 === strpos( $page, MembersMenu::SLUG );
+        return 0 === strpos( $page, MembersMenu::SLUG ) || 0 === strpos( $page, 'sulayr-ranking' );
     }
 }

@@ -6,7 +6,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Roles «Gestor de socios» y «Gestor de tienda» y capacidades de socios (spec §10).
+ * Roles «Gestor de socios», «Gestor de tienda» y «Gestor de ranking» y sus
+ * capacidades (spec de altas §10; SPEC-RANKING-INTERNO R14).
  *
  * Los dos roles se suman al rol del usuario (normalmente athlete). Las
  * comprobaciones usan capacidades, no nombres de rol. add_role() no modifica
@@ -17,18 +18,21 @@ class MemberRoles {
 
     public const ROLE_MEMBER_MANAGER = 'sulayr_member_manager';
     public const ROLE_SHOP_MANAGER = 'sulayr_shop_manager';
+    public const ROLE_RANKING_MANAGER = 'sulayr_ranking_manager';
 
     /** Menú Socios: solicitudes, fichas, catálogo, ajustes, recibos, listados, monedero, tareas. */
     public const MANAGE_MEMBERS = 'sulayr_manage_members';
     public const VIEW_LOG = 'sulayr_view_member_log';
     /** Marca del gestor de tienda; solo sirve para abrirle wp-admin. */
     public const MANAGE_SHOP = 'sulayr_manage_shop';
+    /** Menú Ranking: competiciones, resultados, deportistas, registro y ajustes del ranking interno. */
+    public const MANAGE_RANKING = 'sulayr_manage_ranking';
 
     /** capability_type de los CPT de socios. */
     public const SERVICE_CAP_TYPE = [ 'sulayr_service', 'sulayr_services' ];
     public const WALLET_CAP_TYPE = [ 'sulayr_wallet', 'sulayr_wallets' ];
 
-    private const VERSION = 1;
+    private const VERSION = 2;
     private const VERSION_OPTION = 'sulayr_member_roles_version';
 
     /**
@@ -118,9 +122,10 @@ class MemberRoles {
         );
 
         return [
-            'administrator' => $members,
+            'administrator' => array_merge( $members, [ self::MANAGE_RANKING ] ),
             self::ROLE_MEMBER_MANAGER => array_merge( [ 'read', 'view_admin_dashboard' ], $members ),
             self::ROLE_SHOP_MANAGER => array_merge( [ 'read', 'view_admin_dashboard', self::MANAGE_SHOP ], self::shop_caps() ),
+            self::ROLE_RANKING_MANAGER => [ 'read', 'view_admin_dashboard', self::MANAGE_RANKING ],
         ];
     }
 
@@ -135,6 +140,7 @@ class MemberRoles {
         return [
             self::ROLE_MEMBER_MANAGER => __( 'Gestor de socios', SULAYR_TEXTDOMAIN ),
             self::ROLE_SHOP_MANAGER => __( 'Gestor de tienda', SULAYR_TEXTDOMAIN ),
+            self::ROLE_RANKING_MANAGER => __( 'Gestor de ranking', SULAYR_TEXTDOMAIN ),
         ];
     }
 
@@ -154,7 +160,8 @@ class MemberRoles {
 
         return user_can( $user, 'manage_options' )
             || user_can( $user, self::MANAGE_MEMBERS )
-            || user_can( $user, self::MANAGE_SHOP );
+            || user_can( $user, self::MANAGE_SHOP )
+            || user_can( $user, self::MANAGE_RANKING );
     }
 
     /**
@@ -169,6 +176,7 @@ class MemberRoles {
             self::VERSION === (int) get_option( self::VERSION_OPTION )
             && null !== get_role( self::ROLE_MEMBER_MANAGER )
             && null !== get_role( self::ROLE_SHOP_MANAGER )
+            && null !== get_role( self::ROLE_RANKING_MANAGER )
         ) {
             return;
         }
@@ -192,7 +200,7 @@ class MemberRoles {
         }
 
         $managed = array_unique( array_merge(
-            [ self::MANAGE_MEMBERS, self::VIEW_LOG, self::MANAGE_SHOP ],
+            [ self::MANAGE_MEMBERS, self::VIEW_LOG, self::MANAGE_SHOP, self::MANAGE_RANKING ],
             self::post_type_caps( self::SERVICE_CAP_TYPE ),
             self::post_type_caps( self::WALLET_CAP_TYPE )
         ) );

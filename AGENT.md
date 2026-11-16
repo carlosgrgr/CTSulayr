@@ -8,7 +8,7 @@ A full WordPress **Multisite** install (subdomain mode) committed as-is, core an
 
 | Path | What it is |
 |---|---|
-| `wp-content/plugins/club-triatlon-sulayr/` | Club site plugin: athletes (`athlete` role), ACF fields, members module (`src/Modules/Members/`: service catalog, member history, change log, manager roles, receipts with PDF via dompdf, coach list, welcome pack), wallet, WooCommerce glue. Stripe was removed (members spec, part A). Composer/PSR-4 (`ClubTriatlonSulayr\` → `src/`), `vendor/` is committed. |
+| `wp-content/plugins/club-triatlon-sulayr/` | Club site plugin: athletes (`athlete` role), ACF fields, members module (`src/Modules/Members/`: service catalog, member history, change log, manager roles, receipts with PDF via dompdf, coach list, welcome pack), internal ranking (`src/Modules/Ranking/`), wallet, WooCommerce glue. Stripe was removed (members spec, part A). Composer/PSR-4 (`ClubTriatlonSulayr\` → `src/`), `vendor/` is committed. |
 | `wp-content/plugins/sulayr-reservas/` | Network-activated swimming reservations plugin (the current release work). No Composer, own autoloader (`SulayrReservas\` → `src/`), bootstrapped from `Plugin::init()` on `plugins_loaded`. |
 | `wp-content/plugins/sulayr-scripts-manager/` | Single-file plugin, network-activated: per-site tracking codes (GTM/Analytics) in Settings → Scripts Manager, printed right after `<head>`, right after `<body>` (Astra's `astra_head_top` / `astra_body_top`, falling back to `wp_head` / `wp_body_open`) or in `wp_footer`. Only users with `unfiltered_html` (super admins in multisite) can edit them. |
 | `wp-content/themes/ct-sulayr-theme/` | Astra child theme for the club site (blog 1). |
@@ -34,6 +34,7 @@ wp eval-file /path/to/check.php                         # one-off verification s
 php -l wp-content/plugins/sulayr-reservas/src/Path/To/File.php   # syntax check
 ```
 
+- Club plugin ranking tests (pure PHP, no WordPress): `cd wp-content/plugins/club-triatlon-sulayr/tests && composer install && vendor/bin/phpunit`. They have their own `composer.json`; `tests/vendor/` is gitignored and `tests/` is never uploaded to PROD. With WordPress: `wp eval-file wp-content/plugins/club-triatlon-sulayr/tests/wp/check-ranking.php` (creates and deletes its own test data).
 - Club plugin dependencies: `composer install` inside `wp-content/plugins/club-triatlon-sulayr/`. Its `phpcs.xml` (WPCS-based) is the lint config, but WPCS is not installed in `vendor/` right now.
 - The local CLI runs PHP 8.5, but both plugins target **PHP 7.4**: no union types, `mixed`, constructor promotion, enums, `match`, or nullsafe operator.
 
@@ -105,6 +106,19 @@ Implements `docs/club/SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md` (part A in `main` and
 - **Receipts (part D).** `Receipts\ReceiptCalculator` computes the automatic lines of a member and month from history and catalog; `Receipts\Receipts` stores receipts, lines and payments (generation, regeneration, outdated check, corrections, penalties, payments). Never change a paid receipt: corrections go to the next one. History changes fire `sulayr_member_history_changed` (from `MemberLog::record()` for services and status, and from `MemberTypes` and `Subsidies`); receipts of those members are re-checked on `shutdown`. Wallet movements created by code go through `Receipts\WalletLedger` so they look like manual ones. PDF with dompdf (`Receipts\ReceiptPdf`); `composer.json` pins `config.platform.php` to 7.4, so run `composer` there and keep that pin. The PDF uses static brand fonts (TTF + `.ufm` metrics, OFL) from `assets/pdf-fonts/`, registered in memory per request; dompdf's font cache goes to the system temp dir, never to the plugin.
 - **Sulayr brand.** Every Socios screen wraps its content in `.sulayr-brand` (styles and fonts from `Admin\BrandStyles`; main action buttons get `button-primary sulayr-cta`, in Sol). Front member pages (join form, image consent, Mis cuotas, Mis recibos) use the theme's `--sulayr-*` variables in `public/css/styles.css`. `MemberMailer::send()` wraps every member email in `MemberMailer::layout()` and embeds the crest as `cid:sulayr-escudo` during that send; use `MemberMailer::button()` for the main link of an email. Brand rules: `docs/club/identidad-sulayr.html`.
 - **Mi cuenta (D33, D32).** Athletes can't change status, DNI or birth date from Mi cuenta (`UserService` locks them). The image consent is a separate form (`Join\ImageConsentAccount`). Members on leave don't see «Perfil de deportista».
+
+## Club ranking module
+
+Implements `docs/club/SPEC-RANKING-INTERNO.md` (steps R0 to R6 on branch `ranking-interno` since 16 November 2026, not merged, not in PROD; deployment steps in `docs/club/ranking-interno/despliegue-prod.md`). Code in `wp-content/plugins/club-triatlon-sulayr/src/Modules/Ranking/`, wired in `App::load_ranking()`. Section 13 of the spec has the implementation notes.
+
+- **Calculation is pure PHP.** `Ranking\Calc\*` (`Keys`, `Baremo`, `AgeGroups`, `RaceTime`, `PointsCalculator`, `Standings`, `ResultValidator`) must not call WordPress functions: PHPUnit loads them without WordPress. Labels live in `Ranking\Labels`.
+- **Tables, not CPTs.** `RankingSchema` (option `sulayr_ranking_db_version`): competitions, references (winner time and finishers per scope/team category/sex/age group), results (one per member and competition, with stored points) and an insert-only log (`RankingLog`, not `MemberLog`).
+- **Each season has its own scoring.** Settings (ACF options page, post_id `sulayr_ranking`) are the current season's; saving copies them to `sulayr_ranking_baremo_<year>` and recalculates only that season. Always read `RankingSettings::for_season()`, never the ACF fields, when calculating.
+- **Points are stored; standings are cached.** `RankingService::recalculate_competition()` after any change; standings in a transient per season, invalidated by bumping `sulayr_ranking_cache_version`. Sex and birth date changes recalculate that member on `shutdown`; status changes (`sulayr_member_history_changed`) only bump the cache.
+- **Who appears.** Only `athlete` users with status `active` or `congelado` (`RankingRoster`). Members on leave keep their results but are hidden; they come back if they rejoin.
+- **Sex** is the member meta `sulayr_member_sex` (`m`/`f`), required in the join form. Ranking managers set it in Ranking → Deportistas (they have no `edit_users`).
+- **Roles.** `sulayr_ranking_manager` (on top of `athlete`) and administrators have `sulayr_manage_ranking`; member managers don't. Check the capability, not the role.
+- **Front.** WooCommerce endpoint `ranking-interno` (`Front\RankingAccount`) and shortcode `[sulayr_ranking]`, both through `Front\RankingView` (GET parameters, read only). Templates under `templates/ranking/` can be overridden by the theme in `sulayr/ranking/` (`TemplateService::locate()`, filter `sulayr_ranking_template`); other plugin templates can't.
 
 ## Production
 

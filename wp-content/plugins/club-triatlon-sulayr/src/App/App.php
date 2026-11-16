@@ -44,6 +44,12 @@ use ClubTriatlonSulayr\Modules\Documents\DocumentsAccountEndpoint;
 use ClubTriatlonSulayr\Services\DocumentService;
 use ClubTriatlonSulayr\Modules\Taxonomies\DocumentCategoryTaxonomy;
 use ClubTriatlonSulayr\Modules\Documents\DocumentAdminList;
+use ClubTriatlonSulayr\Modules\Ranking\Database\RankingSchema;
+use ClubTriatlonSulayr\Modules\Ranking\RankingSettings;
+use ClubTriatlonSulayr\Modules\Ranking\RankingService;
+use ClubTriatlonSulayr\Modules\Ranking\Admin\RankingMenu;
+use ClubTriatlonSulayr\Modules\Ranking\Front\RankingAccount;
+use ClubTriatlonSulayr\Modules\Ranking\Front\RankingShortcode;
 
 /**
  * App
@@ -125,6 +131,7 @@ class App {
         $athlete_admin_profile = new AthleteAdminProfile();
 
         $this->load_members();
+        $this->load_ranking();
 
         if ( class_exists( 'WooCommerce' ) ) {
             new DocumentsAccountEndpoint( new DocumentService() );
@@ -165,6 +172,29 @@ class App {
         } else {
             new PublicJoinForm();
             new ImageConsentAccount();
+        }
+    }
+
+    /**
+     * Ranking interno (docs/club/SPEC-RANKING-INTERNO.md).
+     *
+     * @return 	void
+     * @access 	private
+     * @package	club-triatlon-sulayr
+     */
+    private function load_ranking(): void {
+        new RankingSchema();
+        new RankingSettings();
+        new RankingService();
+
+        if ( is_admin() ) {
+            new RankingMenu();
+        } else {
+            new RankingShortcode();
+        }
+
+        if ( class_exists( 'WooCommerce' ) ) {
+            new RankingAccount();
         }
     }
 

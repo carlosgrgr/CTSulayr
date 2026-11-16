@@ -1,0 +1,94 @@
+# Manual del gestor — Ranking interno
+
+Este manual es para quien mete los resultados del ranking interno del club. Explica cómo dar de alta una competición a partir de las clasificaciones oficiales de la federación, cómo se calculan los puntos y qué ven los socios.
+
+No incluye capturas todavía. Los nombres en negrita son los textos de los botones y de los apartados del menú.
+
+La especificación técnica completa está en `docs/club/SPEC-RANKING-INTERNO.md`.
+
+## 1. Qué es
+
+Después de cada competición, el gestor mete los resultados de los socios que participaron. La web calcula los puntos y publica una clasificación de la temporada (año natural) en **Mi cuenta → Ranking interno**:
+
+- **absoluta**, por sexo;
+- **por grupo de edad**, por sexo y categoría de la federación.
+
+Cuentan las 6 mejores pruebas de cada socio. Solo lo ven los socios activos y congelados, con su sesión iniciada. Los deportistas no pueden meter sus tiempos.
+
+## 2. Quién lo gestiona
+
+Hace falta el rol **Gestor de ranking** (o ser administrador). Lo da un administrador: **Usuarios** → ficha del socio → **Roles adicionales del club** → **Gestor de ranking** → **Actualizar usuario**. El gestor sigue usando Mi cuenta como cualquier socio y además ve el menú **Ranking** en wp-admin.
+
+## 3. Antes de la primera competición: Deportistas
+
+**Ranking → Deportistas** lista los socios activos y congelados con su sexo, su fecha de nacimiento y su grupo de edad en la temporada.
+
+- Un socio **sin sexo** no se puede elegir en los resultados. Rellénalo aquí y pulsa **Guardar sexos**.
+- Un socio **sin fecha de nacimiento** puntúa en la absoluta, pero no en grupo de edad. La fecha la cambia un gestor de socios o un administrador.
+
+El grupo de edad es la categoría que corresponde a la edad que el socio cumple el 31 de diciembre de la temporada. No cambia a mitad de temporada.
+
+## 4. Meter una competición
+
+Necesitas dos documentos de la federación: la **Clasificación general** de cada sexo y la **Clasificación por categorías**.
+
+1. **Ranking → Añadir competición**.
+2. **Datos**: nombre, fecha, lugar, modalidad (triatlón, triatlón cros, duatlón, duatlón cros, acuatlón, acuabike), distancia y formato (individual, relevos o contrarreloj por equipos). Copia lo que pone la cabecera de la clasificación.
+3. **Resultados**: una fila por socio que participó, con los datos de la clasificación general de su sexo:
+   - **Socio**. Debajo aparecen su sexo y su grupo de edad.
+   - **Pos**: la posición en la general de su sexo.
+   - **Cat**: el código de la columna «Cat» (por ejemplo `V1M`, `SNF`, `ABM`).
+   - **Pos Cat**: la posición en su categoría.
+   - **Tiempo**: el tiempo final, como `1:35:53`.
+   - **Estado**: Finalizado, DNF, DSQ, DNS o NC. Si no terminó, no hace falta tiempo ni posiciones: son 0 puntos.
+   - En relevos y equipos, además, la **categoría del equipo** (open masculina, open femenina o mixta).
+   
+   **Añadir fila** añade más filas; **Quitar** borra una.
+4. Pulsa **Guardar**. La competición queda en **borrador**: todavía no cuenta ni se ve.
+5. **Referencias**: al guardar aparecen las filas que hacen falta. Rellénalas y vuelve a guardar:
+   - **Ganador masculino** / **Ganadora femenina**: el tiempo de la primera fila de la clasificación general de cada sexo, y **Finalizados**, de la cabecera («FINALIZADOS»).
+   - **Primero de cada categoría** con socios: el tiempo de la primera fila de esa categoría en la clasificación por categorías.
+   - Los finalizados de una categoría solo se piden si un socio de esa categoría no tiene tiempo.
+6. Revisa los puntos de cada fila y pulsa **Guardar y publicar**. Ya se ve en Mi cuenta.
+
+Si falta algo, la web no publica y marca en rojo lo que falta. Si hay errores, no se guarda nada y cada error sale junto a su campo.
+
+### Casos especiales
+
+- **Un socio terminó pero no tiene tiempo** en la clasificación: pídeselo. Si no lo da, deja el tiempo vacío; sus puntos se calculan por su posición, y entonces hace falta el número de finalizados de su categoría.
+- **Categoría AB (ABM / ABF)**: son los primeros de la general y la federación los saca de su categoría por edad. Mete «ABM» en **Cat**. En su grupo de edad cuenta como ganador.
+- **El código de la carrera no coincide con el grupo de la web** (por ejemplo, la carrera dice `V2M` y la web calcula Veterano 1): se guarda, con un aviso. Revisa la fecha de nacimiento del socio o las edades de los grupos.
+- **Relevos**: cada relevista hace el recorrido completo. Mete su tiempo individual. Las referencias son las de su clasificación de relevos (open masculina, femenina o mixta).
+- **Contrarreloj por equipos**: mete a cada socio con el tiempo de su equipo. La referencia es el tiempo del equipo ganador de su categoría.
+
+## 5. Cómo se calculan los puntos
+
+- Por tiempo: `1000 × (tiempo del ganador / tiempo del socio) × coeficiente + 50`.
+- Si no hay tiempo: `1000 × (1 − (posición − 1) / finalizados) × coeficiente + 50`.
+- DNF, DSQ, DNS o NC: 0 puntos.
+- Coeficientes por defecto: sprint de triatlón ×1,1; estándar ×1,2; media ×1,4; larga ×1,6; acuatlón, acuabike, supersprint y duatlón sprint ×1,0. Cros, igual que carretera.
+- En la clasificación suman las 6 mejores. Con los mismos puntos, va delante quien terminó más pruebas y después quien tiene el mejor resultado. Si siguen iguales, comparten puesto.
+
+En la ficha de cada socio, pasando por los puntos (o tocándolos en el móvil), se ve el cálculo.
+
+## 6. Corregir y borrar
+
+- Para corregir, abre la competición desde **Ranking → Competiciones**, cambia lo que haga falta y guarda. Los puntos se recalculan solos.
+- Si una competición publicada se queda sin referencias o sin resultados al guardarla, vuelve a borrador.
+- **Volver a borrador** la quita del ranking sin borrar nada.
+- **Borrar competición** la quita con todos sus resultados. Queda una copia en el registro.
+- **Recalcular todo** (en Competiciones) vuelve a calcular los puntos de todas las temporadas. No cambia ningún dato. Úsalo si algo no cuadra.
+
+## 7. Ajustes
+
+**Ranking → Ajustes** cambia los puntos base, el bonus, cuántas pruebas cuentan, los coeficientes, los grupos de edad y el nombre de la pestaña de Mi cuenta.
+
+Los ajustes son los de la **temporada en curso**. Al guardar se recalcula solo esa temporada; las anteriores conservan su baremo. Los grupos de edad llevan un código (las dos letras de la columna «Cat», sin la M/F) para avisar cuando la carrera clasifica a un socio en otro grupo.
+
+## 8. Registro
+
+**Ranking → Registro** guarda quién cambió qué y cuándo: datos de competiciones, referencias, resultados, puntos recalculados y ajustes. No se puede editar ni borrar. Se puede filtrar por tipo, competición o socio.
+
+## 9. Socios de baja
+
+Un socio que se da de baja desaparece de la clasificación y de las fichas de Mi cuenta, pero sus resultados se guardan. En **Ranking → Clasificación** salen aparte, como «De baja». Si vuelve al club, recupera sus puntos, también los de la misma temporada.

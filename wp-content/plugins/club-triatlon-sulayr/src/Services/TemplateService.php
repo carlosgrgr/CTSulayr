@@ -23,8 +23,8 @@ class TemplateService {
         // Extraer variables para que estén disponibles en la plantilla
         extract( $vars ); // phpcs:ignore WordPress.PHP.DontExtract.extract_extract
 
-        // Construir ruta de la plantilla
-        $template_path = SULAYR_TEMPLATE_DIR . '/' . $template_name . '.php';
+        // Construir ruta de la plantilla (las del ranking se pueden sobrescribir desde el tema)
+        $template_path = self::locate( $template_name );
 
         // Verificar que la plantilla existe
         if ( ! file_exists( $template_path ) ) {
@@ -34,6 +34,33 @@ class TemplateService {
 
         // Incluir la plantilla
         include $template_path;
+    }
+
+    /**
+     * Ruta de la plantilla que se usa.
+     *
+     * Las plantillas «ranking/…» se buscan antes en el tema hijo y en el padre
+     * (sulayr/ranking/….php) y pasan por el filtro sulayr_ranking_template
+     * (SPEC-RANKING-INTERNO §8.3). Las demás salen siempre del plugin.
+     *
+     * @param string $template_name Nombre de la plantilla (sin extensión .php)
+     * @return string Ruta completa
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public static function locate( string $template_name ): string {
+        $path = self::get_path( $template_name );
+
+        if ( 0 !== strpos( $template_name, 'ranking/' ) ) {
+            return $path;
+        }
+
+        $theme = locate_template( 'sulayr/' . $template_name . '.php' );
+        if ( '' !== $theme ) {
+            $path = $theme;
+        }
+
+        return (string) apply_filters( 'sulayr_ranking_template', $path, $template_name );
     }
 
     /**
@@ -74,8 +101,8 @@ class TemplateService {
         // Extraer variables para que estén disponibles en la plantilla
         extract( $vars ); // phpcs:ignore WordPress.PHP.DontExtract.extract_extract
 
-        // Construir ruta de la plantilla
-        $template_path = SULAYR_TEMPLATE_DIR . '/' . $template_name . '.php';
+        // Construir ruta de la plantilla (las del ranking se pueden sobrescribir desde el tema)
+        $template_path = self::locate( $template_name );
 
         // Verificar que la plantilla existe
         if ( ! file_exists( $template_path ) ) {

@@ -35,6 +35,32 @@ class MemberFields {
     }
 
     /**
+     * Valores del sexo como [ valor => nombre ].
+     *
+     * @return 	array<string, string>
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function sexes(): array {
+        return [
+            CustomFields::SEX_MALE => __( 'Masculino', SULAYR_TEXTDOMAIN ),
+            CustomFields::SEX_FEMALE => __( 'Femenino', SULAYR_TEXTDOMAIN ),
+        ];
+    }
+
+    /**
+     * Nombre del sexo de un socio, o '—'.
+     *
+     * @param   string $sex Valor guardado.
+     * @return 	string
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function sex_label( string $sex ): string {
+        return self::sexes()[ $sex ] ?? '—';
+    }
+
+    /**
      * Clave ACF.
      *
      * @param   string $name Nombre del campo.
@@ -86,6 +112,16 @@ class MemberFields {
                     'type' => 'text',
                     'placeholder' => 'aaaa-mm-dd',
                     'instructions' => __( 'Último día como socio (aaaa-mm-dd), o «desconocida».', SULAYR_TEXTDOMAIN ),
+                ],
+                [
+                    'key' => self::key( CustomFields::MEMBER_SEX ),
+                    'label' => __( 'Sexo', SULAYR_TEXTDOMAIN ),
+                    'name' => CustomFields::MEMBER_SEX,
+                    'type' => 'select',
+                    'choices' => self::sexes(),
+                    'allow_null' => 1,
+                    'return_format' => 'value',
+                    'instructions' => __( 'Para las clasificaciones del ranking interno.', SULAYR_TEXTDOMAIN ),
                 ],
                 [
                     'key' => self::key( CustomFields::MEMBER_TSHIRT_SIZE ),

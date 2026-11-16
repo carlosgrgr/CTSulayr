@@ -10,6 +10,7 @@ use ClubTriatlonSulayr\Modules\Members\Join\JoinRequests;
 use ClubTriatlonSulayr\Modules\Members\Lifecycle\MembersDailyTask;
 use ClubTriatlonSulayr\Modules\Members\MemberSummary;
 use ClubTriatlonSulayr\Modules\Members\MemberConsents;
+use ClubTriatlonSulayr\Modules\Members\MemberFields;
 use ClubTriatlonSulayr\Modules\Members\MemberLog;
 use ClubTriatlonSulayr\Modules\Members\MemberTasks;
 use ClubTriatlonSulayr\Modules\Members\MemberRoles;
@@ -468,6 +469,7 @@ class MembersMenu {
             __( 'Email', SULAYR_TEXTDOMAIN ) => $user->user_email ?: '—',
             __( 'Teléfono', SULAYR_TEXTDOMAIN ) => $meta( CustomFields::USER_PROFILE_PHONE ) ?: '—',
             __( 'DNI', SULAYR_TEXTDOMAIN ) => $meta( CustomFields::USER_PROFILE_DNI ) ?: '—',
+            __( 'Sexo', SULAYR_TEXTDOMAIN ) => MemberFields::sex_label( $meta( CustomFields::MEMBER_SEX ) ),
             __( 'Fecha de nacimiento', SULAYR_TEXTDOMAIN ) => $date( $meta( CustomFields::USER_PROFILE_BIRTH ) ),
             __( 'Fecha de alta', SULAYR_TEXTDOMAIN ) => $date( $meta( CustomFields::USER_PROFILE_JOIN_DATE ) ),
             __( 'Fecha de baja', SULAYR_TEXTDOMAIN ) => $date( $meta( CustomFields::MEMBER_LEAVE_DATE ) ),
