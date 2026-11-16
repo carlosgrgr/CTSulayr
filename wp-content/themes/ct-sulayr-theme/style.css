@@ -251,3 +251,13 @@ body.ast-header-break-point.woocommerce.ast-left-sidebar #secondary .wc-block-pr
 		transition: transform 0.15s ease;
 	}
 }
+
+/* Bootstrap subraya todos los <a>. Este botón no es .menu-link, así que Astra no se lo quita. */
+a.ast-custom-button-link {
+	text-decoration: none;
+}
+
+/* Astra pone peso 500 al texto del botón; el de la marca va en negrita. */
+a.ast-custom-button-link .ast-custom-button {
+	font-weight: bold;
+}
