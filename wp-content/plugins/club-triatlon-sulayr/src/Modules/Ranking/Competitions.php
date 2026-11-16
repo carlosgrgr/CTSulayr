@@ -97,10 +97,14 @@ class Competitions {
         $row['status'] = Keys::COMPETITION_DRAFT;
         $row['created_by'] = get_current_user_id();
         $row['created_at'] = current_time( 'mysql' );
-        $wpdb->insert( RankingSchema::table( RankingSchema::COMPETITIONS ), $row );
+        if ( false === $wpdb->insert( RankingSchema::table( RankingSchema::COMPETITIONS ), $row ) ) {
+            return 0;
+        }
         $id = (int) $wpdb->insert_id;
 
-        RankingLog::record( RankingLog::ENTITY_COMPETITION, $id, $id, 0, 'alta', '', $row['name'] );
+        if ( false === RankingLog::record( RankingLog::ENTITY_COMPETITION, $id, $id, 0, 'alta', '', $row['name'] ) ) {
+            return 0;
+        }
 
         return $id;
     }
@@ -110,7 +114,7 @@ class Competitions {
      *
      * @param   int   $id   Competición.
      * @param   array $data Campos limpios.
-     * @return 	bool  True si cambió algo.
+     * @return 	bool  True si guardó (o no había nada que cambiar); false si falló la base de datos.
      * @access 	public
      * @package	club-triatlon-sulayr
      */
@@ -127,18 +131,19 @@ class Competitions {
         foreach ( $row as $field => $value ) {
             if ( (string) $current->$field !== (string) $value ) {
                 $changes[ $field ] = $value;
-                RankingLog::record( RankingLog::ENTITY_COMPETITION, $id, $id, 0, $field, $current->$field, $value );
+                if ( false === RankingLog::record( RankingLog::ENTITY_COMPETITION, $id, $id, 0, $field, $current->$field, $value ) ) {
+                    return false;
+                }
             }
         }
         if ( empty( $changes ) ) {
-            return false;
+            return true;
         }
 
         $changes['updated_by'] = get_current_user_id();
         $changes['updated_at'] = current_time( 'mysql' );
-        $wpdb->update( RankingSchema::table( RankingSchema::COMPETITIONS ), $changes, [ 'id' => $id ] );
 
-        return true;
+        return false !== $wpdb->update( RankingSchema::table( RankingSchema::COMPETITIONS ), $changes, [ 'id' => $id ] );
     }
 
     /**
@@ -146,7 +151,7 @@ class Competitions {
      *
      * @param   int    $id     Competición.
      * @param   string $status Keys::COMPETITION_*.
-     * @return 	bool   True si cambió.
+     * @return 	bool   True si está en ese estado al terminar; false si no existe o falla la base de datos.
      * @access 	public
      * @package	club-triatlon-sulayr
      */
@@ -154,18 +159,22 @@ class Competitions {
         global $wpdb;
 
         $current = self::get( $id );
-        if ( null === $current || $current->status === $status ) {
+        if ( null === $current ) {
             return false;
         }
+        if ( $current->status === $status ) {
+            return true;
+        }
 
-        $wpdb->update(
+        if ( false === $wpdb->update(
             RankingSchema::table( RankingSchema::COMPETITIONS ),
             [ 'status' => $status, 'updated_by' => get_current_user_id(), 'updated_at' => current_time( 'mysql' ) ],
             [ 'id' => $id ]
-        );
-        RankingLog::record( RankingLog::ENTITY_COMPETITION, $id, $id, 0, Keys::COMPETITION_PUBLISHED === $status ? 'publicar' : 'despublicar', $current->status, $status );
+        ) ) {
+            return false;
+        }
 
-        return true;
+        return RankingLog::record( RankingLog::ENTITY_COMPETITION, $id, $id, 0, Keys::COMPETITION_PUBLISHED === $status ? 'publicar' : 'despublicar', $current->status, $status );
     }
 
     /**
@@ -226,11 +235,11 @@ class Competitions {
      *
      * @param   int   $id         Competición.
      * @param   array $references Clave => [ scope, team_category, sex, age_group, winner_time, participants ].
-     * @return 	void
+     * @return 	bool  False en cuanto falla una escritura; el llamador debe deshacer la transacción.
      * @access 	public
      * @package	club-triatlon-sulayr
      */
-    public static function save_references( int $id, array $references ): void {
+    public static function save_references( int $id, array $references ): bool {
         global $wpdb;
 
         $table = RankingSchema::table( RankingSchema::REFERENCES );
@@ -244,7 +253,7 @@ class Competitions {
                 if ( $empty ) {
                     continue;
                 }
-                $wpdb->insert( $table, [
+                if ( false === $wpdb->insert( $table, [
                     'competition_id' => $id,
                     'scope' => $ref['scope'],
                     'team_category' => $ref['team_category'],
@@ -252,22 +261,36 @@ class Competitions {
                     'age_group' => $ref['age_group'],
                     'winner_time' => $ref['winner_time'],
                     'participants' => $ref['participants'],
-                ] );
-                RankingLog::record( RankingLog::ENTITY_REFERENCE, (int) $wpdb->insert_id, $id, 0, $key, '', self::ref_text( $ref ) );
+                ] ) ) {
+                    return false;
+                }
+                if ( false === RankingLog::record( RankingLog::ENTITY_REFERENCE, (int) $wpdb->insert_id, $id, 0, $key, '', self::ref_text( $ref ) ) ) {
+                    return false;
+                }
                 continue;
             }
 
             if ( $empty ) {
-                $wpdb->delete( $table, [ 'id' => (int) $existing->id ], [ '%d' ] );
-                RankingLog::record( RankingLog::ENTITY_REFERENCE, (int) $existing->id, $id, 0, $key, self::ref_text( (array) $existing ), '' );
+                if ( false === $wpdb->delete( $table, [ 'id' => (int) $existing->id ], [ '%d' ] ) ) {
+                    return false;
+                }
+                if ( false === RankingLog::record( RankingLog::ENTITY_REFERENCE, (int) $existing->id, $id, 0, $key, self::ref_text( (array) $existing ), '' ) ) {
+                    return false;
+                }
                 continue;
             }
 
             if ( $existing->winner_time !== $ref['winner_time'] || $existing->participants !== $ref['participants'] ) {
-                $wpdb->update( $table, [ 'winner_time' => $ref['winner_time'], 'participants' => $ref['participants'] ], [ 'id' => (int) $existing->id ] );
-                RankingLog::record( RankingLog::ENTITY_REFERENCE, (int) $existing->id, $id, 0, $key, self::ref_text( (array) $existing ), self::ref_text( $ref ) );
+                if ( false === $wpdb->update( $table, [ 'winner_time' => $ref['winner_time'], 'participants' => $ref['participants'] ], [ 'id' => (int) $existing->id ] ) ) {
+                    return false;
+                }
+                if ( false === RankingLog::record( RankingLog::ENTITY_REFERENCE, (int) $existing->id, $id, 0, $key, self::ref_text( (array) $existing ), self::ref_text( $ref ) ) ) {
+                    return false;
+                }
             }
         }
+
+        return true;
     }
 
     /**

@@ -61,12 +61,12 @@ class RankingLog {
      * @access 	public
      * @package	club-triatlon-sulayr
      */
-    public static function record( string $entity, int $entity_id, int $competition_id, int $user_id, string $field, $old, $new, string $note = '' ): void {
+    public static function record( string $entity, int $entity_id, int $competition_id, int $user_id, string $field, $old, $new, string $note = '' ): bool {
         global $wpdb;
 
         $note = trim( implode( ' · ', array_unique( array_filter( [ self::$note, $note ] ) ) ) );
 
-        $wpdb->insert(
+        return false !== $wpdb->insert(
             RankingSchema::table( RankingSchema::LOG ),
             [
                 'entity' => $entity,

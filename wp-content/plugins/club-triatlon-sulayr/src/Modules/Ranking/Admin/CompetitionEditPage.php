@@ -31,7 +31,7 @@ class CompetitionEditPage {
     private const ACTION_DELETE = 'sulayr_ranking_delete_competition';
 
     /** Filas vacías que se añaden a la tabla de resultados. */
-    private const EMPTY_ROWS = 3;
+    private const EMPTY_ROWS = 5;
 
     /**
      * __construct()
@@ -156,7 +156,11 @@ class CompetitionEditPage {
         Notices::render();
 
         if ( ! empty( $state['errors'] ) ) {
-            echo '<div class="notice notice-error"><p>' . esc_html__( 'No se ha guardado nada. Corrige los errores marcados.', SULAYR_TEXTDOMAIN ) . '</p></div>';
+            echo '<div class="notice notice-error"><p>' . esc_html__( 'No se ha guardado nada. Corrige los errores marcados.', SULAYR_TEXTDOMAIN ) . '</p>';
+            foreach ( self::error_summary( $errors, $input['results'] ?? [] ) as $line ) {
+                echo '<p>' . esc_html( $line ) . '</p>';
+            }
+            echo '</div>';
         }
         if ( null !== $competition && ! empty( $validation['missing'] ) ) {
             echo '<div class="notice notice-warning"><p>' . esc_html( sprintf( _n( 'Falta %d referencia para poder publicar: está marcada abajo.', 'Faltan %d referencias para poder publicar: están marcadas abajo.', count( $validation['missing'] ), SULAYR_TEXTDOMAIN ), count( $validation['missing'] ) ) ) . '</p></div>';
@@ -243,7 +247,7 @@ class CompetitionEditPage {
             '<tr><th scope="row"><label for="sulayr-c-format">%s</label></th><td>%s%s%s</td></tr>',
             esc_html__( 'Formato', SULAYR_TEXTDOMAIN ),
             $select( 'format', Labels::formats() ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            $has_results ? '<p class="description">' . esc_html__( 'Para pasar de individual a relevos o equipos (o al revés), borra antes los resultados.', SULAYR_TEXTDOMAIN ) . '</p>' : '',
+            $has_results ? '<p class="description">' . esc_html__( 'Con resultados guardados no se puede cambiar el formato. Para cambiarlo, borra antes los resultados.', SULAYR_TEXTDOMAIN ) . '</p>' : '',
             $error( 'format' ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         );
         printf( '<tr><th scope="row"><label for="sulayr-c-notes">%s</label></th><td><input type="text" class="large-text" id="sulayr-c-notes" name="competition[notes]" value="%s" maxlength="255"><p class="description">%s</p></td></tr>', esc_html__( 'Nota interna', SULAYR_TEXTDOMAIN ), esc_attr( $v( 'notes' ) ), esc_html__( 'Solo la ven los gestores.', SULAYR_TEXTDOMAIN ) );
@@ -289,21 +293,82 @@ class CompetitionEditPage {
         }
         echo '</tr></thead><tbody>';
 
+        // Un socio ya elegido en una fila no aparece en las demás (SPEC §4.2).
+        $used = [];
+        foreach ( $rows as $row ) {
+            $own = (int) ( ( (array) $row )['user_id'] ?? 0 );
+            if ( $own > 0 ) {
+                $used[ $own ] = true;
+            }
+        }
+
         $index = 0;
         foreach ( $rows as $i => $row ) {
-            self::render_result_row( (int) $i, (array) $row, $errors[ $i ] ?? [], $warnings[ $i ] ?? [], $team, $members, $groups, $calc );
+            $row = (array) $row;
+            $own = (int) ( $row['user_id'] ?? 0 );
+            self::render_result_row( (int) $i, $row, $errors[ $i ] ?? [], $warnings[ $i ] ?? [], $team, self::available_members( $members, $used, $own ), $groups, $calc );
             $index = max( $index, (int) $i + 1 );
         }
+        $free = self::available_members( $members, $used, 0 );
         for ( $k = 0; $k < self::EMPTY_ROWS; $k++ ) {
-            self::render_result_row( $index + $k, [], [], [], $team, $members, $groups, [] );
+            self::render_result_row( $index + $k, [], [], [], $team, $free, $groups, [] );
         }
         echo '</tbody></table>';
 
+        // La plantilla lleva a todos los socios: ranking-results.js quita los que ya están en otra fila.
         echo '<template id="sulayr-ranking-row-template">';
         self::render_result_row( -1, [], [], [], $team, $members, $groups, [] );
         echo '</template>';
         printf( '<p><button type="button" class="button" id="sulayr-ranking-add-row" data-next="%d">%s</button></p>', $index + self::EMPTY_ROWS, esc_html__( 'Añadir fila', SULAYR_TEXTDOMAIN ) );
         echo '</div>';
+    }
+
+    /**
+     * Resumen de errores por fila de resultados, para ver de un vistazo dónde está el problema (SPEC §4.2).
+     *
+     * @param   array $errors Errores (clave 'results' por índice de fila).
+     * @param   array $rows   Filas enviadas.
+     * @return 	string[]
+     * @access 	private
+     * @package	club-triatlon-sulayr
+     */
+    private static function error_summary( array $errors, array $rows ): array {
+        $lines = [];
+        foreach ( (array) ( $errors['results'] ?? [] ) as $index => $row_errors ) {
+            if ( empty( $row_errors ) ) {
+                continue;
+            }
+            $user_id = (int) ( ( (array) ( $rows[ $index ] ?? [] ) )['user_id'] ?? 0 );
+            $who = $user_id > 0 ? RankingRoster::info( $user_id )['name'] : __( 'fila sin socio', SULAYR_TEXTDOMAIN );
+            $count = count( (array) $row_errors );
+            $lines[] = sprintf(
+                /* translators: 1: número de errores, 2: nombre del socio de la fila */
+                _n( '%1$d error en la fila de %2$s.', '%1$d errores en la fila de %2$s.', $count, SULAYR_TEXTDOMAIN ),
+                $count,
+                $who
+            );
+        }
+        return $lines;
+    }
+
+    /**
+     * Socios que se pueden elegir en una fila: los que no están ya en otra fila (SPEC §4.2).
+     *
+     * @param   array $members Socios (id => nombre).
+     * @param   array $used    Ids ya usados (id => true).
+     * @param   int   $own     Id elegido en esta fila (se conserva aunque esté en $used).
+     * @return 	array
+     * @access 	private
+     * @package	club-triatlon-sulayr
+     */
+    private static function available_members( array $members, array $used, int $own ): array {
+        return array_filter(
+            $members,
+            function ( $id ) use ( $used, $own ) {
+                return ! isset( $used[ $id ] ) || (int) $id === $own;
+            },
+            ARRAY_FILTER_USE_KEY
+        );
     }
 
     /**
@@ -547,8 +612,8 @@ class CompetitionEditPage {
         $v = ResultValidator::validate( $input, self::member_map( self::members( $groups, $season, $id ) ), $groups, current_time( 'Y-m-d' ) );
         $errors = $v['errors'];
 
-        // El formato no pasa de individual a relevos o equipos (ni al revés) si ya hay resultados.
-        if ( null !== $competition && Keys::has_team( (string) $competition->format ) !== Keys::has_team( $v['competition']['format'] ) && ! empty( Results::for_competition( $id ) ) ) {
+        // Con resultados guardados, el formato no se cambia (SPEC §4.2).
+        if ( null !== $competition && (string) $competition->format !== (string) $v['competition']['format'] && ! empty( Results::for_competition( $id ) ) ) {
             $errors['competition']['format'] = __( 'Para cambiar a este formato, borra antes los resultados.', SULAYR_TEXTDOMAIN );
         }
 
@@ -557,17 +622,21 @@ class CompetitionEditPage {
             Notices::redirect( self::url( $id ), 'error', __( 'Hay errores: no se ha guardado nada.', SULAYR_TEXTDOMAIN ) );
         }
 
+        // Todo o nada: competición, referencias, resultados, puntos y estado van en una transacción.
         $wpdb->query( 'START TRANSACTION' );
         if ( null === $competition ) {
             $id = Competitions::insert( $v['competition'] );
+            $ok = $id > 0;
         } else {
-            Competitions::update( $id, $v['competition'] );
+            $ok = Competitions::update( $id, $v['competition'] );
         }
-        Competitions::save_references( $id, $v['references'] );
-        Results::save_rows( $id, array_values( $v['results'] ) );
-        $wpdb->query( 'COMMIT' );
+        $ok = $ok && Competitions::save_references( $id, $v['references'] );
+        $ok = $ok && Results::save_rows( $id, array_values( $v['results'] ) );
+        $ok = $ok && RankingService::recalculate_competition( $id ) >= 0;
+        if ( false === $ok ) {
+            self::abort_save( $id, $input );
+        }
 
-        RankingService::recalculate_competition( $id );
         $count = count( $v['results'] );
         $current = Competitions::get( $id );
         $type = 'success';
@@ -582,18 +651,22 @@ class CompetitionEditPage {
                 $type = 'warning';
                 $text .= ' ' . __( 'No se ha publicado: faltan referencias.', SULAYR_TEXTDOMAIN );
             } else {
-                Competitions::set_status( $id, Keys::COMPETITION_PUBLISHED );
+                $ok = Competitions::set_status( $id, Keys::COMPETITION_PUBLISHED );
                 $text .= ' ' . __( 'Publicada: ya se ve en Mi cuenta.', SULAYR_TEXTDOMAIN );
             }
         } elseif ( 'unpublish' === $do ) {
-            Competitions::set_status( $id, Keys::COMPETITION_DRAFT );
+            $ok = Competitions::set_status( $id, Keys::COMPETITION_DRAFT );
             $text .= ' ' . __( 'Ha vuelto a borrador: ya no cuenta ni se ve.', SULAYR_TEXTDOMAIN );
         } elseif ( null !== $current && Keys::COMPETITION_PUBLISHED === $current->status && ( ! empty( $v['missing'] ) || 0 === $count ) ) {
-            Competitions::set_status( $id, Keys::COMPETITION_DRAFT );
+            $ok = Competitions::set_status( $id, Keys::COMPETITION_DRAFT );
             $type = 'warning';
             $text .= ' ' . __( 'Ha vuelto a borrador porque faltan referencias o resultados.', SULAYR_TEXTDOMAIN );
         }
+        if ( false === $ok ) {
+            self::abort_save( $id, $input );
+        }
 
+        $wpdb->query( 'COMMIT' );
         RankingService::bump_cache();
         Notices::redirect( self::url( $id ), $type, $text );
     }
@@ -618,6 +691,23 @@ class CompetitionEditPage {
         Competitions::delete( $id );
         RankingService::bump_cache();
         Notices::redirect( RankingMenu::url( (int) $competition->season ), 'success', sprintf( __( 'Competición «%s» borrada. Queda copia en el registro.', SULAYR_TEXTDOMAIN ), $competition->name ) );
+    }
+
+    /**
+     * Deshace la transacción y vuelve al formulario con los datos enviados. No se guarda nada.
+     *
+     * @param   int   $id    Competición (0 si era nueva).
+     * @param   array $input Datos enviados.
+     * @return 	void
+     * @access 	private
+     * @package	club-triatlon-sulayr
+     */
+    private static function abort_save( int $id, array $input ): void {
+        global $wpdb;
+
+        $wpdb->query( 'ROLLBACK' );
+        Notices::save_state( [ 'input' => $input, 'errors' => [] ] );
+        Notices::redirect( self::url( $id ), 'error', __( 'No se ha guardado nada: falló la base de datos. Revisa los datos e inténtalo de nuevo.', SULAYR_TEXTDOMAIN ) );
     }
 
     /**

@@ -33,10 +33,12 @@ class Results {
 
         $table = RankingSchema::table( RankingSchema::RESULTS );
 
+        // Primero los que terminan, luego DNF, DSQ, DNS y NC (SPEC §4.2).
+        $order = implode( ', ', array_fill( 0, count( Keys::STATUSES ), '%s' ) );
+
         return self::cast( $wpdb->get_results( $wpdb->prepare(
-            "SELECT * FROM {$table} WHERE competition_id = %d ORDER BY status <> %s, team_category, position_sex IS NULL, position_sex, time_s IS NULL, time_s, id", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $competition_id,
-            Keys::STATUS_FINISHED
+            "SELECT * FROM {$table} WHERE competition_id = %d ORDER BY FIELD( status, {$order} ), team_category, position_sex IS NULL, position_sex, time_s IS NULL, time_s, id", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            array_merge( [ $competition_id ], Keys::STATUSES )
         ) ) );
     }
 
@@ -118,7 +120,7 @@ class Results {
      * @access 	public
      * @package	club-triatlon-sulayr
      */
-    public static function save_rows( int $competition_id, array $rows ): void {
+    public static function save_rows( int $competition_id, array $rows ): bool {
         global $wpdb;
 
         $table = RankingSchema::table( RankingSchema::RESULTS );
@@ -138,15 +140,19 @@ class Results {
             $existing = $current[ $user_id ] ?? null;
 
             if ( null === $existing ) {
-                $wpdb->insert( $table, array_merge( $values, [
+                if ( false === $wpdb->insert( $table, array_merge( $values, [
                     'competition_id' => $competition_id,
                     'user_id' => $user_id,
                     'sex' => (string) $row['sex'],
                     'age_group' => (string) $row['age_group'],
                     'created_by' => $author,
                     'created_at' => $now,
-                ] ) );
-                RankingLog::record( RankingLog::ENTITY_RESULT, (int) $wpdb->insert_id, $competition_id, $user_id, 'alta', '', self::text( $values ) );
+                ] ) ) ) {
+                    return false;
+                }
+                if ( false === RankingLog::record( RankingLog::ENTITY_RESULT, (int) $wpdb->insert_id, $competition_id, $user_id, 'alta', '', self::text( $values ) ) ) {
+                    return false;
+                }
                 continue;
             }
 
@@ -154,13 +160,17 @@ class Results {
             foreach ( $values as $field => $value ) {
                 if ( self::differs( $existing->$field, $value ) ) {
                     $changes[ $field ] = $value;
-                    RankingLog::record( RankingLog::ENTITY_RESULT, (int) $existing->id, $competition_id, $user_id, $field, self::field_text( $field, $existing->$field ), self::field_text( $field, $value ) );
+                    if ( false === RankingLog::record( RankingLog::ENTITY_RESULT, (int) $existing->id, $competition_id, $user_id, $field, self::field_text( $field, $existing->$field ), self::field_text( $field, $value ) ) ) {
+                        return false;
+                    }
                 }
             }
             if ( ! empty( $changes ) ) {
                 $changes['updated_by'] = $author;
                 $changes['updated_at'] = $now;
-                $wpdb->update( $table, $changes, [ 'id' => (int) $existing->id ] );
+                if ( false === $wpdb->update( $table, $changes, [ 'id' => (int) $existing->id ] ) ) {
+                    return false;
+                }
             }
         }
 
@@ -168,9 +178,15 @@ class Results {
             if ( isset( $kept[ $user_id ] ) ) {
                 continue;
             }
-            $wpdb->delete( $table, [ 'id' => (int) $existing->id ], [ '%d' ] );
-            RankingLog::record( RankingLog::ENTITY_RESULT, (int) $existing->id, $competition_id, $user_id, 'borrado', $existing, '' );
+            if ( false === $wpdb->delete( $table, [ 'id' => (int) $existing->id ], [ '%d' ] ) ) {
+                return false;
+            }
+            if ( false === RankingLog::record( RankingLog::ENTITY_RESULT, (int) $existing->id, $competition_id, $user_id, 'borrado', $existing, '' ) ) {
+                return false;
+            }
         }
+
+        return true;
     }
 
     /**
@@ -182,10 +198,10 @@ class Results {
      * @access 	public
      * @package	club-triatlon-sulayr
      */
-    public static function update_calc( int $id, array $data ): void {
+    public static function update_calc( int $id, array $data ): bool {
         global $wpdb;
 
-        $wpdb->update( RankingSchema::table( RankingSchema::RESULTS ), $data, [ 'id' => $id ] );
+        return false !== $wpdb->update( RankingSchema::table( RankingSchema::RESULTS ), $data, [ 'id' => $id ] );
     }
 
     /**

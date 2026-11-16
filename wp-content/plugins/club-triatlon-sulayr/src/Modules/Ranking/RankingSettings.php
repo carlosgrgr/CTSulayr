@@ -107,21 +107,28 @@ class RankingSettings {
     }
 
     /**
-     * Baremo de una temporada. Si aún no tiene, se crea con los ajustes actuales.
+     * Baremo de una temporada.
      *
-     * @param   int $season Año.
+     * Si la temporada aún no tiene copia guardada, se devuelven los ajustes
+     * actuales sin guardar nada (lectura). Con $create = true (escrituras:
+     * recalcular, guardar ajustes) la copia se guarda antes de usarla.
+     *
+     * @param   int  $season Año.
+     * @param   bool $create Guardar la copia si no existe.
      * @return 	array
      * @access 	public
      * @package	club-triatlon-sulayr
      */
-    public static function for_season( int $season ): array {
+    public static function for_season( int $season, bool $create = false ): array {
         $saved = get_option( self::SEASON_OPTION . $season );
         if ( is_array( $saved ) ) {
             return Baremo::normalize( $saved );
         }
 
         $baremo = self::current();
-        add_option( self::SEASON_OPTION . $season, $baremo, '', 'no' );
+        if ( $create ) {
+            add_option( self::SEASON_OPTION . $season, $baremo, '', 'no' );
+        }
 
         return $baremo;
     }
@@ -174,7 +181,10 @@ class RankingSettings {
             return;
         }
 
-        self::$before = self::for_season( self::current_season() );
+        // Antes de que ACF escriba los campos: los valores actuales son los de la temporada anterior
+        // si esta aún no tiene copia (solo se cambian desde esta pantalla).
+        self::for_season( self::current_season() - 1, true );
+        self::$before = self::for_season( self::current_season(), true );
     }
 
     /**

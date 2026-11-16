@@ -106,7 +106,7 @@ class RankingService {
      *
      * @param   int    $competition_id Competición.
      * @param   bool   $log            Registrar los puntos que cambien.
-     * @return 	int    Resultados que cambiaron.
+     * @return 	int    Resultados que cambiaron, o -1 si falla una escritura (el llamador debe deshacer la transacción).
      * @access 	public
      * @package	club-triatlon-sulayr
      */
@@ -117,7 +117,7 @@ class RankingService {
         }
 
         $season = (int) $competition->season;
-        $baremo = RankingSettings::for_season( $season );
+        $baremo = RankingSettings::for_season( $season, true );
         $groups = new AgeGroups( $baremo['age_groups'] );
         $coef = Baremo::coefficient( $baremo, (string) $competition->modality, (string) $competition->distance );
         $format = (string) $competition->format;
@@ -138,11 +138,13 @@ class RankingService {
                 continue;
             }
 
-            Results::update_calc( (int) $result->id, $diff );
+            if ( false === Results::update_calc( (int) $result->id, $diff ) ) {
+                return -1;
+            }
             $changed++;
 
             if ( $log && ( array_key_exists( 'points_absolute', $diff ) || array_key_exists( 'points_age_group', $diff ) ) ) {
-                RankingLog::record(
+                if ( false === RankingLog::record(
                     RankingLog::ENTITY_RESULT,
                     (int) $result->id,
                     $competition_id,
@@ -150,7 +152,9 @@ class RankingService {
                     'puntos',
                     self::points_text( $result->points_absolute, $result->points_age_group ),
                     self::points_text( $data['points_absolute'], $data['points_age_group'] )
-                );
+                ) ) {
+                    return -1;
+                }
             }
         }
 
@@ -172,7 +176,7 @@ class RankingService {
         return (int) RankingLog::with_note( $reason, function () use ( $season ) {
             $changed = 0;
             foreach ( Competitions::for_season( $season ) as $competition ) {
-                $changed += self::recalculate_competition( (int) $competition->id, true );
+                $changed += max( 0, self::recalculate_competition( (int) $competition->id, true ) );
             }
             RankingLog::record( RankingLog::ENTITY_RECALC, 0, 0, 0, (string) $season, '', sprintf( __( '%d resultados cambiaron', SULAYR_TEXTDOMAIN ), $changed ) );
 
@@ -215,7 +219,7 @@ class RankingService {
         return (int) RankingLog::with_note( __( 'Cambio de datos del socio', SULAYR_TEXTDOMAIN ), function () use ( $competitions ) {
             $changed = 0;
             foreach ( $competitions as $competition_id ) {
-                $changed += self::recalculate_competition( $competition_id, true );
+                $changed += max( 0, self::recalculate_competition( $competition_id, true ) );
             }
 
             return $changed;
@@ -257,7 +261,8 @@ class RankingService {
                 $hidden[ $user_id ] = true;
                 $sort[ $user_id ] = RankingRoster::info( $user_id )['sort'];
             }
-            $sex = (string) $result->sex;
+            // El sexo sale de la ficha, no de la copia del resultado: sin sexo no hay clasificación.
+            $sex = $visible[ $user_id ]['sex'] ?? RankingRoster::info( $user_id )['sex'];
             if ( '' === $sex ) {
                 continue;
             }
@@ -331,10 +336,24 @@ class RankingService {
      */
     private static function calculate( object $result, string $format, int $season, float $coef, array $baremo, AgeGroups $groups, array $references ): array {
         $info = RankingRoster::info( (int) $result->user_id );
-        $sex = '' !== $info['sex'] ? $info['sex'] : (string) $result->sex;
+        $sex = $info['sex'];
         $group = $groups->for_birth( $info['birth'], $season );
         $team = Keys::has_team( $format ) ? (string) $result->team_category : '';
         $is_team = Keys::FORMAT_TEAM === $format;
+
+        // Sin sexo en la ficha no hay clasificación en la que contar (SPEC §3.6): el resultado se guarda, pero sin puntos.
+        if ( '' === $sex ) {
+            return [
+                'sex' => '',
+                'age_group' => $group,
+                'coefficient' => round( $coef, 2 ),
+                'points_absolute' => 0.0,
+                'points_age_group' => null,
+                'method_absolute' => Keys::METHOD_NONE,
+                'method_age_group' => Keys::METHOD_NONE,
+                'calc_note' => __( 'El socio no tiene sexo en su ficha: no cuenta hasta que se rellene.', SULAYR_TEXTDOMAIN ),
+            ];
+        }
 
         $ref = function ( string $scope, string $ref_sex, string $ref_group ) use ( $references, $team ): ?array {
             $row = $references[ Keys::ref_key( $scope, $team, $ref_sex, $ref_group ) ] ?? null;
