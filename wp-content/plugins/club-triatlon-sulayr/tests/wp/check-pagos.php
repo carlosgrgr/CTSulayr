@@ -4,9 +4,11 @@
  *
  *   wp eval-file wp-content/plugins/club-triatlon-sulayr/tests/wp/check-pagos.php
  *
- * Crea un socio y un recibo de prueba, comprueba esquema, medio de cobro,
- * tarjetas, operaciones, pago con medio «tpv», consentimiento y ajustes, y lo
- * borra todo al terminar. No llama a Redsys.
+ * Crea un socio y recibos de prueba, comprueba esquema, medio de cobro,
+ * tarjetas, operaciones, pago con medio «tpv», consentimiento y ajustes
+ * (paso B1), y el pago desde Mis recibos con notificaciones simuladas y
+ * firmadas con la clave pública de pruebas de Redsys (paso B2). Lo borra todo
+ * al terminar. No llama a Redsys ni envía emails.
  */
 
 use ClubTriatlonSulayr\Modules\Members\Database\MembersSchema;
@@ -14,7 +16,11 @@ use ClubTriatlonSulayr\Modules\Members\MemberConsents;
 use ClubTriatlonSulayr\Modules\Members\MemberLog;
 use ClubTriatlonSulayr\Modules\Members\MemberSettings;
 use ClubTriatlonSulayr\Modules\Members\Receipts\Receipts;
+use ClubTriatlonSulayr\Modules\Members\Receipts\ReceiptsAccount;
+use ClubTriatlonSulayr\Modules\Payments\CardPayments;
 use ClubTriatlonSulayr\Modules\Payments\ChargeMethod;
+use ClubTriatlonSulayr\Modules\Payments\Redsys\RedsysConfig;
+use ClubTriatlonSulayr\Modules\Payments\Redsys\RedsysSignature;
 use ClubTriatlonSulayr\Modules\Payments\PaymentCards;
 use ClubTriatlonSulayr\Modules\Payments\Redsys\RedsysOrder;
 use ClubTriatlonSulayr\Modules\Payments\TpvTransactions;
@@ -34,6 +40,36 @@ $check = function ( string $label, bool $ok ) use ( &$fails ) {
 global $wpdb;
 $user_id = 0;
 $receipt_id = 0;
+$receipt_ids = [];
+$mails = [];
+$catch_mail = function ( $return, $atts ) use ( &$mails ) {
+    $mails[] = $atts;
+    return true;
+};
+add_filter( 'pre_wp_mail', $catch_mail, 10, 2 );
+$new_receipt = function ( int $user, float $total ) use ( $wpdb, &$receipt_ids ) {
+    $wpdb->insert( Receipts::table(), [
+        'number' => 'PRUEBA-' . $user . '-' . count( $receipt_ids ),
+        'user_id' => $user,
+        // Un recibo por socio y mes: cada recibo de prueba va en un mes de 2001.
+        'period' => sprintf( '2001-%02d', count( $receipt_ids ) + 1 ),
+        'total' => $total,
+        'status' => Receipts::STATUS_PENDING,
+        'generated_by' => get_current_user_id(),
+        'generated_at' => current_time( 'mysql' ),
+    ] );
+    $receipt_ids[] = (int) $wpdb->insert_id;
+    return (int) $wpdb->insert_id;
+};
+$test_key = 'sq7HjrUOBfKmC576ILgskD5srU870gJ7'; // Clave pública de pruebas de Redsys.
+$notify = function ( array $params, string $key = '' ) use ( $test_key ) {
+    $encoded = strtr( RedsysSignature::encode_params( $params ), '+/', '-_' );
+    return [
+        'Ds_SignatureVersion' => 'HMAC_SHA256_V1',
+        'Ds_MerchantParameters' => $encoded,
+        'Ds_Signature' => strtr( ( new RedsysSignature( '' !== $key ? $key : $test_key ) )->sign( (string) $params['Ds_Order'], $encoded ), '+/', '-_' ),
+    ];
+};
 $admin = get_users( [ 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ] );
 wp_set_current_user( (int) ( $admin[0] ?? 1 ) );
 
@@ -67,16 +103,7 @@ try {
     update_user_meta( $user_id, ChargeMethod::META, ChargeMethod::TPV );
 
     // Recibo de prueba de 45 €.
-    $wpdb->insert( Receipts::table(), [
-        'number' => 'PRUEBA-' . $user_id,
-        'user_id' => $user_id,
-        'period' => current_time( 'Y-m' ),
-        'total' => 45,
-        'status' => Receipts::STATUS_PENDING,
-        'generated_by' => get_current_user_id(),
-        'generated_at' => current_time( 'mysql' ),
-    ] );
-    $receipt_id = (int) $wpdb->insert_id;
+    $receipt_id = $new_receipt( $user_id, 45 );
 
     // Operaciones (§4.2, §5.3).
     $tx = TpvTransactions::create( $user_id, TpvTransactions::TYPE_MANUAL, 45.0, $receipt_id );
@@ -141,13 +168,141 @@ try {
 
     // Ajustes (§4.3).
     $check( 'Ajustes por defecto: día 5, reintentos 3 y 6, aviso 30', 5 === (int) MemberSettings::get( 'tpv_charge_day' ) && 3 === (int) MemberSettings::get( 'tpv_retry_first' ) && 6 === (int) MemberSettings::get( 'tpv_retry_second' ) && 30 === (int) MemberSettings::get( 'tpv_expiry_notice_days' ) );
+
+    // ---------------------------------------------------------------
+    // Paso B2: pago desde Mis recibos (§5.1, §7).
+    // ---------------------------------------------------------------
+    CardPayments::use_config( new RedsysConfig( '', '', '' ) );
+    $check( 'B2: sin credenciales el pago con tarjeta no está disponible', false === CardPayments::is_enabled() && is_wp_error( CardPayments::start( $user_id, $new_receipt( $user_id, 10 ), true ) ) );
+    CardPayments::use_config( new RedsysConfig( '999008881', '1', $test_key ) );
+    $check( 'B2: con credenciales sí', CardPayments::is_enabled() );
+    $check( 'B2: URL de notificación /wp-json/sulayr/v1/redsys', false !== strpos( CardPayments::notify_url(), 'sulayr/v1/redsys' ) );
+    $routes = rest_get_server()->get_routes();
+    $check( 'B2: ruta REST registrada', isset( $routes['/sulayr/v1/redsys'] ) );
+
+    $r1 = $new_receipt( $user_id, 39.10 );
+    $check( 'B2: sin la autorización de cargos no se va al banco (C12)', is_wp_error( CardPayments::start( $user_id, $r1, false ) ) && false === TpvTransactions::in_flight( $r1 ) );
+    $other_user = (int) $admin[0];
+    $check( 'B2: no se puede pagar un recibo ajeno', is_wp_error( CardPayments::start( $other_user, $r1, true ) ) );
+    $consents_before = count( MemberConsents::rows( $user_id ) );
+    $start = CardPayments::start( $user_id, $r1, true );
+    $check( 'B2: empieza el pago con el pendiente en céntimos y pidiendo la tarjeta', is_array( $start ) && false !== strpos( $start['url'], 'sis-t.redsys.es' ) && '3910' === RedsysSignature::decode_params( $start['fields']['Ds_MerchantParameters'] )['DS_MERCHANT_AMOUNT'] && 'REQUIRED' === RedsysSignature::decode_params( $start['fields']['Ds_MerchantParameters'] )['DS_MERCHANT_IDENTIFIER'] );
+    $check( 'B2: la autorización queda guardada con versión (C12)', count( MemberConsents::rows( $user_id ) ) === $consents_before + 1 && 1 === (int) MemberConsents::latest( $user_id, MemberConsents::RECURRING_CHARGES )->accepted );
+    $check( 'B2: un segundo intento mientras está en curso se rechaza', is_wp_error( CardPayments::start( $user_id, $r1, true ) ) );
+    $tx1 = $start['transaction'];
+
+    $base = [ 'Ds_Amount' => '3910', 'Ds_Currency' => '978', 'Ds_Order' => $tx1->ds_order, 'Ds_MerchantCode' => '999008881', 'Ds_Terminal' => '1', 'Ds_Response' => '0000', 'Ds_AuthorisationCode' => '111111', 'Ds_Merchant_Identifier' => 'REF-B2', 'Ds_Merchant_Cof_Txnid' => 'TXN-B2', 'Ds_ExpiryDate' => '3001', 'Ds_Card_Number' => '454881******0004' ];
+    $check( 'B2: firma falsa → no válida y no se apunta nada (criterio 5)', CardPayments::RESULT_INVALID === CardPayments::handle_notification( $notify( $base, base64_encode( str_repeat( 'z', 24 ) ) ) ) && 0.0 === Receipts::paid( $r1 ) );
+    $check( 'B2: volver a la web sin notificación no apunta nada (criterio 6)', TpvTransactions::STATUS_SENT === TpvTransactions::get( (int) $tx1->id )->status && 0.0 === Receipts::paid( $r1 ) );
+    $check( 'B2: notificación autorizada', CardPayments::RESULT_AUTHORIZED === CardPayments::handle_notification( $notify( $base ) ) );
+    $paid = Receipts::get( $r1 );
+    $card = PaymentCards::active( $user_id );
+    $check( 'B2: recibo pagado con «Tarjeta (TPV)» y autor el socio (criterio 4)', Receipts::STATUS_PAID === $paid->status && Receipts::METHOD_TPV === Receipts::payments( $r1 )[0]->method && $user_id === (int) Receipts::payments( $r1 )[0]->created_by );
+    $check( 'B2: tarjeta guardada en «Mi tarjeta» (criterio 4)', null !== $card && 'REF-B2' === $card->identifier && 'TXN-B2' === $card->cof_txnid && '**** 0004' === $card->masked && '3001' === $card->expiry );
+    $check( 'B2: operación cerrada con su pago', (int) Receipts::payments( $r1 )[0]->id === (int) TpvTransactions::get( (int) $tx1->id )->payment_id );
+    $check( 'B2: notificación repetida → no crea otro pago (criterio 5)', CardPayments::RESULT_DUPLICATE === CardPayments::handle_notification( $notify( $base ) ) && 1 === count( Receipts::payments( $r1 ) ) );
+    $check( 'B2: Ds_Order desconocido', CardPayments::RESULT_UNKNOWN === CardPayments::handle_notification( $notify( [ 'Ds_Order' => '2611Q9999999' ] + $base ) ) );
+
+    // Denegada.
+    $r2 = $new_receipt( $user_id, 20 );
+    $tx2 = CardPayments::start( $user_id, $r2, true )['transaction'];
+    $check( 'B2: denegada → sin pago y la tarjeta anterior sigue', CardPayments::RESULT_DENIED === CardPayments::handle_notification( $notify( [ 'Ds_Order' => $tx2->ds_order, 'Ds_Amount' => '2000', 'Ds_Response' => '0190', 'Ds_Merchant_Identifier' => 'OTRA' ] + $base ) ) && 0.0 === Receipts::paid( $r2 ) && 'REF-B2' === PaymentCards::active( $user_id )->identifier );
+    $check( 'B2: tras una denegada se puede volver a intentar', false === TpvTransactions::in_flight( $r2 ) && is_array( CardPayments::start( $user_id, $r2, true ) ) );
+
+    // Importe distinto.
+    $r3 = $new_receipt( $user_id, 15 );
+    $tx3 = CardPayments::start( $user_id, $r3, true )['transaction'];
+    $mails = [];
+    $check( 'B2: autorizada por otro importe → error, sin pago y aviso al club', CardPayments::RESULT_MISMATCH === CardPayments::handle_notification( $notify( [ 'Ds_Order' => $tx3->ds_order, 'Ds_Amount' => '1' ] + $base ) ) && 0.0 === Receipts::paid( $r3 ) && TpvTransactions::STATUS_ERROR === TpvTransactions::get( (int) $tx3->id )->status && 1 === count( $mails ) );
+
+    // El gestor apuntó el pago a mano mientras el socio pagaba.
+    $r4 = $new_receipt( $user_id, 12 );
+    $tx4 = CardPayments::start( $user_id, $r4, true )['transaction'];
+    $manual_method = (string) array_key_first( Receipts::payment_methods() );
+    $check( 'B2: el gestor apunta el pago a mano', true === Receipts::add_payment( $r4, 12, current_time( 'Y-m-d' ), $manual_method ) );
+    $mails = [];
+    $check( 'B2: cobrado sin pendiente → autorizada, sin segundo pago y aviso al club', CardPayments::RESULT_AUTHORIZED === CardPayments::handle_notification( $notify( [ 'Ds_Order' => $tx4->ds_order, 'Ds_Amount' => '1200' ] + $base ) ) && 1 === count( Receipts::payments( $r4 ) ) && 1 === count( $mails ) );
+
+    // Operación abandonada: deja de bloquear a los 30 minutos.
+    $r5 = $new_receipt( $user_id, 8 );
+    $tx5 = CardPayments::start( $user_id, $r5, true )['transaction'];
+    $wpdb->update( TpvTransactions::table(), [ 'created_at' => gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - 31 * MINUTE_IN_SECONDS ) ], [ 'id' => (int) $tx5->id ] ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
+    $check( 'B2: un pago abandonado deja de bloquear a los 30 minutos', false === TpvTransactions::in_flight( $r5 ) );
+    $check( 'B2: su notificación tardía se procesa igual', CardPayments::RESULT_AUTHORIZED === CardPayments::handle_notification( $notify( [ 'Ds_Order' => $tx5->ds_order, 'Ds_Amount' => '800' ] + $base ) ) && Receipts::STATUS_PAID === Receipts::get( $r5 )->status );
+
+    // REST.
+    $r6 = $new_receipt( $user_id, 5 );
+    $tx6 = CardPayments::start( $user_id, $r6, true )['transaction'];
+    $request = new WP_REST_Request( 'POST', '/sulayr/v1/redsys' );
+    $request->set_body_params( [ 'Ds_Signature' => 'falsa' ] + $notify( [ 'Ds_Order' => $tx6->ds_order, 'Ds_Amount' => '500' ] + $base ) );
+    $check( 'B2: REST con firma falsa → 400', 400 === rest_do_request( $request )->get_status() );
+    $request->set_body_params( $notify( [ 'Ds_Order' => $tx6->ds_order, 'Ds_Amount' => '500' ] + $base ) );
+    $response = rest_do_request( $request );
+    $check( 'B2: REST sin sesión → 200 y pago apuntado', 200 === $response->get_status() && Receipts::STATUS_PAID === Receipts::get( $r6 )->status );
+
+    // Baja: paga sin guardar tarjeta ni pedir autorización (C14).
+    update_user_meta( $user_id, \ClubTriatlonSulayr\Infrastructure\CustomFields::USER_PROFILE_ATHLETE_STATUS, \ClubTriatlonSulayr\Infrastructure\CustomFields::STATUS_LEFT );
+    PaymentCards::erase_for_leave( $user_id );
+    $r7 = $new_receipt( $user_id, 7 );
+    $start7 = CardPayments::start( $user_id, $r7, false );
+    $check( 'B2: un socio de baja paga sin autorización y sin pedir la tarjeta', is_array( $start7 ) && false === isset( RedsysSignature::decode_params( $start7['fields']['Ds_MerchantParameters'] )['DS_MERCHANT_IDENTIFIER'] ) );
+    CardPayments::handle_notification( $notify( [ 'Ds_Order' => $start7['transaction']->ds_order, 'Ds_Amount' => '700', 'Ds_Merchant_Identifier' => 'NO-GUARDAR' ] + $base ) );
+    $check( 'B2: y no se le guarda la tarjeta aunque Redsys mande referencia', Receipts::STATUS_PAID === Receipts::get( $r7 )->status && null === PaymentCards::active( $user_id ) );
+    delete_user_meta( $user_id, \ClubTriatlonSulayr\Infrastructure\CustomFields::USER_PROFILE_ATHLETE_STATUS );
+
+    // Mis recibos.
+    PaymentCards::save( $user_id, 'REF-VISTA', 'TXN', '1234', '3001', 0 );
+    $r8 = $new_receipt( $user_id, 30 );
+    wp_set_current_user( $user_id );
+    ob_start();
+    ( new ReceiptsAccount() )->render();
+    $html = ob_get_clean();
+    $check( 'B2: Mis recibos enseña «Mi tarjeta» y «Quitar tarjeta»', false !== strpos( $html, 'Mi tarjeta' ) && false !== strpos( $html, '**** 1234' ) && false !== strpos( $html, 'Quitar tarjeta' ) );
+    $check( 'B2: «Pagar 30,00 € con tarjeta» con la autorización y la información', false !== strpos( $html, 'Pagar 30,00' ) && false !== strpos( $html, 'name="authorized"' ) && false !== strpos( $html, 'Protección de datos' ) && false !== strpos( $html, 'día 5' ) );
+    $payable = count( array_filter( Receipts::for_user( $user_id ), function ( $receipt ) {
+        return Receipts::outstanding( $receipt ) > 0 && false === TpvTransactions::in_flight( (int) $receipt->id );
+    } ) );
+    $check( 'B2: botón de pago solo en los pendientes sin pago en curso', $payable > 0 && $payable === substr_count( $html, 'sulayr-card-pay-button' ) && false !== strpos( $html, 'Hay un pago con tarjeta de este recibo en curso' ) );
+    $check( 'B2: sin el ID del tutor no sale el selector de quién autoriza', false === strpos( $html, 'name="given_by"' ) );
+    $_GET = [ 'pago' => 'ok', 'op' => (string) $tx1->id ];
+    ob_start();
+    ( new ReceiptsAccount() )->render();
+    $html = ob_get_clean();
+    $check( 'B2: vuelta del banco con la operación autorizada → «Pago … hecho»', false !== strpos( $html, 'Pago de 39,10' ) );
+    $_GET = [ 'pago' => 'ok', 'op' => (string) $tx1->id ];
+    wp_set_current_user( $other_user );
+    ob_start();
+    do_action( 'sulayr_receipts_account_top', $other_user );
+    $html = ob_get_clean();
+    $check( 'B2: otro usuario no ve el estado de una operación ajena', false === strpos( $html, 'Pago de 39,10' ) );
+    $_GET = [];
+    wp_set_current_user( $user_id );
+    CardPayments::use_config( new RedsysConfig( '', '', '' ) );
+    ob_start();
+    ( new ReceiptsAccount() )->render();
+    $html = ob_get_clean();
+    $check( 'B2: sin credenciales no hay botón de pago, pero sí la tarjeta guardada', false === strpos( $html, 'sulayr-card-pay-button' ) && false !== strpos( $html, '**** 1234' ) );
+    wp_set_current_user( $other_user );
+
+    // Quitar tarjeta con medio «tpv» → aviso al club (C13).
+    $mails = [];
+    PaymentCards::remove( $user_id );
+    $check( 'B2: quitar la tarjeta con medio «Tarjeta (TPV)» avisa al club (C13)', 1 === count( $mails ) && false !== strpos( (string) $mails[0]['subject'], 'tarjeta' ) );
+    update_user_meta( $user_id, ChargeMethod::META, ChargeMethod::OTHER );
+    PaymentCards::save( $user_id, 'REF-X', 'TXN', '1234', '3001', 0 );
+    $mails = [];
+    PaymentCards::remove( $user_id );
+    $check( 'B2: con «Otro medio» no se avisa', 0 === count( $mails ) );
 } catch ( Throwable $e ) {
     $check( 'Excepción: ' . $e->getMessage() . ' en ' . $e->getFile() . ':' . $e->getLine(), false );
 } finally {
-    if ( $receipt_id > 0 ) {
-        $wpdb->delete( Receipts::payments_table(), [ 'receipt_id' => $receipt_id ], [ '%d' ] );
-        $wpdb->delete( Receipts::lines_table(), [ 'receipt_id' => $receipt_id ], [ '%d' ] );
-        $wpdb->delete( Receipts::table(), [ 'id' => $receipt_id ], [ '%d' ] );
+    CardPayments::use_config( null );
+    remove_filter( 'pre_wp_mail', $catch_mail, 10 );
+    $_GET = [];
+    foreach ( $receipt_ids as $id ) {
+        $wpdb->delete( Receipts::payments_table(), [ 'receipt_id' => $id ], [ '%d' ] );
+        $wpdb->delete( Receipts::lines_table(), [ 'receipt_id' => $id ], [ '%d' ] );
+        $wpdb->delete( Receipts::table(), [ 'id' => $id ], [ '%d' ] );
     }
     if ( $user_id > 0 ) {
         $wpdb->delete( TpvTransactions::table(), [ 'user_id' => $user_id ], [ '%d' ] );

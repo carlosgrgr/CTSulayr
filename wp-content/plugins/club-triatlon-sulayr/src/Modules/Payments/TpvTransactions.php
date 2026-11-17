@@ -28,6 +28,13 @@ class TpvTransactions {
     public const STATUS_DENIED = 'denegada';
     public const STATUS_ERROR = 'error';
 
+    /**
+     * Minutos tras los que una operación con el socio delante (redirección) que
+     * sigue «enviada» deja de bloquear el recibo: el socio cerró la página de
+     * Redsys. Si su notificación llega después, se procesa igual.
+     */
+    public const REDIRECT_TIMEOUT_MINUTES = 30;
+
     /** Claves de la respuesta de Redsys que no se guardan (referencia de la tarjeta). */
     private const SENSITIVE_KEYS = '/identifier|cof_txnid|signature|card_number|_pan$/i';
 
@@ -110,6 +117,9 @@ class TpvTransactions {
     /**
      * El recibo tiene una operación «enviada» sin cerrar (§5.2, paso 3).
      *
+     * Las de redirección (pago manual y validación) solo cuentan durante
+     * REDIRECT_TIMEOUT_MINUTES. Las de cobro sin el socio, siempre.
+     *
      * @param   int $receipt_id Recibo.
      * @return 	bool
      * @access 	public
@@ -118,7 +128,16 @@ class TpvTransactions {
     public static function in_flight( int $receipt_id ): bool {
         global $wpdb;
 
-        return (bool) $wpdb->get_var( $wpdb->prepare( 'SELECT 1 FROM ' . self::table() . ' WHERE receipt_id = %d AND status = %s LIMIT 1', $receipt_id, self::STATUS_SENT ) );
+        $since = gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - self::REDIRECT_TIMEOUT_MINUTES * MINUTE_IN_SECONDS ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested -- Hora local, como created_at.
+
+        return (bool) $wpdb->get_var( $wpdb->prepare(
+            'SELECT 1 FROM ' . self::table() . ' WHERE receipt_id = %d AND status = %s AND ( type NOT IN (%s, %s) OR created_at >= %s ) LIMIT 1',
+            $receipt_id,
+            self::STATUS_SENT,
+            self::TYPE_MANUAL,
+            self::TYPE_VALIDATION,
+            $since
+        ) );
     }
 
     /**
@@ -162,6 +181,21 @@ class TpvTransactions {
         ) );
 
         return 1 === (int) $updated;
+    }
+
+    /**
+     * Une una operación autorizada con el pago que creó en el recibo.
+     *
+     * @param   int $id         Operación.
+     * @param   int $payment_id Pago.
+     * @return 	void
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function set_payment( int $id, int $payment_id ): void {
+        global $wpdb;
+
+        $wpdb->update( self::table(), [ 'payment_id' => $payment_id, 'updated_at' => current_time( 'mysql' ) ], [ 'id' => $id ], [ '%d', '%s' ], [ '%d' ] );
     }
 
     /**

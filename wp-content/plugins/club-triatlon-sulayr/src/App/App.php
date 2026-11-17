@@ -165,6 +165,8 @@ class App {
         new ReceiptsAccount();
         new MemberTypes();
         new Receipts();
+        // Pago online (SPEC-COBROS): la URL de notificación de Redsys va por la API REST.
+        new \ClubTriatlonSulayr\Modules\Payments\CardPayments();
 
         if ( is_admin() ) {
             new MembersMenu();
@@ -172,6 +174,7 @@ class App {
         } else {
             new PublicJoinForm();
             new ImageConsentAccount();
+            new \ClubTriatlonSulayr\Modules\Payments\CardAccount();
         }
     }
 

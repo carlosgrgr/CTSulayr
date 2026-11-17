@@ -344,7 +344,7 @@ Rama `pago-online-parte-b`, empezada el 17 de noviembre de 2026. Se avanza con l
 
 ### 11.1. Paso B1: base sin conexión con Redsys
 
-Hecho el 17 de noviembre de 2026 y probado en local, sin commit todavía.
+Hecho el 17 de noviembre de 2026 y probado en local (`72ab9dd6d`).
 
 | Pieza | Código | Qué hace |
 |---|---|---|
@@ -361,9 +361,34 @@ Hecho el 17 de noviembre de 2026 y probado en local, sin commit todavía.
 
 Pruebas: 12 tests PHPUnit nuevos (`tests/Unit/RedsysTest.php`, 97 en total en verde). La firma esperada se calculó aparte con la línea de comandos de openssl y la clave pública de pruebas de Redsys. 36 comprobaciones con WordPress en `tests/wp/check-pagos.php`, en verde. `check-ranking.php` sigue en verde.
 
-### 11.2. Pendiente
+### 11.2. Paso B2: pago desde Mis recibos
 
-- **B2. Pago con el socio delante (§5.1).** Formulario de redirección, URL de notificación `/wp-json/sulayr/v1/redsys`, vuelta a Mis recibos y bloque «Mi tarjeta». Se puede programar ya. Para probarlo de punta a punta hace falta el entorno de pruebas de Redsys.
+Hecho el 17 de noviembre de 2026 y probado en local con notificaciones simuladas, firmadas con la clave pública de pruebas de Redsys.
+
+| Pieza | Código | Qué hace |
+|---|---|---|
+| Petición (§5.1, paso 1) | `Payments\Redsys\RedsysRequest` | Campos firmados del formulario de Redsys: importe en céntimos, `Ds_Order`, URLs de notificación y de vuelta, y `DS_MERCHANT_IDENTIFIER=REQUIRED`, `COF_INI=S`, `COF_TYPE=R` para guardar la tarjeta. |
+| Notificación (§5.1, pasos 2 y 3) | `Payments\Redsys\RedsysNotification` | Solo acepta una notificación con versión `HMAC_SHA256_V1`, firma válida y el código de comercio propio. Decodifica los valores que Redsys manda codificados para URL. |
+| Servicio | `Payments\CardPayments` | `start()`: recibo propio con pendiente, autorización obligatoria (C12, se guarda con versión y quién la da), operación «enviada» y campos para Redsys. `handle_notification()`: idempotente; cierra la operación antes de apuntar nada, así dos notificaciones a la vez no crean dos pagos. Ruta `POST /wp-json/sulayr/v1/redsys`, pública (la autentica la firma): 400 con firma no válida, 200 en lo demás. |
+| Mi cuenta (§7) | `Payments\CardAccount`, ganchos `sulayr_receipts_account_top` y `sulayr_receipt_account_actions` en `ReceiptsAccount` | «Pagar X con tarjeta» en cada recibo pendiente o parcial, con la casilla de autorización, el selector «Lo autoriza» si hay tutor y la información de protección de datos. Página intermedia que envía el formulario al banco. Bloque «Mi tarjeta» con «Quitar tarjeta» (revoca la autorización y avisa al club si cobra con tarjeta, C13). Avisos al volver: la vuelta no apunta nada (criterio 6). |
+| Mis cuotas | `FeesAccount` | Fila «Medio de cobro». |
+
+Decisiones de implementación (no cambian la spec):
+
+- **Sin credenciales no se ve nada de pago.** Con `SULAYR_REDSYS_*` vacías no salen los botones ni el bloque «Mi tarjeta», salvo que el socio ya tenga una tarjeta guardada.
+- **Guardar o cambiar la tarjeta sin pagar (C11) queda pendiente** de que el técnico confirme la validación sin importe. Mientras, la tarjeta se guarda o se cambia pagando un recibo, y Mis recibos lo explica.
+- **Pago abandonado.** Si el socio cierra la página del banco, Redsys no avisa y la operación se queda «enviada». Una operación de redirección deja de bloquear el recibo a los 30 minutos (`TpvTransactions::REDIRECT_TIMEOUT_MINUTES`). Si su notificación llega después, se procesa igual. Los cobros sin el socio (§5.2) bloquean siempre.
+- **Cobro sin recibo pendiente.** Si un gestor apuntó el pago a mano mientras el socio pagaba, la operación queda autorizada pero sin pago en el recibo, y se avisa al club por email para que devuelva el cobro o lo pase al monedero (C24).
+- **Importe distinto.** Si Redsys autoriza otro importe, no se apunta nada, la operación queda en «error» y se avisa al club.
+- **Socio de baja.** Puede pagar sus recibos pendientes, pero no se pide la autorización ni se guarda su tarjeta (C14).
+
+Pruebas: 8 tests PHPUnit nuevos (`tests/Unit/RedsysRedirectTest.php`, 105 en total en verde). `tests/wp/check-pagos.php` pasa de 36 a 73 comprobaciones, en verde y repetibles, sin dejar restos. Los emails se interceptan. Cubren los criterios 4, 5, 6 y 7 (la parte de quitar la tarjeta). La ruta REST responde 400 por HTTP en local con una firma falsa.
+
+Falta comprobar en el navegador cómo se ve Mis recibos con credenciales de pruebas, y la prueba de punta a punta con el entorno de pruebas de Redsys. Para esa prueba, la URL de notificación tiene que ser accesible desde internet: en local no lo es, así que hará falta un túnel o probarlo en PROD con el entorno de pruebas.
+
+### 11.3. Pendiente
+
 - **B3. Cobro sin el socio (§5.2).** Cliente REST con `wp_remote_post`. Los parámetros MIT y la consulta de una operación sin respuesta se confirman con el manual del técnico.
+- **C11.** «Guardar tarjeta» sin pagar, si el técnico confirma la validación sin importe.
 - **Emails de C23.** Textos editables y envíos (parte C).
 - **Parte C.** Aprobar cobro, tarea diaria, reintentos, caducidad y baja (C14 ya tiene `PaymentCards::erase_for_leave()`, falta engancharlo a la baja efectiva).
