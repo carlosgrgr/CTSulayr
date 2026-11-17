@@ -1,7 +1,7 @@
 # SPEC — Pago online: cuotas y tienda con TPV virtual
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr` (web del club, blog 1)
-**Estado:** Definida el 17 de noviembre de 2026. Decisiones C1 a C30 cerradas con el club (sección 3). Sin implementar. Contrato del TPV pendiente de firma; sin credenciales de pruebas todavía.
+**Estado:** Definida el 17 de noviembre de 2026. Decisiones C1 a C30 cerradas con el club (sección 3). Parte B en desarrollo en la rama `pago-online-parte-b`: pasos B1 y B2 hechos y probados en local el 17 de noviembre de 2026, también a mano en el navegador (sección 11). No está en `main` ni en PROD. Contrato del TPV pendiente de firma; sin credenciales de pruebas del club todavía (en local se usan las públicas de Redsys).
 **Fecha:** 17 de noviembre de 2026 (borrador inicial del 28 de octubre de 2026)
 
 El club cobrará con el TPV virtual de su banco (Redsys) dos cosas: las cuotas mensuales de los socios, con la tarjeta guardada y sin que el socio tenga que hacer nada cada mes, y los pedidos de la tienda. Esta spec se apoya en [SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md), que ya genera los recibos mensuales y lleva el control manual de pagos. Esta spec no cambia cómo se calcula un recibo: solo cómo se paga.
@@ -54,7 +54,7 @@ Respuesta del banco del 17 de noviembre de 2026:
 - Devoluciones desde la web (C24).
 - Cobro con tarjeta en el formulario público de alta (C20).
 - Contabilidad del club.
-- El texto legal de autorización de cargos y de protección de datos lo redacta el club ([PRIORIDADES.md](../PRIORIDADES.md), punto 5). Esta spec solo fija dónde aparece.
+- El texto legal de autorización de cargos y de protección de datos lo aprueba el club ([PRIORIDADES.md](../PRIORIDADES.md), punto 5). Esta spec solo fija dónde aparece. Los borradores están en [SPEC-PROTECCION-DE-DATOS.md](SPEC-PROTECCION-DE-DATOS.md), sección 4, y son los textos por defecto de los ajustes.
 
 ### 2.3. Por qué TPV y no SEPA ni Stripe
 

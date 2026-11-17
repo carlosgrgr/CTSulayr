@@ -1,7 +1,7 @@
 # SPEC — Protección de datos (RGPD y LOPDGDD)
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr` (web del club, blog 1), con efectos en `sulayr-reservas` (blog 2)
-**Estado:** En definición desde el 17 de noviembre de 2026. Alcance y forma de trabajo decididos con el club (L1 a L9). Las decisiones L10 a L27 son propuestas pendientes de confirmar. Sin implementar.
+**Estado:** En definición desde el 17 de noviembre de 2026. Alcance y forma de trabajo decididos con el club (L1 a L9). Las decisiones L10 a L27 son propuestas pendientes de confirmar. P2 hecha en parte dentro del pago online (rama `pago-online-parte-b`, 17 de noviembre de 2026, sección 7); P1, P3 y P4 sin empezar.
 **Fecha:** 17 de noviembre de 2026
 
 Esta spec es la prioridad 5 de [PRIORIDADES.md](../PRIORIDADES.md). Cubre dos cosas:
@@ -213,7 +213,7 @@ En WooCommerce → Ajustes → Cuentas y privacidad: los valores de L20 y L21 (c
 | Parte | Contenido | Requisito |
 |---|---|---|
 | P1 | Anonimización (sección 5), pantalla, capacidad, ajustes de conservación y filtro de cuentas inactivas. Configurar los plazos de WooCommerce. | Ninguno. Se puede hacer ya. |
-| P2 | Tipo `cargos_recurrentes`, casilla y primera capa en Mis recibos, ajustes de textos, L13, L18 y L19. | Va dentro de la parte B del pago online. |
+| P2 | Tipo `cargos_recurrentes`, casilla y primera capa en Mis recibos, ajustes de textos, L13, L18 y L19. | Va dentro de la parte B del pago online. Hecho el 17 de noviembre de 2026 en la rama `pago-online-parte-b` (paso B2 del pago online), con los borradores de 4.1 y 4.2 como textos por defecto: tipo, casilla obligatoria al pagar con tarjeta (L11), selector de quién autoriza si hay tutor, primera capa, ajustes y L13 (quitar la tarjeta guarda la revocación). Faltan L18 (vaciar la referencia de las tarjetas sustituidas o quitadas) y L19 (vaciar la respuesta de Redsys a los 18 meses), que siguen siendo propuestas. |
 | P3 | Política de privacidad, versión 2, y email a los socios (L14). | Textos aprobados por la junta. Antes de que la parte B del pago online llegue a PROD. |
 | P4 | Documentos internos (sección 8). | Revisión de la junta. |
 

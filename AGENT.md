@@ -8,7 +8,7 @@ A full WordPress **Multisite** install (subdomain mode) committed as-is, core an
 
 | Path | What it is |
 |---|---|
-| `wp-content/plugins/club-triatlon-sulayr/` | Club site plugin: athletes (`athlete` role), ACF fields, members module (`src/Modules/Members/`: service catalog, member history, change log, manager roles, receipts with PDF via dompdf, coach list, welcome pack), internal ranking (`src/Modules/Ranking/`), wallet, WooCommerce glue. Stripe was removed (members spec, part A). Composer/PSR-4 (`ClubTriatlonSulayr\` → `src/`), `vendor/` is committed. |
+| `wp-content/plugins/club-triatlon-sulayr/` | Club site plugin: athletes (`athlete` role), ACF fields, members module (`src/Modules/Members/`: service catalog, member history, change log, manager roles, receipts with PDF via dompdf, coach list, welcome pack), internal ranking (`src/Modules/Ranking/`), online card payments with Redsys (`src/Modules/Payments/`, in progress), wallet, WooCommerce glue. Stripe was removed (members spec, part A). Composer/PSR-4 (`ClubTriatlonSulayr\` → `src/`), `vendor/` is committed. |
 | `wp-content/plugins/sulayr-reservas/` | Network-activated swimming reservations plugin (the current release work). No Composer, own autoloader (`SulayrReservas\` → `src/`), bootstrapped from `Plugin::init()` on `plugins_loaded`. |
 | `wp-content/plugins/sulayr-scripts-manager/` | Single-file plugin, network-activated: per-site tracking codes (GTM/Analytics) in Settings → Scripts Manager, printed right after `<head>`, right after `<body>` (Astra's `astra_head_top` / `astra_body_top`, falling back to `wp_head` / `wp_body_open`) or in `wp_footer`. Only users with `unfiltered_html` (super admins in multisite) can edit them. |
 | `wp-content/themes/ct-sulayr-theme/` | Astra child theme for the club site (blog 1). |
@@ -23,7 +23,7 @@ Local sites (Apache, docroot `/var/www/html/CTSulayr`):
 
 ## Commands
 
-There is no build step and no PHPUnit suite. Verification is done with WP-CLI and scripts that load WordPress.
+There is no build step. Verification is done with WP-CLI, scripts that load WordPress, and a PHPUnit suite for the club plugin's pure PHP classes (below).
 
 ```bash
 cd /var/www/html/CTSulayr
@@ -34,7 +34,7 @@ wp eval-file /path/to/check.php                         # one-off verification s
 php -l wp-content/plugins/sulayr-reservas/src/Path/To/File.php   # syntax check
 ```
 
-- Club plugin ranking tests (pure PHP, no WordPress): `cd wp-content/plugins/club-triatlon-sulayr/tests && composer install && vendor/bin/phpunit`. They have their own `composer.json`; `tests/vendor/` is gitignored and `tests/` is never uploaded to PROD. With WordPress: `wp eval-file wp-content/plugins/club-triatlon-sulayr/tests/wp/check-ranking.php` (creates and deletes its own test data).
+- Club plugin tests (pure PHP, no WordPress: ranking calculation and the Redsys client): `cd wp-content/plugins/club-triatlon-sulayr/tests && composer install && vendor/bin/phpunit`. They have their own `composer.json`; `tests/vendor/` is gitignored and `tests/` is never uploaded to PROD. With WordPress: `wp eval-file wp-content/plugins/club-triatlon-sulayr/tests/wp/check-ranking.php` and `…/tests/wp/check-pagos.php` (each creates and deletes its own test data; `check-pagos.php` injects test credentials, simulates signed Redsys notifications and intercepts emails, so it never calls Redsys or sends mail).
 - Club plugin dependencies: `composer install` inside `wp-content/plugins/club-triatlon-sulayr/`. Its `phpcs.xml` (WPCS-based) is the lint config, but WPCS is not installed in `vendor/` right now.
 - The local CLI runs PHP 8.5, but both plugins target **PHP 7.4**: no union types, `mixed`, constructor promotion, enums, `match`, or nullsafe operator.
 
@@ -123,6 +123,18 @@ Implements `docs/club/SPEC-RANKING-INTERNO.md` (steps R0 to R6 in `main` (`7fb03
 - **Interest bonus (SPEC §15, R42/R43).** A competition can carry `interest_bonus` (0 or a multiple of the season's `interest_step` up to `interest_max`, defaults 50/300, stored in the season's baremo) and an optional `interest_label`. `PointsCalculator` adds it like the finish bonus (finishers with a reference only, absolute and age group); each result keeps a copy in `results.interest_bonus` for the breakdown. Allowed values: `RankingSettings::interest_values( $season )`, passed to `ResultValidator::validate()` as the 5th argument (default `[0]`). Settings refuse a step/max that would invalidate a bonus already used in the current season (`Baremo::interest_conflicts()`). Schema version 2.
 - **Static asset versions.** PROD caches CSS and JS for seven days, so `App::asset_version()` appends the file's mtime to `SULAYR_VERSION` for the plugin's main front and admin styles and scripts. Use it for any new enqueue.
 - **Front.** WooCommerce endpoint `ranking-interno` (`Front\RankingAccount`) and shortcode `[sulayr_ranking]`, both through `Front\RankingView` (GET parameters, read only). Templates under `templates/ranking/` can be overridden by the theme in `sulayr/ranking/` (`TemplateService::locate()`, filter `sulayr_ranking_template`); other plugin templates can't.
+
+## Club payments module
+
+Implements `docs/club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md` (part B in progress on branch `pago-online-parte-b`: steps B1 and B2 done and tested in local on 17 November 2026, also by hand in the browser; not in `main` nor PROD). Code in `wp-content/plugins/club-triatlon-sulayr/src/Modules/Payments/`; `CardPayments` is wired in `App::load_members()` and `CardAccount` on the front only. Section 11 of the spec has the implementation notes and what is pending (B3 charges without the member, C11 card validation without amount, part C monthly charge).
+
+- **Credentials only in `wp-config.php` (C29).** `SULAYR_REDSYS_MERCHANT_CODE`, `SULAYR_REDSYS_TERMINAL`, `SULAYR_REDSYS_SECRET_KEY`, `SULAYR_REDSYS_ENVIRONMENT` (`test`; only the exact value `live` uses the real environment). Never in the database or the repo. Without them nothing about card payments is shown, so the code can go to PROD before the contract. The local `wp-config.php` has Redsys's **public** test credentials (generic merchant 999008881), not the club's.
+- **Redsys client is pure PHP.** `Payments\Redsys\*` (`RedsysConfig`, `RedsysSignature`, `RedsysOrder`, `RedsysRequest`, `RedsysNotification`) must not call WordPress functions: PHPUnit loads them without WordPress. Parameter names and URLs are Redsys's public ones and must be confirmed against the technician's manual.
+- **Tables in `MembersSchema` (version 5).** `sulayr_payment_cards` (one active card per member; rows are never deleted) and `sulayr_tpv_transactions` (`ds_order` = `AAMM` + `Q` + id with 7 digits, NULL until the id exists, unique).
+- **Only the notification records payments.** `CardPayments::handle_notification()` (REST `POST /wp-json/sulayr/v1/redsys`, public, authenticated by the signature) closes the transaction first with `TpvTransactions::close()` (only updates while `enviada`), then adds the payment and saves the card, so repeated or concurrent notifications do nothing. The return pages only show the state. Mismatched amounts or a payment that no longer fits the receipt are not recorded and the club gets an email.
+- **Payment method `tpv`.** Only `Receipts::add_tpv_payment()` records it; `Receipts::add_payment()` rejects it and the manual form doesn't offer it.
+- **In-flight rule.** Never start a charge on a receipt with an `enviada` transaction (`TpvTransactions::in_flight()`). Redirect transactions (`pago_manual`, `validacion`) stop blocking after 30 minutes because an abandoned Redsys page never notifies; charges without the member (part C) always block.
+- **Charge method.** Meta `sulayr_charge_method` (`tpv`/`otro`); empty follows the setting (`ChargeMethod::get()`), so switching everyone after the pilot is a settings change. Recurring-charge authorization is the consent type `cargos_recurrentes`, kept out of `MemberConsents::types()` so it never appears in the join form.
 
 ## Production
 
