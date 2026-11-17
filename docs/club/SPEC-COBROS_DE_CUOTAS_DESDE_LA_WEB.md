@@ -1,247 +1,336 @@
-# Spec: Cobro de cuotas desde la web
+# SPEC — Pago online: cuotas y tienda con TPV virtual
 
-**Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr` (web del club)
+**Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr` (web del club, blog 1)
+**Estado:** Definida el 17 de noviembre de 2026. Decisiones C1 a C30 cerradas con el club (sección 3). Sin implementar. Contrato del TPV pendiente de firma; sin credenciales de pruebas todavía.
+**Fecha:** 17 de noviembre de 2026 (borrador inicial del 28 de octubre de 2026)
 
-Oct 28, 2026 · @Carlos · Estado: borrador abierto
+El club cobrará con el TPV virtual de su banco (Redsys) dos cosas: las cuotas mensuales de los socios, con la tarjeta guardada y sin que el socio tenga que hacer nada cada mes, y los pedidos de la tienda. Esta spec se apoya en [SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md), que ya genera los recibos mensuales y lleva el control manual de pagos. Esta spec no cambia cómo se calcula un recibo: solo cómo se paga.
 
-Nota del 11 de noviembre de 2026: [SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md) define socios, servicios con vigencia, histórico y recibos mensuales con control manual de pagos, y elimina Stripe. Este borrador debe apoyarse en ese modelo para el cobro online.
+Amplía dos decisiones de la spec de altas: D41 (se añade el medio de pago «Tarjeta (TPV)») y D52 (los socios que pagan con tarjeta reciben emails de cobro, sección 3).
 
-## Contexto y objetivos
+---
 
-El club cobrará las mensualidades desde su propia web WordPress con un TPV virtual, y dejará de usar el Excel de cuotas. La integración la desarrolla el club en su plugin de área de socio, sin coste más allá del tiempo.
+## 1. Situación actual
 
-**Situación actual**
+### 1.1. Cuotas
 
-- Los cobros de mensualidades se hacen con SportEasy. Solo se usa para cobrar.
-- El control de cuotas vive en un Excel de Drive con una pestaña por mes. En cada pestaña se ajustan a mano altas, bajas, piscina, saldos a favor, matrículas y prorrateos.
-- Un socio pagó por la web con una suscripción de Stripe. La integración se elimina en la parte A de [SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md) (D57).
+- Los recibos mensuales los genera la web el día 1 (Socios → Recibos, `sulayr_receipts`). En noviembre de 2026: 45 pendientes (1.776,50 €) y 1 «no aplica».
+- Los socios pagan por SportEasy, que solo se usa para cobrar. Un gestor apunta cada pago a mano en el recibo, con su medio: SportEasy, Bizum, efectivo, transferencia o monedero (`Receipts::add_payment`).
+- Un recibo pendiente pasa a verse como «impagado» el día 20 (`limit_date`). Ese día el gestor puede aplicar la penalización de 2 € (D46).
+- Stripe se eliminó el 11 de noviembre de 2026 (D57 de la spec de altas).
 
-**Objetivos**
+### 1.2. Tienda
 
-- El cobro mensual se lanza solo, con el importe correcto para cada socio.
-- Cada pago queda registrado automáticamente en la web en cuanto el banco lo confirma.
-- Un usuario administrador sigue pagos, impagos y cambios desde la web, sin Excel.
-- La única tarea manual es revisar el borrador de recibos unos minutos al mes y atender excepciones.
+- WooCommerce 11.2.2 con el catálogo de equipación en PROD (spec de la tienda online). Checkout clásico (shortcode), HPOS activo, compra como invitado permitida.
+- Único medio de pago activo: transferencia bancaria (`bacs`). Los pedidos quedan «en espera» hasta que el club confirma el ingreso.
+- La página «Política de devoluciones y reembolsos» está configurada en WooCommerce como página de términos y de devoluciones (comprobado el 17 de noviembre de 2026 con la copia de PROD en local).
 
-**Fuera de alcance por ahora**
+### 1.3. TPV virtual
 
-- Contabilidad general del club (gastos, visión anual).
+Respuesta del banco del 17 de noviembre de 2026:
 
+- Permite pago por referencia con cobros iniciados por el comercio (**pagos MIT**). Hay que pedir que los activen. Sin coste adicional.
+- 0,70 % por operación con tarjeta nacional, 2 % internacional, 5 € al mes de mantenimiento (no lo rebajan). Sin cuota de alta ni permanencia.
+- Las devoluciones de cobros rechazados no tienen coste. Lo cobrado se abona en cuenta al día siguiente.
+- Sin Bizum por ahora.
+- La instalación la hace un técnico de Redsys, que contacta con la persona del club que se indique. Él da el entorno de pruebas, las credenciales y el manual.
+- Un único terminal para cuotas y tienda.
 
+---
 
-## Medio de pago elegido
+## 2. Objetivos y alcance
 
-TPV virtual del banco con pago por referencia (cobro recurrente con tarjeta guardada). Cuesta lo mismo que las alternativas y es el único que permite automatizar el registro de pagos en la web.
+### 2.1. Objetivos
 
+- Cada socio guarda su tarjeta una vez. Cada mes la web cobra su recibo sola, después de que un gestor apruebe el cobro.
+- Cada cobro queda apuntado en el recibo en cuanto el banco lo confirma, sin trabajo manual.
+- Los fallos se reintentan y se avisan solos. El gestor solo atiende excepciones.
+- Los pedidos de la tienda se pagan con tarjeta al momento.
+- Dejar de cobrar cuotas por SportEasy.
 
-| Opción                        | Coste anual aprox.                               | Automatización | Comentario                                                                                                 |
-| ----------------------------- | ------------------------------------------------ | -------------- | ---------------------------------------------------------------------------------------------------------- |
-| SportEasy (actual)            | 182,49 € (3,96 €/deportista/año; 46 deportistas) | Solo cobros    | Valorado. La diferencia con el TPV es de unos 20 € al año                                                  |
-| TPV virtual                   | 160–196,80 €                                     | Casi total     | 0,70 % tarjetas nacionales, 2 % internacionales, 5 €/mes de mantenimiento                                  |
-| Domiciliación SEPA (norma 19) | 181 € + 0,60 €/devolución                        | Parcial        | 0,36 €/recibo en otras entidades, 0 € en la propia; requiere subir el fichero cada mes y mandatos firmados |
-| Stripe                        | Más del doble que el TPV                         | Total          | 1,5 % + 0,25 € por cobro con tarjeta europea                                                               |
+### 2.2. Fuera de alcance
 
+- Bizum (el banco no lo ofrece).
+- Devoluciones desde la web (C24).
+- Cobro con tarjeta en el formulario público de alta (C20).
+- Contabilidad del club.
+- El texto legal de autorización de cargos y de protección de datos lo redacta el club ([PRIORIDADES.md](../PRIORIDADES.md), punto 5). Esta spec solo fija dónde aparece.
 
-Valoración de octubre de 2026, el mes con más deportistas del año: 47 deportistas y 1.626,58 € a cobrar.
+### 2.3. Por qué TPV y no SEPA ni Stripe
 
-SportEasy cobra 3,96 € al año por deportista. Con 46 deportistas, este año son 182,49 €. El TPV suma 5 € al mes (60 € al año aunque no se cobre nada) y 0,70 € de cada 100 € cobrados.
+Valoración de octubre de 2026, el mes con más deportistas: 47 deportistas y 1.626,58 € a cobrar.
 
-Si todos los meses fueran como octubre, el TPV saldría por 196,80 € al año, cerca de 1,2 € al mes más que SportEasy. Redondeando, unos 200 €: unos 18 € más. Como en verano se cobra menos, lo probable es que baje a unos 160 €: unos 20 € menos que SportEasy. La diferencia de dinero es pequeña.
+| Opción | Coste anual aprox. | Automatización | Comentario |
+|---|---|---|---|
+| SportEasy (actual) | 182,49 € (3,96 €/deportista/año; 46 deportistas) | Solo cobros | La diferencia con el TPV es de unos 20 € al año |
+| TPV virtual | 160–196,80 € | Casi total | 0,70 % tarjetas nacionales, 5 €/mes |
+| Domiciliación SEPA (norma 19) | 181 € + 0,60 €/devolución | Parcial | Fichero manual cada mes, mandatos firmados, devoluciones días después |
+| Stripe | Más del doble que el TPV | Total | 1,5 % + 0,25 € por cobro |
 
-A partir de unos 60 socios el TPV sale claramente más barato: SportEasy cobra lo mismo por cada socio nuevo y en el TPV ese coste baja. El motivo para cambiar es el trabajo. Cada socio guarda la tarjeta una vez, el cobro mensual es automático y los pagos quedan en la web, sin Excel.
+La diferencia de dinero es pequeña. El motivo para el TPV es el tiempo de gestión: tarjeta guardada una vez, cobro automático y pagos apuntados solos. A partir de unos 60 socios el TPV sale claramente más barato. El club asume la comisión: el socio paga el importe del recibo.
 
-**Por qué TPV y no SEPA:** el banco avisa a la web al momento de cada cobro, aprobado o denegado. Con SEPA hay que subir el fichero a mano y las devoluciones llegan días después.
+---
 
-**Cuándo revisar la decisión:** si el banco no ofrece pago por referencia, o si quita o rebaja los 5 € al mes. En ese caso el TPV pasa a ser claramente más barato.
+## 3. Decisiones del club
 
-## Cálculo del cobro mensual
+Cerradas con el club el 17 de noviembre de 2026. C2, C5, C9, C12, C13, C17, C22 y C28 a C30 salieron como propuestas y el club las confirmó el mismo día.
 
-La web no guarda un importe fijo por socio: cada mes calcula el recibo con la tarifa, los servicios y los ajustes vigentes. Cualquier cambio se refleja solo en el siguiente recibo.
+### Alcance
 
-```latex
-\text{Recibo} = \text{cuota base} + \sum \text{servicios activos} + \sum \text{ajustes del mes}
-```
+| # | Decisión |
+|---|---|
+| C1 | Una spec con dos ámbitos: tienda (parte A) y cuotas (partes B a D). Comparten terminal y credenciales. |
+| C2 | Un único terminal Redsys para cuotas y tienda. Separarlos se valorará más adelante. |
 
-**Piezas**
+### Tienda
 
-- **Tarifas:** cuota básica, cuota completa, piscina… Cada precio tiene fechas de vigencia, así se cubre que la piscina cueste 25 € en invierno y 15–20 € en verano.
-- **Servicios del socio:** su cuota base y los servicios activos, cada uno con fecha de inicio y de fin. Dar de baja la natación es poner fecha de fin, no borrar.
-- **Ajustes:** importes positivos o negativos que se aplican una vez o durante un periodo: matrícula, medio mes, saldo a favor, promoción amigo, penalización por retraso, congelación por lesión, cuota subvencionada.
+| # | Decisión |
+|---|---|
+| C3 | La tienda cobra con el **módulo oficial de Redsys para WooCommerce** (gratuito), sin programar. Se activa en cuanto haya credenciales, sin esperar a las cuotas. |
+| C4 | En la tienda solo se paga con tarjeta. La transferencia bancaria se desactiva. Los pedidos ya hechos por transferencia siguen como están. |
+| C5 | Antes de activar el pago con tarjeta, debe haber una página de condiciones de venta y devoluciones configurada como página de términos de WooCommerce. Hecho: «Política de devoluciones y reembolsos». |
 
-**Reglas** (por confirmar con la junta)
+### Medio de cobro del socio
 
-- **Fecha de corte:** día 25. Los cambios hechos hasta el corte cuentan para el mes siguiente; los posteriores, para el otro.
-- **Fecha de cobro:** día 1 de cada mes.
-- **Alta a mitad de mes:** prorrateo por días, o medio mes si entra después del 15. La matrícula se añade al primer recibo.
-- **Saldo a favor mayor que el recibo:** el recibo queda a 0 € y el resto pasa como saldo al mes siguiente.
-- **Congelación o subvención:** el recibo se genera a 0 € con el motivo, para que quede constancia.
-- **Junta directiva:** mismas reglas; sus particularidades se registran como ajustes.
+| # | Decisión |
+|---|---|
+| C6 | Guardar la tarjeta es obligatorio, con excepciones. Cada socio tiene un campo **«Medio de cobro»**: «Tarjeta (TPV)» u «Otro medio». Solo los de «Tarjeta (TPV)» entran en el cobro automático. |
+| C7 | Los de «Otro medio» pagan como hoy (Bizum, efectivo, transferencia…, apuntado por un gestor) y no reciben emails de cobro (D52 sigue para ellos). También pueden pagar con tarjeta desde Mis recibos. |
+| C8 | Un ajuste fija el medio de cobro de las altas nuevas. Durante el piloto es «Otro medio»; al arrancar con todos pasa a «Tarjeta (TPV)». |
+| C9 | El cambio de medio de cobro lo hace un gestor desde la ficha del socio y queda en el registro de cambios (D58). |
 
-**Ciclo mensual**
+### Tarjeta
 
-1. Día 25: la web genera el borrador de recibos con el desglose de cada socio.
-2. Días 25–30: el administrador revisa y corrige los recibos que haga falta, y aprueba el lote.
-3. Día 1: la web cobra cada recibo aprobado con la referencia de la tarjeta.
-4. El banco responde y la web marca cada recibo como pagado o fallido.
-5. Los fallidos se reintentan y, si siguen fallando, se avisa al socio y al administrador.
+| # | Decisión |
+|---|---|
+| C10 | La web nunca ve ni guarda datos de tarjeta. El socio los mete en la página de Redsys; la web guarda solo la referencia que devuelve Redsys, la tarjeta enmascarada y la caducidad. |
+| C11 | El socio guarda la tarjeta de dos formas desde Mis recibos: pagando con tarjeta cualquier recibo pendiente, o con el botón «Guardar tarjeta» sin pagar nada (validación sin importe), si el técnico de Redsys confirma que se puede. |
+| C12 | Al guardar la tarjeta, el socio marca una casilla obligatoria de autorización de cargos recurrentes. Se guarda como consentimiento con versión y fecha (tabla de consentimientos de la spec de altas). Si es menor, puede aceptarla el tutor (D6, D10). |
+| C13 | Una tarjeta activa por socio. Guardar otra sustituye a la anterior. El socio puede quitar su tarjeta: si su medio de cobro es «Tarjeta (TPV)», se avisa al club. |
+| C14 | Al hacerse efectiva la baja, se borra la referencia de la tarjeta. Si quedan recibos pendientes, se intentan cobrar antes. Recibos y transacciones se conservan con el plazo de antiguos socios (D36, 6 años). |
 
+### Cobro mensual
 
+| # | Decisión |
+|---|---|
+| C15 | Los recibos se siguen generando el día 1 (D39). El cobro con tarjeta es el **día 5**. Los dos días son configurables. |
+| C16 | El cobro necesita aprobación: un gestor pulsa **«Aprobar cobro de <mes>»** después de revisar los recibos. Si se aprueba antes del día de cobro, se cobra ese día. Si se aprueba después, se cobra al momento. Si el día de cobro llega sin aprobar, no se cobra nada y se avisa al email del club. |
+| C17 | Entran en el cobro los recibos del mes en estado pendiente o parcial, de socios con medio «Tarjeta (TPV)» y tarjeta activa. Se cobra lo pendiente (total menos pagos ya apuntados). No entran los recibos «no aplica», anulados ni pagados, ni los de meses anteriores. |
+| C18 | El monedero no se descuenta solo. Si hay que pagar con monedero, el gestor lo apunta antes de aprobar, como hoy (D47). |
+| C19 | Si falla un cobro: email al socio con enlace para pagar o cambiar la tarjeta y **2 reintentos**, a los 3 y a los 6 días. Tras el último fallo se avisa al club. La penalización del día 20 no cambia (D46). |
 
-## Estructura de tablas
+### Altas y pagos manuales
 
-Nueve tablas propias del plugin, con prefijo `{wp_prefix}sulayr_`. Los importes se guardan en céntimos (enteros) para evitar errores de redondeo, y las fechas en formato `DATE`/`DATETIME`.
+| # | Decisión |
+|---|---|
+| C20 | El socio nuevo paga su primer recibo (matrícula y parte proporcional) con tarjeta desde Mis recibos. El email de bienvenida lleva el enlace. Así guarda la tarjeta y desde el mes siguiente se le cobra solo. Si no paga, sigue el flujo normal de impagados. |
+| C21 | Cualquier socio puede pagar con tarjeta cualquier recibo propio pendiente desde Mis recibos, tenga el medio de cobro que tenga. |
+| C22 | Un gestor puede lanzar «Cobrar con la tarjeta guardada» en un recibo concreto (p. ej. uno generado después de aprobar el cobro del mes o tras un reingreso). |
 
+### Avisos
 
-| Tabla             | Para qué                                                  | Campos principales                                                                                                                                                           |
-| ----------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `socios`          | Ficha del socio (si el plugin ya tiene una, se reutiliza) | id, userid (WordPress), numsocio, tipo (normal, junta, externo), estado (activo, congelado, baja), fechaalta, fechabaja                                                      |
-| `tarifas`         | Catálogo de conceptos cobrables                           | id, codigo, nombre, tipo (cuotabase, servicio, puntual), activa                                                                                                              |
-| `tarifa_precios`  | Precio de cada tarifa en el tiempo                        | id, tarifaid, importecent, vigentedesde, vigentehasta                                                                                                                        |
-| `socio_servicios` | Qué tiene contratado cada socio y desde cuándo            | id, socioid, tarifaid, fechainicio, fechafin, estado (pendiente, aprobado, rechazado), solicitadopor, aprobadopor                                                            |
-| `ajustes`         | Importes puntuales o por periodo                          | id, socioid, tipo (matricula, prorrateo, saldofavor, descuento, promocion, penalizacion, exencion), importecent (±), periododesde, periodohasta, motivo, reciboid, creadopor |
-| `recibos`         | Lo que se cobra a un socio en un mes                      | id, socioid, periodo (AAAA-MM), importecent, estado (borrador, aprobado, cobrando, pagado, fallido, exento, anulado), intentos, fechacobro, metodopagoid                     |
-| `recibo_lineas`   | Desglose del recibo                                       | id, reciboid, concepto, tarifaid o ajusteid, importecent                                                                                                                     |
-| `metodos_pago`    | Referencia de la tarjeta que da Redsys                    | id, socioid, redsysidentifier, coftxnid, tarjetaenmascarada, caducidad (AAMM), estado (activo, caducado, revocado), fechaalta                                                |
-| `transacciones`   | Cada operación enviada a Redsys                           | id, reciboid, dsorder, tipo (inicial, recurrente, puntual, devolucion), importecent, dsresponse, codigoautorizacion, estado, respuesta (JSON sin datos sensibles), creado    |
+| # | Decisión |
+|---|---|
+| C23 | Emails al socio con medio «Tarjeta (TPV)», con textos editables en Socios → Ajustes: aviso previo al aprobar el cobro (importe, desglose y día de cargo); cobro realizado (con enlace al recibo); cobro fallido (con enlace para pagar o cambiar la tarjeta); tarjeta a punto de caducar (30 días antes). Si es menor, también al tutor (D6). |
 
+### Devoluciones
 
-Una décima tabla `log_cambios` (quién, qué, cuándo, valor anterior y nuevo) guarda la auditoría de cambios en servicios, ajustes y recibos.
+| # | Decisión |
+|---|---|
+| C24 | Las devoluciones se hacen en el portal de comercio de Redsys. En la web, el gestor borra el pago con motivo o lo pasa al monedero, con las herramientas que ya existen. |
 
-**Relaciones clave**
+### Arranque
 
-- Un socio tiene muchos servicios, ajustes y recibos, y normalmente un método de pago activo.
-- Un recibo tiene varias líneas y una o más transacciones (reintentos).
-- Un recibo se identifica de forma única por socio + periodo, lo que evita cobrar dos veces el mismo mes.
+| # | Decisión |
+|---|---|
+| C25 | Piloto real de un mes con un grupo de socios que **no** son de la junta. El gestor les pone el medio «Tarjeta (TPV)». El resto sigue con SportEasy. |
+| C26 | Tras el piloto, todos los socios pasan a «Tarjeta (TPV)» a la vez, salvo las excepciones. Quien no tenga tarjeta guardada el día de cobro paga desde Mis recibos. Se deja de cobrar por SportEasy. |
+| C27 | Sin fecha objetivo: el piloto empieza cuando todo esté probado en el entorno de pruebas de Redsys. |
 
+### Permisos y seguridad
 
+| # | Decisión |
+|---|---|
+| C28 | Aprobar el cobro, cobrar un recibo concreto y cambiar el medio de cobro requieren `sulayr_manage_members` (administrador y gestor de socios). El deportista solo ve y paga sus recibos y gestiona su tarjeta. |
+| C29 | Las credenciales de Redsys (comercio, terminal, clave SHA-256 y entorno de pruebas o real) van en `wp-config.php`, nunca en la base de datos ni en el repositorio. También las del módulo de la tienda: el plugin del club sustituye con un filtro los valores que el módulo guarda en sus ajustes por los de `wp-config.php`. Así una copia de la base de datos de PROD en local nunca lleva la clave real ni cobra de verdad. |
+| C30 | Cada cobro y cada cambio de tarjeta queda en el registro de cambios del socio (D58). |
 
-## Flujo con Redsys
+---
 
-El socio registra su tarjeta una vez en la página del banco; a partir de ahí la web cobra cada mes sin que tenga que hacer nada. Los nombres de parámetros son los habituales de Redsys y hay que confirmarlos con el manual de integración del banco.
+## 4. Modelo de datos
 
-[embedded content: cobro mensual · 6 pasos, 1 decisión
+### 4.1. Ficha del socio
 
-Solo los recibos fallidos tras los reintentos requieren atención del socio o de tesorería.
+Meta de usuario `sulayr_charge_method`: `tpv` u `otro`. Si no existe, vale el ajuste de altas nuevas (C8). En la ficha de wp-admin aparece junto al estado del socio, con el estado de su tarjeta (enmascarada, caducidad, fecha de alta).
 
-**1. Registro de tarjeta (primer pago)**
+### 4.2. Tablas nuevas
 
-1. El socio paga su primer recibo (matrícula + parte proporcional) desde la web.
-2. La web redirige a la página segura de Redsys con `DS_MERCHANT_IDENTIFIER=REQUIRED`, `DS_MERCHANT_COF_INI=S` y `DS_MERCHANT_COF_TYPE=R` (pago recurrente). El socio se autentica con su banco (3D Secure).
-3. Redsys envía la notificación a la URL de la web con la referencia (`Ds_Merchant_Identifier`), el identificador de la operación inicial (`Ds_Merchant_Cof_Txnid`) y la caducidad (`Ds_ExpiryDate`).
-4. La web verifica la firma, marca el recibo como pagado y guarda la referencia en `metodos_pago`.
+Con el prefijo de blog 1 y en `MembersSchema` (sube la versión del esquema). Importes en euros con 2 decimales, como `sulayr_receipts`.
 
-Para cambiar de tarjeta sin pagar un recibo, preguntar al banco si permite una operación de validación sin importe.
+| Tabla | Contenido |
+|---|---|
+| `sulayr_payment_cards` | Tarjetas: usuario, referencia de Redsys (`Ds_Merchant_Identifier`), identificador de la operación inicial (`Ds_Merchant_Cof_Txnid`), tarjeta enmascarada, caducidad (AAMM), estado (`activa`, `sustituida`, `quitada`, `caducada`, `borrada`), creada, cerrada. Al borrarse (C14) se vacían la referencia y el identificador; la fila queda para el histórico. |
+| `sulayr_tpv_transactions` | Cada operación enviada a Redsys: recibo (o 0 si es validación), usuario, `Ds_Order`, tipo (`registro`, `pago_manual`, `recurrente`, `reintento`, `validacion`), intento, importe, estado (`enviada`, `autorizada`, `denegada`, `error`), `Ds_Response`, código de autorización, respuesta sin datos sensibles (JSON), pago del recibo creado, creada, actualizada. `Ds_Order` único. |
 
-**2. Cobro mensual (sin el socio delante)**
+### 4.3. Opciones
 
-1. El cron del día 1 recorre los recibos aprobados.
-2. Para cada uno, llamada a la API REST de Redsys con la referencia, `DS_MERCHANT_DIRECTPAYMENT=true`, `DS_MERCHANT_EXCEP_SCA=MIT`, `DS_MERCHANT_COF_INI=N`, `DS_MERCHANT_COF_TYPE=R` y el `DS_MERCHANT_COF_TXNID` guardado.
-3. La respuesta llega en la misma llamada: un `Ds_Response` entre 0000 y 0099 significa autorizado.
-4. La web registra la transacción y actualiza el recibo a pagado o fallido.
+- `sulayr_tpv_charges`: por mes (`AAAA-MM`), quién aprobó, cuándo, día de cobro y resumen del lote (cobrados, fallidos, sin tarjeta).
+- Ajustes nuevos en Socios → Ajustes: día de cobro (5), días de reintento (3 y 6), medio de cobro de altas nuevas, días de aviso de caducidad (30), textos de los emails de C23, texto y versión de la autorización de cargos recurrentes (C12).
 
-**3. Detalles técnicos**
+### 4.4. Medio de pago
 
-- **Número de pedido (**`Ds_Order`**):** de 4 a 12 caracteres, los 4 primeros numéricos, único por intento. Propuesta: periodo AAMM + id del recibo + número de intento.
-- **Importe:** en céntimos y moneda 978 (euro), que coincide con cómo se guarda en la base de datos.
-- **Firma:** HMAC SHA-256 con la clave del comercio, tanto al enviar como al recibir.
-- **Caducidad de tarjeta:** aviso al socio 30 días antes; si caduca, el recibo pasa a pago manual hasta que registre otra.
-- **Pago manual:** un recibo fallido se paga desde el área de socio con el mismo flujo del registro de tarjeta, lo que aprovecha para guardar la nueva tarjeta.
+`Receipts::add_payment` gana el medio fijo `tpv` («Tarjeta (TPV)»), como `monedero`: no es editable en los ajustes y solo lo apunta la web cuando Redsys autoriza un cobro. El pago guarda el `Ds_Order` en la nota y el autor es el usuario del sistema (0) o el socio si pagó desde Mis recibos.
 
+---
 
+## 5. Integración con Redsys
 
-## Panel de administración y área de socio
+Los nombres de parámetros son los habituales de Redsys. Hay que confirmarlos con el manual que dé el técnico.
 
-El administrador gestiona excepciones y revisa el lote mensual; el socio gestiona su tarjeta y pide sus cambios.
+### 5.1. Pago con el socio delante (redirección)
 
-**Panel de administración** (rol con permiso propio, por ejemplo `sulayr_tesoreria`)
+Lo usan el pago desde Mis recibos (C20, C21) y la validación sin importe (C11).
 
-- **Resumen del mes:** total a cobrar, cobrado, pendiente y fallido, con la lista de impagos.
-- **Borrador de recibos:** lista de socios con el desglose de cada recibo, edición puntual y botón de aprobar el lote.
-- **Ficha de socio:** servicios con sus fechas, ajustes, historial de recibos y estado de la tarjeta.
-- **Solicitudes pendientes:** altas y bajas de servicios pedidas por socios, para aprobar o rechazar.
-- **Tarifas:** precios y fechas de vigencia.
-- **Avisos:** tarjetas que caducan en los próximos 30 días y recibos fallidos tras reintentos.
-- **Exportación:** listado mensual en CSV, que sustituye a la pestaña del Excel.
+1. La web crea la transacción y manda al socio a la página de Redsys con la firma HMAC SHA-256. Pide guardar la tarjeta con `DS_MERCHANT_IDENTIFIER=REQUIRED`, `DS_MERCHANT_COF_INI=S` y `DS_MERCHANT_COF_TYPE=R`. El socio se autentica con su banco (3D Secure).
+2. Redsys avisa a la URL de notificación de la web (`DS_MERCHANT_MERCHANTURL`, por HTTPS) con el resultado, la referencia, el `Ds_Merchant_Cof_Txnid` y la caducidad.
+3. La web verifica la firma. Si está autorizada (`Ds_Response` de 0000 a 0099): apunta el pago en el recibo con medio `tpv` y guarda la tarjeta (sustituye la anterior).
+4. El socio vuelve a Mis recibos con un aviso de pago hecho o fallido. La página de vuelta **no** apunta nada: solo la notificación lo hace.
 
-**Área de socio**
+### 5.2. Cobro sin el socio (MIT)
 
-- Ver su cuota actual y el importe previsto del próximo recibo.
-- Historial de recibos con su estado.
-- Pedir alta o baja en natación o cambio de cuota, con aviso de la fecha de corte.
-- Añadir o cambiar la tarjeta (redirige a la página segura del banco).
-- Pagar a mano un recibo fallido.
+Lo usan el cobro mensual, los reintentos y el cobro de un recibo concreto (C22).
 
-**Notificaciones por email**
+1. Llamada a la API REST de Redsys con la referencia guardada, `DS_MERCHANT_DIRECTPAYMENT=true`, `DS_MERCHANT_EXCEP_SCA=MIT`, `DS_MERCHANT_COF_INI=N`, `DS_MERCHANT_COF_TYPE=R` y el `DS_MERCHANT_COF_TXNID` guardado.
+2. La respuesta llega en la misma llamada. La web apunta el pago o el fallo.
+3. Si no hay respuesta (tiempo agotado o error de red), la transacción queda `enviada` y no se reintenta sola hasta consultar su estado en Redsys. Nunca se lanza otro cobro sobre un recibo con una transacción `enviada`.
 
-- Al socio: cobro realizado, cobro fallido, tarjeta a punto de caducar, solicitud aprobada o rechazada.
-- Al administrador: borrador listo para revisar, resumen tras el cobro.
+### 5.3. Detalles
 
-**Apunte para la revisión** (28 de octubre de 2026, sin decidir)
+- **`Ds_Order`:** 12 caracteres, los 4 primeros numéricos: `AAMM` + `Q` + id de la transacción con ceros a la izquierda (7 cifras). La letra evita choques con los pedidos de la tienda, que usan el mismo terminal (C2).
+- **Importe:** en céntimos y moneda 978 (euro).
+- **Firma:** HMAC SHA-256 con la clave del comercio, al enviar y al recibir.
+- **Notificación:** endpoint REST propio (`/wp-json/sulayr/v1/redsys`). Idempotente: si la transacción ya está cerrada, responde y no hace nada.
+- **Código:** un cliente de Redsys propio en el plugin (`src/Modules/Payments/`), compatible con PHP 7.4. La tienda no lo usa (C3).
 
-Cinco días antes del vencimiento, mandar a cada socio el resumen de lo que se le va a cobrar: la cuantía de su tarifa más los servicios añadidos. Por dos vías:
+---
 
-- Correo.
-- Aviso en su perfil, en Comunicaciones o Alertas.
+## 6. Ciclo mensual
 
-El aviso interno puede llevar directamente al pago. Al revisarlo hay que encajarlo con el cobro automático del día 1: si la tarjeta ya está guardada, el resumen informa de lo que se cobrará; el enlace de pago sirve cuando no hay tarjeta o el cobro anterior falló.
+| Día | Qué pasa |
+|---|---|
+| 1 | Se generan los recibos (como hoy). |
+| 1 a 4 | El gestor revisa: recibos desfasados, pagos con monedero, excepciones. Pulsa «Aprobar cobro». Cada socio con medio «Tarjeta (TPV)» recibe el aviso previo (C23). |
+| 5 | La tarea diaria cobra los recibos aprobados (C17). Email de cobro realizado o fallido. |
+| 8 y 11 | Reintentos de los fallidos (C19). Tras el último, aviso al club. |
+| 20 | Día límite: impagado y penalización, como hoy (D46). |
 
-## Seguridad y protección de datos
+### 6.1. Pantalla «Aprobar cobro»
 
-La web nunca ve ni guarda datos de tarjeta: el socio los introduce en la página del banco y la web solo recibe una referencia. Eso deja el plugin fuera del ámbito de la normativa de seguridad de tarjetas (PCI DSS).
+En Socios → Recibos, para el mes en curso:
 
-**Pagos**
+- Resumen: número de recibos e importe que se cobrarán, socios con medio «Tarjeta (TPV)» sin tarjeta activa o con la tarjeta caducada, recibos desfasados (D40).
+- Los recibos desfasados se avisan, pero no bloquean: el gestor decide si los regenera antes.
+- Botón «Aprobar cobro de <mes>», con confirmación. Una vez aprobado se puede anular la aprobación mientras no haya empezado el cobro.
 
-- Verificar la firma de cada notificación de Redsys antes de cambiar el estado de un recibo.
-- Tratar cada notificación como idempotente: si el recibo ya está pagado, no volver a procesarla.
-- La clave del comercio fuera de la base de datos (en `wp-config.php` o variable de entorno).
-- La URL de notificación solo por HTTPS.
-- Un cron que no se ejecute dos veces a la vez (bloqueo) y que nunca cobre un recibo que no esté aprobado.
+### 6.2. Tarea diaria
 
-**Acceso**
+Se amplía la tarea diaria de la spec de altas (`MembersDailyTask`):
 
-- Solo el rol de tesorería ve importes e historial de pagos de otros socios.
-- Todas las acciones de administración comprueban permisos y nonce de WordPress.
-- Registro de auditoría de cada cambio en servicios, ajustes y recibos.
+- Día de cobro con el mes aprobado: cobra los recibos. Uno por uno, con bloqueo para que dos ejecuciones no cobren a la vez y comprobando antes de cada cargo que el recibo sigue con importe pendiente.
+- Días de reintento: reintenta los fallidos que sigan pendientes.
+- Avisa de las tarjetas que caducan en 30 días (una vez por tarjeta) y marca como caducadas las vencidas.
+- Borra las referencias de los socios cuya baja se hizo efectiva (C14).
+- Día de cobro sin aprobar: avisa al club una vez.
 
-**Protección de datos**
+WP-Cron depende de las visitas. En PROD se usa una tarea cron del servidor que llama a `wp-cron.php` de los dos sitios cada 5 minutos, con `DISABLE_WP_CRON` en `wp-config.php`.
 
-- Añadir al formulario de alta online la información sobre el tratamiento de datos de pago y la autorización expresa para cargos recurrentes en la tarjeta.
-- Definir cuánto tiempo se conservan recibos y transacciones (obligaciones fiscales) y cuándo se borra la referencia de tarjeta tras una baja.
-- Incluir al banco como encargado o responsable del tratamiento en el registro de actividades del club.
+---
 
+## 7. Mi cuenta
 
+En la pestaña «Mis recibos» (20.8 de la spec de altas):
 
-## Preguntas abiertas y plan
+- Botón «Pagar con tarjeta» en cada recibo pendiente o parcial (C21), salvo que tenga una transacción en curso.
+- Bloque «Mi tarjeta»: tarjeta enmascarada y caducidad, «Cambiar tarjeta» (guardar otra, C11 y C13) y «Quitar tarjeta». Si no tiene, «Guardar tarjeta», con la casilla de autorización (C12).
+- Si el medio de cobro es «Tarjeta (TPV)», texto con el día de cobro del mes y aviso si no hay tarjeta activa.
 
-**Al banco**
+La pestaña «Mis cuotas» muestra el medio de cobro.
 
-Enviado el 28 de octubre de 2026. Pendiente de respuesta.
+---
 
-- [ ] ¿Activan pago por referencia con operativa de cobros recurrentes iniciados por el comercio?
-- [ ] ¿Hay cuota de alta del TPV virtual?
-- [ ] ¿Pueden quitar o rebajar los 5 €/mes de mantenimiento por ser asociación deportiva?
-- [ ] ¿Incluye Bizum y con qué comisión?
+## 8. Tienda
+
+Parte A. Sin código propio.
+
+1. Comprobar que la versión del módulo oficial de Redsys para WooCommerce funciona con la versión de PHP de PROD y con WooCommerce 11.
+2. Instalar y configurar con las credenciales de pruebas. Probar pago autorizado, denegado y cancelado. Comprobar que el pedido pasa a «procesando» y que el CSV de Inverse y el nombre del tritraje no cambian.
+3. Añadir el filtro de C29 para que el módulo lea las credenciales de `wp-config.php`. Los nombres de sus ajustes se ven al instalarlo.
+4. Pasar a las credenciales reales, desactivar la transferencia (C4) y hacer una compra real pequeña.
+5. Actualizar `club-triatlon-sulayr/MANUAL-TIENDA.md` y `docs/club/guia-tienda-sulayr.html`.
+
+Si el módulo oficial no sirve en PROD, se valora una pasarela propia con el cliente de la sección 5 antes de seguir.
+
+---
+
+## 9. Entrega por partes
+
+| Parte | Contenido | Requisito |
+|---|---|---|
+| A | Tienda con tarjeta (sección 8). | Credenciales de pruebas. |
+| B | Tablas, cliente Redsys, URL de notificación, pago y guardado de tarjeta desde Mis recibos, validación sin importe, medio de cobro en la ficha, consentimiento, emails de bienvenida con enlace (C20). | Credenciales de pruebas y pagos MIT activados. |
+| C | Aprobar cobro, cobro mensual, reintentos, cobro de un recibo concreto, avisos, caducidad, baja (C14). | Parte B. |
+| D | Piloto con socios que no son de la junta (C25), un mes; luego arranque con todos (C26) y retirada de SportEasy de los medios de pago. | Parte C en PROD con credenciales reales. |
+
+### 9.1. Criterios de aceptación
+
+Parte A:
+
+1. Un pedido pagado con tarjeta en pruebas queda «procesando» con el pago apuntado.
+2. Un pago denegado o cancelado deja el pedido «pendiente de pago» y no reduce el stock más allá de lo que hace hoy WooCommerce.
+3. En PROD, el checkout solo ofrece tarjeta y muestra la casilla de condiciones.
+
+Parte B:
+
+4. Un socio paga un recibo pendiente desde Mis recibos: el recibo queda pagado con medio «Tarjeta (TPV)» y su tarjeta aparece en «Mi tarjeta».
+5. Una notificación repetida o con firma falsa no crea pagos.
+6. Volver a la web sin que llegue la notificación no apunta el pago.
+7. Guardar otra tarjeta sustituye a la anterior. Quitarla avisa al club si su medio es «Tarjeta (TPV)».
+8. Sin la casilla de autorización no se puede guardar la tarjeta, y el consentimiento queda con versión y fecha.
+
+Parte C:
+
+9. Sin aprobación, el día de cobro no se cobra nada y el club recibe el aviso.
+10. Con aprobación, se cobran solo los recibos de C17 y por lo pendiente. Un socio con medio «Otro medio» no recibe ningún cargo ni email.
+11. Ejecutar la tarea dos veces el mismo día no cobra dos veces.
+12. Un cobro denegado se reintenta los días 8 y 11; tras el último, el club recibe el aviso.
+13. El socio recibe el aviso previo, el de cobro realizado o fallido y el de caducidad.
+14. Al hacerse efectiva una baja, la referencia de la tarjeta queda vacía.
+
+---
+
+## 10. Preguntas abiertas
+
+**Al técnico de Redsys**
+
+- [ ] Activar los pagos MIT (pago por referencia, COF) en el terminal.
+- [ ] Credenciales y URL del entorno de pruebas, y manual de la API REST.
+- [ ] ¿Permite una operación de validación sin importe para guardar o cambiar la tarjeta (C11)?
 - [ ] ¿Hay comisión mínima o fija por operación además del 0,70 %?
-- [ ] ¿Tienen entorno de pruebas y manual de integración con la API REST?
+- [ ] ¿Cómo se consulta el estado de una operación sin respuesta (5.2, paso 3)?
 
-**A la junta**
+**Al club**
 
-- [x] ¿Los 3,96 € de SportEasy cubren todo el servicio o solo los pagos? Solo los pagos. Con los datos de octubre de 2026, la diferencia con el TPV es de unos 20 € al año. El ahorro está en el tiempo de gestión.
-- [ ] Confirmar fecha de corte (día 25) y de cobro (día 1).
-- [ ] Regla de prorrateo para altas a mitad de mes.
-- [ ] Cuántos reintentos tras un cobro fallido y si se aplica penalización por retraso.
-- [ ] ¿Los cambios de servicio pedidos por socios se aplican solos o necesitan aprobación?
-- [x] ¿Qué pasa con el socio que paga ahora con suscripción de Stripe? Ya no se usa: Stripe se elimina (spec de altas, D57).
-- [ ] Recordatorio 5 días antes del vencimiento, con el importe de la tarifa y los toppings, por correo y por aviso en el perfil (Comunicaciones o Alertas), con enlace al pago. Ver el apunte del apartado de notificaciones.
+- [ ] Persona de contacto para el técnico de Redsys (nombre y móvil) y firma del contrato.
+- [ ] Texto de la autorización de cargos recurrentes (C12).
+- [ ] Socios del piloto (C25).
+- [x] PROD usa PHP 8.2 (se puede subir a 8.3, 8.4 o 8.5). El hosting permite desactivar WP-Cron y usar una tarea cron del servidor (6.2).
 
-**Plan de implantación**
+**Respuestas del banco** (28 de octubre al 17 de noviembre de 2026)
 
-1. Contratar el TPV y obtener credenciales del entorno de pruebas.
-2. Crear tablas, catálogo de tarifas y cargar los socios con sus servicios actuales.
-3. Primer pago con guardado de tarjeta y notificación, en pruebas.
-4. Generación de borrador, aprobación y cobro recurrente, en pruebas.
-5. Panel de administración y área de socio.
-6. Piloto real con la junta directiva durante un mes, en paralelo con el Excel.
-7. Migración del resto de socios: cada uno registra su tarjeta antes del día de corte.
-8. Dejar de cobrar mensualidades por SportEasy.
-
+- [x] Pago por referencia con cobros iniciados por el comercio: sí, pagos MIT, a pedir, sin coste adicional.
+- [x] Cuota de alta: no. Permanencia: no.
+- [x] Rebaja de los 5 €/mes: no.
+- [x] Bizum: no lo tienen de momento.
+- [ ] Comisión mínima o fija por operación: sin respuesta (pasa al técnico).
+- [x] Entorno de pruebas y manual: los da el técnico de Redsys al activar el servicio.
+- Devoluciones de cobros rechazados sin coste. Abono en cuenta al día siguiente. Para contratar piden la URL del club (`https://clubtriatlonsulayr.com/`).

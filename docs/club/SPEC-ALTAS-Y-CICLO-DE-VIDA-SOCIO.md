@@ -6,7 +6,7 @@
 
 Esta spec sustituye el alta manual de socios (WhatsApp + Excel + alta a mano en la web) por un proceso en la web del club (blog 1): solicitud, aprobación, cambios, congelaciones, bajas, recibos mensuales y listados. Conserva el histórico de altas, bajas y cambios de servicios, y deja los Excel de Drive solo para ingresos y gastos del club.
 
-Es la base sobre la que se apoyará más adelante [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) (cobro online con TPV): los recibos de esta spec son los que ese borrador cobrará. Esta spec no cobra dinero.
+Es la base sobre la que se apoyará más adelante [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) (cobro online con TPV): los recibos de esta spec son los que esa spec cobrará. Esta spec no cobra dinero.
 
 ---
 
