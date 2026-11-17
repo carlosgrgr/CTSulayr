@@ -1,6 +1,6 @@
 # Prioridades
 
-Nov 17, 2026 · Estado: orden cerrado. Los puntos 1 a 3 están definidos y el punto 4 está valorado; el punto 5 sigue sin definir.
+Nov 17, 2026 · Estado: orden cerrado. Los puntos 1 a 3 están definidos, el punto 4 está valorado y el punto 5 está en definición.
 
 Este documento fija el orden de lo que falta por definir. No es una spec y no cambia requisitos ya escritos. Una fila de aquí no se implementa hasta que tenga su propio documento.
 
@@ -13,7 +13,7 @@ El orden es el de la lista. Definir una tarea no adelanta las siguientes.
 | 2     | Tienda online                      | Cerrada, desplegada en PROD | [SPEC-TIENDA-ONLINE.md](club/SPEC-TIENDA-ONLINE.md)                                 |
 | 3     | Pago online                        | Definida, sin implementar   | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) |
 | 4     | Rentabilidad frente a SportEasy    | Valorada                    | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) |
-| 5     | Consentimiento legal (RGPD y LOPD) | Pendiente de definir        | Mención en la spec de pago online                                                   |
+| 5     | Consentimiento legal (RGPD y LOPD) | En definición               | [SPEC-PROTECCION-DE-DATOS.md](club/SPEC-PROTECCION-DE-DATOS.md)                     |
 
 
 El documento cercano no es la definición de la tarea. Hay que confirmar si vale o si la tarea es otra cosa.
@@ -44,8 +44,6 @@ Las cifras y la cuenta están en la spec de pago online. El banco respondió el 
 
 ## 5. Consentimiento legal (RGPD y LOPD)
 
-No hay spec. La spec de pago online pide, solo para los pagos, informar del tratamiento, autorizar cargos recurrentes, fijar cuánto se conservan recibos y referencia de tarjeta, e incluir al banco en el registro de actividades. Este documento no redacta cláusulas.
+[SPEC-PROTECCION-DE-DATOS.md](club/SPEC-PROTECCION-DE-DATOS.md), en definición desde el 17 de noviembre de 2026. Alcance decidido con el club ese día (L1 a L9): lo que el pago online exige (autorización de cargos recurrentes, información y cambios en la política de privacidad) y la conservación real (anonimizar a los antiguos socios con un botón del gestor, y plazos de la tienda, el TPV, el registro de cambios y las cuentas sin socio). Los textos legales los redacta Claude como borradores y los aprueba la junta. Los documentos internos (registro de actividades, encargados, brechas, derechos y confidencialidad) se preparan como borradores en Drive. Quedan fuera el sitio de reservas y las herramientas de exportar y borrar de WordPress. Las propuestas L10 a L27 están pendientes de confirmar.
 
-Falta decidir qué tratamientos cubre, en qué formularios aparece y quién escribe el texto legal.
-
-[SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](club/SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md) (11 de noviembre de 2026) cubre solo el formulario de alta: casillas de privacidad, normas del club e imagen, con versión y fecha, y plazos de conservación. El texto legal lo redacta el club. Implementado en la parte B de esa spec (commit en la rama `altas-socio-parte-b`, probada en local el 11 de noviembre de 2026, sin mergear; no está en `main` ni en PROD).
+La política de privacidad, la de cookies y los consentimientos del formulario de alta ya existen. Están en PROD desde el 11 y el 12 de noviembre de 2026 (parte B de [SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](club/SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md)).
