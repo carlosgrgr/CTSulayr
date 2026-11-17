@@ -20,9 +20,9 @@ class UserFields extends Fields
      * @access 	public
      * @package	newsroom
      */
-    public function __construct()
+    protected function build_fields(): array
     {
-        $this->fields = [
+        return [
             'key' => 'group_' . md5( $this->group_name ),
             'title' => __( 'Athlete data', SULAYR_TEXTDOMAIN ),
             'fields' => [
@@ -152,7 +152,5 @@ class UserFields extends Fields
                 ],
             ]
         ];
-
-        parent::__construct();
     }
 }

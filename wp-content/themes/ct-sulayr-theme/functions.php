@@ -86,15 +86,6 @@ add_action( 'init', function () {
 	}
 } );
 
-// Opcional: no cargar en la portada plugins que no usa (comprobar antes)
-add_action( 'wp_enqueue_scripts', function () {
-	if ( ! is_front_page() ) {
-		return;
-	}
-	wp_dequeue_style( 'js_composer_front' );   // WPBakery
-	wp_dequeue_script( 'wpb_composer_front_js' );
-}, 100 );
-
 // En el corte en el que Astra apila el sidebar, pliega las categorías.
 add_action( 'wp_enqueue_scripts', function () {
 	if ( ! function_exists( 'is_shop' ) ) {

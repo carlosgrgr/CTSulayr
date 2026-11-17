@@ -18,8 +18,8 @@ class WalletFields extends Fields {
     private string $group_name = CustomFields::WALLET_FIELDS_GROUP;
     protected array $fields = [];
 
-    public function __construct() {
-        $this->fields = [
+    protected function build_fields(): array {
+        return [
             'key' => 'group_' . md5( $this->group_name ),
             'title' => __( 'Datos del movimiento', SULAYR_TEXTDOMAIN ),
             'fields' => [
@@ -80,8 +80,6 @@ class WalletFields extends Fields {
                 ],
             ],
         ];
-
-        parent::__construct();
     }
 
     public function init(): void {

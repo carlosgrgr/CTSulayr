@@ -30,7 +30,23 @@ abstract class Fields
      */
     public function init(): void
     {
-        $this->create_group_fields();
+        // En acf/init (dentro de init) las traducciones del plugin ya están cargadas.
+        add_action( 'acf/init', [ $this, 'create_group_fields' ] );
+    }
+
+    /**
+     * build_fields()
+     *
+     * Devuelve la definición del grupo de campos. Las subclases la construyen
+     * aquí y no en el constructor, para que __() se llame después de cargar
+     * las traducciones.
+     *
+     * @return 	array
+     * @access 	protected
+     */
+    protected function build_fields(): array
+    {
+        return $this->fields;
     }
 
     /**
@@ -42,6 +58,7 @@ abstract class Fields
      */
     public function create_group_fields(): void
     {
+        $this->fields = $this->build_fields();
         acf_add_local_field_group( $this->fields );
     }
 }
