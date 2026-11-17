@@ -188,4 +188,39 @@ class Labels {
     public static function coef( $coef ): string {
         return number_format_i18n( (float) $coef, 2 );
     }
+
+    /**
+     * Opciones del desplegable del bonus por interés del club (§15.4).
+     *
+     * @param   int[] $values Valores de la temporada.
+     * @return 	array<string, string>
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function interest_options( array $values ): array {
+        $out = [];
+        foreach ( $values as $value ) {
+            $out[ (string) $value ] = 0 === (int) $value ? __( 'Normal (sin bonus)', SULAYR_TEXTDOMAIN ) : '+' . (int) $value;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Etiqueta del bonus por interés: «+100 · Circuito Granadino», o '' sin bonus.
+     *
+     * @param   mixed  $bonus  Puntos.
+     * @param   string $reason Motivo.
+     * @return 	string
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function interest( $bonus, string $reason = '' ): string {
+        $bonus = (int) $bonus;
+        if ( $bonus <= 0 ) {
+            return '';
+        }
+
+        return '+' . $bonus . ( '' !== trim( $reason ) ? ' · ' . trim( $reason ) : '' );
+    }
 }

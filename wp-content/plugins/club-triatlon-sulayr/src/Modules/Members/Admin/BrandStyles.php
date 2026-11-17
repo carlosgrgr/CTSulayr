@@ -103,6 +103,7 @@ class BrandStyles {
             .sulayr-brand .sulayr-join-admin legend{font-family:var(--s-display);font-weight:700;font-stretch:108%;color:var(--s-noche)}
             .sulayr-brand .sulayr-join-error{color:var(--s-noche);font-weight:600;border-left:3px solid var(--s-sol);padding-left:8px}
             .sulayr-brand .sulayr-tag{background:var(--s-nieve);border:1px solid var(--s-linea);border-radius:4px;font-family:var(--s-mono);font-size:11px;letter-spacing:.06em}
+            .sulayr-brand .sulayr-tag-interest{background:var(--s-noche);border-color:var(--s-noche);color:var(--s-menta);white-space:nowrap}
             /* Botones */
             .sulayr-brand .button,.sulayr-brand .page-title-action{border-radius:4px;border:1px solid var(--s-noche);color:var(--s-noche);background:#fff}
             .sulayr-brand .button:hover,.sulayr-brand .button:focus,.sulayr-brand .page-title-action:hover{background:var(--s-nieve);border-color:var(--s-noche);color:var(--s-noche)}

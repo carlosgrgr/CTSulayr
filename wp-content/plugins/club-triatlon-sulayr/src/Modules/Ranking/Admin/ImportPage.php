@@ -309,6 +309,13 @@ class ImportPage {
         printf( '<input type="hidden" name="action" value="%s">', esc_attr( self::ACTION_APPLY ) );
         wp_nonce_field( self::ACTION_APPLY );
 
+        // Bonus por interés del club (§15.4): lo decide el club, no viene en el JSON.
+        $interest = (array) ( $data['interest'] ?? [] );
+        echo '<div class="sulayr-brand-block"><h2>' . esc_html__( 'Bonus por interés del club', SULAYR_TEXTDOMAIN ) . '</h2>';
+        echo '<table class="form-table sulayr-ranking-data" role="presentation"><tbody>';
+        CompetitionEditPage::render_interest( $interest, [], RankingSettings::interest_values( $season ), 'interest' );
+        echo '</tbody></table></div>';
+
         self::render_match_table(
             sprintf( __( 'Dudas (%d)', SULAYR_TEXTDOMAIN ), count( $doubts ) ),
             __( 'Se parecen a algún socio, pero no lo bastante. Elige el socio que corresponde o «No es socio».', SULAYR_TEXTDOMAIN ),
@@ -518,9 +525,17 @@ class ImportPage {
             }
         }
         $data['assign'] = $assign;
-        self::store( $data );
-
         $season = (int) $data['season'];
+        $raw_interest = (array) wp_unslash( $_POST['interest'] ?? [] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Entero y texto limpiado abajo.
+        $data['interest'] = [
+            'interest_bonus' => absint( $raw_interest['interest_bonus'] ?? 0 ),
+            'interest_label' => sanitize_text_field( (string) ( $raw_interest['interest_label'] ?? '' ) ),
+        ];
+        self::store( $data );
+        if ( ! in_array( $data['interest']['interest_bonus'], RankingSettings::interest_values( $season ), true ) ) {
+            Notices::redirect( self::url(), 'error', __( 'Bonus por interés del club: elige un bonus de la lista.', SULAYR_TEXTDOMAIN ) );
+        }
+
         $members = self::selectable_members( $season );
         $athletes = $data['merged']['athletes'];
 
@@ -564,7 +579,7 @@ class ImportPage {
         $notes = sprintf( __( 'Importada el %1$s de: %2$s.', SULAYR_TEXTDOMAIN ), date_i18n( 'd/m/Y' ), implode( ', ', $titles ) );
         $notes = function_exists( 'mb_substr' ) ? mb_substr( $notes, 0, 255 ) : substr( $notes, 0, 255 );
 
-        $built = ImportMerger::build_input( $data['parsed'], $data['merged'], $assign, $map, RankingSettings::groups( $season ), $notes );
+        $built = ImportMerger::build_input( $data['parsed'], $data['merged'], $assign, $map, RankingSettings::groups( $season ), $notes, $data['interest'] );
 
         $data['applied'] = true;
         self::store( $data );

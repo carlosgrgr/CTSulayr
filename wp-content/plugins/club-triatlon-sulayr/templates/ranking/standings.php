@@ -9,7 +9,7 @@
  * @var int    $season       Año.
  * @var int    $best_n       Pruebas que cuentan.
  * @var array  $rows         rank, name, url, photo, initials, group, finished, counted, results, total, is_me.
- * @var array  $competitions name, date, type, url.
+ * @var array  $competitions name, date, type, interest, url.
  */
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -74,7 +74,7 @@ $with_group = 'absoluta' === $filters['view'];
             <?php foreach ( $competitions as $c ) : ?>
                 <li>
                     <span class="sulayr-ranking-date"><?php echo esc_html( $c['date'] ); ?></span>
-                    <a href="<?php echo esc_url( $c['url'] ); ?>"><?php echo esc_html( $c['name'] ); ?></a>
+                    <a href="<?php echo esc_url( $c['url'] ); ?>"><?php echo esc_html( $c['name'] ); ?></a><?php if ( '' !== $c['interest'] ) : ?> <span class="sulayr-ranking-interest"><?php echo esc_html( $c['interest'] ); ?></span><?php endif; ?>
                     <span class="sulayr-ranking-type"><?php echo esc_html( $c['type'] ); ?></span>
                 </li>
             <?php endforeach; ?>

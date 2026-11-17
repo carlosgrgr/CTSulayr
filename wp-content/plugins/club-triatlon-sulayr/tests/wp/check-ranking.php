@@ -44,7 +44,13 @@ wp_set_current_user( (int) ( $admin[0] ?? 1 ) );
 
 try {
     // Esquema y roles.
-    $check( 'Versión del esquema = 1', 1 === (int) get_option( RankingSchema::VERSION_OPTION ) );
+    $check( 'Versión del esquema = 2', 2 === (int) get_option( RankingSchema::VERSION_OPTION ) );
+    $columns = function ( string $table ) use ( $wpdb ) {
+        return $wpdb->get_col( 'SHOW COLUMNS FROM ' . RankingSchema::table( $table ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+    };
+    $check( 'Esquema 2: interest_bonus e interest_label en competiciones', [] === array_diff( [ 'interest_bonus', 'interest_label' ], $columns( RankingSchema::COMPETITIONS ) ) );
+    $check( 'Esquema 2: interest_bonus en resultados', in_array( 'interest_bonus', $columns( RankingSchema::RESULTS ), true ) );
+    $check( 'Esquema 2: las competiciones que ya había quedan con bonus 0', 0 === (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . RankingSchema::table( RankingSchema::COMPETITIONS ) . ' WHERE interest_bonus IS NULL' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
     foreach ( [ RankingSchema::COMPETITIONS, RankingSchema::REFERENCES, RankingSchema::RESULTS, RankingSchema::LOG ] as $t ) {
         $check( "Tabla {$t}", RankingSchema::table( $t ) === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', RankingSchema::table( $t ) ) ) );
     }
@@ -165,6 +171,23 @@ try {
     RankingRoster::flush();
     $check( 'B vuelve: recupera sus puntos (R34)', isset( RankingService::standings( $season )['positions'][ $b ] ) );
 
+    // Bonus por interés del club (§15): cambiarlo recalcula, queda en el registro y se copia al resultado.
+    $values = RankingSettings::interest_values( $season );
+    $check( 'Bonus por interés: valores de la temporada (0 a 300 de 50 en 50)', [ 0, 50, 100, 150, 200, 250, 300 ] === $values );
+    $with_interest = ResultValidator::validate( [ 'competition' => array_merge( $v['competition'], [ 'interest_bonus' => '100', 'interest_label' => 'Circuito Granadino' ] ) ], [], $groups, $date, $values );
+    $check( 'Bonus por interés: 100 se acepta', ! isset( $with_interest['errors']['competition']['interest_bonus'] ) );
+    Competitions::update( $competition_id, $with_interest['competition'] );
+    RankingService::recalculate_competition( $competition_id, true );
+    $bonus_a = null;
+    foreach ( Results::for_competition( $competition_id ) as $r ) {
+        if ( (int) $r->user_id === $a ) {
+            $bonus_a = $r;
+        }
+    }
+    $check( 'Bonus por interés: A pasa de 1040 a 1140', abs( $bonus_a->points_absolute - 1140 ) < 0.001 && 100 === $bonus_a->interest_bonus );
+    $logged = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . RankingSchema::table( RankingSchema::LOG ) . " WHERE id > %d AND entity = 'competicion' AND field = 'interest_bonus' AND new_value = '100'", $log_start ) );
+    $check( 'Bonus por interés: el cambio queda en el registro', 1 === $logged );
+
     // Baremo por temporada (R35): la anterior no cambia.
     $previous = $season - 1;
     $had_previous = false !== get_option( RankingSettings::SEASON_OPTION . $previous );
@@ -184,10 +207,12 @@ try {
     $_GET['deportista'] = (string) $c;
     $html = RankingView::render( home_url( '/mi-cuenta/ranking-interno/' ) );
     $check( 'Front: ficha del deportista', false !== strpos( $html, 'Prueba Tres' ) && false !== strpos( $html, 'sulayr-ranking-breakdown' ) );
+    $check( 'Front: desglose con el interés del club', false !== strpos( $html, '+ 100 interés del club' ) );
     unset( $_GET['deportista'] );
     $_GET['competicion'] = (string) $competition_id;
     $html = RankingView::render( home_url( '/mi-cuenta/ranking-interno/' ) );
     $check( 'Front: ficha de la competición', false !== strpos( $html, 'Prueba ranking' ) && false !== strpos( $html, '1:00:00' ) );
+    $check( 'Front: etiqueta del bonus por interés', false !== strpos( $html, 'sulayr-ranking-interest' ) && false !== strpos( $html, '+100 · Circuito Granadino' ) );
     unset( $_GET['competicion'] );
 
     update_user_meta( $a, CustomFields::USER_PROFILE_ATHLETE_STATUS, CustomFields::STATUS_LEFT );

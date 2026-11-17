@@ -1,8 +1,8 @@
 # SPEC — Ranking interno del club
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr`
-**Estado:** Definida el 16 de noviembre de 2026. Decisiones R1 a R38 tomadas con el club ese día (sección 1.3); R26 a R32 salen de los ejemplos de clasificaciones de la Federación Andaluza (`docs/club/ejemplos-clasificaciones/`). No quedan preguntas abiertas (sección 12). Implementada el 16 de noviembre de 2026 en la rama `ranking-interno` (pasos R0 a R6, sección 13): 47 tests PHPUnit y 42 comprobaciones con WordPress en verde. Mergeada en `main` (`7fb03aba1`) y subida a PROD el 16 de noviembre de 2026. Configuración hecha (ajustes, sexos y rol de gestor). Faltan los criterios de PROD. Quedan las pruebas manuales de [ranking-interno/pruebas.md](ranking-interno/pruebas.md) y el registro del despliegue en [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md). **Ampliación (16 de noviembre de 2026):** importación de resultados desde JSON (decisiones R39 a R41, sección 14), implementada ese día en la rama `ranking-importar`, probada en local con la competición de Úbeda (72 tests PHPUnit) y mergeada en `main` el mismo día. La skill `ranking-importar` es autónoma y está instalada en la app de escritorio de Claude desde ese día. Subida a PROD el 16 de noviembre de 2026; Úbeda se está importando y quedan los criterios 11 a 14 en PROD (ver [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md), «Ampliación»). El mismo día se corrigieron los estilos del ranking en el móvil (sección 8.4), pendientes de subir.
-**Fecha:** 16 de noviembre de 2026
+**Estado:** Definida el 16 de noviembre de 2026. Decisiones R1 a R38 tomadas con el club ese día (sección 1.3); R26 a R32 salen de los ejemplos de clasificaciones de la Federación Andaluza (`docs/club/ejemplos-clasificaciones/`). No quedan preguntas abiertas (sección 12). Implementada el 16 de noviembre de 2026 en la rama `ranking-interno` (pasos R0 a R6, sección 13): 47 tests PHPUnit y 42 comprobaciones con WordPress en verde. Mergeada en `main` (`7fb03aba1`) y subida a PROD el 16 de noviembre de 2026. Configuración hecha (ajustes, sexos y rol de gestor). Faltan los criterios de PROD. Quedan las pruebas manuales de [ranking-interno/pruebas.md](ranking-interno/pruebas.md) y el registro del despliegue en [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md). **Ampliación (16 de noviembre de 2026):** importación de resultados desde JSON (decisiones R39 a R41, sección 14), implementada ese día en la rama `ranking-importar`, probada en local con la competición de Úbeda (72 tests PHPUnit) y mergeada en `main` el mismo día. La skill `ranking-importar` es autónoma y está instalada en la app de escritorio de Claude desde ese día. Subida a PROD el 16 de noviembre de 2026; Úbeda se está importando y quedan los criterios 11 a 14 en PROD (ver [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md), «Ampliación»). El mismo día se corrigieron los estilos del ranking en el móvil (sección 8.4), pendientes de subir. **Bonus por interés del club** (R42 y R43, sección 15): definido e implementado en local el 17 de noviembre de 2026 (85 tests PHPUnit y 51 comprobaciones con WordPress en verde), sin subir a PROD.
+**Fecha:** 16 de noviembre de 2026. Ampliada el 17 de noviembre de 2026 con el bonus por interés del club (sección 15, implementada en local ese día).
 **Resumen para la junta:** [resumen-ranking-interno.html](resumen-ranking-interno.html), sin la parte técnica (16 de noviembre de 2026): puntuación, qué ven los socios y cómo se meten las competiciones (los tiempos se sacan con IA de los PDF de la federación). Si cambia el baremo o el flujo, hay que actualizarlo.
 
 Después de cada competición, un gestor de ranking introduce en la web del club (blog 1) los resultados de los socios que participaron. La web calcula los puntos de cada resultado y publica, en Mi cuenta, una clasificación interna de la temporada: absoluta por sexo y por grupo de edad, con una ficha por deportista y otra por competición.
@@ -87,6 +87,8 @@ Comprobado en local el 16 de noviembre de 2026 sobre `main` (`1c03c2634`).
 | R39 | Decidida por el club el 16 de noviembre de 2026. Para el ranking interno no se distingue la clasificación de la federación en la que sale un deportista (por ejemplo, **federado** y **open** en relevos): se unifican todas las de la misma categoría de equipo y el mismo sexo. El tiempo de referencia del ganador es el más rápido de todas ellas; el primero de cada categoría, el más rápido de esa categoría en todas ellas; los finalizados, la suma. «Pos» y «Pos Cat» se recalculan por tiempo dentro del conjunto unificado (empate, misma posición). Por eso la categoría de equipo se llama «Masculina», «Femenina» o «Mixta», sin «open». |
 | R40 | Decidida por el club el 16 de noviembre de 2026. Los resultados se importan desde un JSON que una IA genera a partir de los PDF oficiales (skill `/ranking-importar` de Claude Code, o claude.ai con el prompt que da la web). La web empareja a los deportistas con los socios por nombre y rellena el formulario de la competición sin guardarlo; el gestor revisa, guarda y publica como siempre. Sustituye a R19. |
 | R41 | El emparejamiento es por nombre, porque las clasificaciones no traen licencia ni DNI. Se contrasta con el sexo y el grupo de edad que da la categoría de la carrera. Lo que no es seguro se lista para que el gestor diga a qué socio corresponde o que no es socio (sección 14.4). |
+| R42 | Decidida por el club el 17 de noviembre de 2026. Para que haya más socios en las pruebas que le interesan al club (circuito granadino, campeonatos de Andalucía…), una competición puede llevar un **bonus por interés del club**: puntos fijos que se suman a cada socio que la termina (sección 15). No es un multiplicador, para no ampliar las diferencias entre deportistas ni hacer que una prueba corta puntúe como una larga. |
+| R43 | El bonus por interés es un valor cerrado: 0 (competición normal) o un múltiplo del salto hasta el máximo. Por defecto, salto 50 y máximo 300 (0, 50, 100, 150, 200, 250, 300). El salto y el máximo están en Ranking → Ajustes y se congelan por temporada con el resto del baremo. |
 
 ### 1.4. Cómo encaja
 
@@ -923,4 +925,135 @@ Comprobado en local el 16 de noviembre de 2026:
 - Por HTTP con sesión de administrador, con el JSON de Úbeda (`docs/club/ranking-interno/i-duatlon-por-relevos-3x-ubeda-nazari/resultados.json`, 75 deportistas; esa carpeta, con los PDF, no se versiona): JSON con errores rechazado con la lista; análisis con 21 socios seguros, 2 dudas y 1 deportista del club sin socio; rechazo con dudas sin decidir; formulario relleno con 23 socios y 7 de 8 referencias; guardado en borrador con los puntos calculados.
 - La referencia que faltaba es la de Júnior femenina: la carrera clasifica a esa socia como 23F y la web como Júnior, y no había ninguna JNF.
 - La competición de prueba se borró después.
+
+---
+
+## 15. Bonus por interés del club (R42 y R43)
+
+**Estado:** definida el 17 de noviembre de 2026 con el club e implementada en local ese día (pasos B1 a B7, sección 15.9). Sin subir a PROD: pasos en [ranking-interno/despliegue-prod.md](ranking-interno/despliegue-prod.md), «Ampliación: bonus por interés del club».
+
+### 15.1. Objetivo
+
+El club quiere que más socios vayan a ciertas pruebas. Por ejemplo, las del Circuito Granadino de Triatlón o los campeonatos de Andalucía. Esas competiciones dan unos puntos extra a quien las termina, sin que una sola prueba descompense el ranking.
+
+Se descartó un multiplicador (×1,2 o ×1,4), por tres motivos:
+
+- **Equivale a cambiar de distancia.** Un supersprint ×1,4 puntuaría como un medio Ironman, y un olímpico ×1,4 (1,2 × 1,4 = 1,68) más que un Ironman (1,6).
+- **Amplía las diferencias.** En un sprint (1,1) con ×1,4, el ganador gana 440 puntos y el que llega al 60 % del ganador solo 264.
+- **Pesa más que el rendimiento.** En la primera competición real, entre dos puestos seguidos hay unos 11 puntos.
+
+Un bonus fijo suma lo mismo a todos los que terminan. Premia ir a la prueba y no cambia las distancias entre los que la corren.
+
+### 15.2. Fórmula
+
+Se añade `interes` a la entrada de `PointsCalculator` (sección 3.3). Es el bonus de la competición en puntos (0 si es normal).
+
+```
+puntos(ref, tiempo, posición)  → base × ratio × coef + bonus + interes
+categoría AB (R29)            → base × 1 × coef + bonus + interes
+```
+
+- Se suma en la absoluta y en el grupo de edad. Vale igual en individual, relevos y contrarreloj por equipos.
+- Solo cuenta para quien termina. DNF, DSQ, DNS y NC siguen con 0 puntos.
+- Si no hay referencia y el resultado se queda en 0 puntos, tampoco se suma.
+- Las N mejores pruebas (`best_n`) se eligen igual: una prueba con bonus puntúa más y entra antes entre ellas.
+
+Ejemplo, con un sprint (coeficiente 1,1) y bonus 100:
+
+- un socio al 80 % del ganador saca 1000 × 0,8 × 1,1 + 50 + 100 = **1030,00**;
+- en la misma prueba sin bonus serían 930,00.
+
+### 15.3. Datos
+
+- **Tabla de competiciones:**
+  - `interest_bonus` `smallint unsigned NOT NULL DEFAULT 0`: puntos;
+  - `interest_label` `varchar(60) NOT NULL DEFAULT ''`: motivo opcional (p. ej. «Circuito Granadino de Triatlón»), que se ve en el front.
+- **Versión del esquema:** `RankingSchema::VERSION` pasa a 2. `dbDelta` añade las columnas, y las competiciones que ya existen quedan con bonus 0, sin recalcular nada.
+- **Resultados:** cada resultado guarda una copia del bonus aplicado en `interest_bonus`, igual que guarda el coeficiente (sección 2.4). Así la ficha puede enseñar el desglose aunque la competición cambie después.
+- **Ajustes de la temporada** (sección 3.1), en el bloque «Bonus por interés del club»:
+
+| Ajuste | Clave | Por defecto |
+|---|---|---|
+| Salto | `interest_step` | 50 |
+| Máximo | `interest_max` | 300 |
+
+- Validación de Ajustes:
+  - salto entre 1 y 500;
+  - máximo entre 0 y 1000 y múltiplo del salto;
+  - con máximo 0 no se usa el bonus.
+- Valores que se pueden elegir: 0 y los múltiplos del salto hasta el máximo, de la temporada de la competición (`RankingSettings::for_season()`).
+- **Bajar el máximo o cambiar el salto:** no recalcula nada, porque los puntos dependen del bonus guardado en cada competición. Si alguna competición de la temporada en curso tiene un bonus que deja de ser válido, Ajustes no guarda y dice cuál es.
+
+### 15.4. Pantallas
+
+- **«Añadir / editar competición»** (sección 4.2), bloque Datos:
+  - desplegable **Bonus por interés del club**, con «Normal (sin bonus)», «+50», «+100»… hasta el máximo;
+  - campo **Motivo** (opcional).
+  - Si el bonus vale 0, el motivo se guarda vacío.
+  - Cambiar el bonus recalcula la competición, como cualquier otro cambio (sección 3.7), y queda en el registro.
+- **Importar resultados** (sección 14):
+  - en la revisión, el mismo desplegable y el motivo, encima de las tablas;
+  - el JSON no lo trae, porque es una decisión del club y no sale del PDF;
+  - «Rellenar la competición» lo pasa al formulario.
+- **Competiciones:** la columna «Tipo» añade «+100 · Circuito Granadino» cuando hay bonus.
+- **Ajustes:** el bloque de 15.3, con una nota que explica que el bonus se suma solo a quien termina.
+
+### 15.5. Front (Mi cuenta y shortcode)
+
+- **Lista de competiciones y ficha de la competición:** etiqueta con el bonus y el motivo (p. ej. «+100 · Circuito Granadino»), en Menta sobre Noche o en Noche sobre Menta (identidad Sulayr), para que los socios sepan qué pruebas puntúan más.
+- **Desglose de puntos de la ficha del deportista:** añade la línea «+100 interés del club» junto al bonus por terminar.
+
+### 15.6. Validación y registro
+
+- `ResultValidator` valida `interest_bonus` contra los valores de la temporada de la competición. Si no vale, da el error «Elige un bonus de la lista».
+- `interest_label`: texto en una línea de hasta 60 caracteres, limpiado como el nombre.
+- El registro (`RankingLog`) guarda el cambio de cada campo, como el resto de datos de la competición.
+
+### 15.7. Tests
+
+| Nº | Caso | Datos | Resultado |
+|---|---|---|---|
+| T33 | Bonus por tiempo | Sprint 1,1, socio al 80 % del ganador, bonus 100 | 1000 × 0,8 × 1,1 + 50 + 100 = **1030,00** en la absoluta y en el grupo |
+| T34 | Bonus por posición | 10.º de 41, coef 1,0, bonus 50 | 1000 × (1 − 9/41) × 1 + 50 + 50 = **880,49** |
+| T35 | Categoría AB con bonus | AB, coef 1,2, bonus 150 | Grupo: 1000 × 1,2 + 50 + 150 = **1400,00** |
+| T36 | DNF con bonus | Bonus 300 | **0** puntos |
+| T37 | Sin referencia | Bonus 100, sin referencia absoluta | **0** puntos, con el aviso de siempre |
+| T38 | Valores cerrados | Salto 50, máximo 300 | 0 a 300 de 50 en 50 se aceptan; 75, 350 y −50 dan error |
+| T39 | Ajustes | Máximo 250 cuando una competición de la temporada tiene 300 | No se guarda, y dice qué competición es |
+| T40 | Importación | Revisión con bonus 100 y motivo | El formulario sale con bonus 100 y el motivo |
+
+Con WordPress (`check-ranking.php`):
+
+- el esquema 2 añade las columnas y deja a 0 las competiciones que ya existían;
+- cambiar el bonus de una competición recalcula sus puntos y deja el cambio en el registro;
+- el front enseña la etiqueta.
+
+Criterios manuales, en `ranking-interno/pruebas.md`:
+
+- **15:** al poner bonus 100 a una competición publicada, los puntos de sus socios suben 100 y la clasificación se actualiza;
+- **16:** la etiqueta del bonus se ve en Mi cuenta, también en el móvil.
+
+### 15.8. Plan de implementación
+
+| Paso | Qué |
+|---|---|
+| B1 | `PointsCalculator` (entrada `interes`) y tests T33 a T37. |
+| B2 | Esquema 2 (columnas en competiciones y resultados), `Competitions` y `Results`, `RankingService::recalculate_competition()` pasa el bonus. |
+| B3 | Ajustes `interest_step` e `interest_max` con su validación (T38 y T39), y `Calc\Keys` o `Baremo` con la lista de valores. |
+| B4 | Formulario de la competición, validación, registro y lista de competiciones. |
+| B5 | Importación: desplegable y motivo en la revisión (T40). |
+| B6 | Front: etiqueta y desglose. |
+| B7 | Documentación: `MANUAL-RANKING.md`, `resumen-ranking-interno.html` (cómo se puntúa), `pruebas.md`, `despliegue-prod.md`, `AGENT.md` y `FASES.md`. |
+
+Despliegue: sube una versión del esquema (`sulayr_ranking_db_version` = 2). La primera carga en wp-admin añade las columnas. No hay datos que migrar.
+
+### 15.9. Notas de implementación
+
+- **Valores:** `Baremo::interest_values()` (0 y los múltiplos del salto hasta el máximo) y `RankingSettings::interest_values( $season )`. `Baremo::normalize()` da 50 y 300 a los baremos guardados antes del §15 y redondea hacia abajo un máximo que no sea múltiplo del salto.
+- **Validación:** `ResultValidator::validate()` recibe los valores como quinto argumento (por defecto `[ 0 ]`). Sin bonus, el motivo se guarda vacío.
+- **Ajustes:** pestaña «Bonus por interés» con `interest_step` e `interest_max`. `RankingSettings::validate_interest()` (en `acf/validate_save_post`) usa `Baremo::interest_problems()` y `Baremo::interest_conflicts()` con las competiciones de la temporada en curso.
+- **Cálculo:** `RankingService::recalculate_competition()` pasa `interest_bonus` de la competición a `PointsCalculator` (entrada `interest`) y lo copia en cada resultado.
+- **Pantallas:** `CompetitionEditPage::render_interest()` pinta el desplegable y el motivo; la importación lo reutiliza con el prefijo `interest` y lo guarda en la importación en curso. `ImportMerger::build_input()` lo recibe como séptimo argumento.
+- **Front:** `Labels::interest()` da «+100 · Motivo». Clase `.sulayr-ranking-interest` (Menta sobre Noche) en la lista de competiciones, la ficha de la competición y la del deportista; en wp-admin, `.sulayr-tag-interest`. El desglose añade «+ 100 interés del club».
+- **Tests:** T33 a T37 en `PointsCalculatorTest`, T38 y T39 en `BaremoTest` y `ResultValidatorTest`, T40 en `ImportTest`. `check-ranking.php` comprueba el esquema 2, el recálculo con bonus, el registro y el front.
 

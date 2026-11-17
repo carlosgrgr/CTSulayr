@@ -4,7 +4,7 @@ use ClubTriatlonSulayr\Modules\Ranking\Calc\PointsCalculator;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Casos con números de SPEC-RANKING-INTERNO §10.1 (T1 a T12, T25 a T28 y T32).
+ * Casos con números de SPEC-RANKING-INTERNO §10.1 (T1 a T12, T25 a T28 y T32) y §15.7 (T33 a T37).
  */
 class PointsCalculatorTest extends TestCase {
 
@@ -139,5 +139,33 @@ class PointsCalculatorTest extends TestCase {
         $in = [ 'time_s' => 4320, 'ref_abs' => $this->ref( 3600, 40 ) ];
         $this->assertSame( 966.67, $this->calc( $in + [ 'coef' => Baremo::coefficient( $b2027, 'triatlon', 'sprint' ) ] )['points_absolute'] );
         $this->assertSame( 1050.0, $this->calc( $in + [ 'coef' => Baremo::coefficient( $b2028, 'triatlon', 'sprint' ) ] )['points_absolute'] );
+    }
+
+    public function test_t33_bonus_de_interes_por_tiempo(): void {
+        $r = $this->calc( [ 'time_s' => 4500, 'coef' => 1.1, 'interest' => 100, 'has_group' => true, 'ref_abs' => $this->ref( 3600, 40 ), 'ref_grp' => $this->ref( 3600, 5 ) ] );
+        $this->assertSame( 1030.0, $r['points_absolute'] );
+        $this->assertSame( 1030.0, $r['points_age_group'] );
+    }
+
+    public function test_t34_bonus_de_interes_por_posicion(): void {
+        $r = $this->calc( [ 'time_s' => null, 'position_sex' => 10, 'interest' => 50, 'ref_abs' => $this->ref( null, 41 ) ] );
+        $this->assertSame( 880.49, $r['points_absolute'] );
+    }
+
+    public function test_t35_categoria_ab_con_bonus_de_interes(): void {
+        $r = $this->calc( [ 'time_s' => 4000, 'coef' => 1.2, 'interest' => 150, 'has_group' => true, 'absolute_category' => true, 'ref_abs' => $this->ref( 3600, 40 ) ] );
+        $this->assertSame( 1400.0, $r['points_age_group'] );
+    }
+
+    public function test_t36_dnf_con_bonus_de_interes(): void {
+        $r = $this->calc( [ 'status' => 'dnf', 'interest' => 300, 'has_group' => true, 'ref_abs' => $this->ref( 3600, 40 ) ] );
+        $this->assertSame( 0.0, $r['points_absolute'] );
+        $this->assertSame( 0.0, $r['points_age_group'] );
+    }
+
+    public function test_t37_sin_referencia_con_bonus_de_interes(): void {
+        $r = $this->calc( [ 'time_s' => 4000, 'interest' => 100, 'ref_abs' => null ] );
+        $this->assertSame( 0.0, $r['points_absolute'] );
+        $this->assertContains( 'Sin referencia absoluta: 0 puntos.', $r['notes'] );
     }
 }

@@ -2,7 +2,7 @@
 
 Criterios de aceptación de [SPEC-RANKING-INTERNO.md](../SPEC-RANKING-INTERNO.md), sección 10.3. Se marcan solo cuando se han hecho de verdad.
 
-Lo automático ya está en verde en local el 16 de noviembre de 2026: 47 tests PHPUnit (`tests/`) y 42 comprobaciones de `tests/wp/check-ranking.php` (sección 13.2 de la spec). Esas comprobaciones cubren por código los criterios 2, 3, 4, 5, 6, 7 y 10; aquí se repiten a mano, en el navegador. Con la importación (sección 14 de la spec, en `main` desde el 16 de noviembre de 2026) son 72 tests PHPUnit (con `ImportSkillTest`, que compara la skill con la web), también en verde el 16 de noviembre de 2026.
+Lo automático ya está en verde en local el 16 de noviembre de 2026: 47 tests PHPUnit (`tests/`) y 42 comprobaciones de `tests/wp/check-ranking.php` (sección 13.2 de la spec). Esas comprobaciones cubren por código los criterios 2, 3, 4, 5, 6, 7 y 10; aquí se repiten a mano, en el navegador. Con la importación (sección 14 de la spec, en `main` desde el 16 de noviembre de 2026) son 72 tests PHPUnit (con `ImportSkillTest`, que compara la skill con la web), también en verde el 16 de noviembre de 2026. Con el bonus por interés del club (sección 15 de la spec) son 85 tests PHPUnit y 51 comprobaciones con WordPress, en verde el 17 de noviembre de 2026.
 
 | Nº | Criterio | Local | PROD |
 |---|---|---|---|
@@ -20,6 +20,8 @@ Lo automático ya está en verde en local el 16 de noviembre de 2026: 47 tests P
 | 12 | Importación: no deja rellenar con dudas sin decidir ni con un socio en dos filas. | Dudas sin decidir comprobado por HTTP el 16 de noviembre de 2026. Falta el socio repetido. | Pendiente |
 | 13 | Importación: «Rellenar la competición» abre «Añadir competición» relleno y sin guardar; al guardar pasa las validaciones de siempre. | Comprobado por HTTP el 16 de noviembre de 2026 (23 socios, 7 de 8 referencias, guardada en borrador con puntos y borrada después). Falta verlo en el navegador. | Pendiente |
 | 14 | Un gestor de socios no ve «Importar resultados» y su URL da 403. | Pendiente | Pendiente |
+| 15 | Bonus por interés: al poner +100 a una competición publicada, los puntos de sus socios que terminaron suben 100 (los DNF siguen a 0), la clasificación se actualiza y el cambio sale en el registro. | Comprobado por código el 17 de noviembre de 2026 (`check-ranking.php`). Falta verlo en el navegador. | Pendiente |
+| 16 | La etiqueta del bonus («+100 · Motivo») se ve en Mi cuenta (lista de competiciones, ficha de la competición y del deportista, con la línea del desglose), también en el móvil. | Comprobado en el HTML el 17 de noviembre de 2026. Falta verlo en el navegador y en el móvil. | Pendiente |
 
 ## Datos para probar
 

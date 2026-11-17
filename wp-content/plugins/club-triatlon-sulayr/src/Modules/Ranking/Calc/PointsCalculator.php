@@ -4,8 +4,9 @@ namespace ClubTriatlonSulayr\Modules\Ranking\Calc;
 /**
  * Puntos de un resultado (SPEC-RANKING-INTERNO §3.3).
  *
- * Por tiempo: base × (tiempo del ganador / tiempo del socio) × coeficiente + bonus.
- * Respaldo por posición: base × (1 − (posición − 1) / finalizados) × coeficiente + bonus.
+ * Por tiempo: base × (tiempo del ganador / tiempo del socio) × coeficiente + bonus + interés.
+ * Respaldo por posición: base × (1 − (posición − 1) / finalizados) × coeficiente + bonus + interés.
+ * El interés es el bonus por interés del club de la competición (§15, R42).
  * DNF, DSQ, DNS y NC: 0, sin bonus. Se redondea a 2 decimales solo al final.
  */
 class PointsCalculator {
@@ -16,6 +17,7 @@ class PointsCalculator {
      * Entrada:
      * - status, time_s (int|null), position_sex (int|null), position_age_group (int|null)
      * - coef (float), base (float), bonus (float)
+     * - interest (float): bonus por interés del club de la competición (0 si es normal).
      * - ref_abs, ref_grp: null o [ 'winner_time' => int|null, 'participants' => int|null ]
      * - has_group (bool): el socio tiene grupo de edad.
      * - absolute_category (bool): corrió en la categoría AB (R29).
@@ -28,7 +30,8 @@ class PointsCalculator {
      */
     public static function calculate( array $in ): array {
         $base = (float) ( $in['base'] ?? 1000 );
-        $bonus = (float) ( $in['bonus'] ?? 50 );
+        // El bonus por terminar y el de interés se suman igual: solo a quien termina y tiene referencia.
+        $bonus = (float) ( $in['bonus'] ?? 50 ) + max( 0.0, (float) ( $in['interest'] ?? 0 ) );
         $coef = (float) ( $in['coef'] ?? 1 );
         $time = isset( $in['time_s'] ) ? (int) $in['time_s'] : 0;
         $has_group = ! empty( $in['has_group'] );

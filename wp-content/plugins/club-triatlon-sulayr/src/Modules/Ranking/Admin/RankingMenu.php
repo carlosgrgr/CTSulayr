@@ -183,7 +183,7 @@ class RankingMenu {
                     esc_url( CompetitionEditPage::url( (int) $c->id ) ),
                     esc_html( (string) $c->name ),
                     esc_html( (string) $c->location ?: '—' ),
-                    esc_html( Labels::of( Labels::modalities(), (string) $c->modality ) . ' · ' . Labels::of( Labels::distances(), (string) $c->distance ) . ' · ' . Labels::of( Labels::formats(), (string) $c->format ) ),
+                    esc_html( Labels::of( Labels::modalities(), (string) $c->modality ) . ' · ' . Labels::of( Labels::distances(), (string) $c->distance ) . ' · ' . Labels::of( Labels::formats(), (string) $c->format ) ) . ( (int) $c->interest_bonus > 0 ? ' <span class="sulayr-tag sulayr-tag-interest">' . esc_html( Labels::interest( $c->interest_bonus, (string) $c->interest_label ) ) . '</span>' : '' ),
                     esc_html( Labels::of( Labels::competition_statuses(), (string) $c->status ) ),
                     (int) $c->result_count,
                     $missing > 0 ? esc_html( sprintf( _n( 'Falta %d referencia', 'Faltan %d referencias', $missing, SULAYR_TEXTDOMAIN ), $missing ) ) : '—'

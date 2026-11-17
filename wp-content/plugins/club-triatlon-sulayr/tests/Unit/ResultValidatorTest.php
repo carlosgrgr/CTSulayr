@@ -125,4 +125,28 @@ class ResultValidatorTest extends TestCase {
         $v = ResultValidator::validate( [ 'competition' => [ 'name' => '', 'race_date' => '2026-12-01', 'modality' => 'x', 'distance' => 'sprint', 'format' => 'individual' ] ], [], new AgeGroups( [] ), '2026-11-16' );
         $this->assertSame( [ 'name', 'race_date', 'modality' ], array_keys( $v['errors']['competition'] ) );
     }
+
+    /** T38 en el formulario: solo valen 0 y los múltiplos del salto hasta el máximo (§15.6). */
+    public function test_t38_bonus_por_interes(): void {
+        $values = [ 0, 50, 100, 150, 200, 250, 300 ];
+        $c = [ 'name' => 'Triatlón de Motril', 'race_date' => '2026-09-01', 'modality' => 'triatlon', 'distance' => 'sprint', 'format' => 'individual' ];
+        $check = function ( $bonus, string $label = '' ) use ( $c, $values ) {
+            return ResultValidator::validate( [ 'competition' => $c + [ 'interest_bonus' => $bonus, 'interest_label' => $label ] ], [], new AgeGroups( [] ), '2026-11-16', $values );
+        };
+
+        foreach ( [ '', '0', '50', '300' ] as $ok ) {
+            $this->assertArrayNotHasKey( 'interest_bonus', $check( $ok )['errors']['competition'], $ok );
+        }
+        foreach ( [ '75', '350', '-50', 'cien' ] as $bad ) {
+            $this->assertSame( 'Elige un bonus de la lista.', $check( $bad )['errors']['competition']['interest_bonus'] ?? null, $bad );
+        }
+
+        $v = $check( '100', "  Circuito   Granadino\n de Triatlón <b>2026</b>  " );
+        $this->assertSame( 100, $v['competition']['interest_bonus'] );
+        $this->assertSame( 'Circuito Granadino de Triatlón 2026', $v['competition']['interest_label'] );
+        // Sin bonus no hay motivo.
+        $this->assertSame( '', $check( '0', 'Circuito' )['competition']['interest_label'] );
+        // Sin valores de la temporada (llamadas antiguas): solo 0.
+        $this->assertArrayHasKey( 'interest_bonus', ResultValidator::validate( [ 'competition' => $c + [ 'interest_bonus' => '50' ] ], [], new AgeGroups( [] ), '2026-11-16' )['errors']['competition'] );
+    }
 }

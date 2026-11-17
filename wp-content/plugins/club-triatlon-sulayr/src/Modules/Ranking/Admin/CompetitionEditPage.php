@@ -139,7 +139,8 @@ class CompetitionEditPage {
         $season = self::season_of( (string) ( $input['competition']['race_date'] ?? '' ) );
         $groups = RankingSettings::groups( $season );
         $members = self::members( $groups, $season, $id );
-        $validation = ResultValidator::validate( $input, self::member_map( $members ), $groups, current_time( 'Y-m-d' ) );
+        $interest_values = RankingSettings::interest_values( $season );
+        $validation = ResultValidator::validate( $input, self::member_map( $members ), $groups, current_time( 'Y-m-d' ), $interest_values );
         $errors = $state['errors'] ?? ( null === $competition ? [ 'competition' => [], 'references' => [], 'results' => [] ] : $validation['errors'] );
         $format = $validation['competition']['format'];
         $calc = [];
@@ -173,7 +174,7 @@ class CompetitionEditPage {
         printf( '<input type="hidden" name="action" value="%s"><input type="hidden" name="id" value="%d">', esc_attr( self::ACTION_SAVE ), $id );
         wp_nonce_field( self::ACTION_SAVE . '_' . $id );
 
-        self::render_data( $input['competition'] ?? [], $errors['competition'] ?? [], null !== $competition && (int) count( $calc ) > 0 );
+        self::render_data( $input['competition'] ?? [], $errors['competition'] ?? [], null !== $competition && (int) count( $calc ) > 0, $interest_values );
         self::render_results( $input['results'] ?? [], $errors['results'] ?? [], $validation['warnings'], $format, $members, $groups, $calc );
         self::render_references( $input['references'] ?? [], $errors['references'] ?? [], $validation, $format, $groups );
 
@@ -219,11 +220,12 @@ class CompetitionEditPage {
      * @param   array $c          Valores.
      * @param   array $errors     Errores por campo.
      * @param   bool  $has_results Hay resultados guardados (el formato no se cambia).
+     * @param   int[] $interest_values Bonus por interés de la temporada.
      * @return 	void
      * @access 	private
      * @package	club-triatlon-sulayr
      */
-    private static function render_data( array $c, array $errors, bool $has_results ): void {
+    private static function render_data( array $c, array $errors, bool $has_results, array $interest_values ): void {
         $v = function ( string $key ) use ( $c ): string {
             return (string) ( $c[ $key ] ?? '' );
         };
@@ -253,8 +255,46 @@ class CompetitionEditPage {
             $has_results ? '<p class="description">' . esc_html__( 'Con resultados guardados no se puede cambiar el formato. Para cambiarlo, borra antes los resultados.', SULAYR_TEXTDOMAIN ) . '</p>' : '',
             $error( 'format' ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         );
+        self::render_interest( $c, $errors, $interest_values );
         printf( '<tr><th scope="row"><label for="sulayr-c-notes">%s</label></th><td><input type="text" class="large-text" id="sulayr-c-notes" name="competition[notes]" value="%s" maxlength="255"><p class="description">%s</p></td></tr>', esc_html__( 'Nota interna', SULAYR_TEXTDOMAIN ), esc_attr( $v( 'notes' ) ), esc_html__( 'Solo la ven los gestores.', SULAYR_TEXTDOMAIN ) );
         echo '</tbody></table></div>';
+    }
+
+    /**
+     * Filas del bonus por interés del club y su motivo (§15.4). También las usa la importación.
+     *
+     * @param   array $c      Valores (interest_bonus, interest_label).
+     * @param   array $errors Errores por campo.
+     * @param   int[] $values Bonus de la temporada.
+     * @param   string $prefix Nombre del array del formulario.
+     * @return 	void
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function render_interest( array $c, array $errors, array $values, string $prefix = 'competition' ): void {
+        $current = (string) (int) ( $c['interest_bonus'] ?? 0 );
+        $html = sprintf( '<select id="sulayr-c-interest_bonus" name="%s[interest_bonus]">', esc_attr( $prefix ) );
+        foreach ( Labels::interest_options( $values ) as $value => $label ) {
+            $html .= sprintf( '<option value="%s"%s>%s</option>', esc_attr( (string) $value ), selected( $current, (string) $value, false ), esc_html( $label ) );
+        }
+        $html .= '</select>';
+        $error = isset( $errors['interest_bonus'] ) ? '<span class="sulayr-ranking-field-error" role="alert">' . esc_html( $errors['interest_bonus'] ) . '</span>' : '';
+
+        printf(
+            '<tr><th scope="row"><label for="sulayr-c-interest_bonus">%s</label></th><td>%s<p class="description">%s</p>%s</td></tr>',
+            esc_html__( 'Bonus por interés del club', SULAYR_TEXTDOMAIN ),
+            $html, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escapado arriba.
+            esc_html__( 'Puntos extra para todos los socios que la terminan, en la absoluta y en su grupo de edad. Para las pruebas a las que el club quiere que vaya más gente.', SULAYR_TEXTDOMAIN ),
+            $error // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        );
+        printf(
+            '<tr><th scope="row"><label for="sulayr-c-interest_label">%s</label></th><td><input type="text" class="regular-text" id="sulayr-c-interest_label" name="%s[interest_label]" value="%s" maxlength="60" placeholder="%s"><p class="description">%s</p></td></tr>',
+            esc_html__( 'Motivo del bonus', SULAYR_TEXTDOMAIN ),
+            esc_attr( $prefix ),
+            esc_attr( (string) ( $c['interest_label'] ?? '' ) ),
+            esc_attr__( 'Circuito Granadino de Triatlón', SULAYR_TEXTDOMAIN ),
+            esc_html__( 'Opcional. Lo ven los socios junto al bonus. Sin bonus no se guarda.', SULAYR_TEXTDOMAIN )
+        );
     }
 
     /**
@@ -612,7 +652,7 @@ class CompetitionEditPage {
 
         $season = self::season_of( (string) ( $input['competition']['race_date'] ?? '' ) );
         $groups = RankingSettings::groups( $season );
-        $v = ResultValidator::validate( $input, self::member_map( self::members( $groups, $season, $id ) ), $groups, current_time( 'Y-m-d' ) );
+        $v = ResultValidator::validate( $input, self::member_map( self::members( $groups, $season, $id ) ), $groups, current_time( 'Y-m-d' ), RankingSettings::interest_values( $season ) );
         $errors = $v['errors'];
 
         // Con resultados guardados, el formato no se cambia (SPEC §4.2).

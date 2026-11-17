@@ -49,6 +49,7 @@ Lo normal es **importarla** (4.1): la web rellena todo a partir de los PDF de la
    - **Socios encontrados**: vienen elegidos. Si alguno no es, cámbialo.
    - **De equipos del club, sin socio**: corren en un equipo «Sulayr», pero su nombre no se parece al de ningún socio. Si alguno es socio, elígelo.
    - Si ya hay una competición con la misma fecha, sale un aviso con su enlace, para que no la metas dos veces.
+   - **Bonus por interés del club**: si es una prueba a la que el club quiere que vaya más gente, elige el bonus y, si quieres, el motivo (sección 5.1). El JSON no lo trae.
 5. Pulsa **Rellenar la competición**. Se abre **Añadir competición** con los datos, los resultados y las referencias rellenos. **Todavía no se ha guardado nada.**
 6. Revisa la tabla. Las referencias que no se pudieron rellenar salen en rojo, con el motivo arriba (por ejemplo, un grupo de edad sin código de la federación). Rellénalas a mano.
 7. Pulsa **Guardar**, revisa los puntos de cada fila y, si todo está bien, **Guardar y publicar**.
@@ -62,7 +63,7 @@ La importación se guarda dos horas. Si cierras la pestaña de «Añadir competi
 Necesitas dos documentos de la federación: la **Clasificación general** de cada sexo y la **Clasificación por categorías**.
 
 1. **Ranking → Añadir competición**.
-2. **Datos**: nombre, fecha, lugar, modalidad (triatlón, triatlón cros, duatlón, duatlón cros, acuatlón, acuabike), distancia y formato (individual, relevos o contrarreloj por equipos). Copia lo que pone la cabecera de la clasificación. El formato no se puede cambiar si la competición ya tiene resultados: bórralos antes.
+2. **Datos**: nombre, fecha, lugar, modalidad (triatlón, triatlón cros, duatlón, duatlón cros, acuatlón, acuabike), distancia y formato (individual, relevos o contrarreloj por equipos). Copia lo que pone la cabecera de la clasificación. El formato no se puede cambiar si la competición ya tiene resultados: bórralos antes. Si la prueba tiene **bonus por interés del club**, elígelo aquí (sección 5.1).
 3. **Resultados**: una fila por socio que participó, con los datos de la clasificación general de su sexo:
    - **Socio**. Debajo aparecen su sexo y su grupo de edad.
    - **Pos**: la posición en la general de su sexo.
@@ -101,6 +102,17 @@ Si falta algo, la web no publica y marca en rojo lo que falta. Si hay errores, n
 
 En la ficha de cada socio, pasando por los puntos (o tocándolos en el móvil), se ve el cálculo.
 
+### 5.1. Bonus por interés del club
+
+Para que vayan más socios a ciertas pruebas (por ejemplo, las del Circuito Granadino o un campeonato de Andalucía), una competición puede dar puntos extra:
+
+- Se elige en la competición, en **Bonus por interés del club**: «Normal (sin bonus)», +50, +100… hasta +300. El **Motivo** es opcional y lo ven los socios (p. ej. «+100 · Circuito Granadino»).
+- Se suma igual a todos los socios que la terminan, en la absoluta y en su grupo de edad: `1000 × ratio × coeficiente + 50 + bonus`. Quien no termina sigue con 0 puntos.
+- Es una cifra fija y no un multiplicador: premia ir, pero no cambia las diferencias entre los que corren ni hace que una prueba corta valga como una larga.
+- Se puede poner o cambiar después de publicar: los puntos se recalculan y el cambio queda en el registro.
+
+Úsalo con moderación: si todas las pruebas tienen bonus, ninguna destaca.
+
 ## 6. Corregir y borrar
 
 - Para corregir, abre la competición desde **Ranking → Competiciones**, cambia lo que haga falta y guarda. Los puntos se recalculan solos.
@@ -111,7 +123,9 @@ En la ficha de cada socio, pasando por los puntos (o tocándolos en el móvil), 
 
 ## 7. Ajustes
 
-**Ranking → Ajustes** cambia los puntos base, el bonus, cuántas pruebas cuentan, los coeficientes, los grupos de edad y el nombre de la pestaña de Mi cuenta.
+**Ranking → Ajustes** cambia los puntos base, el bonus, cuántas pruebas cuentan, los coeficientes, los grupos de edad, el bonus por interés del club y el nombre de la pestaña de Mi cuenta.
+
+En **Bonus por interés** están el **salto** (50) y el **máximo** (300) de los valores que se pueden elegir en cada competición. Con máximo 0 no se usa. El máximo tiene que ser múltiplo del salto. Si una competición de la temporada ya tiene un bonus que dejaría de valer (por ejemplo, +300 y quieres bajar el máximo a 250), Ajustes no guarda y te dice cuál es: cámbiale antes el bonus.
 
 Los ajustes son los de la **temporada en curso**. Al guardar se recalcula solo esa temporada; las anteriores conservan su baremo. Los grupos de edad llevan un código (las dos letras de la columna «Cat», sin la M/F) para avisar cuando la carrera clasifica a un socio en otro grupo.
 

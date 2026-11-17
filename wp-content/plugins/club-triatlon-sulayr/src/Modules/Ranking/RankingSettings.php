@@ -27,6 +27,8 @@ class RankingSettings {
 
     private const GROUPS_FIELD = 'field_sulayr_ranking_age_groups';
     private const INTRO_FIELD = 'field_sulayr_ranking_intro';
+    private const INTEREST_STEP_FIELD = 'field_sulayr_ranking_interest_step';
+    private const INTEREST_MAX_FIELD = 'field_sulayr_ranking_interest_max';
 
     /** Baremo antes de guardar, para registrar los cambios. */
     private static ?array $before = null;
@@ -45,6 +47,7 @@ class RankingSettings {
         add_action( 'acf/save_post', [ $this, 'after_save' ], 20 );
         add_filter( 'acf/validate_value/key=' . self::GROUPS_FIELD, [ $this, 'validate_groups' ], 10, 2 );
         add_filter( 'acf/load_field/key=' . self::INTRO_FIELD, [ $this, 'load_intro' ] );
+        add_action( 'acf/validate_save_post', [ $this, 'validate_interest' ], 10, 0 );
     }
 
     /**
@@ -89,6 +92,8 @@ class RankingSettings {
             'best_n' => get_field( 'best_n', self::POST_ID ),
             'coefficients' => [],
             'age_groups' => [],
+            'interest_step' => get_field( 'interest_step', self::POST_ID ),
+            'interest_max' => get_field( 'interest_max', self::POST_ID ),
         ];
         foreach ( Keys::MODALITIES as $modality ) {
             $baremo['coefficients'][ $modality ] = (array) get_field( 'coef_' . $modality, self::POST_ID );
@@ -143,6 +148,18 @@ class RankingSettings {
      */
     public static function groups( int $season ): AgeGroups {
         return new AgeGroups( self::for_season( $season )['age_groups'] );
+    }
+
+    /**
+     * Bonus por interés del club que se pueden elegir en una temporada (§15.3).
+     *
+     * @param   int $season Año.
+     * @return 	int[]
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function interest_values( int $season ): array {
+        return Baremo::interest_values( self::for_season( $season ) );
     }
 
     /**
@@ -253,6 +270,46 @@ class RankingSettings {
     }
 
     /**
+     * Bonus por interés del club (§15.3): salto y máximo válidos, y sin dejar fuera
+     * el bonus de una competición de la temporada en curso.
+     *
+     * @return 	void
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public function validate_interest(): void {
+        if ( self::POST_ID !== ( $_POST['_acf_post_id'] ?? '' ) || ! function_exists( 'acf_add_validation_error' ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- ACF ya comprobó el nonce.
+            return;
+        }
+
+        $acf = (array) wp_unslash( $_POST['acf'] ?? [] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Solo se leen dos números.
+        $step = $acf[ self::INTEREST_STEP_FIELD ] ?? null;
+        $max = $acf[ self::INTEREST_MAX_FIELD ] ?? null;
+        if ( null === $step || null === $max ) {
+            return;
+        }
+
+        $problems = Baremo::interest_problems( $step, $max );
+        if ( ! empty( $problems ) ) {
+            acf_add_validation_error( 'acf[' . self::INTEREST_MAX_FIELD . ']', implode( ' ', $problems ) );
+            return;
+        }
+
+        $competitions = [];
+        foreach ( Competitions::for_season( self::current_season() ) as $c ) {
+            $competitions[] = [ 'name' => (string) $c->name, 'interest_bonus' => (int) $c->interest_bonus ];
+        }
+        $conflicts = Baremo::interest_conflicts( Baremo::interest_values( [ 'interest_step' => (int) $step, 'interest_max' => (int) $max ] ), $competitions );
+        if ( ! empty( $conflicts ) ) {
+            acf_add_validation_error(
+                'acf[' . self::INTEREST_MAX_FIELD . ']',
+                /* translators: %s: competiciones con su bonus. */
+                sprintf( __( 'Con este salto y este máximo dejaría de valer el bonus de: %s. Cambia antes el bonus de esas competiciones.', SULAYR_TEXTDOMAIN ), implode( ', ', $conflicts ) )
+            );
+        }
+    }
+
+    /**
      * Texto de la cabecera de los ajustes, con la temporada y los baremos guardados.
      *
      * @param   array $field Campo.
@@ -271,7 +328,7 @@ class RankingSettings {
             $html .= '<details><summary>' . esc_html__( 'Ver el baremo de temporadas anteriores', SULAYR_TEXTDOMAIN ) . '</summary>';
             foreach ( $past as $year ) {
                 $b = self::for_season( $year );
-                $html .= '<p><strong>' . esc_html( (string) $year ) . '</strong>: ' . esc_html( sprintf( __( 'base %1$s, bonus %2$s, cuentan %3$d pruebas.', SULAYR_TEXTDOMAIN ), number_format_i18n( $b['base'] ), number_format_i18n( $b['bonus'] ), $b['best_n'] ) ) . '</p><ul>';
+                $html .= '<p><strong>' . esc_html( (string) $year ) . '</strong>: ' . esc_html( sprintf( __( 'base %1$s, bonus %2$s, cuentan %3$d pruebas, bonus por interés de %4$d en %4$d hasta %5$d.', SULAYR_TEXTDOMAIN ), number_format_i18n( $b['base'] ), number_format_i18n( $b['bonus'] ), $b['best_n'], $b['interest_step'], $b['interest_max'] ) ) . '</p><ul>';
                 foreach ( Labels::modalities() as $modality => $label ) {
                     $parts = [];
                     foreach ( Labels::distances() as $distance => $distance_label ) {
@@ -341,6 +398,16 @@ class RankingSettings {
             $this->number( 'base_points', __( 'Puntos base', SULAYR_TEXTDOMAIN ), $defaults['base'], __( '1000 por defecto.', SULAYR_TEXTDOMAIN ), 1, 1 ),
             $this->number( 'finish_bonus', __( 'Bonus por prueba terminada', SULAYR_TEXTDOMAIN ), $defaults['bonus'], __( 'Se suma después del coeficiente. 50 por defecto.', SULAYR_TEXTDOMAIN ), 1, 0 ),
             $this->number( 'best_n', __( 'Pruebas que cuentan (N)', SULAYR_TEXTDOMAIN ), $defaults['best_n'], __( 'Mejores resultados de cada socio que suman en la temporada. 6 por defecto.', SULAYR_TEXTDOMAIN ), 1, 1 ),
+            $this->tab( 'interes', __( 'Bonus por interés', SULAYR_TEXTDOMAIN ) ),
+            [
+                'key' => 'field_sulayr_ranking_interest_intro',
+                'label' => '',
+                'name' => '',
+                'type' => 'message',
+                'message' => esc_html__( 'Puntos extra para las competiciones a las que el club quiere que vayan más socios (p. ej. el Circuito Granadino). Se eligen en cada competición: 0 o un múltiplo del salto hasta el máximo. Se suman solo a quien termina, en la absoluta y en su grupo de edad. Con máximo 0 no se usa.', SULAYR_TEXTDOMAIN ),
+            ],
+            $this->number( 'interest_step', __( 'Salto', SULAYR_TEXTDOMAIN ), $defaults['interest_step'], sprintf( __( 'De cuánto en cuánto se elige el bonus. %d por defecto.', SULAYR_TEXTDOMAIN ), Baremo::INTEREST_STEP ), 1, 1 ),
+            $this->number( 'interest_max', __( 'Máximo', SULAYR_TEXTDOMAIN ), $defaults['interest_max'], sprintf( __( 'Múltiplo del salto. %d por defecto. No se puede bajar si una competición de la temporada usa un bonus mayor.', SULAYR_TEXTDOMAIN ), Baremo::INTEREST_MAX ), 1, 0 ),
             $this->tab( 'coeficientes', __( 'Coeficientes', SULAYR_TEXTDOMAIN ) ),
         ];
 
@@ -458,6 +525,8 @@ class RankingSettings {
             'base_points' => (string) (float) $baremo['base'],
             'finish_bonus' => (string) (float) $baremo['bonus'],
             'best_n' => (string) (int) $baremo['best_n'],
+            'interest_step' => (string) (int) $baremo['interest_step'],
+            'interest_max' => (string) (int) $baremo['interest_max'],
         ];
         foreach ( $baremo['coefficients'] as $modality => $distances ) {
             foreach ( $distances as $distance => $value ) {

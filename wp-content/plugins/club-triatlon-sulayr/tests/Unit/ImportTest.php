@@ -207,4 +207,23 @@ class ImportTest extends TestCase {
         $this->assertSame( 2, $merged['groups']['|m']['participants'] );
         $this->assertSame( [], $merged['warnings'] );
     }
+
+    /** T40: el bonus y el motivo elegidos en la revisión llegan al formulario (§15.4). */
+    public function test_t40_bonus_por_interes_en_la_importacion(): void {
+        $parsed = ImportParser::parse( $this->relay_json(), self::TODAY );
+        $merged = ImportMerger::merge( $parsed );
+        $members = [ 10 => [ 'sex' => 'm', 'group' => 'senior' ] ];
+
+        $built = ImportMerger::build_input( $parsed, $merged, [ 1 => 10 ], $members, new AgeGroups( AgeGroups::DEFAULTS ), '', [ 'interest_bonus' => 100, 'interest_label' => 'Circuito Granadino' ] );
+        $this->assertSame( '100', $built['input']['competition']['interest_bonus'] );
+        $this->assertSame( 'Circuito Granadino', $built['input']['competition']['interest_label'] );
+        $v = ResultValidator::validate( $built['input'], $members, new AgeGroups( AgeGroups::DEFAULTS ), self::TODAY, [ 0, 50, 100 ] );
+        $this->assertSame( 100, $v['competition']['interest_bonus'] );
+        $this->assertArrayNotHasKey( 'interest_bonus', $v['errors']['competition'] );
+
+        // Sin elegir nada: competición normal.
+        $plain = ImportMerger::build_input( $parsed, $merged, [ 1 => 10 ], $members, new AgeGroups( AgeGroups::DEFAULTS ), '' );
+        $this->assertSame( '0', $plain['input']['competition']['interest_bonus'] );
+        $this->assertSame( '', $plain['input']['competition']['interest_label'] );
+    }
 }

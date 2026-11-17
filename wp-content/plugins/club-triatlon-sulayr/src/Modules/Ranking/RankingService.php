@@ -120,12 +120,13 @@ class RankingService {
         $baremo = RankingSettings::for_season( $season, true );
         $groups = new AgeGroups( $baremo['age_groups'] );
         $coef = Baremo::coefficient( $baremo, (string) $competition->modality, (string) $competition->distance );
+        $interest = (int) ( $competition->interest_bonus ?? 0 );
         $format = (string) $competition->format;
         $references = Competitions::references( $competition_id );
         $changed = 0;
 
         foreach ( Results::for_competition( $competition_id ) as $result ) {
-            $data = self::calculate( $result, $format, $season, $coef, $baremo, $groups, $references );
+            $data = self::calculate( $result, $format, $season, $coef, $interest, $baremo, $groups, $references );
             $diff = [];
             foreach ( $data as $field => $value ) {
                 $current = $result->$field;
@@ -327,6 +328,7 @@ class RankingService {
      * @param   string    $format     Formato de la competición.
      * @param   int       $season     Año.
      * @param   float     $coef       Coeficiente.
+     * @param   int       $interest   Bonus por interés del club de la competición (§15).
      * @param   array     $baremo     Baremo de la temporada.
      * @param   AgeGroups $groups     Grupos de la temporada.
      * @param   array     $references Referencias por clave.
@@ -334,7 +336,7 @@ class RankingService {
      * @access 	private
      * @package	club-triatlon-sulayr
      */
-    private static function calculate( object $result, string $format, int $season, float $coef, array $baremo, AgeGroups $groups, array $references ): array {
+    private static function calculate( object $result, string $format, int $season, float $coef, int $interest, array $baremo, AgeGroups $groups, array $references ): array {
         $info = RankingRoster::info( (int) $result->user_id );
         $sex = $info['sex'];
         $group = $groups->for_birth( $info['birth'], $season );
@@ -347,6 +349,7 @@ class RankingService {
                 'sex' => '',
                 'age_group' => $group,
                 'coefficient' => round( $coef, 2 ),
+                'interest_bonus' => $interest,
                 'points_absolute' => 0.0,
                 'points_age_group' => null,
                 'method_absolute' => Keys::METHOD_NONE,
@@ -369,6 +372,7 @@ class RankingService {
             'coef' => $coef,
             'base' => $baremo['base'],
             'bonus' => $baremo['bonus'],
+            'interest' => $interest,
             'ref_abs' => $ref( Keys::SCOPE_ABSOLUTE, $is_team ? '' : $sex, '' ),
             'ref_grp' => ( $is_team || '' === $group ) ? null : $ref( Keys::SCOPE_GROUP, $sex, $group ),
             'has_group' => '' !== $group,
@@ -388,6 +392,7 @@ class RankingService {
             'sex' => $sex,
             'age_group' => $group,
             'coefficient' => round( $coef, 2 ),
+            'interest_bonus' => $interest,
             'points_absolute' => $calc['points_absolute'],
             'points_age_group' => $calc['points_age_group'],
             'method_absolute' => $calc['method_absolute'],

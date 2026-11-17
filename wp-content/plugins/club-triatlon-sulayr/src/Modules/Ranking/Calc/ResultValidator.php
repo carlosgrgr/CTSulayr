@@ -17,15 +17,16 @@ class ResultValidator {
      * @param   array     $members user_id => [ sex => m|f, group => clave|'' ] de los socios que se pueden elegir.
      * @param   AgeGroups $groups  Grupos de la temporada.
      * @param   string    $today   Y-m-d.
+     * @param   int[]     $interest_values Bonus por interés que se pueden elegir en la temporada de la competición (§15).
      * @return 	array{competition: array, references: array, results: array, errors: array, warnings: array, required: array, missing: array}
      * @access 	public
      * @package	club-triatlon-sulayr
      */
-    public static function validate( array $input, array $members, AgeGroups $groups, string $today ): array {
+    public static function validate( array $input, array $members, AgeGroups $groups, string $today, array $interest_values = [ 0 ] ): array {
         $errors = [ 'competition' => [], 'references' => [], 'results' => [] ];
         $warnings = [];
 
-        $competition = self::competition( (array) ( $input['competition'] ?? [] ), $today, $errors['competition'] );
+        $competition = self::competition( (array) ( $input['competition'] ?? [] ), $today, $interest_values, $errors['competition'] );
         $format = $competition['format'];
 
         // Referencias.
@@ -181,12 +182,14 @@ class ResultValidator {
      *
      * @param   array  $raw    Textos.
      * @param   string $today  Y-m-d.
+     * @param   int[]  $interest_values Bonus por interés que se pueden elegir.
      * @param   array  $errors Errores (salida).
      * @return 	array
      * @access 	private
      * @package	club-triatlon-sulayr
      */
-    private static function competition( array $raw, string $today, array &$errors ): array {
+    private static function competition( array $raw, string $today, array $interest_values, array &$errors ): array {
+        $interest_raw = trim( (string) ( $raw['interest_bonus'] ?? '' ) );
         $c = [
             'name' => self::text( $raw['name'] ?? '', 190 ),
             'race_date' => trim( (string) ( $raw['race_date'] ?? '' ) ),
@@ -195,6 +198,8 @@ class ResultValidator {
             'distance' => (string) ( $raw['distance'] ?? '' ),
             'format' => (string) ( $raw['format'] ?? '' ),
             'notes' => self::text( $raw['notes'] ?? '', 255 ),
+            'interest_bonus' => '' === $interest_raw ? 0 : (int) $interest_raw,
+            'interest_label' => self::text( $raw['interest_label'] ?? '', 60 ),
         ];
 
         if ( '' === $c['name'] ) {
@@ -214,6 +219,13 @@ class ResultValidator {
         if ( false === in_array( $c['format'], Keys::FORMATS, true ) ) {
             $errors['format'] = 'Elige el formato.';
             $c['format'] = Keys::FORMAT_INDIVIDUAL;
+        }
+        if ( 1 !== preg_match( '/^\d*$/', $interest_raw ) || ! in_array( $c['interest_bonus'], $interest_values, true ) ) {
+            $errors['interest_bonus'] = 'Elige un bonus de la lista.';
+        }
+        // Sin bonus no hay motivo que enseñar.
+        if ( 0 === $c['interest_bonus'] ) {
+            $c['interest_label'] = '';
         }
 
         return $c;

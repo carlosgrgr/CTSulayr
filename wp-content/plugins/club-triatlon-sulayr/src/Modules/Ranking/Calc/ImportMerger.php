@@ -144,11 +144,12 @@ class ImportMerger {
      * @param   array     $members     user_id => [ sex, group ] de los socios que se pueden elegir.
      * @param   AgeGroups $groups      Grupos de la temporada.
      * @param   string    $notes       Nota interna.
+     * @param   array     $interest    [ interest_bonus, interest_label ] elegidos en la revisión (§15.4).
      * @return 	array{input: array, warnings: string[]}
      * @access 	public
      * @package	club-triatlon-sulayr
      */
-    public static function build_input( array $parsed, array $merged, array $assignments, array $members, AgeGroups $groups, string $notes ): array {
+    public static function build_input( array $parsed, array $merged, array $assignments, array $members, AgeGroups $groups, string $notes, array $interest = [] ): array {
         $format = $parsed['competition']['format'];
         $team = Keys::has_team( $format );
         $warnings = [];
@@ -222,6 +223,8 @@ class ImportMerger {
 
         $competition = $parsed['competition'];
         $competition['notes'] = $notes;
+        $competition['interest_bonus'] = (string) (int) ( $interest['interest_bonus'] ?? 0 );
+        $competition['interest_label'] = 0 === (int) $competition['interest_bonus'] ? '' : (string) ( $interest['interest_label'] ?? '' );
 
         return [
             'input' => [ 'competition' => $competition, 'references' => $references, 'results' => $results ],

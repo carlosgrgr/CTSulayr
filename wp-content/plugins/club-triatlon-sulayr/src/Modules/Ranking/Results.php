@@ -57,7 +57,7 @@ class Results {
 
         $results = RankingSchema::table( RankingSchema::RESULTS );
         $competitions = RankingSchema::table( RankingSchema::COMPETITIONS );
-        $sql = "SELECT r.*, c.name AS competition_name, c.race_date, c.season, c.modality, c.distance, c.format, c.status AS competition_status
+        $sql = "SELECT r.*, c.name AS competition_name, c.race_date, c.season, c.modality, c.distance, c.format, c.status AS competition_status, c.interest_label
             FROM {$results} r INNER JOIN {$competitions} c ON c.id = r.competition_id
             WHERE c.season = %d";
         $args = [ $season ];
@@ -292,6 +292,7 @@ class Results {
             }
             $row->points_age_group = null === $row->points_age_group ? null : (float) $row->points_age_group;
             $row->points_absolute = (float) $row->points_absolute;
+            $row->interest_bonus = (int) ( $row->interest_bonus ?? 0 );
         }
 
         return $rows;

@@ -147,3 +147,40 @@ Comprobar:
 2. En el móvil, en vertical: tarjetas; en apaisado: tabla con cabecera Noche, filas alternas y scroll horizontal si no cabe. Iniciales y fotos en un círculo pequeño.
 3. Criterio 8 de `pruebas.md`.
 
+# Ampliación: bonus por interés del club
+
+Escrito el 17 de noviembre de 2026. Sección 15 de la spec (R42 y R43). **Estado:** en local, sin subir a PROD.
+
+Sube la versión del esquema a 2: la primera petición a la web añade tres columnas (`interest_bonus` e `interest_label` en competiciones, `interest_bonus` en resultados). No hay datos que migrar: las competiciones que ya hay quedan sin bonus y sus puntos no cambian.
+
+Si aún no has subido el «Ajuste: estilos del ranking en el móvil», súbelo a la vez: comparte `styles.css` y las plantillas, y estas versiones ya lo incluyen.
+
+Rutas relativas a `wp-content/plugins/club-triatlon-sulayr/`. Sobrescribe, en este orden:
+
+1. `src/Modules/Ranking/Database/RankingSchema.php`. Después, abre cualquier página de wp-admin para que se añadan las columnas.
+2. `src/Modules/Ranking/Calc/Baremo.php`
+3. `src/Modules/Ranking/Calc/PointsCalculator.php`
+4. `src/Modules/Ranking/Calc/ResultValidator.php`
+5. `src/Modules/Ranking/Calc/ImportMerger.php`
+6. `src/Modules/Ranking/Competitions.php`
+7. `src/Modules/Ranking/Results.php`
+8. `src/Modules/Ranking/RankingService.php`
+9. `src/Modules/Ranking/RankingSettings.php`
+10. `src/Modules/Ranking/Labels.php`
+11. `src/Modules/Ranking/Admin/CompetitionEditPage.php`
+12. `src/Modules/Ranking/Admin/ImportPage.php`
+13. `src/Modules/Ranking/Admin/RankingMenu.php`
+14. `src/Modules/Members/Admin/BrandStyles.php`
+15. `src/Modules/Ranking/Front/RankingView.php`
+16. `templates/ranking/standings.php`
+17. `templates/ranking/athlete.php`
+18. `templates/ranking/competition.php`
+19. `public/css/styles.css`
+20. `src/App/App.php` (solo si no subiste el ajuste de estilos)
+
+Comprobar:
+
+1. **Ranking → Ajustes → Bonus por interés**: salto 50 y máximo 300. Pulsa «Guardar ajustes» una vez para que la temporada guarde esos valores.
+2. **Ranking → Competiciones**: Úbeda sigue con los mismos puntos y sin etiqueta.
+3. Abre una competición: debajo de «Formato» salen «Bonus por interés del club» y «Motivo del bonus».
+4. Criterios 15 y 16 de `pruebas.md`. Para el 15 se puede usar Úbeda: pon +50, comprueba que los puntos suben 50 y vuelve a dejarla en «Normal (sin bonus)».

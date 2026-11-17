@@ -63,7 +63,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                 <tr>
                     <td class="sulayr-ranking-date" data-label="<?php esc_attr_e( 'Fecha', SULAYR_TEXTDOMAIN ); ?>"><?php echo esc_html( $r['date'] ); ?></td>
                     <td data-label="<?php esc_attr_e( 'Competición', SULAYR_TEXTDOMAIN ); ?>">
-                        <a href="<?php echo esc_url( $r['url'] ); ?>"><?php echo esc_html( $r['competition'] ); ?></a>
+                        <a href="<?php echo esc_url( $r['url'] ); ?>"><?php echo esc_html( $r['competition'] ); ?></a><?php if ( '' !== $r['interest'] ) : ?> <span class="sulayr-ranking-interest"><?php echo esc_html( $r['interest'] ); ?></span><?php endif; ?>
                         <span class="sulayr-ranking-type"><?php echo esc_html( $r['type'] ); ?></span>
                     </td>
                     <td class="sulayr-num" data-label="<?php esc_attr_e( 'Tiempo', SULAYR_TEXTDOMAIN ); ?>"><?php echo esc_html( $r['finished'] ? $r['time'] : $r['status'] ); ?></td>

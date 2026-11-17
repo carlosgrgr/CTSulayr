@@ -195,6 +195,7 @@ class RankingView {
                 'competition' => (string) $r->competition_name,
                 'url' => add_query_arg( 'competicion', (int) $r->competition_id, $base_url ),
                 'type' => Labels::of( Labels::modalities(), (string) $r->modality ) . ' · ' . Labels::of( Labels::distances(), (string) $r->distance ),
+                'interest' => Labels::interest( $r->interest_bonus, (string) $r->interest_label ),
                 'status' => Labels::status_short( (string) $r->status ),
                 'finished' => Keys::STATUS_FINISHED === $r->status,
                 'time' => RaceTime::format( $r->time_s ) ?: '—',
@@ -203,8 +204,8 @@ class RankingView {
                 'position_age_group' => null !== $r->position_age_group ? (string) $r->position_age_group : '—',
                 'points_absolute' => Labels::points( $r->points_absolute ),
                 'points_age_group' => Labels::points( $r->points_age_group ),
-                'breakdown_absolute' => self::breakdown( $r->points_absolute, (string) $r->method_absolute, (float) $r->coefficient, $baremo ),
-                'breakdown_age_group' => self::breakdown( $r->points_age_group, (string) $r->method_age_group, (float) $r->coefficient, $baremo ),
+                'breakdown_absolute' => self::breakdown( $r->points_absolute, (string) $r->method_absolute, (float) $r->coefficient, (int) $r->interest_bonus, $baremo ),
+                'breakdown_age_group' => self::breakdown( $r->points_age_group, (string) $r->method_age_group, (float) $r->coefficient, (int) $r->interest_bonus, $baremo ),
                 'counts_absolute' => ! empty( $counted[ (int) $r->id ]['absolute'] ),
                 'counts_age_group' => ! empty( $counted[ (int) $r->id ]['group'] ),
             ];
@@ -330,22 +331,24 @@ class RankingView {
             'name' => (string) $c->name,
             'date' => date_i18n( 'd/m/Y', strtotime( (string) $c->race_date ) ),
             'type' => Labels::of( Labels::modalities(), (string) $c->modality ) . ' · ' . Labels::of( Labels::distances(), (string) $c->distance ),
+            'interest' => Labels::interest( $c->interest_bonus ?? 0, (string) ( $c->interest_label ?? '' ) ),
             'url' => add_query_arg( 'competicion', (int) $c->id, $base_url ),
         ];
     }
 
     /**
-     * Desglose de los puntos: «1000 × 0,8333 × 1,10 + 50».
+     * Desglose de los puntos: «1000 × 0,8333 × 1,10 + 50», y «+ 100 interés del club» si la prueba tiene bonus (§15.5).
      *
-     * @param   float|null $points Puntos.
-     * @param   string     $method Método.
-     * @param   float      $coef   Coeficiente.
-     * @param   array      $baremo Baremo de la temporada.
+     * @param   float|null $points   Puntos.
+     * @param   string     $method   Método.
+     * @param   float      $coef     Coeficiente.
+     * @param   int        $interest Bonus por interés aplicado (copia del resultado).
+     * @param   array      $baremo   Baremo de la temporada.
      * @return 	string
      * @access 	private
      * @package	club-triatlon-sulayr
      */
-    private static function breakdown( $points, string $method, float $coef, array $baremo ): string {
+    private static function breakdown( $points, string $method, float $coef, int $interest, array $baremo ): string {
         if ( null === $points ) {
             return __( 'No puntúa en grupo de edad.', SULAYR_TEXTDOMAIN );
         }
@@ -358,8 +361,12 @@ class RankingView {
 
         $base = (float) $baremo['base'];
         $bonus = (float) $baremo['bonus'];
-        $ratio = Keys::METHOD_ABSOLUTE_CATEGORY === $method ? 1.0 : ( (float) $points - $bonus ) / ( $base * $coef );
+        $ratio = Keys::METHOD_ABSOLUTE_CATEGORY === $method ? 1.0 : ( (float) $points - $bonus - $interest ) / ( $base * $coef );
         $text = sprintf( '%s × %s × %s + %s', number_format_i18n( $base ), number_format_i18n( $ratio, 4 ), number_format_i18n( $coef, 2 ), number_format_i18n( $bonus ) );
+        if ( $interest > 0 ) {
+            /* translators: %s: puntos del bonus por interés del club. */
+            $text .= ' ' . sprintf( __( '+ %s interés del club', SULAYR_TEXTDOMAIN ), number_format_i18n( $interest ) );
+        }
 
         if ( Keys::METHOD_POSITION === $method ) {
             $text .= ' (' . __( 'por posición', SULAYR_TEXTDOMAIN ) . ')';

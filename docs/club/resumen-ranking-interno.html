@@ -142,7 +142,7 @@ td.up { color: var(--accent); font-weight: 600; }
     <ul class="facts">
       <li><span class="k">Fecha</span><span class="v">16 nov 2026</span></li>
       <li><span class="k">Temporada</span><span class="v">1 ene – 31 dic</span></li>
-      <li><span class="k">Estado</span><span class="v sol">Hecho · subido a la web el 16 de noviembre de 2026 · pendiente de pruebas con datos reales · importación desde los PDF subida el mismo día</span></li>
+      <li><span class="k">Estado</span><span class="v sol">Hecho · subido a la web el 16 de noviembre de 2026 · pendiente de pruebas con datos reales · importación desde los PDF subida el mismo día · bonus por interés del club hecho el 17 de noviembre, pendiente de subir</span></li>
     </ul>
   </div>
   <svg class="peaks" viewBox="0 0 1200 84" preserveAspectRatio="none" aria-hidden="true">
@@ -180,6 +180,7 @@ td.up { color: var(--accent); font-weight: 600; }
       <li><strong>Relevos:</strong> cada relevista hace el recorrido completo, así que cuenta su tiempo individual frente al del mejor de su sexo en los relevos. Para el ranking interno no se distingue entre federado y open: se juntan, y el ganador es el más rápido de los dos.</li>
       <li><strong>Contrarreloj por equipos:</strong> cuenta el tiempo del equipo frente al del equipo ganador de su categoría.</li>
       <li><strong>Si un socio terminó pero no aparece su tiempo</strong>, se le pide. Si no lo da, puntúa por su posición: 1000 × (1 − (posición − 1) ÷ finalizados) × coeficiente + 50.</li>
+      <li><strong>Pruebas de interés para el club</strong> (por ejemplo, las del Circuito Granadino): pueden dar un bonus fijo de 50 a 300 puntos a todos los que las terminan, en la absoluta y en el grupo de edad. Es una suma y no un multiplicador, para premiar que se vaya sin que una sola prueba desequilibre el ranking. En Mi cuenta salen marcadas, por ejemplo con «+100 · Circuito Granadino».</li>
     </ul>
 
     <div class="example">
@@ -188,6 +189,7 @@ td.up { color: var(--accent); font-weight: 600; }
         <p>La ganadora hace <span class="mono">1:02:30</span>. Una socia termina en <span class="mono">1:15:00</span>.</p>
         <div class="calc">Socia: 1000 × (1:02:30 ÷ 1:15:00) × 1,1 + 50 = <span class="res">966,67 puntos</span></div>
         <div class="calc">Ganadora: 1000 × 1 × 1,1 + 50 = <span class="res">1150 puntos</span></div>
+        <div class="calc">Si la prueba tuviera bonus por interés de +100, la socia sumaría <span class="res">1066,67 puntos</span></div>
       </div>
     </div>
 
@@ -202,7 +204,7 @@ td.up { color: var(--accent); font-weight: 600; }
         </tbody>
       </table>
     </div>
-    <p class="note">La distancia estándar es la olímpica (en triatlón, 1,5 km de natación, 40 km de ciclismo y 10 km de carrera). Son los valores de partida. Los puntos base, el bonus por terminar, cuántas pruebas cuentan, los coeficientes y los grupos de edad se cambian desde wp-admin. Cada temporada guarda su baremo: un cambio solo afecta a la temporada en curso.</p>
+    <p class="note">La distancia estándar es la olímpica (en triatlón, 1,5 km de natación, 40 km de ciclismo y 10 km de carrera). Son los valores de partida. Los puntos base, el bonus por terminar, el bonus por interés del club, cuántas pruebas cuentan, los coeficientes y los grupos de edad se cambian desde wp-admin. Cada temporada guarda su baremo: un cambio solo afecta a la temporada en curso.</p>
 
     <h3>Empates</h3>
     <p>Con los mismos puntos va delante quien ha terminado más pruebas y, si siguen igual, quien tiene el mejor resultado. Si aun así empatan, comparten puesto.</p>

@@ -14,7 +14,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class RankingSchema {
 
-    public const VERSION = 1;
+    /** 2: bonus por interés del club (§15). */
+    public const VERSION = 2;
     public const VERSION_OPTION = 'sulayr_ranking_db_version';
 
     public const COMPETITIONS = 'sulayr_ranking_competitions';
@@ -92,6 +93,8 @@ class RankingSchema {
   format varchar(20) NOT NULL DEFAULT 'individual',
   status varchar(20) NOT NULL DEFAULT 'borrador',
   notes varchar(255) NOT NULL DEFAULT '',
+  interest_bonus smallint(5) unsigned NOT NULL DEFAULT 0,
+  interest_label varchar(60) NOT NULL DEFAULT '',
   created_by bigint(20) unsigned NOT NULL DEFAULT 0,
   created_at datetime NOT NULL,
   updated_by bigint(20) unsigned NOT NULL DEFAULT 0,
@@ -127,6 +130,7 @@ class RankingSchema {
   position_age_group int(10) unsigned DEFAULT NULL,
   team_category varchar(10) NOT NULL DEFAULT '',
   coefficient decimal(4,2) NOT NULL DEFAULT 1.00,
+  interest_bonus smallint(5) unsigned NOT NULL DEFAULT 0,
   points_absolute decimal(8,2) NOT NULL DEFAULT 0.00,
   points_age_group decimal(8,2) DEFAULT NULL,
   method_absolute varchar(10) NOT NULL DEFAULT '',

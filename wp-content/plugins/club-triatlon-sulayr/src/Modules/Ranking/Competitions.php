@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Competitions {
 
     /** Campos editables de una competición. */
-    public const FIELDS = [ 'name', 'race_date', 'location', 'modality', 'distance', 'format', 'notes' ];
+    public const FIELDS = [ 'name', 'race_date', 'location', 'modality', 'distance', 'format', 'notes', 'interest_bonus', 'interest_label' ];
 
     /**
      * Una competición, o null.
