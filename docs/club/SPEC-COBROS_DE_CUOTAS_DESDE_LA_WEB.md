@@ -384,7 +384,19 @@ Decisiones de implementación (no cambian la spec):
 
 Pruebas: 8 tests PHPUnit nuevos (`tests/Unit/RedsysRedirectTest.php`, 105 en total en verde). `tests/wp/check-pagos.php` pasa de 36 a 73 comprobaciones, en verde y repetibles, sin dejar restos. Los emails se interceptan. Cubren los criterios 4, 5, 6 y 7 (la parte de quitar la tarjeta). La ruta REST responde 400 por HTTP en local con una firma falsa.
 
-Falta comprobar en el navegador cómo se ve Mis recibos con credenciales de pruebas, y la prueba de punta a punta con el entorno de pruebas de Redsys. Para esa prueba, la URL de notificación tiene que ser accesible desde internet: en local no lo es, así que hará falta un túnel o probarlo en PROD con el entorno de pruebas.
+**Pruebas manuales en el navegador, hechas el 17 de noviembre de 2026 y correctas.** En local, con las credenciales públicas de pruebas de Redsys en `wp-config.php` (comercio genérico 999008881) y pagando en la página de pruebas de Redsys. Como Redsys no llega a un sitio local, sus avisos se simularon: se firmaron con la misma clave y se mandaron por HTTP a la ruta real.
+
+1. Aspecto de Mis recibos (bloque «Mi tarjeta», casilla de autorización, información de protección de datos, botón de pago y avisos) en el móvil y en el escritorio.
+2. Sin marcar la autorización no se puede pagar.
+3. Cancelar en la página del banco: aviso de pago no completado y recibo pendiente.
+4. Tarjeta denegada: aviso de pago no completado, recibo pendiente y la tarjeta guardada no cambia.
+5. Quitar la tarjeta: aviso, registro en la ficha y email al club con medio «Tarjeta (TPV)» (C13).
+6. Ficha en wp-admin: medio de cobro y tarjeta guardada. Con «Tarjeta (TPV)», Mis recibos muestra el día de cobro y Mis cuotas, el medio.
+7. Socios → Ajustes: pestaña «Pago con tarjeta» y autorización de cargos. El día de cobro cambia el texto de la casilla.
+8. Socios → Recibos: el pago sale como «Tarjeta (TPV)», ese medio no se ofrece en el pago manual, y borrar el pago con motivo devuelve el recibo a pendiente.
+9. Socio con tutor: selector «Lo autoriza».
+
+Falta la prueba de punta a punta, con Redsys avisando él solo a la web. La URL de notificación tiene que ser accesible desde internet: en local no lo es, así que hará falta un túnel o probarlo en PROD con el entorno de pruebas.
 
 ### 11.3. Pendiente
 
