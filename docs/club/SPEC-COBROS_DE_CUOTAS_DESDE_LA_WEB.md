@@ -320,10 +320,11 @@ Parte C:
 
 **Al club**
 
-- [ ] Persona de contacto para el técnico de Redsys (nombre y móvil) y firma del contrato.
-- [ ] Texto de la autorización de cargos recurrentes (C12).
+- [x] Persona de contacto para el técnico de Redsys: Carlos García. Datos enviados al banco por email el 17 de noviembre de 2026.
+- [ ] Firma del contrato.
+- [ ] Texto de la autorización de cargos recurrentes (C12). Borrador en [SPEC-PROTECCION-DE-DATOS.md](SPEC-PROTECCION-DE-DATOS.md), sección 4.1, pendiente de la junta.
 - [ ] Socios del piloto (C25).
-- [x] PROD usa PHP 8.2 (se puede subir a 8.3, 8.4 o 8.5). El hosting permite desactivar WP-Cron y usar una tarea cron del servidor (6.2).
+- [x] PROD usa PHP 8.2 (se puede subir a 8.3, 8.4 o 8.5). Tarea cron del servidor y `DISABLE_WP_CRON` configurados y funcionando en PROD (6.2), comprobado el 17 de noviembre de 2026.
 
 **Respuestas del banco** (28 de octubre al 17 de noviembre de 2026)
 
@@ -334,3 +335,35 @@ Parte C:
 - [ ] Comisión mínima o fija por operación: sin respuesta (pasa al técnico).
 - [x] Entorno de pruebas y manual: los da el técnico de Redsys al activar el servicio.
 - Devoluciones de cobros rechazados sin coste. Abono en cuenta al día siguiente. Para contratar piden la URL del club (`https://clubtriatlonsulayr.com/`).
+
+---
+
+## 11. Parte B: implementación
+
+Rama `pago-online-parte-b`, empezada el 17 de noviembre de 2026. Se avanza con lo que no necesita al banco mientras llegan el contrato y las credenciales de pruebas.
+
+### 11.1. Paso B1: base sin conexión con Redsys
+
+Hecho el 17 de noviembre de 2026 y probado en local, sin commit todavía.
+
+| Pieza | Código | Qué hace |
+|---|---|---|
+| Credenciales (C29) | `Payments\Redsys\RedsysConfig` | Lee `SULAYR_REDSYS_MERCHANT_CODE`, `SULAYR_REDSYS_TERMINAL`, `SULAYR_REDSYS_SECRET_KEY` y `SULAYR_REDSYS_ENVIRONMENT` de `wp-config.php`. Solo `live` exacto usa el entorno real; cualquier otro valor es pruebas. URLs públicas de Redsys, a confirmar con el manual. |
+| Firma (§5.3) | `Payments\Redsys\RedsysSignature` | HMAC SHA-256 con la clave derivada por 3DES del pedido. Comprueba firmas en base64 normal y «URL» con `hash_equals`. |
+| Pedido e importes (§5.3) | `Payments\Redsys\RedsysOrder` | `Ds_Order` = `AAMM` + `Q` + id con 7 cifras; céntimos; `Ds_Response` de 0000 a 0099 = autorizada. |
+| Tablas (§4.2) | `MembersSchema` versión 5 | `sulayr_payment_cards` y `sulayr_tpv_transactions`. `ds_order` admite NULL hasta que se conoce el id, con índice único. |
+| Operaciones | `Payments\TpvTransactions` | Crea la operación «enviada» y le pone su `Ds_Order`. No crea otra sobre un recibo con una «enviada». `close()` solo cierra una «enviada» (notificación idempotente) y guarda la respuesta sin referencia, `Cof_Txnid`, firma ni número de tarjeta. |
+| Tarjetas (C10, C13, C14) | `Payments\PaymentCards` | Una activa por socio; guardar otra la sustituye; quitar dispara `sulayr_payment_card_removed` (para avisar al club, C13); la baja vacía referencia e identificador de todas las filas. Enmascara siempre a `**** 1234`. Cada cambio va al registro con el área `tarjeta` (C30). |
+| Medio de cobro (C6 a C9, §4.1) | `Payments\ChargeMethod`, `MemberFields` | Meta `sulayr_charge_method`. Vacío sigue el ajuste, así el cambio de C26 es solo cambiar el ajuste. En la ficha, con la tarjeta guardada debajo. El cambio queda en el registro. |
+| Medio de pago (§4.4) | `Receipts::METHOD_TPV`, `Receipts::add_tpv_payment()` | «Tarjeta (TPV)» fijo. `add_payment()` lo rechaza: solo lo apunta el pago online, con el `Ds_Order` en la nota y autor 0 o el socio. |
+| Autorización (C12) | `MemberConsents::RECURRING_CHARGES` | Tipo `cargos_recurrentes`, fuera del formulario de alta. Texto y versión en Socios → Ajustes → Consentimientos, con el borrador de SPEC-PROTECCION-DE-DATOS §4.1. |
+| Ajustes (§4.3) | `MemberSettings`, pestaña «Pago con tarjeta» | Medio de cobro por defecto, día de cobro (5), reintentos (3 y 6), aviso de caducidad (30) y la información de protección de datos junto a la casilla. |
+
+Pruebas: 12 tests PHPUnit nuevos (`tests/Unit/RedsysTest.php`, 97 en total en verde). La firma esperada se calculó aparte con la línea de comandos de openssl y la clave pública de pruebas de Redsys. 36 comprobaciones con WordPress en `tests/wp/check-pagos.php`, en verde. `check-ranking.php` sigue en verde.
+
+### 11.2. Pendiente
+
+- **B2. Pago con el socio delante (§5.1).** Formulario de redirección, URL de notificación `/wp-json/sulayr/v1/redsys`, vuelta a Mis recibos y bloque «Mi tarjeta». Se puede programar ya. Para probarlo de punta a punta hace falta el entorno de pruebas de Redsys.
+- **B3. Cobro sin el socio (§5.2).** Cliente REST con `wp_remote_post`. Los parámetros MIT y la consulta de una operación sin respuesta se confirman con el manual del técnico.
+- **Emails de C23.** Textos editables y envíos (parte C).
+- **Parte C.** Aprobar cobro, tarea diaria, reintentos, caducidad y baja (C14 ya tiene `PaymentCards::erase_for_leave()`, falta engancharlo a la baja efectiva).

@@ -23,6 +23,8 @@ class MemberLog {
     public const AREA_ROLES = 'roles';
     public const AREA_RECEIPTS = 'recibos';
     public const AREA_CONSENTS = 'consentimientos';
+    /** Tarjeta guardada para el pago online (SPEC-COBROS C30). */
+    public const AREA_CARD = 'tarjeta';
 
     /** Metas que se registran y su área. */
     private const TRACKED_META = [
@@ -48,6 +50,7 @@ class MemberLog {
         CustomFields::MEMBER_GUARDIAN . '_dni' => self::AREA_DATA,
         CustomFields::MEMBER_GUARDIAN . '_phone' => self::AREA_DATA,
         CustomFields::MEMBER_GUARDIAN . '_email' => self::AREA_DATA,
+        \ClubTriatlonSulayr\Modules\Payments\ChargeMethod::META => self::AREA_DATA,
     ];
 
     /** Nota que se añade a las entradas mientras dura with_note(). */
@@ -191,6 +194,8 @@ class MemberLog {
             CustomFields::MEMBER_GUARDIAN . '_dni' => __( 'Tutor: DNI', SULAYR_TEXTDOMAIN ),
             CustomFields::MEMBER_GUARDIAN . '_phone' => __( 'Tutor: teléfono', SULAYR_TEXTDOMAIN ),
             CustomFields::MEMBER_GUARDIAN . '_email' => __( 'Tutor: email', SULAYR_TEXTDOMAIN ),
+            \ClubTriatlonSulayr\Modules\Payments\ChargeMethod::META => __( 'Medio de cobro', SULAYR_TEXTDOMAIN ),
+            'tarjeta' => __( 'Tarjeta', SULAYR_TEXTDOMAIN ),
         ];
 
         return $labels[ $field ] ?? $field;

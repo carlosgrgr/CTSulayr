@@ -19,6 +19,11 @@ class MemberConsents {
     public const PRIVACY = 'privacy';
     public const RULES = 'rules';
     public const IMAGE = 'image';
+    /**
+     * Autorización de cargos recurrentes al guardar la tarjeta (SPEC-COBROS C12).
+     * No está en types(): no sale en el formulario de alta.
+     */
+    public const RECURRING_CHARGES = 'cargos_recurrentes';
 
     public const BY_MEMBER = 'socio';
     public const BY_GUARDIAN = 'tutor';
@@ -173,6 +178,10 @@ class MemberConsents {
      * @package	club-triatlon-sulayr
      */
     public static function label( string $type ): string {
+        if ( self::RECURRING_CHARGES === $type ) {
+            return __( 'Autorización de cargos recurrentes', SULAYR_TEXTDOMAIN );
+        }
+
         return self::types()[ $type ]['label'] ?? $type;
     }
 
