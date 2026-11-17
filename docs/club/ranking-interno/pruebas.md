@@ -13,15 +13,15 @@ Lo automático ya está en verde en local el 16 de noviembre de 2026: 47 tests P
 | 5 | Cambiar un coeficiente recalcula la temporada en curso y deja el cambio en el registro. | Pendiente | Pendiente |
 | 6 | En Mi cuenta, un socio activo y uno congelado ven la pestaña; uno de baja no la ve y su URL da el aviso. | Pendiente | Pendiente |
 | 7 | Las fichas de deportista y de competición se abren desde la clasificación; la de un socio de baja da «Deportista no encontrado». | Pendiente | Pendiente |
-| 8 | En el móvil (360 px), la clasificación y las fichas se leen sin scroll horizontal. | Pendiente | Pendiente |
+| 8 | En el móvil (360 px), la clasificación y las fichas se leen sin scroll horizontal. | Comprobado el 16 de noviembre de 2026 en Chrome sin interfaz (390 px). | Comprobado el 17 de noviembre de 2026. |
 | 9 | El shortcode `[sulayr_ranking]` en una página muestra lo mismo que la pestaña y pide entrar a quien no ha entrado. | Pendiente | Pendiente |
 | 10 | Una plantilla copiada en `ct-sulayr-theme/sulayr/ranking/` se usa en lugar de la del plugin. | Pendiente | — |
 | 11 | Importación: un JSON con errores no importa nada y lista los errores; uno válido muestra los conjuntos unificados, las dudas y los socios encontrados. | Comprobado por HTTP el 16 de noviembre de 2026 con el JSON de Úbeda. Falta verlo en el navegador. | Pendiente |
 | 12 | Importación: no deja rellenar con dudas sin decidir ni con un socio en dos filas. | Dudas sin decidir comprobado por HTTP el 16 de noviembre de 2026. Falta el socio repetido. | Pendiente |
 | 13 | Importación: «Rellenar la competición» abre «Añadir competición» relleno y sin guardar; al guardar pasa las validaciones de siempre. | Comprobado por HTTP el 16 de noviembre de 2026 (23 socios, 7 de 8 referencias, guardada en borrador con puntos y borrada después). Falta verlo en el navegador. | Pendiente |
 | 14 | Un gestor de socios no ve «Importar resultados» y su URL da 403. | Pendiente | Pendiente |
-| 15 | Bonus por interés: al poner +100 a una competición publicada, los puntos de sus socios que terminaron suben 100 (los DNF siguen a 0), la clasificación se actualiza y el cambio sale en el registro. | Comprobado por código el 17 de noviembre de 2026 (`check-ranking.php`). Falta verlo en el navegador. | Pendiente |
-| 16 | La etiqueta del bonus («+100 · Motivo») se ve en Mi cuenta (lista de competiciones, ficha de la competición y del deportista, con la línea del desglose), también en el móvil. | Comprobado en el HTML el 17 de noviembre de 2026. Falta verlo en el navegador y en el móvil. | Pendiente |
+| 15 | Bonus por interés: al poner +100 a una competición publicada, los puntos de sus socios que terminaron suben 100 (los DNF siguen a 0), la clasificación se actualiza y el cambio sale en el registro. | Comprobado por código el 17 de noviembre de 2026 (`check-ranking.php`). | Comprobado el 17 de noviembre de 2026 con Úbeda (+50 y vuelta a normal). |
+| 16 | La etiqueta del bonus («+100 · Motivo») se ve en Mi cuenta (lista de competiciones, ficha de la competición y del deportista, con la línea del desglose), también en el móvil. | Comprobado en el HTML el 17 de noviembre de 2026. | Comprobado el 17 de noviembre de 2026, también en el móvil. |
 
 ## Datos para probar
 

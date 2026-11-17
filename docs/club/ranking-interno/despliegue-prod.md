@@ -129,7 +129,7 @@ Si algo falla, vuelve a subir el `RankingMenu.php` de `main`: la pantalla deja d
 
 # Ajuste: estilos del ranking en el móvil
 
-Escrito el 16 de noviembre de 2026. Sección 8.4 de la spec. **Estado:** en `main`, sin subir a PROD.
+Escrito el 16 de noviembre de 2026. Sección 8.4 de la spec. **Estado:** subido a PROD el 17 de noviembre de 2026, junto con el bonus por interés. Comprobado: `styles.css?ver=` lleva la fecha del archivo. Criterio 8 de `pruebas.md` comprobado en el móvil ese día.
 
 En un móvil la clasificación se veía sin estilos: iniciales sin círculo, fotos enormes, sin cabecera ni filas alternas. El CSS estaba en PROD, pero el móvil usaba la copia antigua de `styles.css?ver=0.3.0` (el servidor la cachea siete días). Ahora la versión lleva la fecha del archivo. También se añade scroll horizontal a las tablas en pantallas medianas y el avatar tiene un tamaño fijo.
 
@@ -149,7 +149,7 @@ Comprobar:
 
 # Ampliación: bonus por interés del club
 
-Escrito el 17 de noviembre de 2026. Sección 15 de la spec (R42 y R43). **Estado:** en local, sin subir a PROD.
+Escrito el 17 de noviembre de 2026. Sección 15 de la spec (R42 y R43). **Estado:** subido a PROD el 17 de noviembre de 2026 (commit `c976b10b7`). Esquema 2 aplicado y comprobaciones 1 a 4 hechas ese día: ajustes 50/300 guardados, Úbeda sin cambios, +50 de prueba en Úbeda con la etiqueta y el desglose en el móvil, y vuelta a «Normal (sin bonus)».
 
 Sube la versión del esquema a 2: la primera petición a la web añade tres columnas (`interest_bonus` e `interest_label` en competiciones, `interest_bonus` en resultados). No hay datos que migrar: las competiciones que ya hay quedan sin bonus y sus puntos no cambian.
 
