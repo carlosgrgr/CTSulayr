@@ -219,6 +219,25 @@ class CardPayments {
             return self::RESULT_DUPLICATE;
         }
 
+        return self::apply( $transaction, $notification );
+    }
+
+    /**
+     * Aplica una respuesta firmada de Redsys a su operación: la de la
+     * notificación (§5.1) o la de la API REST en un cobro sin el socio (§5.2).
+     *
+     * Cierra la operación antes de apuntar nada, así dos respuestas a la vez
+     * no crean dos pagos. Solo los pagos con el socio delante guardan la
+     * tarjeta; en ellos el autor del pago es el socio, y en los cobros sin
+     * él, 0 (§4.4).
+     *
+     * @param   object             $transaction  Operación «enviada».
+     * @param   RedsysNotification $notification Respuesta verificada.
+     * @return 	string Una de las constantes RESULT_*.
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function apply( object $transaction, RedsysNotification $notification ): string {
         $params = $notification->params();
         if ( false === $notification->is_authorized() ) {
             return TpvTransactions::close( (int) $transaction->id, TpvTransactions::STATUS_DENIED, $params ) ? self::RESULT_DENIED : self::RESULT_DUPLICATE;
@@ -243,8 +262,9 @@ class CardPayments {
 
         $user_id = (int) $transaction->user_id;
         $receipt_id = (int) $transaction->receipt_id;
+        $with_member = self::is_with_member( (string) $transaction->type );
         if ( $receipt_id > 0 ) {
-            $payment_id = Receipts::add_tpv_payment( $receipt_id, (float) $transaction->amount, (string) $transaction->ds_order, $user_id );
+            $payment_id = Receipts::add_tpv_payment( $receipt_id, (float) $transaction->amount, (string) $transaction->ds_order, $with_member ? $user_id : 0 );
             if ( is_wp_error( $payment_id ) ) {
                 // P. ej. un gestor apuntó el pago a mano mientras el socio pagaba: hay que devolverlo.
                 self::notify_club(
@@ -256,11 +276,24 @@ class CardPayments {
             }
         }
 
-        if ( '' !== $notification->identifier() && false === self::is_left( $user_id ) ) {
+        if ( $with_member && '' !== $notification->identifier() && false === self::is_left( $user_id ) ) {
             PaymentCards::save( $user_id, $notification->identifier(), $notification->cof_txnid(), $notification->masked_card(), $notification->expiry(), (int) $transaction->id );
         }
 
         return self::RESULT_AUTHORIZED;
+    }
+
+    /**
+     * La operación se hizo con el socio delante (redirección), no con la
+     * tarjeta guardada.
+     *
+     * @param   string $type Tipo de la operación.
+     * @return 	bool
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function is_with_member( string $type ): bool {
+        return in_array( $type, [ TpvTransactions::TYPE_MANUAL, TpvTransactions::TYPE_VALIDATION, TpvTransactions::TYPE_REGISTER ], true );
     }
 
     /**
@@ -328,10 +361,10 @@ class CardPayments {
      * @param   string $subject Asunto.
      * @param   string $text    Texto.
      * @return 	void
-     * @access 	private
+     * @access 	public
      * @package	club-triatlon-sulayr
      */
-    private static function notify_club( string $subject, string $text ): void {
+    public static function notify_club( string $subject, string $text ): void {
         $to = sanitize_email( (string) MemberSettings::get( 'club_email' ) );
         if ( '' === $to ) {
             return;

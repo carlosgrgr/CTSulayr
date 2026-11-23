@@ -36,7 +36,7 @@ class TpvTransactions {
     public const REDIRECT_TIMEOUT_MINUTES = 30;
 
     /** Claves de la respuesta de Redsys que no se guardan (referencia de la tarjeta). */
-    private const SENSITIVE_KEYS = '/identifier|cof_txnid|signature|card_number|_pan$/i';
+    private const SENSITIVE_KEYS = '/identifier|cof_txnid|signature|card_?number|_pan$/i';
 
     /**
      * Crea una operación «enviada» y le pone su Ds_Order.
@@ -181,6 +181,35 @@ class TpvTransactions {
         ) );
 
         return 1 === (int) $updated;
+    }
+
+    /**
+     * Anota en una operación «enviada» lo que se sabe de un cobro sin respuesta
+     * clara, sin cerrarla: sigue bloqueando el recibo hasta consultarla (§5.2, paso 3).
+     *
+     * @param   int                  $id   Operación.
+     * @param   array<string, mixed> $info Motivo y lo que haya devuelto Redsys.
+     * @return 	void
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function note_unknown( int $id, array $info ): void {
+        global $wpdb;
+
+        $wpdb->update( self::table(), [ 'response' => (string) wp_json_encode( self::sanitize_response( $info ) ), 'updated_at' => current_time( 'mysql' ) ], [ 'id' => $id, 'status' => self::STATUS_SENT ], [ '%s', '%s' ], [ '%d', '%s' ] );
+    }
+
+    /**
+     * Operaciones «enviadas» de cobros sin el socio, que esperan consulta.
+     *
+     * @return 	array<int, object>
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function unresolved_charges(): array {
+        global $wpdb;
+
+        return $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' WHERE status = %s AND type IN (%s, %s) ORDER BY id', self::STATUS_SENT, self::TYPE_RECURRING, self::TYPE_RETRY ) ) ?: [];
     }
 
     /**

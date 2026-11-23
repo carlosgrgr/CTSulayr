@@ -1,0 +1,1 @@
+parent.location.href = document.getElementById('redirect_url').value;

@@ -120,9 +120,11 @@ class RedsysNotification {
         return $this->get( 'Ds_ExpiryDate' );
     }
 
-    /** @return string Tarjeta enmascarada (Ds_Card_Number), si Redsys la manda. */
+    /** @return string Tarjeta enmascarada (Ds_Card_Number, o Ds_CardNumber en la API REST), si Redsys la manda. */
     public function masked_card(): string {
-        return $this->get( 'Ds_Card_Number' );
+        $masked = $this->get( 'Ds_Card_Number' );
+
+        return '' !== $masked ? $masked : $this->get( 'Ds_CardNumber' );
     }
 
     /**

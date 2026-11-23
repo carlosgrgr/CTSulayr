@@ -1,7 +1,7 @@
 # SPEC — Pago online: cuotas y tienda con TPV virtual
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr` (web del club, blog 1)
-**Estado:** Definida el 17 de noviembre de 2026. Decisiones C1 a C30 cerradas con el club (sección 3). Parte B en desarrollo en la rama `pago-online-parte-b`: pasos B1 y B2 hechos y probados en local el 17 de noviembre de 2026, también a mano en el navegador (sección 11). No está en `main` ni en PROD. Contrato del TPV pendiente de firma; sin credenciales de pruebas del club todavía (en local se usan las públicas de Redsys).
+**Estado:** Definida el 17 de noviembre de 2026. Decisiones C1 a C30 cerradas con el club (sección 3). Parte B en desarrollo en la rama `pago-online-parte-b`: pasos B1 y B2 hechos y probados en local el 17 de noviembre de 2026, también a mano en el navegador; paso B3 (cobro con la tarjeta guardada) hecho el 23 de noviembre de 2026 y probado contra el entorno de pruebas de Redsys (sección 11). No está en `main` ni en PROD. El banco dio de alta el TPV virtual el 23 de noviembre de 2026; sin credenciales de pruebas del club todavía (Redsys las manda por email; en local se usan las públicas de Redsys).
 **Fecha:** 17 de noviembre de 2026 (borrador inicial del 28 de octubre de 2026)
 
 El club cobrará con el TPV virtual de su banco (Redsys) dos cosas: las cuotas mensuales de los socios, con la tarjeta guardada y sin que el socio tenga que hacer nada cada mes, y los pedidos de la tienda. Esta spec se apoya en [SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md), que ya genera los recibos mensuales y lleva el control manual de pagos. Esta spec no cambia cómo se calcula un recibo: solo cómo se paga.
@@ -35,6 +35,12 @@ Respuesta del banco del 17 de noviembre de 2026:
 - Sin Bizum por ahora.
 - La instalación la hace un técnico de Redsys, que contacta con la persona del club que se indique. Él da el entorno de pruebas, las credenciales y el manual.
 - Un único terminal para cuotas y tienda.
+
+Respuesta del banco del 23 de noviembre de 2026:
+
+- El TPV virtual está dado de alta. Redsys mandará un email para empezar las pruebas.
+- El módulo de Redsys para WooCommerce no gestiona pagos recurrentes: sirve para la tienda (C3). Las cuotas van con integración propia y tokenización MIT, como prevé esta spec.
+- Documentación: [módulos de pago](https://pagosonline.redsys.es/desarrolladores-inicio/documentacion-tipos-de-integracion/modulos-pago/) y [tokenización MIT](https://pagosonline.redsys.es/desarrolladores-inicio/documentacion-funcionalidades-avanzadas/tokenizacion/tokenizacion-mit/). El módulo (Pasarela Unificada v2.1.5) y su manual están en `docs/club/tpv-virtual/`. Dos de los PDF están protegidos y solo se abren con Microsoft Office.
 
 ---
 
@@ -185,7 +191,7 @@ Con el prefijo de blog 1 y en `MembersSchema` (sube la versión del esquema). Im
 
 ## 5. Integración con Redsys
 
-Los nombres de parámetros son los habituales de Redsys. Hay que confirmarlos con el manual que dé el técnico.
+Los nombres de parámetros son los de la documentación pública de Redsys. El pago por redirección guardando la tarjeta y el cobro MIT por REST se probaron en su entorno de pruebas el 23 de noviembre de 2026 (sección 11.3).
 
 ### 5.1. Pago con el socio delante (redirección)
 
@@ -313,10 +319,11 @@ Parte C:
 **Al técnico de Redsys**
 
 - [ ] Activar los pagos MIT (pago por referencia, COF) en el terminal.
-- [ ] Credenciales y URL del entorno de pruebas, y manual de la API REST.
+- [ ] Credenciales del entorno de pruebas del club (Redsys las manda por email). Las URL y los parámetros de la API REST ya están confirmados con la documentación pública y el entorno de pruebas (sección 11.3).
 - [ ] ¿Permite una operación de validación sin importe para guardar o cambiar la tarjeta (C11)?
 - [ ] ¿Hay comisión mínima o fija por operación además del 0,70 %?
-- [ ] ¿Cómo se consulta el estado de una operación sin respuesta (5.2, paso 3)?
+- [ ] ¿Cómo se consulta el estado de una operación sin respuesta (5.2, paso 3)? El módulo de Redsys usa una API de consultas aparte (`apis.redsys.es/.../operation/search`) con un `RedsysClientId` y un `RedsysClientSecret` propios, sin entorno de pruebas. Hay que pedirlos.
+- [ ] ¿Hace falta `DS_MERCHANT_COF_INI=N` en los cobros MIT? La documentación no lo pide y el entorno de pruebas acepta el cobro con él y sin él. La web lo manda (§5.2).
 
 **Al club**
 
@@ -326,7 +333,7 @@ Parte C:
 - [ ] Socios del piloto (C25).
 - [x] PROD usa PHP 8.2 (se puede subir a 8.3, 8.4 o 8.5). Tarea cron del servidor y `DISABLE_WP_CRON` configurados y funcionando en PROD (6.2), comprobado el 17 de noviembre de 2026.
 
-**Respuestas del banco** (28 de octubre al 17 de noviembre de 2026)
+**Respuestas del banco** (28 de octubre al 23 de noviembre de 2026)
 
 - [x] Pago por referencia con cobros iniciados por el comercio: sí, pagos MIT, a pedir, sin coste adicional.
 - [x] Cuota de alta: no. Permanencia: no.
@@ -334,6 +341,7 @@ Parte C:
 - [x] Bizum: no lo tienen de momento.
 - [ ] Comisión mínima o fija por operación: sin respuesta (pasa al técnico).
 - [x] Entorno de pruebas y manual: los da el técnico de Redsys al activar el servicio.
+- [x] TPV virtual dado de alta (23 de noviembre de 2026). El módulo de WooCommerce no hace pagos recurrentes; las cuotas, con integración propia por tokenización MIT (sección 1.3).
 - Devoluciones de cobros rechazados sin coste. Abono en cuenta al día siguiente. Para contratar piden la URL del club (`https://clubtriatlonsulayr.com/`).
 
 ---
@@ -398,9 +406,38 @@ Pruebas: 8 tests PHPUnit nuevos (`tests/Unit/RedsysRedirectTest.php`, 105 en tot
 
 Falta la prueba de punta a punta, con Redsys avisando él solo a la web. La URL de notificación tiene que ser accesible desde internet: en local no lo es, así que hará falta un túnel o probarlo en PROD con el entorno de pruebas.
 
-### 11.3. Pendiente
+### 11.3. Paso B3: cobro con la tarjeta guardada
 
-- **B3. Cobro sin el socio (§5.2).** Cliente REST con `wp_remote_post`. Los parámetros MIT y la consulta de una operación sin respuesta se confirman con el manual del técnico.
+Hecho el 23 de noviembre de 2026 y probado en local y contra el entorno de pruebas de Redsys.
+
+| Pieza | Código | Qué hace |
+|---|---|---|
+| Petición (§5.2, paso 1) | `Payments\Redsys\RedsysRequest::mit_body()` y `mit_params()` | JSON firmado para `trataPeticionREST` con la referencia, `DIRECTPAYMENT=true`, `EXCEP_SCA=MIT`, `COF_INI=N`, `COF_TYPE=R` y el `COF_TXNID` guardado (si lo hay). Sin URL de notificación: la respuesta llega en la misma llamada. |
+| Respuesta (§5.2, paso 2) | `Payments\Redsys\RedsysRestResult` | Firmada: autorizada o denegada, verificada como una notificación y del mismo pedido. `{"errorCode": "SIS…"}`: rechazada, sin cargo. Lo demás (sin respuesta, HTTP distinto de 200, JSON roto, firma no válida, otro pedido o `SIS0051`, pedido repetido): desconocida. |
+| Servicio | `Payments\CardCharges::charge( $receipt_id, $type, $attempt )` | Cobra lo pendiente de un recibo con la tarjeta activa (tipos `recurrente` y `reintento`). No cobra sin credenciales, sin tarjeta, con la tarjeta caducada, sin pendiente ni con una operación en curso. Un bloqueo de MySQL por recibo (`GET_LOCK`) evita que dos ejecuciones cobren a la vez. Envía con `wp_remote_post` (45 s). |
+| Resultado | `CardPayments::apply()` | La lógica de la notificación, compartida: cierra la operación antes de apuntar nada, comprueba el importe y apunta el pago «Tarjeta (TPV)». En un cobro sin el socio el autor del pago es 0 (§4.4) y no se toca la tarjeta guardada. |
+| Sin respuesta (§5.2, paso 3) | `TpvTransactions::note_unknown()` y `unresolved_charges()` | La operación sigue «enviada» con el motivo, bloquea el recibo y se avisa al club por email para revisarla en el portal de Redsys. |
+
+Decisiones de implementación (no cambian la spec):
+
+- **Error SIS = sin cargo.** Salvo `SIS0051` (pedido repetido), que puede venir de una primera petición que sí cobró: se trata como sin respuesta.
+- **La API REST llama `Ds_CardNumber` a la tarjeta enmascarada** (la notificación, `Ds_Card_Number`). Se lee de las dos formas y ninguna se guarda en la respuesta de la operación.
+- **Todavía no hay pantalla ni tarea que llame a `charge()`.** El cobro de un recibo concreto (C22), el cobro mensual y los reintentos son la parte C.
+
+Pruebas:
+
+- 9 tests PHPUnit nuevos (`tests/Unit/RedsysMitTest.php`, 114 en total en verde), uno con una respuesta real del entorno de pruebas de Redsys firmada por Redsys.
+- `tests/wp/check-pagos.php` pasa de 73 a 96 comprobaciones, en verde y repetibles, con el envío HTTP simulado: autorizada, denegada y reintento, error SIS, importe distinto, sin respuesta, respuesta de otro pedido, `SIS0051`, bloqueo por otra ejecución y sin credenciales.
+- **Entorno de pruebas de Redsys, 23 de noviembre de 2026**, con el comercio genérico 999008881:
+  1. Pago por redirección con la tarjeta de pruebas y 3DS, pidiendo la referencia: autorizado. La vuelta a la web trae la referencia (40 caracteres), el `Cof_Txnid` y la caducidad, con firma `HMAC_SHA256_V1` válida.
+  2. Cobro MIT por REST con esa referencia: autorizado (0000). También sin `COF_INI` y sin `COF_TXNID`.
+  3. Con una referencia que no existe: `SIS0321`, rechazada sin cargo.
+  4. De punta a punta en WordPress (`CardCharges::charge()` con `wp_remote_post` real): recibo pagado con «Tarjeta (TPV)», autor 0, y la respuesta guardada sin referencia ni tarjeta.
+  5. Sin la autenticación 3DS no se puede guardar la tarjeta por REST: el emisor responde 0195.
+
+### 11.4. Pendiente
+
+- **Consulta de una operación sin respuesta.** Con la API de consultas de Redsys, cuando el técnico dé sus credenciales (sección 10). Mientras, la resuelve un gestor mirando el portal de Redsys.
 - **C11.** «Guardar tarjeta» sin pagar, si el técnico confirma la validación sin importe.
 - **Emails de C23.** Textos editables y envíos (parte C).
 - **Parte C.** Aprobar cobro, tarea diaria, reintentos, caducidad y baja (C14 ya tiene `PaymentCards::erase_for_leave()`, falta engancharlo a la baja efectiva).

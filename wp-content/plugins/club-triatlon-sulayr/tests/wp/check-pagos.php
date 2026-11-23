@@ -17,6 +17,7 @@ use ClubTriatlonSulayr\Modules\Members\MemberLog;
 use ClubTriatlonSulayr\Modules\Members\MemberSettings;
 use ClubTriatlonSulayr\Modules\Members\Receipts\Receipts;
 use ClubTriatlonSulayr\Modules\Members\Receipts\ReceiptsAccount;
+use ClubTriatlonSulayr\Modules\Payments\CardCharges;
 use ClubTriatlonSulayr\Modules\Payments\CardPayments;
 use ClubTriatlonSulayr\Modules\Payments\ChargeMethod;
 use ClubTriatlonSulayr\Modules\Payments\Redsys\RedsysConfig;
@@ -293,10 +294,131 @@ try {
     $mails = [];
     PaymentCards::remove( $user_id );
     $check( 'B2: con «Otro medio» no se avisa', 0 === count( $mails ) );
+
+    // ---------------------------------------------------------------
+    // Paso B3: cobro con la tarjeta guardada, sin el socio (§5.2).
+    // ---------------------------------------------------------------
+    CardPayments::use_config( new RedsysConfig( '999008881', '1', $test_key ) );
+    $sent = [];
+    $reply = null;
+    CardCharges::use_transport( function ( $url, $body ) use ( &$sent, &$reply, $test_key ) {
+        $data = json_decode( $body, true );
+        $params = RedsysSignature::decode_params( (string) $data['Ds_MerchantParameters'] );
+        $sent[] = [ 'url' => $url, 'params' => $params, 'signed' => ( new RedsysSignature( $test_key ) )->verify( (string) $data['Ds_MerchantParameters'], (string) $data['Ds_Signature'] ) ];
+        return $reply( $params );
+    } );
+    // Respuesta firmada de Redsys con un Ds_Response.
+    $answer = function ( string $code, array $extra = [] ) use ( $notify ) {
+        return function ( array $params ) use ( $notify, $code, $extra ) {
+            return [ 'code' => 200, 'body' => (string) wp_json_encode( $notify( $extra + [
+                'Ds_Amount' => $params['DS_MERCHANT_AMOUNT'],
+                'Ds_Currency' => '978',
+                'Ds_Order' => $params['DS_MERCHANT_ORDER'],
+                'Ds_MerchantCode' => '999008881',
+                'Ds_Terminal' => '1',
+                'Ds_Response' => $code,
+                'Ds_AuthorisationCode' => '0000' === $code ? '654321' : '',
+                'Ds_CardNumber' => '454881******0003',
+            ] ) ) ];
+        };
+    };
+    $tx_count = function () use ( $wpdb, $user_id ) {
+        return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . TpvTransactions::table() . ' WHERE user_id = %d', $user_id ) );
+    };
+
+    $m1 = $new_receipt( $user_id, 33.30 );
+    $before = $tx_count();
+    $check( 'B3: sin tarjeta guardada no se cobra ni se crea operación', is_wp_error( CardCharges::charge( $m1 ) ) && $before === $tx_count() && 0 === count( $sent ) );
+    PaymentCards::save( $user_id, 'REF-CADUCADA', 'TXN', '0003', '2001', 0 );
+    $check( 'B3: con la tarjeta caducada no se cobra', 'sulayr_tpv_card_expired' === CardCharges::charge( $m1 )->get_error_code() && 0 === count( $sent ) );
+    PaymentCards::save( $user_id, 'REF-MIT', 'TXN-MIT', '454881******0003', '3012', 0 );
+    $card_id = (int) PaymentCards::active( $user_id )->id;
+    $check( 'B3: tipo de cobro no válido', is_wp_error( CardCharges::charge( $m1, TpvTransactions::TYPE_MANUAL ) ) );
+
+    // Autorizada: cobra lo pendiente (total menos lo ya pagado, C17). Con
+    // un pago parcial el total se recalcula de las líneas: el recibo lleva una.
+    $wpdb->insert( Receipts::lines_table(), [ 'receipt_id' => $m1, 'user_id' => $user_id, 'type' => 'manual', 'concept' => 'Prueba B3', 'amount' => 33.30, 'created_at' => current_time( 'mysql' ) ] );
+    Receipts::add_payment( $m1, 10, current_time( 'Y-m-d' ), $manual_method );
+    $reply = $answer( '0000', [ 'Ds_Merchant_Identifier' => 'OTRA-REF' ] );
+    $consents_before = count( MemberConsents::rows( $user_id ) );
+    $res = CardCharges::charge( $m1 );
+    $p = $sent[0]['params'] ?? [];
+    $check( 'B3: petición REST a trataPeticionREST de pruebas, firmada', 1 === count( $sent ) && false !== strpos( $sent[0]['url'], 'sis-t.redsys.es:25443/sis/rest/trataPeticionREST' ) && true === $sent[0]['signed'] );
+    $check( 'B3: lleva la referencia, el Cof_Txnid, MIT, DIRECTPAYMENT y lo pendiente', '2330' === ( $p['DS_MERCHANT_AMOUNT'] ?? '' ) && 'REF-MIT' === ( $p['DS_MERCHANT_IDENTIFIER'] ?? '' ) && 'TXN-MIT' === ( $p['DS_MERCHANT_COF_TXNID'] ?? '' ) && 'MIT' === ( $p['DS_MERCHANT_EXCEP_SCA'] ?? '' ) && 'true' === ( $p['DS_MERCHANT_DIRECTPAYMENT'] ?? '' ) && 'N' === ( $p['DS_MERCHANT_COF_INI'] ?? '' ) && 'R' === ( $p['DS_MERCHANT_COF_TYPE'] ?? '' ) );
+    $check( 'B3: autorizada → recibo pagado', is_array( $res ) && CardPayments::RESULT_AUTHORIZED === $res['result'] && Receipts::STATUS_PAID === Receipts::get( $m1 )->status );
+    $tpv_payment = Receipts::payments( $m1 )[1] ?? null;
+    $check( 'B3: pago «Tarjeta (TPV)» con autor 0 y el Ds_Order en la nota (§4.4)', null !== $tpv_payment && Receipts::METHOD_TPV === $tpv_payment->method && 0 === (int) $tpv_payment->created_by && $res['transaction']->ds_order === $tpv_payment->note && 23.30 === round( (float) $tpv_payment->amount, 2 ) );
+    $check( 'B3: operación «recurrente», intento 1, autorizada y unida al pago', TpvTransactions::TYPE_RECURRING === $res['transaction']->type && 1 === (int) $res['transaction']->attempt && TpvTransactions::STATUS_AUTHORIZED === $res['transaction']->status && '654321' === $res['transaction']->auth_code && (int) $tpv_payment->id === (int) $res['transaction']->payment_id );
+    $check( 'B3: no cambia la tarjeta guardada ni pide autorización', $card_id === (int) PaymentCards::active( $user_id )->id && 'REF-MIT' === PaymentCards::active( $user_id )->identifier && count( MemberConsents::rows( $user_id ) ) === $consents_before );
+    $check( 'B3: la respuesta guardada no lleva la tarjeta enmascarada', false === strpos( (string) $res['transaction']->response, '454881' ) );
+    $sent = [];
+    $check( 'B3: un recibo pagado no se vuelve a cobrar', is_wp_error( CardCharges::charge( $m1 ) ) && 0 === count( $sent ) );
+
+    // Denegada.
+    $m2 = $new_receipt( $user_id, 18 );
+    $reply = $answer( '0190' );
+    $res = CardCharges::charge( $m2 );
+    $check( 'B3: denegada → sin pago, operación denegada y sin bloquear el recibo', is_array( $res ) && CardPayments::RESULT_DENIED === $res['result'] && TpvTransactions::STATUS_DENIED === $res['transaction']->status && '0190' === $res['transaction']->ds_response && 0.0 === Receipts::paid( $m2 ) && false === TpvTransactions::in_flight( $m2 ) );
+    $reply = $answer( '0000' );
+    $res = CardCharges::charge( $m2, TpvTransactions::TYPE_RETRY, 2 );
+    $check( 'B3: el reintento (intento 2) cobra', is_array( $res ) && CardPayments::RESULT_AUTHORIZED === $res['result'] && TpvTransactions::TYPE_RETRY === $res['transaction']->type && 2 === (int) $res['transaction']->attempt && Receipts::STATUS_PAID === Receipts::get( $m2 )->status );
+
+    // Error SIS: Redsys no hizo el cargo.
+    $m3 = $new_receipt( $user_id, 9 );
+    $reply = function () {
+        return [ 'code' => 200, 'body' => '{"errorCode":"SIS0617","errorCodeDescription":"Error de prueba"}' ];
+    };
+    $res = CardCharges::charge( $m3 );
+    $check( 'B3: error SIS → rechazada, operación en «error» con el código y sin bloquear', is_array( $res ) && CardCharges::RESULT_REJECTED === $res['result'] && TpvTransactions::STATUS_ERROR === $res['transaction']->status && false !== strpos( (string) $res['transaction']->response, 'SIS0617' ) && 'SIS0617' === $res['error'] && false === TpvTransactions::in_flight( $m3 ) );
+
+    // Importe distinto.
+    $reply = $answer( '0000', [ 'Ds_Amount' => '1' ] );
+    $mails = [];
+    $res = CardCharges::charge( $m3 );
+    $check( 'B3: autorizada por otro importe → sin pago y aviso al club', is_array( $res ) && CardPayments::RESULT_MISMATCH === $res['result'] && 0.0 === Receipts::paid( $m3 ) && 1 === count( $mails ) );
+
+    // Sin respuesta: no se sabe si se cobró.
+    $m4 = $new_receipt( $user_id, 21 );
+    $reply = function () {
+        return new WP_Error( 'http_request_failed', 'cURL error 28: Operation timed out' );
+    };
+    $mails = [];
+    $res = CardCharges::charge( $m4 );
+    $check( 'B3: sin respuesta → la operación sigue «enviada» y se avisa al club (§5.2, paso 3)', is_array( $res ) && CardCharges::RESULT_PENDING === $res['result'] && TpvTransactions::STATUS_SENT === $res['transaction']->status && false !== strpos( (string) $res['transaction']->response, 'timed out' ) && 1 === count( $mails ) );
+    $check( 'B3: y aparece entre los cobros por resolver', in_array( (int) $res['transaction']->id, array_map( 'intval', wp_list_pluck( TpvTransactions::unresolved_charges(), 'id' ) ), true ) );
+    $sent = [];
+    $check( 'B3: el recibo queda bloqueado: no se lanza otro cobro', TpvTransactions::in_flight( $m4 ) && is_wp_error( CardCharges::charge( $m4 ) ) && 0 === count( $sent ) );
+    $reply = $answer( '0000', [ 'Ds_Order' => '2611Q9999999' ] );
+    $m5 = $new_receipt( $user_id, 6.5 );
+    $res = CardCharges::charge( $m5 );
+    $check( 'B3: respuesta firmada de otro pedido → sin respuesta clara y sin pago', is_array( $res ) && CardCharges::RESULT_PENDING === $res['result'] && 0.0 === Receipts::paid( $m5 ) );
+    $reply = function () {
+        return [ 'code' => 200, 'body' => '{"errorCode":"SIS0051"}' ];
+    };
+    $m6 = $new_receipt( $user_id, 4 );
+    $res = CardCharges::charge( $m6 );
+    $check( 'B3: «pedido repetido» (SIS0051) no se da por no cobrado', is_array( $res ) && CardCharges::RESULT_PENDING === $res['result'] && TpvTransactions::in_flight( $m6 ) );
+
+    // Dos ejecuciones a la vez: el bloqueo del recibo lo tiene otra conexión.
+    $m7 = $new_receipt( $user_id, 11 );
+    $other_db = new mysqli( DB_HOST, DB_USER, DB_PASSWORD, DB_NAME );
+    $other_db->query( "SELECT GET_LOCK('sulayr_tpv_receipt_{$m7}', 0)" );
+    $sent = [];
+    $res = CardCharges::charge( $m7 );
+    $check( 'B3: con el recibo bloqueado por otra ejecución no se cobra', is_wp_error( $res ) && 'sulayr_tpv_in_flight' === $res->get_error_code() && 0 === count( $sent ) );
+    $other_db->query( "SELECT RELEASE_LOCK('sulayr_tpv_receipt_{$m7}')" );
+    $other_db->close();
+    $reply = $answer( '0000' );
+    $res = CardCharges::charge( $m7 );
+    $check( 'B3: liberado el bloqueo, sí', is_array( $res ) && CardPayments::RESULT_AUTHORIZED === $res['result'] );
+
+    CardPayments::use_config( new RedsysConfig( '', '', '' ) );
+    $check( 'B3: sin credenciales no se cobra', is_wp_error( CardCharges::charge( $new_receipt( $user_id, 3 ) ) ) );
 } catch ( Throwable $e ) {
     $check( 'Excepción: ' . $e->getMessage() . ' en ' . $e->getFile() . ':' . $e->getLine(), false );
 } finally {
     CardPayments::use_config( null );
+    CardCharges::use_transport( null );
     remove_filter( 'pre_wp_mail', $catch_mail, 10 );
     $_GET = [];
     foreach ( $receipt_ids as $id ) {
