@@ -1,7 +1,7 @@
 # SPEC — Pago online: cuotas y tienda con TPV virtual
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr` (web del club, blog 1)
-**Estado:** Definida el 17 de noviembre de 2026. Decisiones C1 a C30 cerradas con el club (sección 3). Parte B en desarrollo en la rama `pago-online-parte-b`: pasos B1 y B2 hechos y probados en local el 17 de noviembre de 2026, también a mano en el navegador; paso B3 (cobro con la tarjeta guardada) hecho el 23 de noviembre de 2026 y probado contra el entorno de pruebas de Redsys (sección 11). Parte C en desarrollo en la rama `pago-online-parte-c`, que sale de `pago-online-parte-b`: pasos C1 (cobro mensual) y C2 (pantallas) hechos y probados en local el 23 de noviembre de 2026 (sección 12). No está en `main` ni en PROD. El banco dio de alta el TPV virtual el 23 de noviembre de 2026; sin credenciales de pruebas del club todavía (Redsys las manda por email; en local se usan las públicas de Redsys).
+**Estado:** Definida el 17 de noviembre de 2026. Decisiones C1 a C30 cerradas con el club (sección 3). Parte B en desarrollo en la rama `pago-online-parte-b`: pasos B1 y B2 hechos y probados en local el 17 de noviembre de 2026, también a mano en el navegador; paso B3 (cobro con la tarjeta guardada) hecho el 23 de noviembre de 2026 y probado contra el entorno de pruebas de Redsys (sección 11). Parte C en desarrollo en la rama `pago-online-parte-c`, que sale de `pago-online-parte-b`: pasos C1 (cobro mensual) y C2 (pantallas) hechos y probados en local el 23 de noviembre de 2026 (sección 12). No está en `main` ni en PROD. El banco dio de alta el TPV virtual el 23 de noviembre de 2026, con el contrato ya firmado; sin credenciales de pruebas del club todavía (Redsys las manda por email; en local se usan las públicas de Redsys).
 **Fecha:** 17 de noviembre de 2026 (borrador inicial del 28 de octubre de 2026)
 
 El club cobrará con el TPV virtual de su banco (Redsys) dos cosas: las cuotas mensuales de los socios, con la tarjeta guardada y sin que el socio tenga que hacer nada cada mes, y los pedidos de la tienda. Esta spec se apoya en [SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md), que ya genera los recibos mensuales y lleva el control manual de pagos. Esta spec no cambia cómo se calcula un recibo: solo cómo se paga.
@@ -328,7 +328,7 @@ Parte C:
 **Al club**
 
 - [x] Persona de contacto para el técnico de Redsys: Carlos García. Datos enviados al banco por email el 17 de noviembre de 2026.
-- [ ] Firma del contrato.
+- [x] Firma del contrato del TPV: hecha (confirmado por el club el 23 de noviembre de 2026).
 - [ ] Texto de la autorización de cargos recurrentes (C12). Borrador en [SPEC-PROTECCION-DE-DATOS.md](SPEC-PROTECCION-DE-DATOS.md), sección 4.1, pendiente de la junta.
 - [ ] Socios del piloto (C25).
 - [x] PROD usa PHP 8.2 (se puede subir a 8.3, 8.4 o 8.5). Tarea cron del servidor y `DISABLE_WP_CRON` configurados y funcionando en PROD (6.2), comprobado el 17 de noviembre de 2026.
