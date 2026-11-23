@@ -268,9 +268,9 @@ Modelo de una página que firman los miembros de la junta y los colaboradores co
 
 - [ ] Confirmar las propuestas L10 a L27.
 - [ ] Revisar los borradores de 4.1, 4.2 y 4.3.
-- [ ] ¿Sigue SportEasy para algo después del piloto del pago online (gestión deportiva) o se deja del todo?
-- [ ] ¿Qué relación hay con CN Nazarí en cuanto a datos? ¿Recibe datos de los nadadores del club o solo ve el sistema de reservas?
-- [ ] Quién de la junta es el contacto de privacidad y recibe los avisos de brechas.
+- [x] ¿Sigue SportEasy para algo después del piloto del pago online (gestión deportiva) o se deja del todo? **No:** se da de baja cuando el nuevo sistema esté funcionando, y entonces se quita la línea entera de la política (§4.3, punto 5). Respondido por el club el 23 de noviembre de 2026.
+- [x] ¿Qué relación hay con CN Nazarí en cuanto a datos? ¿Recibe datos de los nadadores del club o solo ve el sistema de reservas? **Solo ve el sistema de reservas**; no tiene acceso a la web del club. Respondido el 23 de noviembre de 2026.
+- [x] Quién de la junta es el contacto de privacidad y recibe los avisos de brechas. **El club:** clubtriatlonsulayr@gmail.com, 613 091 095. Respondido el 23 de noviembre de 2026.
 
 **Al técnico de Redsys o al banco**
 
