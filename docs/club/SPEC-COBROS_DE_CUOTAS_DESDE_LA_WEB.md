@@ -404,7 +404,7 @@ Pruebas: 8 tests PHPUnit nuevos (`tests/Unit/RedsysRedirectTest.php`, 105 en tot
 8. Socios → Recibos: el pago sale como «Tarjeta (TPV)», ese medio no se ofrece en el pago manual, y borrar el pago con motivo devuelve el recibo a pendiente.
 9. Socio con tutor: selector «Lo autoriza».
 
-Falta la prueba de punta a punta, con Redsys avisando él solo a la web. La URL de notificación tiene que ser accesible desde internet: en local no lo es, así que hará falta un túnel o probarlo en PROD con el entorno de pruebas.
+**Prueba de punta a punta, hecha el 23 de noviembre de 2026 y correcta.** El sitio local se expuso con un túnel temporal de Cloudflare (`cloudflared`, con la cabecera `Host` del sitio local) y la constante `SULAYR_REDSYS_NOTIFY_URL` de `wp-config.php` apuntando a él, sin tocar la base de datos. Un socio de prueba pagó un recibo de 1,23 € desde Mis recibos en el entorno de pruebas de Redsys, con el comercio genérico y la tarjeta de pruebas con 3DS. Redsys avisó él solo a `/wp-json/sulayr/v1/redsys` por el túnel: operación autorizada, recibo pagado con «Tarjeta (TPV)» y autor el socio, tarjeta guardada (referencia de 40 caracteres y `Cof_Txnid`) y autorización de cargos registrada. Después se paró el túnel, se quitó la constante y se borró el socio de prueba. Con las credenciales del club se repite igual.
 
 ### 11.3. Paso B3: cobro con la tarjeta guardada
 

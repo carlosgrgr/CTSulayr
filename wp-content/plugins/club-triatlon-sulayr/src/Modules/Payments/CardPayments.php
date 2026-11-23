@@ -91,11 +91,19 @@ class CardPayments {
     /**
      * URL de notificación.
      *
+     * SULAYR_REDSYS_NOTIFY_URL (wp-config.php, solo en local) la sustituye,
+     * p. ej. por la de un túnel, para que Redsys llegue a un sitio local. En
+     * PROD no se define.
+     *
      * @return 	string
      * @access 	public
      * @package	club-triatlon-sulayr
      */
     public static function notify_url(): string {
+        if ( defined( 'SULAYR_REDSYS_NOTIFY_URL' ) && '' !== trim( (string) SULAYR_REDSYS_NOTIFY_URL ) ) {
+            return trim( (string) SULAYR_REDSYS_NOTIFY_URL );
+        }
+
         return rest_url( self::REST_NAMESPACE . self::REST_ROUTE );
     }
 
