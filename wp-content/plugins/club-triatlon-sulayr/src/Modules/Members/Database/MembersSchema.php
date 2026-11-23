@@ -21,10 +21,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  * periodo inicial de cada socio con su tipo actual.
  * Versión 5 (pago online, SPEC-COBROS §4.2): tarjetas guardadas
  * (PAYMENT_CARDS) y operaciones enviadas a Redsys (TPV_TRANSACTIONS).
+ * Versión 6 (pago online, parte C): expiry_notice_at en tarjetas (aviso de
+ * caducidad enviado, una vez por tarjeta).
  */
 class MembersSchema {
 
-    public const VERSION = 5;
+    public const VERSION = 6;
     public const VERSION_OPTION = 'sulayr_members_db_version';
 
     public const SERVICES = 'sulayr_member_services';
@@ -295,6 +297,7 @@ class MembersSchema {
   transaction_id bigint(20) unsigned NOT NULL DEFAULT 0,
   created_at datetime NOT NULL,
   closed_at datetime DEFAULT NULL,
+  expiry_notice_at datetime DEFAULT NULL,
   PRIMARY KEY  (id),
   KEY user_status (user_id,status)
 ) $charset;";

@@ -90,7 +90,7 @@ class CardCharges {
             if ( null === $card || '' === trim( (string) $card->identifier ) ) {
                 return new \WP_Error( 'sulayr_tpv_no_card', __( 'El socio no tiene tarjeta guardada.', SULAYR_TEXTDOMAIN ) );
             }
-            if ( PaymentCards::is_expired( $card, current_time( 'Y-m-d' ) ) ) {
+            if ( PaymentCards::is_expired( $card, MonthlyCharges::today() ) ) {
                 return new \WP_Error( 'sulayr_tpv_card_expired', __( 'La tarjeta guardada está caducada.', SULAYR_TEXTDOMAIN ) );
             }
 
@@ -177,9 +177,62 @@ class CardCharges {
         TpvTransactions::note_unknown( (int) $transaction->id, [ 'sin_respuesta' => $result->error() ] + $result->params() );
         CardPayments::notify_club(
             __( 'Cobro con tarjeta sin respuesta de Redsys', SULAYR_TEXTDOMAIN ),
-            sprintf( __( 'El cobro de %1$s con la tarjeta guardada (operación %2$s) no ha tenido una respuesta clara de Redsys (%3$s). No se sabe si se ha cobrado: búscala en el portal de Redsys. Mientras no se resuelva, el recibo no se vuelve a cobrar con tarjeta.', SULAYR_TEXTDOMAIN ), Receipts::money( (float) $transaction->amount ), $transaction->ds_order, $result->error() )
+            sprintf( __( 'El cobro de %1$s con la tarjeta guardada (operación %2$s) no ha tenido una respuesta clara de Redsys (%3$s). No se sabe si se ha cobrado: búscala en el portal de Redsys y ciérrala con lo que veas en el detalle del recibo (Socios → Recibos). Mientras no se cierre, el recibo no se vuelve a cobrar con tarjeta.', SULAYR_TEXTDOMAIN ), Receipts::money( (float) $transaction->amount ), $transaction->ds_order, $result->error() )
         );
 
         return self::RESULT_PENDING;
+    }
+
+    /**
+     * Cierre a mano de un cobro sin respuesta, después de mirarlo en el portal
+     * de Redsys (§5.2, paso 3, mientras no haya consulta automática).
+     *
+     * - Cobrado: la operación queda autorizada y se apunta el pago «Tarjeta
+     *   (TPV)» con el gestor como autor; el socio recibe el email de cobro.
+     * - No cobrado: la operación queda en «error» y el recibo se desbloquea
+     *   (entra en los reintentos como un cobro fallido).
+     *
+     * @param   int    $transaction_id Operación.
+     * @param   bool   $charged        Redsys la cobró.
+     * @param   string $note           Lo que se vio en el portal (obligatorio).
+     * @return 	true|\WP_Error
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function resolve( int $transaction_id, bool $charged, string $note ) {
+        $transaction = TpvTransactions::get( $transaction_id );
+        if ( null === $transaction || CardPayments::is_with_member( (string) $transaction->type ) ) {
+            return new \WP_Error( 'sulayr_tpv_resolve', __( 'Operación no encontrada.', SULAYR_TEXTDOMAIN ) );
+        }
+        if ( TpvTransactions::STATUS_SENT !== $transaction->status ) {
+            return new \WP_Error( 'sulayr_tpv_resolve', __( 'Esta operación ya está cerrada.', SULAYR_TEXTDOMAIN ) );
+        }
+        $note = trim( $note );
+        if ( '' === $note ) {
+            return new \WP_Error( 'sulayr_tpv_resolve', __( 'Escribe lo que has visto en el portal de Redsys.', SULAYR_TEXTDOMAIN ) );
+        }
+
+        $receipt = Receipts::get( (int) $transaction->receipt_id );
+        if ( $charged && ( null === $receipt || (float) $transaction->amount > Receipts::outstanding( $receipt ) + 0.001 ) ) {
+            return new \WP_Error( 'sulayr_tpv_resolve', __( 'El recibo ya no tiene ese importe pendiente. Revisa sus pagos antes de cerrar la operación como cobrada.', SULAYR_TEXTDOMAIN ) );
+        }
+
+        $user_id = get_current_user_id();
+        $info = [ 'cierre_manual' => $charged ? 'cobrado' : 'no_cobrado', 'por' => $user_id, 'nota' => $note ];
+        if ( false === TpvTransactions::close( $transaction_id, $charged ? TpvTransactions::STATUS_AUTHORIZED : TpvTransactions::STATUS_ERROR, $info ) ) {
+            return new \WP_Error( 'sulayr_tpv_resolve', __( 'Esta operación ya está cerrada.', SULAYR_TEXTDOMAIN ) );
+        }
+        if ( false === $charged ) {
+            return true;
+        }
+
+        $payment_id = Receipts::add_tpv_payment( (int) $transaction->receipt_id, (float) $transaction->amount, (string) $transaction->ds_order, $user_id );
+        if ( is_wp_error( $payment_id ) ) {
+            return $payment_id;
+        }
+        TpvTransactions::set_payment( $transaction_id, (int) $payment_id );
+        ChargeNotices::charged( Receipts::get( (int) $transaction->receipt_id ), (float) $transaction->amount );
+
+        return true;
     }
 }

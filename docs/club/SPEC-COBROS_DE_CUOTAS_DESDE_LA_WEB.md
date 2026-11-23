@@ -1,7 +1,7 @@
 # SPEC — Pago online: cuotas y tienda con TPV virtual
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr` (web del club, blog 1)
-**Estado:** Definida el 17 de noviembre de 2026. Decisiones C1 a C30 cerradas con el club (sección 3). Parte B en desarrollo en la rama `pago-online-parte-b`: pasos B1 y B2 hechos y probados en local el 17 de noviembre de 2026, también a mano en el navegador; paso B3 (cobro con la tarjeta guardada) hecho el 23 de noviembre de 2026 y probado contra el entorno de pruebas de Redsys (sección 11). No está en `main` ni en PROD. El banco dio de alta el TPV virtual el 23 de noviembre de 2026; sin credenciales de pruebas del club todavía (Redsys las manda por email; en local se usan las públicas de Redsys).
+**Estado:** Definida el 17 de noviembre de 2026. Decisiones C1 a C30 cerradas con el club (sección 3). Parte B en desarrollo en la rama `pago-online-parte-b`: pasos B1 y B2 hechos y probados en local el 17 de noviembre de 2026, también a mano en el navegador; paso B3 (cobro con la tarjeta guardada) hecho el 23 de noviembre de 2026 y probado contra el entorno de pruebas de Redsys (sección 11). Parte C en desarrollo en la rama `pago-online-parte-c`, que sale de `pago-online-parte-b`: pasos C1 (cobro mensual) y C2 (pantallas) hechos y probados en local el 23 de noviembre de 2026 (sección 12). No está en `main` ni en PROD. El banco dio de alta el TPV virtual el 23 de noviembre de 2026; sin credenciales de pruebas del club todavía (Redsys las manda por email; en local se usan las públicas de Redsys).
 **Fecha:** 17 de noviembre de 2026 (borrador inicial del 28 de octubre de 2026)
 
 El club cobrará con el TPV virtual de su banco (Redsys) dos cosas: las cuotas mensuales de los socios, con la tarjeta guardada y sin que el socio tenga que hacer nada cada mes, y los pedidos de la tienda. Esta spec se apoya en [SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md), que ya genera los recibos mensuales y lleva el control manual de pagos. Esta spec no cambia cómo se calcula un recibo: solo cómo se paga.
@@ -437,7 +437,61 @@ Pruebas:
 
 ### 11.4. Pendiente
 
-- **Consulta de una operación sin respuesta.** Con la API de consultas de Redsys, cuando el técnico dé sus credenciales (sección 10). Mientras, la resuelve un gestor mirando el portal de Redsys.
+- **Consulta de una operación sin respuesta.** Con la API de consultas de Redsys, cuando el técnico dé sus credenciales (sección 10). Mientras, un gestor la cierra a mano tras mirarla en el portal de Redsys (sección 12.2).
 - **C11.** «Guardar tarjeta» sin pagar, si el técnico confirma la validación sin importe.
-- **Emails de C23.** Textos editables y envíos (parte C).
-- **Parte C.** Aprobar cobro, tarea diaria, reintentos, caducidad y baja (C14 ya tiene `PaymentCards::erase_for_leave()`, falta engancharlo a la baja efectiva).
+- ~~Emails de C23~~ y ~~parte C~~: hechos en la sección 12.
+
+---
+
+## 12. Parte C: implementación
+
+Rama `pago-online-parte-c`, creada el 23 de noviembre de 2026 desde `pago-online-parte-b`. No necesita nada del banco: se prueba con respuestas simuladas y con el entorno de pruebas de Redsys.
+
+### 12.1. Paso C1: cobro mensual
+
+Hecho el 23 de noviembre de 2026 y probado en local.
+
+| Pieza | Código | Qué hace |
+|---|---|---|
+| Estado del mes (§4.3) | `Payments\MonthlyCharges`, opción `sulayr_tpv_charges` | Por `AAAA-MM`: quién aprobó y cuándo, día de cobro guardado al aprobar, avisos enviados, inicio y día del cobro, reintentos hechos y resumen de cada lote (cobrados, importe, fallidos, sin respuesta). |
+| Aprobar (C16) | `MonthlyCharges::approve()` y `unapprove()` | Solo el mes en curso y con credenciales. Al aprobar se programa un evento único de WP-Cron (`sulayr_tpv_charge_now`): manda los avisos y, si ya pasó el día de cobro, cobra al momento. La aprobación se puede anular mientras no haya empezado el cobro. |
+| Qué entra (C17) | `MonthlyCharges::eligible()` y `summary()` | Recibos del mes pendientes o parciales, de socios con medio «Tarjeta (TPV)», con tarjeta activa sin caducar y sin operación en curso. Se cobra lo pendiente. El resumen separa los que no tienen tarjeta, los desfasados y los que tienen un pago en curso. |
+| Tarea (§6.2) | `MonthlyCharges::run()`, paso 7 de `MembersDailyTask` | Con un bloqueo de MySQL para el lote: (1) sin aprobar el día de cobro, aviso al club una vez; (2) aprobado, aviso previo a cada socio una vez; (3) el día de cobro o después, cobra cada recibo (`CardCharges`); (4) reintentos de los fallidos a los días configurados desde el cobro, uno por ejecución; tras el último, aviso al club con los que siguen sin cobrar; (5) bajas; (6) caducidad. Cada paso deja su marca en el estado: ejecutarla dos veces no cobra dos veces. |
+| Reintentos (C19) | `MonthlyCharges::retryable()` | Recibos cuyo último cobro sin el socio fue denegado o rechazado (error SIS). Intentos 2 y 3, de tipo `reintento`. Los «sin respuesta» no se reintentan: bloquean el recibo. |
+| Cobro de un recibo (C22) | `MonthlyCharges::charge_one()` | Cobra un recibo concreto y sigue la numeración de intentos. |
+| Bajas (C14) | `MonthlyCharges::run()` | Socios de baja con referencia guardada: si cobran con tarjeta, se intenta cobrar lo pendiente de los meses con el cobro aprobado; después, `PaymentCards::erase_for_leave()`. |
+| Caducidad (§6.2) | `PaymentCards::expire()`, `mark_expiry_notice()`; esquema 6 | Las vencidas pasan a «caducada» (queda en el registro). Las que caducan en los días del ajuste reciben un aviso, una vez por tarjeta (`expiry_notice_at`), solo si el socio cobra con tarjeta y no está de baja. |
+| Emails (C23) | `Payments\ChargeNotices`, Socios → Ajustes → Emails | Aviso previo (importe, desglose de líneas y lo ya pagado, día de cargo), cobro realizado, cobro fallido (con la fecha del próximo intento o «no haremos más intentos») y tarjeta a punto de caducar. Al socio y al tutor si lo tiene. Textos editables con marcadores. Los avisos al club son fijos. |
+
+Decisiones de implementación (no cambian la spec):
+
+- **Fecha de los reintentos.** Se cuentan desde el día en que se cobró de verdad. Si se aprueba tarde, los reintentos de ese mes se mueven con el cobro. Cada mes es independiente: el siguiente se vuelve a cobrar el día del ajuste.
+- **Email de cobro fallido en cada intento.** Dice cuándo será el siguiente o que no habrá más.
+- **Aviso al club sin aprobar** solo si hay recibos que cobrar: durante el piloto, sin socios con tarjeta, no hay avisos vacíos.
+- **Bajas (C14).** Solo se cobran los recibos de meses con el cobro aprobado, porque la aprobación es la revisión del gestor (C16).
+- **Hoy.** `MonthlyCharges::today()` es la fecha del club; las comprobaciones la fijan con `use_today()`. `CardCharges` la usa para la caducidad.
+
+### 12.2. Paso C2: pantallas
+
+Hecho el 23 de noviembre de 2026 y probado en local.
+
+| Pieza | Código | Qué hace |
+|---|---|---|
+| «Aprobar cobro» (§6.1) | `Payments\ChargesPanel`, gancho `sulayr_receipts_month_panel` en `ReceiptsPage` | En Socios → Recibos del mes en curso, con credenciales: cuántos recibos y qué importe se cobran y qué día, los desfasados, los socios con tarjeta como medio pero sin tarjeta válida, los que tienen un pago en curso y los cobros sin respuesta. Botón «Aprobar cobro de <mes>» con confirmación; aprobado, quién y cuándo, y «Anular la aprobación» mientras no haya empezado. Cobrado, tabla del cobro y de los reintentos. |
+| Recibo (C22) | Gancho `sulayr_receipt_detail_payments` | Operaciones con tarjeta del recibo (fecha, pedido, tipo e intento, importe y resultado) y «Cobrar X con la tarjeta guardada» si hay tarjeta válida y nada en curso. |
+| Tarea diaria | `MembersMenu` | «Ejecutar ahora» informa también de los cobros con tarjeta y los fallidos. |
+| Cobro sin respuesta (§5.2, paso 3) | `CardCharges::resolve()`, en el detalle del recibo | Mientras no haya consulta automática, un gestor busca la operación en el portal de Redsys por el número de pedido y la cierra con lo que ve, con una nota obligatoria. «Cobrado»: la operación queda autorizada, se apunta el pago «Tarjeta (TPV)» con el gestor como autor y el socio recibe el email de cobro. «No cobrado»: la operación queda en «error», el recibo se desbloquea y entra en los reintentos. Solo para cobros sin el socio y una vez; quién la cerró y la nota quedan a la vista en las operaciones del recibo. |
+
+Mis recibos ya tenía lo de la sección 7 desde el paso B2 (día de cobro y aviso sin tarjeta).
+
+### 12.3. Pruebas
+
+- `tests/wp/check-cobro-mensual.php`, nuevo: 38 comprobaciones, en verde y repetibles. Simula marzo de 2001 día a día con 8 socios de prueba y respuestas de Redsys firmadas: criterios 9 a 14, aprobación y anulación, avisos de caducidad, cobro de un recibo concreto y las pantallas.
+- `check-pagos.php` pasa a 103 comprobaciones con el cierre a mano. `check-ranking.php` y los 114 tests PHPUnit siguen en verde.
+- **Entorno de pruebas de Redsys, 23 de noviembre de 2026:** un socio de prueba con la tarjeta de pruebas guardada, aprobación y tarea del día de cobro: aviso previo, cobro autorizado (0000), recibo pagado y email de cobro realizado.
+
+### 12.4. Pendiente
+
+- **Consulta automática de un cobro sin respuesta** (sección 11.4). Mientras, el cierre a mano de la sección 12.2.
+
+Pantallas y emails revisados por el club en el navegador el 23 de noviembre de 2026.

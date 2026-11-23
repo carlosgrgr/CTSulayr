@@ -288,6 +288,13 @@ class ReceiptsPage {
         }
         echo '</p>';
 
+        /**
+         * Después de las acciones del mes (p. ej. «Aprobar cobro» del pago con tarjeta).
+         *
+         * @param string $period AAAA-MM.
+         */
+        do_action( 'sulayr_receipts_month_panel', $period );
+
         if ( empty( $receipts ) ) {
             echo '<p>' . esc_html__( 'No hay recibos de este mes.', SULAYR_TEXTDOMAIN ) . '</p>';
             return;
@@ -452,6 +459,13 @@ class ReceiptsPage {
             }
             printf( '</select> <input type="text" name="note" placeholder="%s"> <button type="submit" class="button button-primary sulayr-cta">%s</button></p></form>', esc_attr__( 'Comentario (opcional)', SULAYR_TEXTDOMAIN ), esc_html__( 'Apuntar', SULAYR_TEXTDOMAIN ) );
         }
+
+        /**
+         * Después de los pagos del recibo (p. ej. operaciones con tarjeta y «Cobrar con la tarjeta guardada»).
+         *
+         * @param object $receipt Recibo.
+         */
+        do_action( 'sulayr_receipt_detail_payments', $receipt );
 
         // Anular.
         if ( Receipts::STATUS_ANNULLED !== $receipt->status && empty( $payments ) ) {

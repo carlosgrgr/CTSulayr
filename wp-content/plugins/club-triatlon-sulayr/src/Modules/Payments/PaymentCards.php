@@ -129,6 +129,76 @@ class PaymentCards {
     }
 
     /**
+     * Socios con alguna fila que aún guarda la referencia de Redsys.
+     *
+     * @return 	int[]
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function users_with_reference(): array {
+        global $wpdb;
+
+        return array_map( 'intval', $wpdb->get_col( 'SELECT DISTINCT user_id FROM ' . self::table() . " WHERE identifier <> ''" ) ?: [] );
+    }
+
+    /**
+     * Tarjetas activas de todos los socios.
+     *
+     * @return 	array<int, object>
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function all_active(): array {
+        global $wpdb;
+
+        return $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' WHERE status = %s ORDER BY id', self::STATUS_ACTIVE ) ) ?: [];
+    }
+
+    /**
+     * Marca como caducada una tarjeta activa (§6.2). Queda en el registro.
+     *
+     * @param   object $card Tarjeta.
+     * @return 	void
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function expire( object $card ): void {
+        self::close( (int) $card->id, self::STATUS_EXPIRED );
+        MemberLog::record( (int) $card->user_id, MemberLog::AREA_CARD, 'tarjeta', self::describe( $card ), '', __( 'Tarjeta caducada', SULAYR_TEXTDOMAIN ) );
+    }
+
+    /**
+     * Apunta que se avisó de la caducidad (una vez por tarjeta).
+     *
+     * @param   int $id Tarjeta.
+     * @return 	bool true si se apuntó ahora; false si ya estaba avisada.
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function mark_expiry_notice( int $id ): bool {
+        global $wpdb;
+
+        return 1 === (int) $wpdb->query( $wpdb->prepare( 'UPDATE ' . self::table() . ' SET expiry_notice_at = %s WHERE id = %d AND expiry_notice_at IS NULL', current_time( 'mysql' ), $id ) );
+    }
+
+    /**
+     * Último día de validez de la tarjeta (Y-m-d), o '' si la caducidad no es válida.
+     *
+     * @param   object $card Tarjeta.
+     * @return 	string
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function last_valid_day( object $card ): string {
+        $expiry = (string) $card->expiry;
+        if ( false === self::valid_expiry( $expiry ) ) {
+            return '';
+        }
+
+        return ( new \DateTimeImmutable( '20' . substr( $expiry, 0, 2 ) . '-' . substr( $expiry, 2, 2 ) . '-01' ) )->format( 'Y-m-t' );
+    }
+
+    /**
      * La tarjeta está caducada en una fecha (caduca al terminar su mes).
      *
      * @param   object $card  Tarjeta.

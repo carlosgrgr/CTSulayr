@@ -108,6 +108,15 @@ class MemberSettings {
         'tpv_retry_first' => 3,
         'tpv_retry_second' => 6,
         'tpv_expiry_notice_days' => 30,
+        // Emails al socio que cobra con tarjeta (C23).
+        'email_tpv_notice_subject' => 'Cargo de tu recibo de {mes} el día {dia_cargo}',
+        'email_tpv_notice_body' => "<p>Hola {nombre}:</p>\n<p>El {dia_cargo} cargaremos {importe} en tu tarjeta {tarjeta} por tu recibo {numero} de {mes}:</p>\n{desglose}\n<p>No tienes que hacer nada. Si quieres revisarlo o cambiar la tarjeta, entra en Mi cuenta → Mis recibos.</p>\n<p>{enlace_mis_recibos}</p>",
+        'email_tpv_charged_subject' => 'Recibo de {mes} pagado con tu tarjeta',
+        'email_tpv_charged_body' => "<p>Hola {nombre}:</p>\n<p>Hemos cobrado {importe} en tu tarjeta {tarjeta} por tu recibo {numero} de {mes}. Ya está pagado.</p>\n<p>Tienes el recibo en PDF en Mi cuenta → Mis recibos.</p>\n<p>{enlace_mis_recibos}</p>",
+        'email_tpv_failed_subject' => 'No hemos podido cobrar tu recibo de {mes}',
+        'email_tpv_failed_body' => "<p>Hola {nombre}:</p>\n<p>El banco no ha aceptado el cargo de {importe} en tu tarjeta {tarjeta} por tu recibo {numero} de {mes}.</p>\n<p>{siguiente_intento}</p>\n<p>Puedes pagarlo ahora con otra tarjeta desde Mi cuenta → Mis recibos. Así también cambias la tarjeta guardada.</p>\n<p>{enlace_mis_recibos}</p>",
+        'email_tpv_expiring_subject' => 'Tu tarjeta guardada caduca pronto',
+        'email_tpv_expiring_body' => "<p>Hola {nombre}:</p>\n<p>La tarjeta {tarjeta} que tienes guardada para pagar tus cuotas caduca el {fecha_caducidad}. A partir de entonces no podremos cobrarte con ella.</p>\n<p>Guarda otra pagando tu próximo recibo con tarjeta desde Mi cuenta → Mis recibos.</p>\n<p>{enlace_mis_recibos}</p>",
         'consent_cargos_recurrentes_text' => 'Autorizo al Club Triatlón Sulayr a guardar la referencia de esta tarjeta en su TPV virtual (Redsys) y a cargar en ella, sin que yo tenga que hacer nada, el importe pendiente de cada recibo mensual de mis cuotas. El cargo se hace a partir del día {dia_cobro} de cada mes, después de avisarme por email con el importe y el desglose. Si el cargo falla, se reintenta hasta dos veces en el mismo mes. Puedo retirar esta autorización cuando quiera con «Quitar tarjeta» en Mi cuenta → Mis recibos. Retirarla no anula las cuotas que ya deba.',
         'consent_cargos_recurrentes_version' => '1',
         'tpv_privacy_notice' => '<p><strong>Protección de datos.</strong> Responsable: Club Triatlón Sulayr. Finalidad: cobrar tus cuotas con la tarjeta que elijas. Base: tu relación con el club como socio. El club no ve ni guarda el número de tu tarjeta. Solo guarda la referencia que da Redsys, los últimos dígitos y la caducidad. Destinatarios: la entidad bancaria del TPV y Redsys. Derechos: acceso, rectificación, supresión y los demás, en clubtriatlonsulayr@gmail.com. Más información en la política de privacidad.</p>',
@@ -402,7 +411,7 @@ class MemberSettings {
                 'label' => __( 'Marcadores', SULAYR_TEXTDOMAIN ),
                 'name' => '',
                 'type' => 'message',
-                'message' => __( '{nombre}, {nombre_completo}, {numero_socio}, {fecha_alta}, {fecha_efectiva}, {enlace_contrasena}, {enlace_whatsapp}, {bloques_servicios}, {tipo}, {resultado}, {detalle}, {motivo}, {listado}. Recibo mensual: {nombre}, {mes}, {numero}, {total}, {enlace_mis_recibos}, {enlace_mis_cuotas}', SULAYR_TEXTDOMAIN ),
+                'message' => __( '{nombre}, {nombre_completo}, {numero_socio}, {fecha_alta}, {fecha_efectiva}, {enlace_contrasena}, {enlace_whatsapp}, {bloques_servicios}, {tipo}, {resultado}, {detalle}, {motivo}, {listado}. Recibo mensual: {nombre}, {mes}, {numero}, {total}, {enlace_mis_recibos}, {enlace_mis_cuotas}. Pago con tarjeta: {nombre}, {mes}, {numero}, {importe}, {tarjeta}, {dia_cargo}, {desglose}, {siguiente_intento}, {fecha_caducidad}, {enlace_mis_recibos}', SULAYR_TEXTDOMAIN ),
             ],
         ];
 
@@ -414,6 +423,10 @@ class MemberSettings {
             'leave' => __( 'Confirmación de baja', SULAYR_TEXTDOMAIN ),
             'coach' => __( 'Listado del entrenador', SULAYR_TEXTDOMAIN ),
             'receipt' => __( 'Recibo mensual (si está activado el aviso)', SULAYR_TEXTDOMAIN ),
+            'tpv_notice' => __( 'Tarjeta: aviso previo del cargo', SULAYR_TEXTDOMAIN ),
+            'tpv_charged' => __( 'Tarjeta: cobro realizado', SULAYR_TEXTDOMAIN ),
+            'tpv_failed' => __( 'Tarjeta: cobro fallido', SULAYR_TEXTDOMAIN ),
+            'tpv_expiring' => __( 'Tarjeta: caduca pronto', SULAYR_TEXTDOMAIN ),
         ];
         foreach ( $emails as $key => $label ) {
             $fields[] = $this->text( "email_{$key}_subject", "email_{$key}_subject", sprintf( __( '%s: asunto', SULAYR_TEXTDOMAIN ), $label ), $d[ "email_{$key}_subject" ] );

@@ -7,6 +7,7 @@ use ClubTriatlonSulayr\Modules\Members\Receipts\BoardPayments;
 use ClubTriatlonSulayr\Modules\Members\Receipts\Receipts;
 use ClubTriatlonSulayr\Modules\Members\MemberSettings;
 use ClubTriatlonSulayr\Modules\Members\ReservationsAccess;
+use ClubTriatlonSulayr\Modules\Payments\MonthlyCharges;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -24,7 +25,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  * 4. borra los datos de las solicitudes de alta caducadas (D16);
  * 5. apunta la retribución de la junta del mes (D34), una vez por socio y mes;
  * 6. genera los recibos del mes en curso desde el día configurado si nadie
- *    los ha generado (D39). Si un día no hay visitas, lo hace el siguiente.
+ *    los ha generado (D39). Si un día no hay visitas, lo hace el siguiente;
+ * 7. pago con tarjeta (SPEC-COBROS §6.2, Payments\MonthlyCharges): avisos,
+ *    cobro del mes aprobado, reintentos, bajas y caducidad de tarjetas.
  *
  * Los pasos 5 y 6 no hacen nada hasta que hay «Primer mes con recibos» en
  * Socios → Ajustes. Ejecutarla dos veces el mismo día no cambia nada la
@@ -66,7 +69,7 @@ class MembersDailyTask {
     /**
      * Ejecuta la tarea.
      *
-     * @return 	array{applied: int, returned: int, updated: int, purged: int, board: int, receipts: int}
+     * @return 	array{applied: int, returned: int, updated: int, purged: int, board: int, receipts: int, tpv: array<string, int>}
      * @access 	public
      * @package	club-triatlon-sulayr
      */
@@ -95,8 +98,9 @@ class MembersDailyTask {
 
         $board = BoardPayments::run();
         $receipts = self::auto_generate();
+        $tpv = MonthlyCharges::run();
 
-        $result = [ 'applied' => $applied, 'returned' => $returned, 'updated' => $updated, 'purged' => $purged, 'board' => $board, 'receipts' => $receipts ];
+        $result = [ 'applied' => $applied, 'returned' => $returned, 'updated' => $updated, 'purged' => $purged, 'board' => $board, 'receipts' => $receipts, 'tpv' => $tpv ];
         update_option( self::LAST_RUN_OPTION, [ 'at' => current_time( 'mysql' ), 'result' => $result ], false );
 
         return $result;

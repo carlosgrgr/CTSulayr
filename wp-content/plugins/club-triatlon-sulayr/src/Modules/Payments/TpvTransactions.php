@@ -200,6 +200,22 @@ class TpvTransactions {
     }
 
     /**
+     * Último cobro sin el socio (cobro o reintento) de un recibo.
+     *
+     * @param   int $receipt_id Recibo.
+     * @return 	object|null
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function latest_charge( int $receipt_id ): ?object {
+        global $wpdb;
+
+        $row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' WHERE receipt_id = %d AND type IN (%s, %s) ORDER BY id DESC LIMIT 1', $receipt_id, self::TYPE_RECURRING, self::TYPE_RETRY ) );
+
+        return $row ?: null;
+    }
+
+    /**
      * Operaciones «enviadas» de cobros sin el socio, que esperan consulta.
      *
      * @return 	array<int, object>

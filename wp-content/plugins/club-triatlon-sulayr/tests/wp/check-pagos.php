@@ -19,6 +19,7 @@ use ClubTriatlonSulayr\Modules\Members\Receipts\Receipts;
 use ClubTriatlonSulayr\Modules\Members\Receipts\ReceiptsAccount;
 use ClubTriatlonSulayr\Modules\Payments\CardCharges;
 use ClubTriatlonSulayr\Modules\Payments\CardPayments;
+use ClubTriatlonSulayr\Modules\Payments\ChargesPanel;
 use ClubTriatlonSulayr\Modules\Payments\ChargeMethod;
 use ClubTriatlonSulayr\Modules\Payments\Redsys\RedsysConfig;
 use ClubTriatlonSulayr\Modules\Payments\Redsys\RedsysSignature;
@@ -76,7 +77,7 @@ wp_set_current_user( (int) ( $admin[0] ?? 1 ) );
 
 try {
     // Esquema.
-    $check( 'Versión del esquema de socios = 5', 5 === (int) get_option( MembersSchema::VERSION_OPTION ) );
+    $check( 'Versión del esquema de socios = 6', 6 === (int) get_option( MembersSchema::VERSION_OPTION ) );
     foreach ( [ MembersSchema::PAYMENT_CARDS, MembersSchema::TPV_TRANSACTIONS ] as $t ) {
         $check( "Tabla {$t}", MembersSchema::table( $t ) === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', MembersSchema::table( $t ) ) ) );
     }
@@ -398,6 +399,24 @@ try {
     $m6 = $new_receipt( $user_id, 4 );
     $res = CardCharges::charge( $m6 );
     $check( 'B3: «pedido repetido» (SIS0051) no se da por no cobrado', is_array( $res ) && CardCharges::RESULT_PENDING === $res['result'] && TpvTransactions::in_flight( $m6 ) );
+
+    // Cierre a mano de un cobro sin respuesta, tras mirarlo en el portal de Redsys.
+    $tx6 = TpvTransactions::latest_charge( $m6 );
+    $tx4 = TpvTransactions::latest_charge( $m4 );
+    ob_start();
+    ( new ChargesPanel() )->render_receipt( Receipts::get( $m6 ) );
+    $html = (string) ob_get_clean();
+    $check( 'Cierre a mano: el detalle del recibo ofrece «Cerrar operación»', false !== strpos( $html, 'Cerrar operación' ) && false !== strpos( $html, (string) $tx6->ds_order ) );
+    $check( 'Cierre a mano: sin nota no se cierra', is_wp_error( CardCharges::resolve( (int) $tx6->id, true, ' ' ) ) && TpvTransactions::in_flight( $m6 ) );
+    $check( 'Cierre a mano: un pago con el socio delante no se cierra así', is_wp_error( CardCharges::resolve( (int) $tx1->id, true, 'x' ) ) );
+    $mails = [];
+    $check( 'Cierre a mano «no cobrado» → operación en «error» y recibo desbloqueado', true === CardCharges::resolve( (int) $tx4->id, false, 'No aparece en el portal' ) && TpvTransactions::STATUS_ERROR === TpvTransactions::get( (int) $tx4->id )->status && false === TpvTransactions::in_flight( $m4 ) && 0.0 === Receipts::paid( $m4 ) && 0 === count( $mails ) );
+    $check( 'Cierre a mano «cobrado» → pago «Tarjeta (TPV)» del gestor y email al socio', true === CardCharges::resolve( (int) $tx6->id, true, 'Autorizada, código 999999' ) && Receipts::STATUS_PAID === Receipts::get( $m6 )->status && Receipts::METHOD_TPV === Receipts::payments( $m6 )[0]->method && get_current_user_id() === (int) Receipts::payments( $m6 )[0]->created_by && 1 === count( $mails ) && (int) Receipts::payments( $m6 )[0]->id === (int) TpvTransactions::get( (int) $tx6->id )->payment_id );
+    $check( 'Cierre a mano: no se cierra dos veces', is_wp_error( CardCharges::resolve( (int) $tx6->id, true, 'otra vez' ) ) && 1 === count( Receipts::payments( $m6 ) ) );
+    ob_start();
+    ( new ChargesPanel() )->render_receipt( Receipts::get( $m6 ) );
+    $html = (string) ob_get_clean();
+    $check( 'Cierre a mano: queda a la vista quién la cerró y qué vio', false !== strpos( $html, 'cerrada a mano' ) && false !== strpos( $html, 'código 999999' ) && false === strpos( $html, 'Cerrar operación' ) );
 
     // Dos ejecuciones a la vez: el bloqueo del recibo lo tiene otra conexión.
     $m7 = $new_receipt( $user_id, 11 );
