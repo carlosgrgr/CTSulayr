@@ -21,6 +21,8 @@ Local sites (Apache, docroot `/var/www/html/CTSulayr`):
 
 `WP_DEBUG` and `WP_DEBUG_LOG` are on; errors go to `wp-content/debug.log`. `wp-config.php` is gitignored.
 
+Staging (proposed on 24 November 2026, not set up yet): `staging.clubtriatlonsulayr.com` and `cnnazari.staging.clubtriatlonsulayr.com`, a copy of PROD on Hostinger used to test before PROD. Setup, the DB copy script and the risks (emails, cron, payments, personal data) are in `docs/STAGING.md`. Code that sends email or runs on cron must keep working with `pre_wp_mail` short-circuited and `DISABLE_WP_CRON` on.
+
 ## Commands
 
 There is no build step and no PHPUnit suite. Verification is done with WP-CLI and scripts that load WordPress.
