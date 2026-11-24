@@ -66,8 +66,24 @@ else
 fi
 [ "$(current_db)" = "$TMP_DB" ] || die "no se pudo confirmar la conexión con $TMP_DB"
 
+# PROD (Hostinger) usa MariaDB 11 y sus colaciones uca1400, que MySQL o un
+# MariaDB más antiguo no conocen. Se importa una copia con colaciones
+# equivalentes. El volcado de staging sale con las colaciones locales, que
+# el MariaDB de Hostinger sí acepta.
+WORK_SQL="$(mktemp "${TMPDIR:-/tmp}/prod-normalizado.XXXXXX.sql")"
+trap 'rm -f "$WORK_SQL"' EXIT
+sed -E \
+	-e 's/utf8mb4_uca1400_[a-z_]+/utf8mb4_unicode_ci/g' \
+	-e 's/utf8mb3_uca1400_[a-z_]+/utf8_general_ci/g' \
+	-e '1{/^\/\*M!999999\\- enable the sandbox mode \*\/ *$/d}' \
+	"$IN" > "$WORK_SQL"
+if grep -q 'uca1400' "$WORK_SQL"; then
+	echo "  Aviso: quedan colaciones uca1400 sin convertir:"
+	grep -o '[A-Za-z0-9_]*uca1400[A-Za-z0-9_]*' "$WORK_SQL" | sort | uniq -c
+fi
+
 echo "· Importando $IN"
-wp db import "$IN"
+wp db import "$WORK_SQL"
 
 PREFIX="$(wp config get table_prefix)"
 [[ "$PREFIX" =~ ^[A-Za-z0-9_]+$ ]] || die "prefijo de tablas raro: $PREFIX"
