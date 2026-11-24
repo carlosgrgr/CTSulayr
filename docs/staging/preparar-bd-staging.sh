@@ -21,7 +21,11 @@ set -euo pipefail
 
 PROD_DOMAIN="clubtriatlonsulayr.com"
 STAGING_DOMAIN="staging.clubtriatlonsulayr.com"
-RES_SUB="cnnazari"   # subdominio del sitio de reservas (blog 2)
+RES_SUB="cnnazari"   # subdominio del sitio de reservas (blog 2) en PROD
+# Hostinger no admite subdominios de varios niveles (cnnazari.staging.…), así
+# que reservas en staging es un subdominio hermano, de un solo nivel.
+RES_PROD="${RES_SUB}.${PROD_DOMAIN}"
+RES_STAGING="${RES_SUB}-staging.${PROD_DOMAIN}"
 
 IN="${1:-}"
 OUT="${2:-staging.sql}"
@@ -71,16 +75,16 @@ PREFIX="$(wp config get table_prefix)"
 # ── Reemplazo de URLs (respeta datos serializados) ──
 # Se reemplaza «//dominio» y no «dominio» a secas, para no cambiar emails
 # como info@clubtriatlonsulayr.com. Las pasadas no se pisan: «//cnnazari.…» no
-# contiene «//clubtriatlonsulayr.com». También la versión escapada en JSON (\/\/).
+# contiene «//clubtriatlonsulayr.com», ni «//cnnazari-staging.…» tampoco. También la versión escapada en JSON (\/\/).
 replace() {
 	echo "· $1  →  $2"
 	"${WP[@]}" search-replace "$1" "$2" \
 		--all-tables-with-prefix --precise --skip-columns=guid --report-changed-only
 }
-replace "//${RES_SUB}.${PROD_DOMAIN}"     "//${RES_SUB}.${STAGING_DOMAIN}"
+replace "//${RES_PROD}"                   "//${RES_STAGING}"
 replace "//www.${PROD_DOMAIN}"            "//${STAGING_DOMAIN}"
 replace "//${PROD_DOMAIN}"                "//${STAGING_DOMAIN}"
-replace "\\/\\/${RES_SUB}.${PROD_DOMAIN}" "\\/\\/${RES_SUB}.${STAGING_DOMAIN}"
+replace "\\/\\/${RES_PROD}"               "\\/\\/${RES_STAGING}"
 replace "\\/\\/www.${PROD_DOMAIN}"        "\\/\\/${STAGING_DOMAIN}"
 replace "\\/\\/${PROD_DOMAIN}"            "\\/\\/${STAGING_DOMAIN}"
 
@@ -105,10 +109,10 @@ fi
 
 # Dominios de la red: columnas sin «//», por eso van al final y por SQL.
 # Desde aquí WP-CLI ya no arranca con el dominio de PROD contra esta BD.
-echo "· Dominios de la red → $STAGING_DOMAIN"
+echo "· Dominios de la red → $STAGING_DOMAIN y $RES_STAGING"
 wp db query "UPDATE ${PREFIX}site SET domain='${STAGING_DOMAIN}' WHERE domain IN ('${PROD_DOMAIN}','www.${PROD_DOMAIN}');"
 wp db query "UPDATE ${PREFIX}blogs SET domain='${STAGING_DOMAIN}' WHERE domain IN ('${PROD_DOMAIN}','www.${PROD_DOMAIN}');"
-wp db query "UPDATE ${PREFIX}blogs SET domain='${RES_SUB}.${STAGING_DOMAIN}' WHERE domain='${RES_SUB}.${PROD_DOMAIN}';"
+wp db query "UPDATE ${PREFIX}blogs SET domain='${RES_STAGING}' WHERE domain='${RES_PROD}';"
 
 # ── Comprobación: no debe quedar ninguna URL de PROD ──
 echo "· Comprobando restos del dominio de PROD"

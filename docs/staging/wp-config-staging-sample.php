@@ -1,10 +1,11 @@
 <?php
 /**
- * wp-config.php de ejemplo para STAGING (staging.clubtriatlonsulayr.com).
+ * wp-config.php de ejemplo para STAGING (staging.clubtriatlonsulayr.com
+ * y cnnazari-staging.clubtriatlonsulayr.com).
  *
  * No es un wp-config completo para copiar tal cual. Parte del wp-config.php
  * de PROD (descárgalo de Hostinger) y cambia o añade solo estos bloques.
- * Todo lo demás (prefijo de tablas, constantes de cookies, límites de memoria,
+ * Todo lo demás (prefijo de tablas, límites de memoria,
  * etc.) se queda igual que en PROD, para que staging se comporte como PROD.
  *
  * Instrucciones completas: docs/STAGING.md.
@@ -37,8 +38,13 @@ define( 'DOMAIN_CURRENT_SITE', 'staging.clubtriatlonsulayr.com' );
 define( 'PATH_CURRENT_SITE', '/' );
 define( 'SITE_ID_CURRENT_SITE', 1 );
 define( 'BLOG_ID_CURRENT_SITE', 1 );
-// Si el wp-config de PROD define COOKIE_DOMAIN, cámbialo aquí a
-// '.staging.clubtriatlonsulayr.com' o quítalo. Nunca lo dejes con el dominio de PROD.
+// Obligatorio en staging. WordPress pondría la cookie en el dominio de la red
+// (.staging.clubtriatlonsulayr.com), que no cubre cnnazari-staging.clubtriatlonsulayr.com,
+// y la sesión no pasaría del club a reservas. Con el dominio padre sí.
+// No choca con PROD: el nombre de la cookie lleva un hash de la URL de la red,
+// que es distinta en staging. Si el wp-config de PROD ya define COOKIE_DOMAIN,
+// sustitúyelo por este.
+define( 'COOKIE_DOMAIN', '.clubtriatlonsulayr.com' );
 
 // ── 4. Marcar el entorno ──
 // wp_get_environment_type() devolverá 'staging'. El mu-plugin

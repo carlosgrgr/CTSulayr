@@ -9,8 +9,10 @@ Flujo de trabajo: **local → staging → PROD**. El código se sube a staging i
 | Entorno | Club (blog 1) | Reservas (blog 2) |
 |---|---|---|
 | Local | `clubtriatlonsulayr.local.com` | `cnnazari.clubtriatlonsulayr.local.com` |
-| Staging | `staging.clubtriatlonsulayr.com` | `cnnazari.staging.clubtriatlonsulayr.com` |
+| Staging | `staging.clubtriatlonsulayr.com` | `cnnazari-staging.clubtriatlonsulayr.com` |
 | PROD | `clubtriatlonsulayr.com` | `cnnazari.clubtriatlonsulayr.com` |
+
+Reservas en staging es `cnnazari-staging` y no `cnnazari.staging`, porque Hostinger no admite subdominios de varios niveles («Multi-level subdomains are not supported»). WordPress multisite acepta que un sitio de la red tenga un dominio que no cuelga del dominio de la red. Lo que sí hace falta es `COOKIE_DOMAIN = '.clubtriatlonsulayr.com'` en el `wp-config.php` de staging, para que la sesión pase del club a reservas como en PROD.
 
 Archivos de esta guía:
 
@@ -37,8 +39,8 @@ Staging contiene datos reales de socios: DNI, teléfonos, recibos y documentos p
 
 Hay que comprobar antes que el plan permite otra base de datos y dos subdominios más, y que el disco aguanta otra copia de `wp-content/uploads`. La herramienta de staging de Hostinger no sirve porque no admite multisite.
 
-1. **Subdominios.** En hPanel → Dominios → Subdominios, crea `staging` y `cnnazari.staging`, **los dos apuntando a la misma carpeta**, por ejemplo `public_html/staging`. Es un multisite, así que una sola instalación sirve a los dos. Si hPanel no deja crear `cnnazari.staging`, la alternativa es un subdominio comodín `*.staging` hacia esa misma carpeta.
-2. **SSL.** Activa el certificado gratuito para cada subdominio. Un certificado `*.clubtriatlonsulayr.com` **no** cubre `cnnazari.staging.clubtriatlonsulayr.com`.
+1. **Subdominios.** En hPanel → Dominios → Subdominios, crea `staging` y `cnnazari-staging`, **los dos apuntando a la misma carpeta** (`public_html/staging`, con la opción de carpeta personalizada). Es un multisite, así que una sola instalación sirve a los dos.
+2. **SSL.** Activa el certificado gratuito para los dos subdominios.
 3. **Base de datos.** En hPanel → Bases de datos, crea una BD y un usuario nuevos solo para staging. Nunca se reutiliza la de PROD.
 4. **Archivos.** En PROD, `domains/clubtriatlonsulayr.com/public_html` contiene el multisite y además otras carpetas que no son del club. Staging lleva solo el multisite.
    - Comprime desde el Administrador de archivos solo lo del multisite: `wp-admin`, `wp-includes`, `wp-content`, los `.php` de la raíz, `.htaccess` y `robots.txt`.
@@ -47,7 +49,7 @@ Hay que comprobar antes que el plan permite otra base de datos y dos subdominios
    - Si falta espacio, puedes copiar solo los últimos meses de `uploads`. Las imágenes que falten saldrán rotas en staging, pero no afecta a la lógica.
    - Comprueba que `wp-content/uploads/sulayr-documentos/.htaccess` ha llegado.
 5. **Contraseña de acceso.** En hPanel → Avanzado → Proteger directorios con contraseña, protege `public_html/staging`. Así se pide usuario y contraseña antes de llegar a WordPress, en los dos subdominios.
-6. **wp-config.php.** Edita el `wp-config.php` copiado siguiendo [`staging/wp-config-staging-sample.php`](staging/wp-config-staging-sample.php): BD de staging, salts nuevas, dominio de la red, `WP_ENVIRONMENT_TYPE`, `DISABLE_WP_CRON` y correo.
+6. **wp-config.php.** Edita el `wp-config.php` copiado siguiendo [`staging/wp-config-staging-sample.php`](staging/wp-config-staging-sample.php): BD de staging, salts nuevas, dominio de la red, `COOKIE_DOMAIN`, `WP_ENVIRONMENT_TYPE`, `DISABLE_WP_CRON` y correo.
 7. **mu-plugin.** Crea `public_html/staging/wp-content/mu-plugins/` y sube allí [`staging/sulayr-staging.php`](staging/sulayr-staging.php). Este archivo no se sube a PROD.
 
 ## Preparación única en local
@@ -84,7 +86,7 @@ Esto se hace la primera vez y cada vez que se quiera refrescar staging con datos
    El script hace, en una BD temporal (`ctsulayr_staging_tmp`):
    - Importa el volcado.
    - Lanza `wp search-replace` sobre todas las tablas `wp_*`, también las de los plugins del club. Respeta los datos serializados y reemplaza:
-     - `//cnnazari.clubtriatlonsulayr.com` → `//cnnazari.staging.clubtriatlonsulayr.com`
+     - `//cnnazari.clubtriatlonsulayr.com` → `//cnnazari-staging.clubtriatlonsulayr.com`
      - `//www.clubtriatlonsulayr.com` y `//clubtriatlonsulayr.com` → `//staging.clubtriatlonsulayr.com`
      - Lo mismo escapado en JSON (`\/\/…`).
      - Solo reemplaza lo que empieza por `//`, así que los emails tipo `info@clubtriatlonsulayr.com` no cambian.
@@ -99,12 +101,12 @@ Esto se hace la primera vez y cada vez que se quiera refrescar staging con datos
 3. **Importar en staging.** En phpMyAdmin, entra en la BD de **staging**, vacía sus tablas (Estructura → marcar todas → Eliminar) e importa `staging.sql`. Comprueba dos veces el nombre de la BD antes de vaciar.
 4. **Borrar los volcados** del ordenador cuando termines, porque contienen datos personales.
 
-Las comprobaciones de los pasos 1 y 2 se probaron en local el 24 de noviembre de 2026 con un multisite de prueba. Los datos serializados, el JSON, las tablas `wp_2_*`, la anonimización y el arranque con `cnnazari.staging…` funcionaron. Todavía no se ha probado con el volcado real de PROD.
+Las comprobaciones de los pasos 1 y 2 se probaron en local el 24 de noviembre de 2026 con un multisite de prueba. Los datos serializados, el JSON, las tablas `wp_2_*`, la anonimización y el arranque con los dominios de staging funcionaron. El 24 de noviembre de 2026 se cambió reservas a `cnnazari-staging` y se repitió la prueba. Todavía no se ha probado con el volcado real de PROD.
 
 ## Comprobaciones después de cada importación
 
 - [ ] `https://staging.clubtriatlonsulayr.com` pide la contraseña de Hostinger y después muestra el club.
-- [ ] `https://cnnazari.staging.clubtriatlonsulayr.com` muestra reservas, y entrar desde el club lleva a reservas en staging, no en PROD.
+- [ ] `https://cnnazari-staging.clubtriatlonsulayr.com` muestra reservas, y entrar desde el club lleva a reservas en staging (no en PROD) con la sesión ya iniciada.
 - [ ] La barra de administración muestra «STAGING · los correos no se envían».
 - [ ] Al pedir «He olvidado mi contraseña» con un email conservado, no llega ningún correo y en `wp-content/debug.log` aparece `[staging] Correo NO enviado`.
 - [ ] WP Mail SMTP → Ajustes → Varios muestra «Do not send» activado por constante.
