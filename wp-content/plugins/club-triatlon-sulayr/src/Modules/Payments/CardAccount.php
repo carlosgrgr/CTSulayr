@@ -129,7 +129,7 @@ class CardAccount {
         }
 
         if ( null !== $card ) {
-            echo '<p class="sulayr-fees-note">' . esc_html__( 'Para cambiarla, paga tu próximo recibo con la tarjeta nueva: sustituye a esta.', SULAYR_TEXTDOMAIN ) . '</p>';
+            echo '<p class="sulayr-fees-note">' . esc_html( $this->change_card_text( $user_id ) ) . '</p>';
             printf(
                 '<form method="post" onsubmit="return confirm(%s);">',
                 esc_attr( wp_json_encode( __( '¿Quitar tu tarjeta? Dejarás de pagar las cuotas automáticamente.', SULAYR_TEXTDOMAIN ) ) )
@@ -139,6 +139,35 @@ class CardAccount {
         }
 
         echo '</div>';
+    }
+
+    /**
+     * Cómo usar otra tarjeta (C13): solo se guarda una nueva al pagar con ella
+     * un recibo pendiente, así que el texto depende de si hay uno que se pueda
+     * pagar ahora y de si las cuotas se cobran solas con la tarjeta guardada.
+     *
+     * @param   int $user_id Socio.
+     * @return 	string
+     * @access 	private
+     * @package	club-triatlon-sulayr
+     */
+    private function change_card_text( int $user_id ): string {
+        if ( CardPayments::is_enabled() ) {
+            foreach ( Receipts::for_user( $user_id ) as $receipt ) {
+                if ( Receipts::outstanding( $receipt ) > 0 && Receipts::is_editable( $receipt ) && false === TpvTransactions::in_flight( (int) $receipt->id ) ) {
+                    return __( '¿Quieres usar otra tarjeta? Paga tu recibo pendiente con el botón «Pagar con tarjeta» de más abajo y escribe en el banco los datos de la tarjeta nueva. Se guardará en lugar de esta.', SULAYR_TEXTDOMAIN );
+                }
+            }
+        }
+
+        if ( ChargeMethod::is_tpv( $user_id ) && false === CardPayments::is_left( $user_id ) ) {
+            return sprintf(
+                __( '¿Quieres usar otra tarjeta? Ahora no tienes recibos pendientes. Cuando te llegue el email de aviso del próximo recibo, entra aquí antes del día %d y págalo con la tarjeta nueva: se guardará en lugar de esta. Si no lo haces, el recibo se cobrará en esta tarjeta.', SULAYR_TEXTDOMAIN ),
+                (int) MemberSettings::get( 'tpv_charge_day' )
+            );
+        }
+
+        return __( '¿Quieres usar otra tarjeta? Cuando tengas un recibo pendiente, págalo aquí con la tarjeta nueva: se guardará en lugar de esta.', SULAYR_TEXTDOMAIN );
     }
 
     /**
