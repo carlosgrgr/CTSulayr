@@ -2,6 +2,8 @@
 namespace ClubTriatlonSulayr\Modules\Members;
 
 use ClubTriatlonSulayr\Infrastructure\CustomFields;
+use ClubTriatlonSulayr\Modules\Payments\ChargeMethod;
+use ClubTriatlonSulayr\Modules\Payments\PaymentCards;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -20,6 +22,9 @@ class MemberFields {
     /** Tallas de camiseta de la ficha y del formulario de alta. */
     public const TSHIRT_SIZES = [ 'XS', 'S', 'M', 'L', 'XL', 'XXL' ];
 
+    /** Mensaje de solo lectura con la tarjeta guardada (SPEC-COBROS §4.1). */
+    private const CARD_FIELD = 'sulayr_member_card_status';
+
     /**
      * __construct()
      *
@@ -32,6 +37,8 @@ class MemberFields {
         add_filter( 'acf/load_field/key=' . self::key( CustomFields::MEMBER_TYPE ), [ $this, 'load_member_types' ] );
         add_filter( 'acf/validate_value/key=' . self::key( CustomFields::MEMBER_NUMBER ), [ $this, 'validate_unique_number' ], 10, 4 );
         add_filter( 'acf/validate_value/key=' . self::key( CustomFields::MEMBER_LEAVE_DATE ), [ $this, 'validate_leave_date' ], 10, 2 );
+        add_filter( 'acf/load_field/key=' . self::key( ChargeMethod::META ), [ $this, 'load_charge_methods' ] );
+        add_filter( 'acf/load_field/key=' . self::key( self::CARD_FIELD ), [ $this, 'load_card_status' ] );
     }
 
     /**
@@ -124,6 +131,22 @@ class MemberFields {
                     'instructions' => __( 'Para las clasificaciones del ranking interno.', SULAYR_TEXTDOMAIN ),
                 ],
                 [
+                    'key' => self::key( ChargeMethod::META ),
+                    'label' => __( 'Medio de cobro', SULAYR_TEXTDOMAIN ),
+                    'name' => ChargeMethod::META,
+                    'type' => 'select',
+                    'choices' => [],
+                    'return_format' => 'value',
+                    'instructions' => __( 'Solo los de «Tarjeta (TPV)» entran en el cobro automático con la tarjeta guardada.', SULAYR_TEXTDOMAIN ),
+                ],
+                [
+                    'key' => self::key( self::CARD_FIELD ),
+                    'label' => __( 'Tarjeta guardada', SULAYR_TEXTDOMAIN ),
+                    'name' => '',
+                    'type' => 'message',
+                    'message' => '',
+                ],
+                [
                     'key' => self::key( CustomFields::MEMBER_TSHIRT_SIZE ),
                     'label' => __( 'Talla de camiseta', SULAYR_TEXTDOMAIN ),
                     'name' => CustomFields::MEMBER_TSHIRT_SIZE,
@@ -189,6 +212,44 @@ class MemberFields {
                 ],
             ],
         ] );
+    }
+
+    /**
+     * Opciones del medio de cobro: vacío sigue el ajuste (C8).
+     *
+     * @param   array $field Campo.
+     * @return 	array
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public function load_charge_methods( array $field ): array {
+        $field['choices'] = [
+            '' => sprintf( __( 'Según el ajuste (ahora: %s)', SULAYR_TEXTDOMAIN ), ChargeMethod::label( ChargeMethod::default_method() ) ),
+        ] + ChargeMethod::choices();
+
+        return $field;
+    }
+
+    /**
+     * Texto de la tarjeta guardada del socio que se está editando.
+     *
+     * @param   array $field Campo.
+     * @return 	array
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public function load_card_status( array $field ): array {
+        $user_id = absint( $_GET['user_id'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Solo lectura.
+        if ( 0 === $user_id && defined( 'IS_PROFILE_PAGE' ) && IS_PROFILE_PAGE ) {
+            $user_id = get_current_user_id();
+        }
+
+        $card = $user_id > 0 ? PaymentCards::active( $user_id ) : null;
+        $field['message'] = null === $card
+            ? esc_html__( 'Sin tarjeta guardada.', SULAYR_TEXTDOMAIN )
+            : esc_html( sprintf( __( '%1$s, guardada el %2$s.', SULAYR_TEXTDOMAIN ), PaymentCards::describe( $card ), MemberDates::show( substr( (string) $card->created_at, 0, 10 ) ) ) );
+
+        return $field;
     }
 
     /**

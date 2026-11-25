@@ -164,7 +164,10 @@ class ReceiptsAccount {
 
         $receipts = Receipts::for_user( get_current_user_id() );
 
-        echo '<div class="sulayr-fees"><div class="sulayr-info-block sulayr-receipts-block"><h3 class="sulayr-info-block-title">' . esc_html__( 'Tus recibos', SULAYR_TEXTDOMAIN ) . '</h3>';
+        echo '<div class="sulayr-fees">';
+        // Pago online: avisos de vuelta del banco y bloque «Mi tarjeta» (SPEC-COBROS §7).
+        do_action( 'sulayr_receipts_account_top', get_current_user_id() );
+        echo '<div class="sulayr-info-block sulayr-receipts-block"><h3 class="sulayr-info-block-title">' . esc_html__( 'Tus recibos', SULAYR_TEXTDOMAIN ) . '</h3>';
         if ( empty( $receipts ) ) {
             echo '<p>' . esc_html__( 'Todavía no tienes recibos.', SULAYR_TEXTDOMAIN ) . '</p></div></div>';
             return;
@@ -198,6 +201,8 @@ class ReceiptsAccount {
             if ( $outstanding > 0 ) {
                 printf( '<p class="sulayr-fees-note">%s</p>', esc_html( sprintf( __( 'Pendiente: %s', SULAYR_TEXTDOMAIN ), Receipts::money( $outstanding ) ) ) );
             }
+            // Pago online: «Pagar con tarjeta» (SPEC-COBROS C21).
+            do_action( 'sulayr_receipt_account_actions', $receipt, $outstanding );
             printf( '<p><a class="button" href="%s" target="_blank" rel="noopener">%s</a></p></details>', esc_url( self::pdf_url( (int) $receipt->id ) ), esc_html( sprintf( __( 'Ver recibo %s', SULAYR_TEXTDOMAIN ), $receipt->number ) ) );
         }
         echo '</div></div>';

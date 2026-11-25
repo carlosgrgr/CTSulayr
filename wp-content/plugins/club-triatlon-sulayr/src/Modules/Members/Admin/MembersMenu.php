@@ -78,14 +78,16 @@ class MembersMenu {
 
         $r = MembersDailyTask::run();
         RequestsPage::set_notice( 'success', sprintf(
-            /* translators: 1: cambios aplicados, 2: vueltas de congelación, 3: altas activadas, 4: solicitudes caducadas, 5: retribuciones de la junta, 6: recibos generados. */
-            __( 'Tarea diaria ejecutada: %1$d cambios aplicados, %2$d vueltas de congelación, %3$d altas activadas, %4$d solicitudes caducadas, %5$d retribuciones de la junta apuntadas y %6$d recibos generados.', SULAYR_TEXTDOMAIN ),
+            /* translators: 1: cambios aplicados, 2: vueltas de congelación, 3: altas activadas, 4: solicitudes caducadas, 5: retribuciones de la junta, 6: recibos generados, 7: cobros con tarjeta, 8: cobros fallidos. */
+            __( 'Tarea diaria ejecutada: %1$d cambios aplicados, %2$d vueltas de congelación, %3$d altas activadas, %4$d solicitudes caducadas, %5$d retribuciones de la junta apuntadas, %6$d recibos generados y %7$d cobros con tarjeta (%8$d fallidos).', SULAYR_TEXTDOMAIN ),
             $r['applied'],
             $r['returned'],
             $r['updated'],
             $r['purged'],
             $r['board'],
-            $r['receipts']
+            $r['receipts'],
+            $r['tpv']['charged'],
+            $r['tpv']['failed']
         ) );
         wp_safe_redirect( add_query_arg( 'page', self::SLUG, admin_url( 'admin.php' ) ) );
         exit;
@@ -367,7 +369,7 @@ class MembersMenu {
         printf(
             '<form method="post" action="%1$s" class="sulayr-daily"><p class="description">%2$s %3$s <input type="hidden" name="action" value="%4$s">%5$s<button type="submit" class="button button-small">%6$s</button></p></form>',
             esc_url( admin_url( 'admin-post.php' ) ),
-            esc_html__( 'Tarea diaria (cambios, congelaciones, bajas y altas del día; retribución de la junta y recibos del mes):', SULAYR_TEXTDOMAIN ),
+            esc_html__( 'Tarea diaria (cambios, congelaciones, bajas y altas del día; retribución de la junta, recibos del mes y cobro con tarjeta):', SULAYR_TEXTDOMAIN ),
             esc_html( is_array( $last ) ? sprintf( __( 'última ejecución el %s.', SULAYR_TEXTDOMAIN ), date_i18n( 'd/m/Y H:i', strtotime( (string) $last['at'] ) ) ) : __( 'aún no se ha ejecutado.', SULAYR_TEXTDOMAIN ) ),
             esc_attr( self::ACTION_RUN_DAILY ),
             wp_nonce_field( self::ACTION_RUN_DAILY, '_wpnonce', true, false ),

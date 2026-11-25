@@ -1678,3 +1678,33 @@ nav.woocommerce-MyAccount-navigation {
         width: 100%;
     }
 }
+
+/* Mi cuenta → Mis recibos: pago con tarjeta (SPEC-COBROS §7) */
+.sulayr-alert-warning,
+.sulayr-fees .sulayr-alert-warning {
+    background: var(--sulayr-nieve, #F3F7FA);
+    border-left: 4px solid var(--sulayr-sol, #F46F5C);
+    color: var(--sulayr-noche, #0B1638);
+}
+.sulayr-fees .sulayr-card-current {
+    font-family: var(--sj-mono);
+    letter-spacing: .04em;
+}
+.sulayr-fees .sulayr-card-pay {
+    border-top: 1px solid var(--sj-linea);
+    margin-top: .75rem;
+    padding-top: .75rem;
+}
+.sulayr-fees .sulayr-card-pay .form-check-label {
+    font-size: .9rem;
+}
+.sulayr-fees .sulayr-card-privacy {
+    color: var(--sj-noche);
+    font-size: .8rem;
+    line-height: 1.45;
+    margin: .5rem 0;
+    opacity: .8;
+}
+.sulayr-fees .sulayr-card-privacy p {
+    margin: 0;
+}

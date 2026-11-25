@@ -19,10 +19,14 @@ if ( ! defined( 'ABSPATH' ) ) {
  * source_receipt_id en líneas (correcciones pendientes), note en recibos y
  * pagos, y medio de pago más largo. Al subir, MemberTypes::seed() crea el
  * periodo inicial de cada socio con su tipo actual.
+ * Versión 5 (pago online, SPEC-COBROS §4.2): tarjetas guardadas
+ * (PAYMENT_CARDS) y operaciones enviadas a Redsys (TPV_TRANSACTIONS).
+ * Versión 6 (pago online, parte C): expiry_notice_at en tarjetas (aviso de
+ * caducidad enviado, una vez por tarjeta).
  */
 class MembersSchema {
 
-    public const VERSION = 4;
+    public const VERSION = 6;
     public const VERSION_OPTION = 'sulayr_members_db_version';
 
     public const SERVICES = 'sulayr_member_services';
@@ -37,6 +41,8 @@ class MembersSchema {
     public const RECEIPT_PAYMENTS = 'sulayr_receipt_payments';
     public const LOG = 'sulayr_member_log';
     public const MEMBER_TYPES = 'sulayr_member_type_periods';
+    public const PAYMENT_CARDS = 'sulayr_payment_cards';
+    public const TPV_TRANSACTIONS = 'sulayr_tpv_transactions';
 
     /**
      * __construct()
@@ -91,7 +97,7 @@ class MembersSchema {
 
         $charset = $wpdb->get_charset_collate();
         $n = [];
-        foreach ( [ 'SERVICES', 'STATUS_PERIODS', 'REQUESTS', 'SUBSIDIES', 'CONSENTS', 'TASKS', 'WELCOME_DELIVERIES', 'RECEIPTS', 'RECEIPT_LINES', 'RECEIPT_PAYMENTS', 'LOG', 'MEMBER_TYPES' ] as $const ) {
+        foreach ( [ 'SERVICES', 'STATUS_PERIODS', 'REQUESTS', 'SUBSIDIES', 'CONSENTS', 'TASKS', 'WELCOME_DELIVERIES', 'RECEIPTS', 'RECEIPT_LINES', 'RECEIPT_PAYMENTS', 'LOG', 'MEMBER_TYPES', 'PAYMENT_CARDS', 'TPV_TRANSACTIONS' ] as $const ) {
             $n[ $const ] = self::table( constant( self::class . '::' . $const ) );
         }
 
@@ -280,6 +286,42 @@ class MembersSchema {
   KEY user_id (user_id)
 ) $charset;";
 
+        $sql[] = "CREATE TABLE {$n['PAYMENT_CARDS']} (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  user_id bigint(20) unsigned NOT NULL,
+  identifier varchar(64) NOT NULL DEFAULT '',
+  cof_txnid varchar(64) NOT NULL DEFAULT '',
+  masked varchar(32) NOT NULL DEFAULT '',
+  expiry char(4) NOT NULL DEFAULT '',
+  status varchar(20) NOT NULL DEFAULT 'activa',
+  transaction_id bigint(20) unsigned NOT NULL DEFAULT 0,
+  created_at datetime NOT NULL,
+  closed_at datetime DEFAULT NULL,
+  expiry_notice_at datetime DEFAULT NULL,
+  PRIMARY KEY  (id),
+  KEY user_status (user_id,status)
+) $charset;";
+        $sql[] = "CREATE TABLE {$n['TPV_TRANSACTIONS']} (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  receipt_id bigint(20) unsigned NOT NULL DEFAULT 0,
+  user_id bigint(20) unsigned NOT NULL,
+  ds_order varchar(12) DEFAULT NULL,
+  type varchar(20) NOT NULL,
+  attempt tinyint(3) unsigned NOT NULL DEFAULT 1,
+  amount decimal(10,2) NOT NULL DEFAULT 0,
+  status varchar(20) NOT NULL DEFAULT 'enviada',
+  ds_response varchar(8) NOT NULL DEFAULT '',
+  auth_code varchar(16) NOT NULL DEFAULT '',
+  response longtext NOT NULL,
+  payment_id bigint(20) unsigned NOT NULL DEFAULT 0,
+  created_by bigint(20) unsigned NOT NULL DEFAULT 0,
+  created_at datetime NOT NULL,
+  updated_at datetime DEFAULT NULL,
+  PRIMARY KEY  (id),
+  UNIQUE KEY ds_order (ds_order),
+  KEY receipt_status (receipt_id,status),
+  KEY user_id (user_id)
+) $charset;";
         foreach ( $sql as $statement ) {
             dbDelta( $statement );
         }

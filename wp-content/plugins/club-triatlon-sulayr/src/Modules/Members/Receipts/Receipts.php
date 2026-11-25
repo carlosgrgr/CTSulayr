@@ -43,6 +43,8 @@ class Receipts {
     public const STATUS_UNPAID = 'impagado';
 
     public const METHOD_WALLET = 'monedero';
+    /** Tarjeta (TPV): fijo, solo lo apunta la web cuando Redsys autoriza un cobro (SPEC-COBROS §4.4). */
+    public const METHOD_TPV = 'tpv';
 
     /** Meses generados: [ 'AAAA-MM' => [ 'at' => fecha, 'by' => usuario, 'auto' => bool ] ]. */
     public const MONTHS_OPTION = 'sulayr_receipts_months';
@@ -363,7 +365,11 @@ class Receipts {
      * @package	club-triatlon-sulayr
      */
     public static function method_label( string $method ): string {
-        return self::METHOD_WALLET === $method ? __( 'Monedero', SULAYR_TEXTDOMAIN ) : $method;
+        if ( self::METHOD_WALLET === $method ) {
+            return __( 'Monedero', SULAYR_TEXTDOMAIN );
+        }
+
+        return self::METHOD_TPV === $method ? __( 'Tarjeta (TPV)', SULAYR_TEXTDOMAIN ) : $method;
     }
 
     /* ------------------------------------------------------------------
@@ -917,6 +923,47 @@ class Receipts {
      * @package	club-triatlon-sulayr
      */
     public static function add_payment( int $id, float $amount, string $date, string $method, string $note = '' ) {
+        if ( self::METHOD_TPV === $method ) {
+            return new \WP_Error( 'sulayr_payment_method', __( 'Los pagos con tarjeta los apunta solo la web cuando el banco los confirma.', SULAYR_TEXTDOMAIN ) );
+        }
+
+        $result = self::insert_payment( $id, $amount, $date, $method, $note, get_current_user_id() );
+
+        return is_wp_error( $result ) ? $result : true;
+    }
+
+    /**
+     * Apunta un cobro con tarjeta autorizado por Redsys (SPEC-COBROS §4.4).
+     *
+     * Lo llama solo el pago online. La nota lleva el Ds_Order. El autor es el
+     * socio si pagó desde Mis recibos, o 0 (el sistema) en los cobros sin él.
+     *
+     * @param   int    $id       Recibo.
+     * @param   float  $amount   Importe.
+     * @param   string $ds_order Ds_Order de la operación.
+     * @param   int    $author   Socio que pagó, o 0.
+     * @return 	int|\WP_Error Id del pago.
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public static function add_tpv_payment( int $id, float $amount, string $ds_order, int $author ) {
+        return self::insert_payment( $id, $amount, current_time( 'Y-m-d' ), self::METHOD_TPV, $ds_order, $author );
+    }
+
+    /**
+     * Inserta un pago ya validado el medio, y devuelve su id.
+     *
+     * @param   int    $id     Recibo.
+     * @param   float  $amount Importe.
+     * @param   string $date   Fecha Y-m-d.
+     * @param   string $method Medio.
+     * @param   string $note   Comentario.
+     * @param   int    $author Autor del pago.
+     * @return 	int|\WP_Error
+     * @access 	private
+     * @package	club-triatlon-sulayr
+     */
+    private static function insert_payment( int $id, float $amount, string $date, string $method, string $note, int $author ) {
         global $wpdb;
 
         $amount = round( $amount, 2 );
@@ -927,7 +974,7 @@ class Receipts {
         if ( $amount <= 0 || $amount > self::outstanding( $receipt ) ) {
             return new \WP_Error( 'sulayr_payment_amount', sprintf( __( 'El importe tiene que ser mayor que 0 y no más de lo pendiente (%s).', SULAYR_TEXTDOMAIN ), self::money( self::outstanding( $receipt ) ) ) );
         }
-        if ( false === isset( self::payment_methods()[ $method ] ) ) {
+        if ( self::METHOD_TPV !== $method && false === isset( self::payment_methods()[ $method ] ) ) {
             return new \WP_Error( 'sulayr_payment_method', __( 'Elige el medio de pago.', SULAYR_TEXTDOMAIN ) );
         }
         if ( '' === MemberDates::acf_to_iso( $date ) ) {
@@ -954,13 +1001,14 @@ class Receipts {
             'method' => $method,
             'wallet_post_id' => (int) $wallet_post,
             'note' => substr( trim( $note ), 0, 255 ),
-            'created_by' => get_current_user_id(),
+            'created_by' => $author,
             'created_at' => current_time( 'mysql' ),
         ] );
+        $payment_id = (int) $wpdb->insert_id;
         self::recompute( $id );
         MemberLog::record( $user_id, MemberLog::AREA_RECEIPTS, (string) $receipt->number, '', sprintf( __( 'Pago de %1$s (%2$s, %3$s)', SULAYR_TEXTDOMAIN ), self::money( $amount ), self::method_label( $method ), MemberDates::show( $date ) ), $note );
 
-        return true;
+        return $payment_id;
     }
 
     /**

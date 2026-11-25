@@ -1,6 +1,6 @@
 # Prioridades
 
-Nov 17, 2026 · Estado: orden cerrado. Los puntos 1 a 3 están definidos y el punto 4 está valorado; el punto 5 sigue sin definir.
+Nov 17, 2026 · Estado: orden cerrado. Los puntos 1 a 3 están definidos, el punto 4 está valorado y el punto 5 está en definición.
 
 Este documento fija el orden de lo que falta por definir. No es una spec y no cambia requisitos ya escritos. Una fila de aquí no se implementa hasta que tenga su propio documento.
 
@@ -11,9 +11,9 @@ El orden es el de la lista. Definir una tarea no adelanta las siguientes.
 | ----- | ---------------------------------- | --------------------------- | ----------------------------------------------------------------------------------- |
 | 1     | Facturación Reservas               | Cerrada, desplegada en PROD | [SPEC-FACTURACION-RESERVAS.md](reservas/SPEC-FACTURACION-RESERVAS.md)               |
 | 2     | Tienda online                      | Cerrada, desplegada en PROD | [SPEC-TIENDA-ONLINE.md](club/SPEC-TIENDA-ONLINE.md)                                 |
-| 3     | Pago online                        | Definida, sin implementar   | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) |
+| 3     | Pago online                        | Definida, en desarrollo     | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) |
 | 4     | Rentabilidad frente a SportEasy    | Valorada                    | [SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) |
-| 5     | Consentimiento legal (RGPD y LOPD) | Pendiente de definir        | Mención en la spec de pago online                                                   |
+| 5     | Consentimiento legal (RGPD y LOPD) | En definición               | [SPEC-PROTECCION-DE-DATOS.md](club/SPEC-PROTECCION-DE-DATOS.md)                     |
 
 
 El documento cercano no es la definición de la tarea. Hay que confirmar si vale o si la tarea es otra cosa.
@@ -32,7 +32,7 @@ WooCommerce ya está en el sitio del club, con el catálogo de equipación 2025-
 
 ## 3. Pago online
 
-[SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) define el pago online con el TPV virtual (Redsys) en `club-triatlon-sulayr`. Definida el 17 de noviembre de 2026 (decisiones C1 a C30), sin implementar. Cubre las dos cosas: la tienda con tarjeta (parte A, módulo oficial de Redsys) y el cobro automático de las cuotas con la tarjeta guardada (partes B a D). Espera a la firma del contrato del TPV y a las credenciales de pruebas.
+[SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md](club/SPEC-COBROS_DE_CUOTAS_DESDE_LA_WEB.md) define el pago online con el TPV virtual (Redsys) en `club-triatlon-sulayr`. Definida el 17 de noviembre de 2026 (decisiones C1 a C30). Cubre las dos cosas: la tienda con tarjeta (parte A, módulo oficial de Redsys) y el cobro automático de las cuotas con la tarjeta guardada (partes B a D). La parte B está en desarrollo en la rama `pago-online-parte-b`: los pasos B1 (base sin conexión con Redsys) y B2 (pago desde Mis recibos) están hechos y probados en local el 17 de noviembre de 2026, también a mano en el navegador, y el paso B3 (cobro con la tarjeta guardada) el 23 de noviembre de 2026, probado contra el entorno de pruebas de Redsys (spec §11). No está en `main` ni en PROD. La parte C (cobro mensual) está en desarrollo en la rama `pago-online-parte-c`, que sale de `pago-online-parte-b`: pasos C1 y C2 hechos y probados en local el 23 de noviembre de 2026 (spec §12). El banco dio de alta el TPV virtual el 23 de noviembre de 2026. Las credenciales de pruebas del club llegaron el 24 de noviembre de 2026 y la prueba de punta a punta con ellas salió bien ese día, cobro MIT incluido (spec §11.2). El terminal sigue en el entorno de pruebas. Siguiente paso: probarlo en staging (`docs/club/pago-online/despliegue-staging.md`).
 
 Desde el 11 de noviembre de 2026, [SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](club/SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md) define los recibos mensuales y el control manual de pagos sobre los que se apoyará el cobro online, y elimina la integración con Stripe. No define el cobro online.
 
@@ -44,8 +44,6 @@ Las cifras y la cuenta están en la spec de pago online. El banco respondió el 
 
 ## 5. Consentimiento legal (RGPD y LOPD)
 
-No hay spec. La spec de pago online pide, solo para los pagos, informar del tratamiento, autorizar cargos recurrentes, fijar cuánto se conservan recibos y referencia de tarjeta, e incluir al banco en el registro de actividades. Este documento no redacta cláusulas.
+[SPEC-PROTECCION-DE-DATOS.md](club/SPEC-PROTECCION-DE-DATOS.md), en definición desde el 17 de noviembre de 2026. Alcance decidido con el club ese día (L1 a L9): lo que el pago online exige (autorización de cargos recurrentes, información y cambios en la política de privacidad) y la conservación real (anonimizar a los antiguos socios con un botón del gestor, y plazos de la tienda, el TPV, el registro de cambios y las cuentas sin socio). Los textos legales los redacta Claude como borradores y los aprueba la junta. Los documentos internos (registro de actividades, encargados, brechas, derechos y confidencialidad) se preparan como borradores en Drive. Quedan fuera el sitio de reservas y las herramientas de exportar y borrar de WordPress. Las propuestas L10 a L27 están pendientes de confirmar.
 
-Falta decidir qué tratamientos cubre, en qué formularios aparece y quién escribe el texto legal.
-
-[SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](club/SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md) (11 de noviembre de 2026) cubre solo el formulario de alta: casillas de privacidad, normas del club e imagen, con versión y fecha, y plazos de conservación. El texto legal lo redacta el club. Implementado en la parte B de esa spec (commit en la rama `altas-socio-parte-b`, probada en local el 11 de noviembre de 2026, sin mergear; no está en `main` ni en PROD).
+La política de privacidad, la de cookies y los consentimientos del formulario de alta ya existen. Están en PROD desde el 11 y el 12 de noviembre de 2026 (parte B de [SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](club/SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md)).

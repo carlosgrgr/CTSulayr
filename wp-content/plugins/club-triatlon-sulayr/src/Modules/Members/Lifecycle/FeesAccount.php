@@ -221,6 +221,8 @@ class FeesAccount {
         $rows = [
             __( 'Estado', SULAYR_TEXTDOMAIN ) => StatusPeriods::label( $status ),
             __( 'Tipo de socio', SULAYR_TEXTDOMAIN ) => $types[ $type ] ?? ( $type ?: '—' ),
+            // Pago online (SPEC-COBROS §7).
+            __( 'Medio de cobro', SULAYR_TEXTDOMAIN ) => \ClubTriatlonSulayr\Modules\Payments\ChargeMethod::label( \ClubTriatlonSulayr\Modules\Payments\ChargeMethod::get( $user_id ) ),
         ];
         $period = StatusPeriods::current( $user_id );
         if ( null !== $period && CustomFields::STATUS_FROZEN === $period->status && null !== $period->planned_end_date ) {
