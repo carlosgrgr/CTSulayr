@@ -232,21 +232,39 @@ class SulayrSettingsPage {
      * @package	club-triatlon-sulayr
      */
     private function render_athletes_by_plan(): void {
-        $athletes = $this->user_service->get_athletes_by_plan();
+        // «Mes siguiente»: previsión el día 1 del mes que viene, con los cambios aprobados que aún no se han aplicado.
+        $next = isset( $_GET['mes'] ) && 'siguiente' === sanitize_key( wp_unslash( $_GET['mes'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Filtro de solo lectura.
+        $date = $next ? \ClubTriatlonSulayr\Modules\Members\MemberDates::first_of_month_after( current_time( 'Y-m-d' ) ) : '';
+
+        $this->load_template( 'admin/athletes-by-plan-tabs', [
+            'next' => $next,
+            'current_url' => $this->get_list_url( 'by_plan' ),
+            'next_url' => add_query_arg( 'mes', 'siguiente', $this->get_list_url( 'by_plan' ) ),
+            'date' => $date,
+        ] );
+
+        $athletes = $this->user_service->get_athletes_by_plan( $date );
+        $leaving = $next ? $this->user_service->get_athletes_leaving( $date ) : [];
         
-        if ( empty( $athletes ) ) {
+        if ( empty( $athletes ) && empty( $leaving ) ) {
             $this->render_empty_athletes_message();
             return;
         }
 
         $grouped = $this->group_athletes_by_plan( $athletes );
-        $current_month = $this->get_current_month_name();
+        $current_month = $this->get_current_month_name( $next ? (int) substr( $date, 5, 2 ) : 0 );
         $total_count = count( $athletes );
+        $changed_count = count( array_filter( $athletes, function ( $athlete ) {
+            return ! empty( $athlete['changes'] );
+        } ) );
         
         $this->load_template( 'admin/athletes-by-plan', [
             'grouped' => $grouped,
             'current_month' => $current_month,
             'total_count' => $total_count,
+            'next' => $next,
+            'changed_count' => $changed_count,
+            'leaving' => $leaving,
         ] );
     }
 
@@ -339,12 +357,13 @@ class SulayrSettingsPage {
     }
 
     /**
-     * Obtiene el nombre del mes actual en español
+     * Obtiene el nombre del mes en español
      *
+     * @param int $month Número de mes (0 = el actual).
      * @return string Nombre del mes en mayúsculas
      * @access private
      */
-    private function get_current_month_name(): string {
+    private function get_current_month_name( int $month = 0 ): string {
         $months = [
             1 => __( 'ENERO', SULAYR_TEXTDOMAIN ),
             2 => __( 'FEBRERO', SULAYR_TEXTDOMAIN ),
@@ -360,7 +379,7 @@ class SulayrSettingsPage {
             12 => __( 'DICIEMBRE', SULAYR_TEXTDOMAIN ),
         ];
         
-        $current_month_num = (int) date( 'n' );
+        $current_month_num = $month > 0 ? $month : (int) current_time( 'n' );
         return $months[ $current_month_num ] ?? '';
     }
 

@@ -1118,3 +1118,19 @@ Pedido por el club: los recibos estaban dentro de «Mis cuotas», mezclados con 
 Comprobado en local con el socio 6 (junta, recibo R-2026-0005 de noviembre a 0 €, «No aplica»): sale en «Mis recibos» con sus líneas; «Mis cuotas» dice «Estás al día» con el enlace. Por HTTP: la pestaña da 200; el PDF propio, 200 (`application/pdf`); el de otro socio, 403; sin sesión, al login; `mis-cuotas/?recibo=5` redirige a `mis-recibos/?recibo=5`.
 
 Comprobado después por el club (12 de noviembre de 2026): el aspecto en ordenador y móvil, en local y en PROD.
+
+### 20.9. «Sulayr Info» por tarifa: mes siguiente (25 de noviembre de 2026)
+
+**Estado:** en la rama `listado-mes-siguiente` (sale de `main`), comprobada en local el 25 de noviembre de 2026. Sin mergear en `main` ni subir a PROD.
+
+Pedido por el club: el listado por tarifa solo mostraba los servicios de hoy, y los cambios aprobados para el mes que viene no salen en el historial hasta que la tarea diaria los aplica el día 1. No había forma de ver de una vez cómo queda el mes siguiente.
+
+| Qué | Dónde | Notas |
+|---|---|---|
+| Selector «Mes actual / Mes siguiente» | `SulayrSettingsPage::render_athletes_by_plan()`, `templates/admin/athletes-by-plan-tabs.php` | `?action=by_plan&mes=siguiente`. Solo lectura: no aplica nada. |
+| Previsión | `MemberSummary::projected()` | Historial el día 1 del mes siguiente más los cambios aprobados sin aplicar con fecha efectiva hasta ese día, en orden: servicios, tipo, baja y congelación (si vuelve después de ese día). Una congelación cuyo fin previsto ya pasó cuenta como activo, como hará la tarea diaria. La natación sale de los servicios (`grants_swimming`). |
+| Marca de cambios | `templates/admin/athletes-group.php`, `admin/css/styles.css` | Deportista con algún cambio: fondo, etiqueta «Cambio», la descripción (`MemberChanges::describe()`) y «antes: …» si cambian los servicios. Arriba, cuántos tienen cambios. |
+| Salen del listado | `UserService::get_athletes_leaving()` | Activos hoy que el mes siguiente están de baja o congelados por un cambio programado, con el motivo. |
+
+Comprobado en local con tres cambios programados para el 1 de diciembre de 2026 dentro de una transacción deshecha al final (servicios, congelación y baja): el listado pasa de 47 a 45, el cambio de servicios sale marcado en su grupo nuevo con «antes: …» y los otros dos en «Salen del listado». El mes actual no cambia.
+

@@ -26,8 +26,21 @@ $css_class = $group_key === 'other' ? 'sulayr-athletes-group-title sulayr-athlet
 </h4>
 <div class="sulayr-athletes-list">
     <?php foreach ( $athletes as $index => $athlete ) : ?>
-        <span class="sulayr-athletes-list-item">
+        <?php $changes = $athlete['changes'] ?? []; ?>
+        <span class="sulayr-athletes-list-item<?php echo empty( $changes ) ? '' : ' sulayr-athletes-list-item-changed'; ?>">
             <?php echo esc_html( ( $index + 1 ) . '. ' . $athlete['name'] . ' ' . $athlete['email'] ); ?>
+            <?php if ( ! empty( $changes ) ) : ?>
+                <span class="sulayr-athlete-change-badge"><?php esc_html_e( 'Cambio', SULAYR_TEXTDOMAIN ); ?></span>
+                <span class="sulayr-athlete-change">
+                    <?php
+                    $text = implode( ' · ', $changes );
+                    if ( ( $athlete['previous_plan'] ?? '' ) !== ( $athlete['plan'] ?? '' ) ) {
+                        $text .= ' · ' . sprintf( __( 'antes: %s', SULAYR_TEXTDOMAIN ), '' !== $athlete['previous_plan'] ? $athlete['previous_plan'] : '—' );
+                    }
+                    echo esc_html( $text );
+                    ?>
+                </span>
+            <?php endif; ?>
         </span>
     <?php endforeach; ?>
 </div>
