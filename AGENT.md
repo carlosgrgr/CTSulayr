@@ -21,7 +21,7 @@ Local sites (Apache, docroot `/var/www/html/CTSulayr`):
 
 `WP_DEBUG` and `WP_DEBUG_LOG` are on; errors go to `wp-content/debug.log`. `wp-config.php` is gitignored.
 
-Staging (proposed on 24 November 2026, not set up yet): `staging.clubtriatlonsulayr.com` and `cnnazari-staging.clubtriatlonsulayr.com` (Hostinger has no multi-level subdomains, so staging sets `COOKIE_DOMAIN` to `.clubtriatlonsulayr.com`), a copy of PROD on Hostinger used to test before PROD. Setup, the DB copy script and the risks (emails, cron, payments, personal data) are in `docs/STAGING.md`. Code that sends email or runs on cron must keep working with `pre_wp_mail` short-circuited and `DISABLE_WP_CRON` on.
+Staging (set up on Hostinger, confirmed on 25 November 2026, behind Hostinger's password; deployed from the `staging` branch, so merge a change into it before uploading): `staging.clubtriatlonsulayr.com` and `cnnazari-staging.clubtriatlonsulayr.com` (Hostinger has no multi-level subdomains, so staging sets `COOKIE_DOMAIN` to `.clubtriatlonsulayr.com`), a copy of PROD on Hostinger used to test before PROD. Setup, the DB copy script and the risks (emails, cron, payments, personal data) are in `docs/STAGING.md`. Code that sends email or runs on cron must keep working with `pre_wp_mail` short-circuited and `DISABLE_WP_CRON` on.
 
 ## Commands
 

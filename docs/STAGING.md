@@ -1,6 +1,6 @@
 # Entorno de staging (preproducción)
 
-**Estado:** propuesto el 24 de noviembre de 2026. Todavía no está montado en Hostinger.
+**Estado:** propuesto el 24 de noviembre de 2026 y montado en Hostinger (confirmado el 25 de noviembre de 2026). Pide la contraseña de Hostinger en todas sus direcciones.
 
 Staging es una copia de PROD, con datos reales, en la que se prueba un cambio justo antes de subirlo a PROD. "Staging" y "preproducción" significan lo mismo. Usamos "staging" porque es el término que usa WordPress (`WP_ENVIRONMENT_TYPE = 'staging'`).
 
@@ -28,7 +28,7 @@ Staging contiene datos reales de socios: DNI, teléfonos, recibos y documentos p
 |---|---|
 | Correos reales a socios (altas, recibos, reservas) | El mu-plugin corta `wp_mail()` y deja el correo en `debug.log`. Además, WP Mail SMTP queda en «Do not send» (`WPMS_DO_NOT_SEND`). Si se quiere, el script anonimiza los emails de los usuarios. |
 | Tareas diarias (`sulayr_members_daily`: recibos, monedero, correos; `sulayr_billing_daily` en reservas) | `DISABLE_WP_CRON`. Las tareas se lanzan a mano desde Socios → «Ejecutar ahora». |
-| Cobros | Hoy no hay pasarela con cobro automático (Stripe se quitó). Aun así, hay que revisar WooCommerce → Ajustes → Pagos en staging y dejar desactivado todo lo que no sea transferencia o pago en mano. |
+| Cobros | El pago de cuotas con tarjeta (SPEC-COBROS) usa en staging solo el TPV del club en el **entorno de pruebas** de Redsys (`SULAYR_REDSYS_ENVIRONMENT = 'test'`), así que no se mueve dinero ni se aceptan tarjetas reales. Nunca se ponen en staging las credenciales reales. La copia de PROD no tiene socios con medio «Tarjeta (TPV)» ni tarjetas guardadas, así que «Aprobar cobro» no cobra a nadie hasta que se prepare un socio de prueba. En WooCommerce → Ajustes → Pagos hay que dejar desactivado todo lo que no sea transferencia o pago en mano: el módulo de Redsys de la tienda (parte A) no se sube todavía. |
 | Estadísticas de Analytics/GTM | El script borra los códigos de Scripts Manager en los dos sitios. |
 | Que Google indexe staging | El script pone `blog_public = 0`. El mu-plugin lo fuerza y envía `X-Robots-Tag: noindex`. La contraseña de acceso también lo impide. |
 | Datos personales visibles en internet (RGPD) | Contraseña de acceso a todo staging (paso 5). |
@@ -113,8 +113,14 @@ Las comprobaciones de los pasos 1 y 2 se probaron en local el 24 de noviembre de
 - [ ] Ajustes → Lectura → «Disuade a los motores de búsqueda» está marcado en los dos sitios.
 - [ ] Scripts Manager está vacío en los dos sitios.
 - [ ] WooCommerce → Ajustes → Pagos: no hay ninguna pasarela que cobre de verdad.
+- [ ] Si están puestas las constantes `SULAYR_REDSYS_*` en `wp-config.php`, `SULAYR_REDSYS_ENVIRONMENT` es `'test'`.
 - [ ] El código fuente de una página no contiene `//clubtriatlonsulayr.com` en enlaces, imágenes ni CSS.
 
 ## Subir un cambio a staging
+
+Antes de subir, el cambio se mergea en la rama `staging` y los archivos se suben desde ella. Así la rama `staging` es siempre lo que hay en staging.
+
+El pago online tiene su propia guía: [club/pago-online/despliegue-staging.md](club/pago-online/despliegue-staging.md). Además de los archivos, incluye la entrada `redsys-notify/`, que deja pasar los avisos de Redsys sin la contraseña de Hostinger.
+
 
 Se suben los archivos cambiados a `public_html/staging` igual que se hace en PROD, siguiendo el `despliegue-prod.md` de la spec si lo tiene. Si el cambio crea o modifica tablas, la migración se ejecuta en staging primero. Cuando todo funciona en staging, se repiten los mismos pasos en PROD.
