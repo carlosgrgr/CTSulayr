@@ -91,8 +91,10 @@ class CardPayments {
     /**
      * URL de notificación.
      *
-     * SULAYR_REDSYS_NOTIFY_URL (wp-config.php, solo en local) la sustituye,
-     * p. ej. por la de un túnel, para que Redsys llegue a un sitio local. En
+     * SULAYR_REDSYS_NOTIFY_URL (wp-config.php, solo en local y staging) la
+     * sustituye: en local por la de un túnel, para que Redsys llegue a un
+     * sitio local; en staging por la entrada redsys-notify/, que queda fuera
+     * de la contraseña de Hostinger (docs/club/pago-online). En
      * PROD no se define.
      *
      * @return 	string

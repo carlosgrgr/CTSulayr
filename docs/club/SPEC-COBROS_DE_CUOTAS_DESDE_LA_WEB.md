@@ -1,7 +1,7 @@
 # SPEC — Pago online: cuotas y tienda con TPV virtual
 
 **Proyecto:** Club Triatlón Sulayr / plugin `club-triatlon-sulayr` (web del club, blog 1)
-**Estado:** Definida el 17 de noviembre de 2026. Decisiones C1 a C30 cerradas con el club (sección 3). Parte B en desarrollo en la rama `pago-online-parte-b`: pasos B1 y B2 hechos y probados en local el 17 de noviembre de 2026, también a mano en el navegador; paso B3 (cobro con la tarjeta guardada) hecho el 23 de noviembre de 2026 y probado contra el entorno de pruebas de Redsys (sección 11). Parte C en desarrollo en la rama `pago-online-parte-c`, que sale de `pago-online-parte-b`: pasos C1 (cobro mensual) y C2 (pantallas) hechos y probados en local el 23 de noviembre de 2026 (sección 12). No está en `main` ni en PROD. El banco dio de alta el TPV virtual el 23 de noviembre de 2026, con el contrato ya firmado; sin credenciales de pruebas del club todavía (Redsys las manda por email; en local se usan las públicas de Redsys).
+**Estado:** Definida el 17 de noviembre de 2026. Decisiones C1 a C30 cerradas con el club (sección 3). Parte B en desarrollo en la rama `pago-online-parte-b`: pasos B1 y B2 hechos y probados en local el 17 de noviembre de 2026, también a mano en el navegador; paso B3 (cobro con la tarjeta guardada) hecho el 23 de noviembre de 2026 y probado contra el entorno de pruebas de Redsys (sección 11). Parte C en desarrollo en la rama `pago-online-parte-c`, que sale de `pago-online-parte-b`: pasos C1 (cobro mensual) y C2 (pantallas) hechos y probados en local el 23 de noviembre de 2026 (sección 12). No está en `main` ni en PROD. El banco dio de alta el TPV virtual el 23 de noviembre de 2026, con el contrato ya firmado. Las credenciales de pruebas del club llegaron por email el 24 de noviembre de 2026 (comercio 186032504, terminal 001) y la prueba de punta a punta con ellas salió bien ese día, cobro MIT incluido (sección 11.2). El terminal sigue en el entorno de pruebas. Siguiente paso: probarlo en staging con la guía [pago-online/despliegue-staging.md](pago-online/despliegue-staging.md), antes de pasar el terminal al entorno real.
 **Fecha:** 17 de noviembre de 2026 (borrador inicial del 28 de octubre de 2026)
 
 El club cobrará con el TPV virtual de su banco (Redsys) dos cosas: las cuotas mensuales de los socios, con la tarjeta guardada y sin que el socio tenga que hacer nada cada mes, y los pedidos de la tienda. Esta spec se apoya en [SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md](SPEC-ALTAS-Y-CICLO-DE-VIDA-SOCIO.md), que ya genera los recibos mensuales y lleva el control manual de pagos. Esta spec no cambia cómo se calcula un recibo: solo cómo se paga.
@@ -318,8 +318,8 @@ Parte C:
 
 **Al técnico de Redsys**
 
-- [ ] Activar los pagos MIT (pago por referencia, COF) en el terminal.
-- [ ] Credenciales del entorno de pruebas del club (Redsys las manda por email). Las URL y los parámetros de la API REST ya están confirmados con la documentación pública y el entorno de pruebas (sección 11.3).
+- [ ] Activar los pagos MIT (pago por referencia, COF) en el terminal. En el entorno de pruebas el terminal del club ya los acepta (24 de noviembre de 2026, sección 11.2). Falta confirmarlo en el entorno real.
+- [x] Credenciales del entorno de pruebas del club. Llegaron por email el 24 de noviembre de 2026: comercio 186032504, terminal 001. La clave de pruebas es la pública de Redsys; la real sale del portal al pasar a producción. Están en `wp-config.php` local (C29). Las URL y los parámetros de la API REST ya están confirmados con la documentación pública y el entorno de pruebas (sección 11.3).
 - [ ] ¿Permite una operación de validación sin importe para guardar o cambiar la tarjeta (C11)?
 - [ ] ¿Hay comisión mínima o fija por operación además del 0,70 %?
 - [ ] ¿Cómo se consulta el estado de una operación sin respuesta (5.2, paso 3)? El módulo de Redsys usa una API de consultas aparte (`apis.redsys.es/.../operation/search`) con un `RedsysClientId` y un `RedsysClientSecret` propios, sin entorno de pruebas. Hay que pedirlos.
@@ -405,6 +405,14 @@ Pruebas: 8 tests PHPUnit nuevos (`tests/Unit/RedsysRedirectTest.php`, 105 en tot
 9. Socio con tutor: selector «Lo autoriza».
 
 **Prueba de punta a punta, hecha el 23 de noviembre de 2026 y correcta.** El sitio local se expuso con un túnel temporal de Cloudflare (`cloudflared`, con la cabecera `Host` del sitio local) y la constante `SULAYR_REDSYS_NOTIFY_URL` de `wp-config.php` apuntando a él, sin tocar la base de datos. Un socio de prueba pagó un recibo de 1,23 € desde Mis recibos en el entorno de pruebas de Redsys, con el comercio genérico y la tarjeta de pruebas con 3DS. Redsys avisó él solo a `/wp-json/sulayr/v1/redsys` por el túnel: operación autorizada, recibo pagado con «Tarjeta (TPV)» y autor el socio, tarjeta guardada (referencia de 40 caracteres y `Cof_Txnid`) y autorización de cargos registrada. Después se paró el túnel, se quitó la constante y se borró el socio de prueba. Con las credenciales del club se repite igual.
+
+**Prueba de punta a punta con el TPV del club, hecha el 24 de noviembre de 2026 y correcta.** Igual que la anterior, pero con el comercio 186032504 (terminal 001) en el entorno de pruebas y tres recibos de 1,23 € de un socio de prueba:
+
+1. Pago desde Mis recibos con la tarjeta de pruebas y 3DS, marcando la autorización (`2611Q0000318`): autorizado. Redsys avisó él solo por el túnel: recibo pagado con «Tarjeta (TPV)» y autor el socio, tarjeta guardada (referencia de 40 caracteres, `Cof_Txnid` y caducidad) y autorización de cargos registrada.
+2. Cobro MIT con la tarjeta guardada, `CardCharges::charge()` con la llamada real a la API REST (`2611Q0000319`): autorizado (0000). Recibo pagado con «Tarjeta (TPV)» y autor 0. **El terminal del club acepta los pagos MIT en pruebas.**
+3. Venta denegada (`2611Q0000320`): en la autenticación 3DS se eligió fallar. Redsys la deniega con 184 y ofrece reintentar. Al cancelar ese reintento, la notificación final trae 9915 (cancelada por el usuario). La web deja la operación «denegada», el recibo pendiente y la tarjeta guardada sin cambios.
+
+En Consultas > Operaciones del portal de pruebas salen las dos autorizadas, la denegada 184 y la cancelada. Con esto está hecho el paso 3 que pide el banco (una venta autorizada y una denegada). Después se paró el túnel, se quitó la constante y se borró el socio de prueba con sus recibos, operaciones, tarjeta y consentimientos.
 
 ### 11.3. Paso B3: cobro con la tarjeta guardada
 
