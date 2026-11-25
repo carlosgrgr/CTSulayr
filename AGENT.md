@@ -21,7 +21,7 @@ Local sites (Apache, docroot `/var/www/html/CTSulayr`):
 
 `WP_DEBUG` and `WP_DEBUG_LOG` are on; errors go to `wp-content/debug.log`. `wp-config.php` is gitignored.
 
-Staging (set up on Hostinger, confirmed on 25 November 2026, behind Hostinger's password; deployed from the `staging` branch, so merge a change into it before uploading): `staging.clubtriatlonsulayr.com` and `cnnazari-staging.clubtriatlonsulayr.com` (Hostinger has no multi-level subdomains, so staging sets `COOKIE_DOMAIN` to `.clubtriatlonsulayr.com`), a copy of PROD on Hostinger used to test before PROD. Setup, the DB copy script and the risks (emails, cron, payments, personal data) are in `docs/STAGING.md`. Code that sends email or runs on cron must keep working with `pre_wp_mail` short-circuited and `DISABLE_WP_CRON` on.
+Staging (set up on 24 November 2026, behind Hostinger's password; deployed from the `staging` branch, so merge a change into it before uploading): `staging.clubtriatlonsulayr.com` and `cnnazari-staging.clubtriatlonsulayr.com` (Hostinger has no multi-level subdomains, so staging sets `COOKIE_DOMAIN` to `.clubtriatlonsulayr.com`), a copy of PROD on Hostinger used to test before PROD. Setup, the DB copy script and the risks (emails, cron, payments, personal data) are in `docs/STAGING.md`. Code that sends email or runs on cron must keep working with `pre_wp_mail` short-circuited and `DISABLE_WP_CRON` on.
 
 ## Commands
 
@@ -157,3 +157,4 @@ PROD is on Hostinger without SSH or WP-CLI. Code is deployed with FileZilla: upl
 - **Do not edit `club-triatlon-sulayr` from reservations work.** Integration is hooked in from `sulayr-reservas`. Club specs (documentos, cobros de cuotas) are implemented in the club plugin.
 - **Known WooCommerce issue.** Removing a user from blog 2 triggers a WooCommerce hook that fails on the missing table `wp_2_wc_customer_lookup`. `SwimmerService` suppresses that error. Do not create the table to silence it.
 - **Commits.** Don't commit unless asked. There is no fixed working branch.
+- **Pull before committing or merging.** Before any commit or merge on a branch, run `git fetch origin` and bring that branch up to date with `origin/<branch>` (`git pull --ff-only origin <branch>`). Do the same with the branch being merged in. If the pull can't fast-forward because the local branch has its own commits, stop and ask: don't pick merge or rebase on your own. Never commit on a local branch that is behind its remote. Reason: on 25 November 2026 a merge into `staging` was made on a local branch that was behind `origin/staging`, so the user's pull failed with divergent branches.

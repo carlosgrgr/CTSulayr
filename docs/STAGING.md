@@ -1,6 +1,6 @@
 # Entorno de staging (preproducción)
 
-**Estado:** propuesto el 24 de noviembre de 2026 y montado en Hostinger (confirmado el 25 de noviembre de 2026). Pide la contraseña de Hostinger en todas sus direcciones.
+**Estado:** montado en Hostinger el 24 de noviembre de 2026 con la BD de PROD de ese día. Funciona el escritorio de `staging.clubtriatlonsulayr.com`, con el aviso de STAGING y el envío de correos bloqueado. Quedan por hacer las comprobaciones de la lista de abajo. Pide la contraseña de Hostinger en todas sus direcciones.
 
 Staging es una copia de PROD, con datos reales, en la que se prueba un cambio justo antes de subirlo a PROD. "Staging" y "preproducción" significan lo mismo. Usamos "staging" porque es el término que usa WordPress (`WP_ENVIRONMENT_TYPE = 'staging'`).
 
@@ -32,6 +32,7 @@ Staging contiene datos reales de socios: DNI, teléfonos, recibos y documentos p
 | Estadísticas de Analytics/GTM | El script borra los códigos de Scripts Manager en los dos sitios. |
 | Que Google indexe staging | El script pone `blog_public = 0`. El mu-plugin lo fuerza y envía `X-Robots-Tag: noindex`. La contraseña de acceso también lo impide. |
 | Datos personales visibles en internet (RGPD) | Contraseña de acceso a todo staging (paso 5). |
+| Licencia de ACF PRO | Al abrir staging, ACF activa la licencia para la nueva URL. Hay que revisar en la cuenta de ACF que PROD sigue activa y que staging no ocupa una activación que haga falta. |
 | Cuotas de servicios externos (Imagify, Instagram Feed, Akismet) | Desactivar Imagify en staging, o no optimizar imágenes allí. Instagram y Akismet pueden quedarse como están. |
 | Confundir staging con PROD | Barra de administración con el aviso «STAGING» (mu-plugin). Salts nuevas, así que una sesión de PROD no sirve en staging. |
 
