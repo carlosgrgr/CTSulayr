@@ -130,4 +130,15 @@ class RedsysTest extends TestCase {
         $this->assertFalse( ( new RedsysConfig( '', '1', self::KEY ) )->is_configured() );
         $this->assertFalse( RedsysConfig::from_constants()->is_configured() );
     }
+
+    public function test_clave_mal_copiada_cuenta_como_sin_configurar(): void {
+        foreach ( [ '<clave de firma del email>', 'sq7HjrUOBfKmC576ILgskD5srU870gJ', 'sq7HjrUOBfKmC576ILgskD5srU870gJ7x', 'c2hvcnQ=' ] as $bad ) {
+            $config = new RedsysConfig( '186032504', '001', $bad );
+            $this->assertFalse( $config->has_valid_key(), $bad );
+            $this->assertFalse( $config->is_configured(), $bad );
+        }
+
+        $padded = new RedsysConfig( '186032504', '001', '  ' . self::KEY . "\n" );
+        $this->assertTrue( $padded->is_configured(), 'Los espacios alrededor se quitan.' );
+    }
 }

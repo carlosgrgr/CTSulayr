@@ -356,7 +356,7 @@ Hecho el 17 de noviembre de 2026 y probado en local (`72ab9dd6d`).
 
 | Pieza | Código | Qué hace |
 |---|---|---|
-| Credenciales (C29) | `Payments\Redsys\RedsysConfig` | Lee `SULAYR_REDSYS_MERCHANT_CODE`, `SULAYR_REDSYS_TERMINAL`, `SULAYR_REDSYS_SECRET_KEY` y `SULAYR_REDSYS_ENVIRONMENT` de `wp-config.php`. Solo `live` exacto usa el entorno real; cualquier otro valor es pruebas. URLs públicas de Redsys, a confirmar con el manual. |
+| Credenciales (C29) | `Payments\Redsys\RedsysConfig` | Lee `SULAYR_REDSYS_MERCHANT_CODE`, `SULAYR_REDSYS_TERMINAL`, `SULAYR_REDSYS_SECRET_KEY` y `SULAYR_REDSYS_ENVIRONMENT` de `wp-config.php`. Solo `live` exacto usa el entorno real; cualquier otro valor es pruebas. Una clave que no es base64 de 24 bytes cuenta como sin credenciales (`has_valid_key()`); antes daba un error fatal al recibir un aviso (staging, 25 de noviembre de 2026). URLs públicas de Redsys, a confirmar con el manual. |
 | Firma (§5.3) | `Payments\Redsys\RedsysSignature` | HMAC SHA-256 con la clave derivada por 3DES del pedido. Comprueba firmas en base64 normal y «URL» con `hash_equals`. |
 | Pedido e importes (§5.3) | `Payments\Redsys\RedsysOrder` | `Ds_Order` = `AAMM` + `Q` + id con 7 cifras; céntimos; `Ds_Response` de 0000 a 0099 = autorizada. |
 | Tablas (§4.2) | `MembersSchema` versión 5 | `sulayr_payment_cards` y `sulayr_tpv_transactions`. `ds_order` admite NULL hasta que se conoce el id, con índice único. |

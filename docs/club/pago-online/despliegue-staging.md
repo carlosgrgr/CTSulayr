@@ -74,6 +74,8 @@ define( 'SULAYR_REDSYS_NOTIFY_URL', 'https://staging.clubtriatlonsulayr.com/reds
 
 `SULAYR_REDSYS_ENVIRONMENT` se queda en `'test'`. Así, en staging, ninguna tarjeta real puede pagar.
 
+Copia la clave exactamente como viene, sin espacios ni caracteres de más. Una clave mal copiada cuenta como «sin credenciales»: no salen los botones de pago y los avisos de Redsys se rechazan. Antes de la corrección del 25 de noviembre de 2026 daba un error fatal (500).
+
 ## Paso 5. Primera carga
 
 1. Entra en wp-admin de staging. Al cargar, el plugin crea las tablas `wp_sulayr_payment_cards` y `wp_sulayr_tpv_transactions` y sube `sulayr_members_db_version` a 6. Compruébalo en phpMyAdmin.
@@ -86,7 +88,7 @@ define( 'SULAYR_REDSYS_NOTIFY_URL', 'https://staging.clubtriatlonsulayr.com/reds
      https://staging.clubtriatlonsulayr.com/redsys-notify/
    ```
 
-   Lo correcto es `{"result":"firma_no_valida"} 400`. Si responde `404`, la carpeta no está en su sitio. Si responde `401`, el `.htaccess` del paso 3 no ha bastado en el servidor de Hostinger. Último recurso: quitar la contraseña de hPanel solo mientras duran las pruebas del paso 7 y volver a ponerla al terminar. Hay que tener en cuenta que, durante ese rato, staging deja ver datos reales de socios en internet (ver [STAGING.md](../../STAGING.md)).
+   Lo correcto es `{"result":"firma_no_valida"} 400`. Si responde `404`, la carpeta no está en su sitio. Si responde `500`, mira `wp-content/debug.log`. Si responde `401`, el `.htaccess` del paso 3 no ha bastado en el servidor de Hostinger. Último recurso: quitar la contraseña de hPanel solo mientras duran las pruebas del paso 7 y volver a ponerla al terminar. Hay que tener en cuenta que, durante ese rato, staging deja ver datos reales de socios en internet (ver [STAGING.md](../../STAGING.md)).
 5. Comprueba que el resto de staging sigue protegido: `https://staging.clubtriatlonsulayr.com/` debe seguir pidiendo la contraseña.
 
 ## Paso 6. Configurar
