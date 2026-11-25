@@ -1121,7 +1121,7 @@ Comprobado después por el club (12 de noviembre de 2026): el aspecto en ordenad
 
 ### 20.9. «Sulayr Info» por tarifa: mes siguiente (25 de noviembre de 2026)
 
-**Estado:** en la rama `listado-mes-siguiente` (sale de `main`), comprobada en local el 25 de noviembre de 2026. Sin mergear en `main` ni subir a PROD.
+**Estado:** en `staging` y `main` (`b4002b3a2`), desplegada en staging y PROD el 25 de noviembre de 2026. Comprobada en local y probada en PROD por el club ese mismo día.
 
 Pedido por el club: el listado por tarifa solo mostraba los servicios de hoy, y los cambios aprobados para el mes que viene no salen en el historial hasta que la tarea diaria los aplica el día 1. No había forma de ver de una vez cómo queda el mes siguiente.
 
