@@ -64,6 +64,35 @@
     margin-bottom: 5px;
 }
 
+.sulayr-athletes-month-tabs {
+    float: none;
+    margin: 10px 0 0;
+}
+
+.sulayr-athletes-list-item-changed {
+    background: #fff8e1;
+    border-left: 3px solid #f0b400;
+    padding-left: 6px;
+}
+
+.sulayr-athlete-change-badge {
+    display: inline-block;
+    margin: 0 4px;
+    padding: 0 6px;
+    border-radius: 3px;
+    background: #f0b400;
+    color: #1d2327;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 18px;
+    text-transform: uppercase;
+}
+
+.sulayr-athlete-change {
+    color: #50575e;
+    font-size: 12px;
+}
+
 .sulayr-athletes-total {
     margin-top: 30px;
     font-weight: bold;

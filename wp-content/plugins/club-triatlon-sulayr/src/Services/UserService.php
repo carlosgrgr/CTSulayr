@@ -439,14 +439,17 @@ class UserService {
      * @access public
      * @package club-triatlon-sulayr
      */
-    public function get_athlete_formatted_data( int $user_id ): array {
+    public function get_athlete_formatted_data( int $user_id, string $date = '' ): array {
         $user = get_userdata( $user_id );
         if ( ! $user ) {
             return [];
         }
 
         // Servicios, natación y estado salen del historial de socios (spec de altas, parte C).
-        $summary = \ClubTriatlonSulayr\Modules\Members\MemberSummary::for_user( $user_id );
+        // Con $date, la previsión en esa fecha (cambios programados incluidos).
+        $summary = '' !== $date
+            ? \ClubTriatlonSulayr\Modules\Members\MemberSummary::projected( $user_id, $date )
+            : \ClubTriatlonSulayr\Modules\Members\MemberSummary::for_user( $user_id );
         $phone = HelperService::get_user_field( CustomFields::USER_PROFILE_PHONE, $user_id );
         $dni = HelperService::get_user_field( CustomFields::USER_PROFILE_DNI, $user_id );
         $birth_date = HelperService::get_user_field( CustomFields::USER_PROFILE_BIRTH, $user_id );
@@ -474,17 +477,20 @@ class UserService {
             'athlete_status' => HelperService::format_athlete_status( $athlete_status ),
             'athlete_status_value' => $athlete_status,
             'photo_url' => HelperService::get_user_photo_url( $user_id ),
+            'changes' => $summary['changes'] ?? [],
+            'previous_plan' => implode( ', ', $summary['previous_services'] ?? [] ),
         ];
     }
 
     /**
      * Obtener todos los deportistas ordenados por tarifa
      *
+     * @param string $date Y-m-d: previsión en esa fecha ('' = hoy).
      * @return array Lista de deportistas con sus datos
      * @access public
      * @package club-triatlon-sulayr
      */
-    public function get_athletes_by_plan(): array {
+    public function get_athletes_by_plan( string $date = '' ): array {
         $athletes = get_users( [
             'role' => 'athlete',
             'orderby' => 'display_name',
@@ -497,7 +503,7 @@ class UserService {
 
         $result = [];
         foreach ( $athletes as $athlete ) {
-            $athlete_data = $this->get_athlete_formatted_data( $athlete->ID );
+            $athlete_data = $this->get_athlete_formatted_data( $athlete->ID, $date );
             
             // Solo incluir si el estado es "Activo"
             if ( $athlete_data['athlete_status_value'] !== 'active' ) {
@@ -521,6 +527,35 @@ class UserService {
             }
             
             return $pos_a <=> $pos_b;
+        } );
+
+        return $result;
+    }
+
+    /**
+     * Deportistas que hoy están activos y que en $date dejan de estarlo por un
+     * cambio programado (baja o congelación).
+     *
+     * @param string $date Y-m-d.
+     * @return array Lista de deportistas con sus datos, por nombre.
+     * @access public
+     * @package club-triatlon-sulayr
+     */
+    public function get_athletes_leaving( string $date ): array {
+        $result = [];
+        foreach ( get_users( [ 'role' => 'athlete', 'orderby' => 'display_name', 'order' => 'ASC' ] ) as $athlete ) {
+            $data = $this->get_athlete_formatted_data( $athlete->ID, $date );
+            if ( 'active' === $data['athlete_status_value'] || empty( $data['changes'] ) ) {
+                continue;
+            }
+            if ( 'active' !== \ClubTriatlonSulayr\Modules\Members\MemberSummary::for_user( $athlete->ID )['status'] ) {
+                continue;
+            }
+            $result[] = $data;
+        }
+
+        usort( $result, function ( $a, $b ) {
+            return strcmp( $a['name'], $b['name'] );
         } );
 
         return $result;

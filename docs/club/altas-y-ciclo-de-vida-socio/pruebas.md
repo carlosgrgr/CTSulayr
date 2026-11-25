@@ -85,6 +85,7 @@ Con un socio de prueba propio (créalo con «Nueva alta» y un email `@example.c
 - [x] **Socios → «Ejecutar ahora»**: muestra el resumen; pulsado dos veces no aplica nada la segunda vez. (12/11/2026)
 - [x] **Usuarios → editar** al socio: no salen tarifa, modalidad, natación, directiva ni estado; sale el recuadro «Socio: …» con el botón a la ficha. El listado de Usuarios muestra «Servicios», «Natación» y «Tipo de socio». (12/11/2026)
 - [x] **Sulayr Info** (por tarifa, por estado y nadadores) muestra a los socios en su grupo. (12/11/2026)
+- [ ] **Sulayr Info → por tarifa → «Mes siguiente»** (spec 20.9): con un cambio de servicios, una congelación y una baja programados para el 1 del mes siguiente, el primero sale marcado «Cambio» en su grupo nuevo con «antes: …» y los otros dos en «Salen del listado». «Mes actual» sigue igual.
 - [x] Un socio de baja entra en Mi cuenta: no ve «Perfil de deportista» ni «Documentos»; sí «Mis cuotas», monedero y pedidos. (12/11/2026)
 
 ### 6 bis. Parte D en local
