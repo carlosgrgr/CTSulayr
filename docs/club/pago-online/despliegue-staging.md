@@ -7,7 +7,7 @@ Cómo subir con FileZilla a staging el pago de cuotas con tarjeta de [SPEC-COBRO
 
 Escrito el 24 de noviembre de 2026. El código está en la rama `pago-online-parte-c`, que contiene la `pago-online-parte-b` y sale de `main`. A staging se sube siempre desde la rama `staging`, así que antes hay que mergear `pago-online-parte-c` en ella. Staging es una copia de PROD, y PROD está como `main`, así que la lista de abajo es la diferencia entre `main` y `staging` en el plugin. La rama `staging` solo añade sus documentos.
 
-**Estado:** sin subir.
+**Estado:** subido a staging el 25 de noviembre de 2026 desde la rama `staging` (merge de `pago-online-parte-c`, con la corrección de la clave `8d6a5b346`). Pasos 1 a 6 hechos, y del paso 7 las pruebas 1 a 3, correctas: pago desde Mis recibos, cobro con la tarjeta guardada y venta denegada, todas también en el portal de Redsys. Ajuste por defecto en «Otro medio» y los socios del piloto con «Tarjeta (TPV)» en su ficha. Falta la prueba 4, el cobro mensual.
 
 Fuera de este despliegue:
 
