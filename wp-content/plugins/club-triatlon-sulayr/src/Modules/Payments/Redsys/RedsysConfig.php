@@ -87,14 +87,30 @@ class RedsysConfig {
     }
 
     /**
-     * Hay credenciales completas.
+     * Hay credenciales completas y la clave tiene el formato de Redsys.
+     *
+     * Una clave mal copiada en wp-config.php cuenta como sin configurar: no
+     * salen los botones de pago, no se cobra y los avisos se rechazan, en vez
+     * de un error fatal en RedsysSignature (staging, 25 de noviembre de 2026).
      *
      * @return 	bool
      * @access 	public
      * @package	club-triatlon-sulayr
      */
     public function is_configured(): bool {
-        return '' !== $this->merchant_code && '' !== $this->terminal && '' !== $this->secret_key;
+        return '' !== $this->merchant_code && '' !== $this->terminal && $this->has_valid_key();
+    }
+
+    /**
+     * La clave es base64 de 24 bytes, como la que da Redsys (la exige RedsysSignature).
+     *
+     * @return 	bool
+     * @access 	public
+     * @package	club-triatlon-sulayr
+     */
+    public function has_valid_key(): bool {
+        $key = base64_decode( $this->secret_key, true );
+        return false !== $key && 24 === strlen( $key );
     }
 
     /** @return string */
